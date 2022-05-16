@@ -8,11 +8,30 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 
 public class ZkConnection implements Connection {
     /**
+     * @param config
+     * @param pathPrefix
+     * @return
+     * @throws ConnectionError
+     */
+    @Override
+    public Connection init(@NonNull XMLConfiguration config, String pathPrefix) throws ConnectionError {
+        return null;
+    }
+
+    /**
      * @return
      * @throws ConnectionError
      */
     @Override
     public Connection connect() throws ConnectionError {
+        return null;
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public Throwable error() {
         return null;
     }
 
