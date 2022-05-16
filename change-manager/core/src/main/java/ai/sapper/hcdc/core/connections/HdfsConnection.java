@@ -6,7 +6,6 @@ import com.google.common.base.Strings;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.XMLConfiguration;
@@ -15,20 +14,33 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
+import org.apache.hadoop.hdfs.client.HdfsAdmin;
 import org.apache.hadoop.security.UserGroupInformation;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Map;
 
+@Getter
+@Accessors(fluent = true)
 public class HdfsConnection implements Connection {
     private static final String HDFS_PARAM_DEFAULT_FS = "fs.defaultFS";
     private static final String HDFS_PARAM_DFS_IMPLEMENTATION = "fs.hdfs.impl";
 
-
+    @Getter(AccessLevel.NONE)
     private final ConnectionState state = new ConnectionState();
     private HdfsConfig config;
     private Configuration hdfsConfig = null;
     private FileSystem fileSystem;
+    private HdfsAdmin adminClient;
+
+    /**
+     * @return
+     */
+    @Override
+    public String name() {
+        return config.name();
+    }
 
     /**
      * @param xmlConfig
@@ -78,6 +90,14 @@ public class HdfsConnection implements Connection {
                 state.clear(EConnectionState.Initialized);
                 try {
                     fileSystem = FileSystem.get(hdfsConfig);
+                    if (config.isAdminEnabled) {
+                        adminClient = new HdfsAdmin(URI.create(config.primaryNameNodeUri), hdfsConfig);
+                    }
+                    if (config.parameters != null && !config.parameters.isEmpty()) {
+                        for (String key : config.parameters.keySet()) {
+                            hdfsConfig.set(key, config.parameters.get(key));
+                        }
+                    }
                     state.state(EConnectionState.Connected);
                 } catch (Throwable t) {
                     state.error(t);
@@ -146,17 +166,22 @@ public class HdfsConnection implements Connection {
     @Accessors(fluent = true)
     public static class HdfsConfig extends ConfigReader {
         private static final class Constants {
-            private static final String CONN_PRI_NAME_NODE_URI = "PRIMARY_NAME_NODE_URI";
-            private static final String CONN_SEC_NAME_NODE_URI = "SECONDARY_NAME_NODE_URI";
-            private static final String CONN_SECURITY_ENABLED = "SECURITY_ENABLED";
+            private static final String CONN_NAME = "name";
+            private static final String CONN_PRI_NAME_NODE_URI = "namenode.primary.URI";
+            private static final String CONN_SEC_NAME_NODE_URI = "namenode.secondary.URI";
+            private static final String CONN_SECURITY_ENABLED = "security.enabled";
+            private static final String CONN_ADMIN_CLIENT_ENABLED = "enable_admin";
         }
 
         private static final String __CONFIG_PATH = "connection.hdfs";
 
         private HierarchicalConfiguration<ImmutableNode> node;
+        private String name;
         private String primaryNameNodeUri;
         private String secondaryNameNodeUri;
         private boolean isSecurityEnabled = false;
+        private boolean isAdminEnabled = false;
+
         private Map<String, String> parameters;
 
         public HdfsConfig(@NonNull XMLConfiguration config, String pathPrefix) {
@@ -169,6 +194,10 @@ public class HdfsConnection implements Connection {
                 throw new ConfigurationException(String.format("HDFS Configuration not found. [path=%s]", path()));
             }
             try {
+                name = node.getString(Constants.CONN_NAME);
+                if (Strings.isNullOrEmpty(name)) {
+                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s.%s]", path(), Constants.CONN_NAME));
+                }
                 primaryNameNodeUri = node.getString(Constants.CONN_PRI_NAME_NODE_URI);
                 if (Strings.isNullOrEmpty(primaryNameNodeUri)) {
                     throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s.%s]", path(), Constants.CONN_PRI_NAME_NODE_URI));
@@ -178,6 +207,8 @@ public class HdfsConnection implements Connection {
                     throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s.%s]", path(), Constants.CONN_SEC_NAME_NODE_URI));
                 }
                 isSecurityEnabled = node.getBoolean(Constants.CONN_SECURITY_ENABLED);
+                isAdminEnabled = node.getBoolean(Constants.CONN_ADMIN_CLIENT_ENABLED);
+
                 parameters = readParameters(node);
             } catch (Throwable t) {
                 throw new ConfigurationException("Error processing HDFS configuration.", t);
@@ -185,6 +216,8 @@ public class HdfsConnection implements Connection {
         }
     }
 
+    @Getter
+    @Accessors(fluent = true)
     public static class HdfsSecurityConfig extends ConfigReader {
         private static final String __CONFIG_PATH = "security";
         private static final String HDFS_PARAM_SECURITY_REQUIRED = "hadoop.security.authorization";

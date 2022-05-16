@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<configuration>
+    <connections>
+        <connection>
+            <hdfs>
+                <name>test-hdfs</name>
+                <namenode>
+                    <primary>
+                        <URI>hdfs://192.168.0.2:9000</URI>
+                    </primary>
+                    <secondary>
+                        <URI>hdfs://192.168.0.3:9000</URI>
+                    </secondary>
+                </namenode>
+                <security>
+                    <enabled>false</enabled>
+                </security>
+                <enable_admin>true</enable_admin>
+            </hdfs>
+        </connection>
+    </connections>
+</configuration>

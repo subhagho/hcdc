@@ -11,6 +11,7 @@ import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
 import org.apache.commons.configuration2.builder.fluent.Parameters;
 import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.configuration2.ex.ConfigurationRuntimeException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 
 import java.io.File;
@@ -43,6 +44,28 @@ public class ConfigReader {
             this.path = path;
     }
 
+    public boolean checkIfNodeExists(@NonNull HierarchicalConfiguration<ImmutableNode> node, @NonNull String name) {
+        try {
+            if (!Strings.isNullOrEmpty(name)) {
+                return !node.configurationAt(name).isEmpty();
+            }
+        } catch (ConfigurationRuntimeException e) {
+            // Node not found.
+        }
+        return false;
+    }
+
+    public boolean checkIfNodeExists(@NonNull XMLConfiguration node, @NonNull String name) {
+        try {
+            if (!Strings.isNullOrEmpty(name)) {
+                return !node.configurationAt(name).isEmpty();
+            }
+        } catch (ConfigurationRuntimeException e) {
+            // Node not found.
+        }
+        return false;
+    }
+
     public HierarchicalConfiguration<ImmutableNode> get() {
         return config.configurationAt(path);
     }
@@ -50,29 +73,35 @@ public class ConfigReader {
     public HierarchicalConfiguration<ImmutableNode> get(@NonNull String name) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
         String key = String.format("%s.%s", path, name);
-        return config.configurationAt(key);
+        if (checkIfNodeExists(config, key))
+            return config.configurationAt(key);
+        return null;
     }
 
     public List<HierarchicalConfiguration<ImmutableNode>> getCollection(@NonNull String name) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
         String key = String.format("%s.%s", path, name);
-        return config.configurationsAt(key);
+        if (checkIfNodeExists(config, key))
+            return config.configurationsAt(key);
+        return null;
     }
 
     protected Map<String, String> readParameters(@NonNull HierarchicalConfiguration<ImmutableNode> node) throws ConfigurationException {
-        HierarchicalConfiguration<ImmutableNode> pc = node.configurationAt(__NODE_PARAMETERS);
-        if (pc != null) {
-            List<HierarchicalConfiguration<ImmutableNode>> pl = pc.configurationsAt(__NODE_PARAMETER);
-            if (pl != null && !pl.isEmpty()) {
-                Map<String, String> params = new HashMap<>(pl.size());
-                for (HierarchicalConfiguration<ImmutableNode> p : pl) {
-                    String name = p.getString(__PARAM_NAME);
-                    if (!Strings.isNullOrEmpty(name)) {
-                        String value = p.getString(__PARAM_VALUE);
-                        params.put(name, value);
+        if (checkIfNodeExists(node, __NODE_PARAMETERS)) {
+            HierarchicalConfiguration<ImmutableNode> pc = node.configurationAt(__NODE_PARAMETERS);
+            if (pc != null) {
+                List<HierarchicalConfiguration<ImmutableNode>> pl = pc.configurationsAt(__NODE_PARAMETER);
+                if (pl != null && !pl.isEmpty()) {
+                    Map<String, String> params = new HashMap<>(pl.size());
+                    for (HierarchicalConfiguration<ImmutableNode> p : pl) {
+                        String name = p.getString(__PARAM_NAME);
+                        if (!Strings.isNullOrEmpty(name)) {
+                            String value = p.getString(__PARAM_VALUE);
+                            params.put(name, value);
+                        }
                     }
+                    return params;
                 }
-                return params;
             }
         }
         return null;

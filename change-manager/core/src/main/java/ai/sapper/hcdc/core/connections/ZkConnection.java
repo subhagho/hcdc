@@ -8,6 +8,14 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 
 public class ZkConnection implements Connection {
     /**
+     * @return
+     */
+    @Override
+    public String name() {
+        return null;
+    }
+
+    /**
      * @param config
      * @param pathPrefix
      * @return
