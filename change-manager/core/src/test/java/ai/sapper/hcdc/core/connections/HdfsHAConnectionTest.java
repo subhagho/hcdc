@@ -13,13 +13,14 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
-class HdfsConnectionTest {
+class HdfsHAConnectionTest {
     private static final String __CONFIG_FILE = "src/test/resources/connection-test.xml";
     private static final String __PATH_PREFIX = "connections";
-    private static final String __PATH = UUID.randomUUID().toString();
-
+    private static final String __UUID = UUID.randomUUID().toString();
+    private static final String __PATH = String.format("/test/hcdc/core/HA/%s", __UUID);
     private static XMLConfiguration xmlConfiguration = null;
 
     @BeforeAll
@@ -31,7 +32,7 @@ class HdfsConnectionTest {
     void init() {
         DefaultLogger.__LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "init"));
         try {
-            HdfsConnection connection = new HdfsConnection();
+            HdfsHAConnection connection = new HdfsHAConnection();
             connection.init(xmlConfiguration, __PATH_PREFIX);
         } catch (Throwable t) {
             DefaultLogger.__LOG.error(DefaultLogger.stacktrace(t));
@@ -43,12 +44,12 @@ class HdfsConnectionTest {
     void connect() {
         DefaultLogger.__LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "connect"));
         try {
-            HdfsConnection connection = new HdfsConnection();
+            HdfsHAConnection connection = new HdfsHAConnection();
             connection.init(xmlConfiguration, __PATH_PREFIX);
             connection.connect();
             FileSystem fs = connection.fileSystem();
             assertNotNull(fs);
-            Path path = new Path(String.format("/test/hcdc/core/%s", __PATH));
+            Path path = new Path(__PATH);
             if (!fs.exists(path)) {
                 fs.mkdirs(path);
             }
@@ -63,16 +64,16 @@ class HdfsConnectionTest {
     void close() {
         DefaultLogger.__LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "close"));
         try {
-            HdfsConnection connection = new HdfsConnection();
+            HdfsHAConnection connection = new HdfsHAConnection();
             connection.init(xmlConfiguration, __PATH_PREFIX);
             connection.connect();
             FileSystem fs = connection.fileSystem();
             assertNotNull(fs);
-            Path path = new Path(String.format("/test/hcdc/core/%s", __PATH));
+            Path path = new Path(__PATH);
             if (!fs.exists(path)) {
                 fs.mkdirs(path);
             }
-            path = new Path(String.format("/test/hcdc/core/%s/upload.xml", __PATH));
+            path = new Path(String.format("%s/upload.xml", __PATH));
             FSDataOutputStream fsDataOutputStream = fs.create(path, true);
             try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fsDataOutputStream, StandardCharsets.UTF_8))) {
                 File file = new File(__CONFIG_FILE);    //creates a new file instance

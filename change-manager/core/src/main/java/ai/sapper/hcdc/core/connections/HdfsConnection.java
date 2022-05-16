@@ -86,7 +86,7 @@ public class HdfsConnection implements Connection {
     @Override
     public Connection connect() throws ConnectionError {
         synchronized (state) {
-            if (!state.isConnected() && !state.hasError()) {
+            if (!state.isConnected() && state.state() == EConnectionState.Initialized) {
                 state.clear(EConnectionState.Initialized);
                 try {
                     fileSystem = FileSystem.get(hdfsConfig);
@@ -146,6 +146,9 @@ public class HdfsConnection implements Connection {
                 if (fileSystem != null) {
                     fileSystem.close();
                     fileSystem = null;
+                }
+                if (adminClient != null) {
+                    adminClient = null;
                 }
             } catch (Exception ex) {
                 state.error(ex);

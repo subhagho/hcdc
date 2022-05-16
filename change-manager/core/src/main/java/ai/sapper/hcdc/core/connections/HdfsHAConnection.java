@@ -12,7 +12,10 @@ import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.hdfs.client.HdfsAdmin;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,6 +35,8 @@ public class HdfsHAConnection implements Connection {
     private HdfsHAConfig config;
 
     private Configuration hdfsConfig = null;
+    private FileSystem fileSystem;
+    private HdfsAdmin adminClient;
 
     /**
      * @return
@@ -61,9 +66,10 @@ public class HdfsHAConnection implements Connection {
                 hdfsConfig = new Configuration();
                 hdfsConfig.set(Constants.DFS_NAME_SERVICES, config.nameService);
                 hdfsConfig.set(String.format(Constants.DFS_FAILOVER_PROVIDER, config.nameService), config.failoverProvider);
-                StringBuilder snn = new StringBuilder();
-                for (String nn : config.nameNodeAddresses.keySet()) {
-
+                String nns = String.format("%s,%s", config.nameNodeAddresses[0][0], config.nameNodeAddresses[1][0]);
+                hdfsConfig.set(String.format(Constants.DFS_NAME_NODES, config.nameService), nns);
+                for (String[] nn : config.nameNodeAddresses) {
+                    hdfsConfig.set(String.format(Constants.DFS_NAME_NODE_ADDRESS, config.nameService, nn[0]), nn[1]);
                 }
                 state.state(EConnectionState.Initialized);
             } catch (Throwable t) {
@@ -87,7 +93,27 @@ public class HdfsHAConnection implements Connection {
      */
     @Override
     public Connection connect() throws ConnectionError {
-        return null;
+        synchronized (state) {
+            if (!state.isConnected() && state.state() == EConnectionState.Initialized) {
+                state.clear(EConnectionState.Initialized);
+                try {
+                    fileSystem = FileSystem.get(URI.create(String.format("hdfs://%s", config.nameService)), hdfsConfig);
+                    if (config.isAdminEnabled) {
+                        adminClient = new HdfsAdmin(URI.create(String.format("hdfs://%s", config.nameService)), hdfsConfig);
+                    }
+                    if (config.parameters != null && !config.parameters.isEmpty()) {
+                        for (String key : config.parameters.keySet()) {
+                            hdfsConfig.set(key, config.parameters.get(key));
+                        }
+                    }
+                    state.state(EConnectionState.Connected);
+                } catch (Throwable t) {
+                    state.error(t);
+                    throw new ConnectionError("Error opening HDFS connection.", t);
+                }
+            }
+        }
+        return this;
     }
 
     /**
@@ -95,7 +121,7 @@ public class HdfsHAConnection implements Connection {
      */
     @Override
     public Throwable error() {
-        return null;
+        return state.error();
     }
 
     /**
@@ -103,7 +129,7 @@ public class HdfsHAConnection implements Connection {
      */
     @Override
     public EConnectionState state() {
-        return null;
+        return state.state();
     }
 
     /**
@@ -111,7 +137,7 @@ public class HdfsHAConnection implements Connection {
      */
     @Override
     public HierarchicalConfiguration<ImmutableNode> config() {
-        return null;
+        return config.get();
     }
 
     /**
@@ -120,7 +146,24 @@ public class HdfsHAConnection implements Connection {
      */
     @Override
     public EConnectionState close() throws ConnectionError {
-        return null;
+        synchronized (state) {
+            if (state.isConnected()) {
+                state.state(EConnectionState.Closed);
+            }
+            try {
+                if (fileSystem != null) {
+                    fileSystem.close();
+                    fileSystem = null;
+                }
+                if (adminClient != null) {
+                    adminClient = null;
+                }
+            } catch (Exception ex) {
+                state.error(ex);
+                throw new ConnectionError("Error closing HDFS connection.", ex);
+            }
+            return state.state();
+        }
     }
 
     @Getter
@@ -133,14 +176,19 @@ public class HdfsHAConnection implements Connection {
             private static final String DFS_NAME_SERVICES = "nameservice";
             private static final String DFS_FAILOVER_PROVIDER = "failover_provider";
             private static final String DFS_NAME_NODES = "namenodes";
+
+            private static final String CONN_SECURITY_ENABLED = "security.enabled";
+            private static final String CONN_ADMIN_CLIENT_ENABLED = "enable_admin";
         }
 
         private HierarchicalConfiguration<ImmutableNode> node;
         private String name;
         private String nameService;
         private String failoverProvider;
-        private Map<String, String> nameNodeAddresses;
+        private String[][] nameNodeAddresses;
         private Map<String, String> parameters;
+        private boolean isSecurityEnabled = false;
+        private boolean isAdminEnabled = false;
 
         public HdfsHAConfig(@NonNull XMLConfiguration config, String pathPrefix) {
             super(config, __CONFIG_PATH, pathPrefix);
@@ -172,8 +220,10 @@ public class HdfsHAConnection implements Connection {
                 if (nns.length != 2) {
                     throw new ConfigurationException(String.format("Invalid NameNode(s) specified. Expected count = 2, specified = %d", nns.length));
                 }
-                for (String n : nns) {
-                    nameNodeAddresses = new HashMap<>(2);
+                nameNodeAddresses = new String[2][2];
+
+                for (int ii = 0; ii < nns.length; ii++) {
+                    String n = nns[ii];
                     String[] parts = n.split("=");
                     if (parts.length != 2) {
                         throw new ConfigurationException(String.format("Invalid NameNode specified. Expected count = 2, specified = %d", parts.length));
@@ -182,8 +232,12 @@ public class HdfsHAConnection implements Connection {
                     String address = parts[1].trim();
 
                     DefaultLogger.__LOG.info(String.format("Registering namenode [%s -> %s]...", key, address));
-                    nameNodeAddresses.put(key, address);
+                    nameNodeAddresses[ii][0] = key;
+                    nameNodeAddresses[ii][1] = address;
                 }
+                isSecurityEnabled = node.getBoolean(Constants.CONN_SECURITY_ENABLED);
+                isAdminEnabled = node.getBoolean(Constants.CONN_ADMIN_CLIENT_ENABLED);
+
                 parameters = readParameters(node);
             } catch (Throwable t) {
                 throw new ConfigurationException("Error processing HDFS configuration.", t);

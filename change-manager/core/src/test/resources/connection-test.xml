@@ -18,5 +18,17 @@
                 <enable_admin>true</enable_admin>
             </hdfs>
         </connection>
+        <connection>
+            <hdfs_ha>
+                <name>test-hdfs-ha</name>
+                <nameservice>ha-cluster</nameservice>
+                <failover_provider>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider</failover_provider>
+                <namenodes>nn1=192.168.0.2:9000;nn2=192.168.0.3:9000</namenodes>
+                <security>
+                    <enabled>false</enabled>
+                </security>
+                <enable_admin>true</enable_admin>
+            </hdfs_ha>
+        </connection>
     </connections>
 </configuration>
