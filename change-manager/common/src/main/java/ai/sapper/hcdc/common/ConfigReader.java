@@ -62,7 +62,7 @@ public class ConfigReader {
     protected Map<String, String> readParameters(@NonNull HierarchicalConfiguration<ImmutableNode> node) throws ConfigurationException {
         HierarchicalConfiguration<ImmutableNode> pc = node.configurationAt(__NODE_PARAMETERS);
         if (pc != null) {
-            List<HierarchicalConfiguration<ImmutableNode>> pl = pc.childConfigurationsAt(__NODE_PARAMETER);
+            List<HierarchicalConfiguration<ImmutableNode>> pl = pc.configurationsAt(__NODE_PARAMETER);
             if (pl != null && !pl.isEmpty()) {
                 Map<String, String> params = new HashMap<>(pl.size());
                 for (HierarchicalConfiguration<ImmutableNode> p : pl) {

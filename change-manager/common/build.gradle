@@ -10,9 +10,6 @@ repositories {
 }
 
 dependencies {
-    implementation 'commons-beanutils:commons-beanutils-core:1.8.3'
-    implementation 'org.apache.commons:commons-configuration2:2.7'
-
     implementation 'com.fasterxml.jackson.core:jackson-core:2.13.2'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.2.2'
     implementation 'com.fasterxml.jackson.core:jackson-annotations:2.13.2'

@@ -1,10 +1,14 @@
 package ai.sapper.hcdc.common;
 
+import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
+import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -13,24 +17,65 @@ class ConfigReaderTest {
 
     @Test
     void get() {
+        DefaultLogger.__LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "get"));
+        try {
+            ConfigReader reader = new ConfigReader(readFile(), "database");
+            HierarchicalConfiguration<ImmutableNode> node = reader.get();
+            assertNotNull(node);
+        } catch (Throwable t) {
+            DefaultLogger.__LOG.error(DefaultLogger.stacktrace(t));
+            fail(t);
+        }
     }
 
     @Test
     void testGet() {
+        DefaultLogger.__LOG.debug(String.format("Running [%s].%s(name)", getClass().getCanonicalName(), "get"));
+        try {
+            ConfigReader reader = new ConfigReader(readFile(), "database");
+            HierarchicalConfiguration<ImmutableNode> node = reader.get("name");
+            assertNotNull(node);
+        } catch (Throwable t) {
+            DefaultLogger.__LOG.error(DefaultLogger.stacktrace(t));
+            fail(t);
+        }
     }
 
     @Test
     void getCollection() {
+        DefaultLogger.__LOG.debug(String.format("Running [%s].%s(name)", getClass().getCanonicalName(), "getCollection"));
+        try {
+            ConfigReader reader = new ConfigReader(readFile(), "database");
+            List<HierarchicalConfiguration<ImmutableNode>> nodes = reader.getCollection("tables.table");
+            assertNotNull(nodes);
+            assertEquals(2, nodes.size());
+        } catch (Throwable t) {
+            DefaultLogger.__LOG.error(DefaultLogger.stacktrace(t));
+            fail(t);
+        }
     }
 
     @Test
     void readParameters() {
+        DefaultLogger.__LOG.debug(String.format("Running [%s].%s(name)", getClass().getCanonicalName(), "getCollection"));
+        try {
+            ConfigReader reader = new ConfigReader(readFile(), "database");
+            Map<String, String> params = reader.readParameters(reader.get());
+            assertNotNull(params);
+            assertEquals(2, params.size());
+        } catch (Throwable t) {
+            DefaultLogger.__LOG.error(DefaultLogger.stacktrace(t));
+            fail(t);
+        }
     }
 
     @Test
     void read() {
+        DefaultLogger.__LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "read"));
         try {
-            readFile();
+            ConfigReader reader = new ConfigReader(readFile(), "database");
+            HierarchicalConfiguration<ImmutableNode> node = reader.get();
+            assertNotNull(node);
         } catch (Throwable t) {
             DefaultLogger.__LOG.error(DefaultLogger.stacktrace(t));
             fail(t);
