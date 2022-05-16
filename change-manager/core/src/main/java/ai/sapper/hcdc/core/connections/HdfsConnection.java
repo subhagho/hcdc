@@ -12,6 +12,8 @@ import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 
+import java.util.Map;
+
 public class HdfsConnection implements Connection {
 
     private final ConnectionState state = new ConnectionState();
@@ -110,6 +112,7 @@ public class HdfsConnection implements Connection {
         private String primaryNameNodeUri;
         private String secondaryNameNodeUri;
         private boolean isSecurityEnabled = false;
+        private Map<String, String> parameters;
 
         public HdfsConfig(@NonNull XMLConfiguration config, String pathPrefix) {
             super(config, __CONFIG_PATH, pathPrefix);
@@ -130,6 +133,7 @@ public class HdfsConnection implements Connection {
                     throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s.%s]", path(), Constants.CONN_SEC_NAME_NODE_URI));
                 }
                 isSecurityEnabled = config.getBoolean(Constants.CONN_SECURITY_ENABLED);
+                parameters = readParameters(config);
             } catch (Throwable t) {
                 throw new ConfigurationException("Error processing HDFS configuration.", t);
             }

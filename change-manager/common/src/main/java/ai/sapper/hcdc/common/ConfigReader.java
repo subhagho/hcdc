@@ -14,12 +14,19 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
 @Accessors(fluent = true)
 public class ConfigReader {
+    public static final String __NODE_PARAMETERS = "parameters";
+    public static final String __NODE_PARAMETER = "parameter";
+    public static final String __PARAM_NAME = "name";
+    public static final String __PARAM_VALUE = "value";
+
     private final XMLConfiguration config;
     private final String path;
 
@@ -50,6 +57,25 @@ public class ConfigReader {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
         String key = String.format("%s.%s", path, name);
         return config.configurationsAt(key);
+    }
+
+    protected Map<String, String> readParameters(@NonNull HierarchicalConfiguration<ImmutableNode> node) throws ConfigurationException {
+        HierarchicalConfiguration<ImmutableNode> pc = node.configurationAt(__NODE_PARAMETERS);
+        if (pc != null) {
+            List<HierarchicalConfiguration<ImmutableNode>> pl = pc.childConfigurationsAt(__NODE_PARAMETER);
+            if (pl != null && !pl.isEmpty()) {
+                Map<String, String> params = new HashMap<>(pl.size());
+                for (HierarchicalConfiguration<ImmutableNode> p : pl) {
+                    String name = p.getString(__PARAM_NAME);
+                    if (!Strings.isNullOrEmpty(name)) {
+                        String value = p.getString(__PARAM_VALUE);
+                        params.put(name, value);
+                    }
+                }
+                return params;
+            }
+        }
+        return null;
     }
 
     public static XMLConfiguration read(@NonNull String filename) throws ConfigurationException {

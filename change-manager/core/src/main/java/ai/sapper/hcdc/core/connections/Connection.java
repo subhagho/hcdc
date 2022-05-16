@@ -7,11 +7,11 @@ import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 
 public interface Connection {
-    public static enum EConnectionState {
-        Unknown, Initialized, Connected, Disconnected, Error
+    enum EConnectionState {
+        Unknown, Initialized, Connected, Closed, Error
     }
 
-    public static class ConnectionState extends AbstractState<EConnectionState> {
+    class ConnectionState extends AbstractState<EConnectionState> {
 
         public ConnectionState() {
             super(EConnectionState.Error);
