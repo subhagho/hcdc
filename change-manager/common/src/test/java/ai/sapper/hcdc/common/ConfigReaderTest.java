@@ -33,7 +33,7 @@ class ConfigReaderTest {
         DefaultLogger.__LOG.debug(String.format("Running [%s].%s(name)", getClass().getCanonicalName(), "get"));
         try {
             ConfigReader reader = new ConfigReader(readFile(), "database");
-            HierarchicalConfiguration<ImmutableNode> node = reader.get("name");
+            HierarchicalConfiguration<ImmutableNode> node = reader.get("header.name");
             assertNotNull(node);
         } catch (Throwable t) {
             DefaultLogger.__LOG.error(DefaultLogger.stacktrace(t));
@@ -60,7 +60,7 @@ class ConfigReaderTest {
         DefaultLogger.__LOG.debug(String.format("Running [%s].%s(name)", getClass().getCanonicalName(), "getCollection"));
         try {
             ConfigReader reader = new ConfigReader(readFile(), "database");
-            Map<String, String> params = reader.readParameters(reader.get());
+            Map<String, String> params = reader.readParameters();
             assertNotNull(params);
             assertEquals(2, params.size());
         } catch (Throwable t) {

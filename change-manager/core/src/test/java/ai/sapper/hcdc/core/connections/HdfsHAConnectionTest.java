@@ -1,8 +1,11 @@
 package ai.sapper.hcdc.core.connections;
 
 import ai.sapper.hcdc.common.DefaultLogger;
+import com.google.common.base.Preconditions;
+import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
+import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -22,10 +25,14 @@ class HdfsHAConnectionTest {
     private static final String __UUID = UUID.randomUUID().toString();
     private static final String __PATH = String.format("/test/hcdc/core/HA/%s", __UUID);
     private static XMLConfiguration xmlConfiguration = null;
+    private static HierarchicalConfiguration<ImmutableNode> config = null;
 
     @BeforeAll
     public static void setup() throws Exception {
         xmlConfiguration = readFile();
+        Preconditions.checkState(xmlConfiguration != null);
+        config = xmlConfiguration.configurationAt(__PATH_PREFIX);
+        Preconditions.checkState(config != null);
     }
 
     @Test
@@ -33,7 +40,7 @@ class HdfsHAConnectionTest {
         DefaultLogger.__LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "init"));
         try {
             HdfsHAConnection connection = new HdfsHAConnection();
-            connection.init(xmlConfiguration, __PATH_PREFIX);
+            connection.init(config);
         } catch (Throwable t) {
             DefaultLogger.__LOG.error(DefaultLogger.stacktrace(t));
             fail(t);
@@ -45,7 +52,7 @@ class HdfsHAConnectionTest {
         DefaultLogger.__LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "connect"));
         try {
             HdfsHAConnection connection = new HdfsHAConnection();
-            connection.init(xmlConfiguration, __PATH_PREFIX);
+            connection.init(config);
             connection.connect();
             FileSystem fs = connection.fileSystem();
             assertNotNull(fs);
@@ -65,7 +72,7 @@ class HdfsHAConnectionTest {
         DefaultLogger.__LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "close"));
         try {
             HdfsHAConnection connection = new HdfsHAConnection();
-            connection.init(xmlConfiguration, __PATH_PREFIX);
+            connection.init(config);
             connection.connect();
             FileSystem fs = connection.fileSystem();
             assertNotNull(fs);

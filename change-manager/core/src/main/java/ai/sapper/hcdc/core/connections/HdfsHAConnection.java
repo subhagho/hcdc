@@ -48,19 +48,18 @@ public class HdfsHAConnection implements Connection {
 
     /**
      * @param xmlConfig
-     * @param pathPrefix
      * @return
      * @throws ConnectionError
      */
     @Override
-    public Connection init(@NonNull XMLConfiguration xmlConfig, String pathPrefix) throws ConnectionError {
+    public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConnectionError {
         synchronized (state) {
             if (state.isConnected()) {
                 close();
             }
             state.clear(EConnectionState.Unknown);
             try {
-                config = new HdfsHAConfig(xmlConfig, pathPrefix);
+                config = new HdfsHAConfig(xmlConfig);
                 config.read();
 
                 hdfsConfig = new Configuration();
@@ -82,7 +81,7 @@ public class HdfsHAConnection implements Connection {
 
 
     private void enableSecurity(Configuration conf) throws Exception {
-        HdfsConnection.HdfsSecurityConfig sConfig = new HdfsConnection.HdfsSecurityConfig(config.config(), config.path());
+        HdfsConnection.HdfsSecurityConfig sConfig = new HdfsConnection.HdfsSecurityConfig(config.config());
         sConfig.read();
         sConfig.setup(conf);
     }
@@ -169,7 +168,7 @@ public class HdfsHAConnection implements Connection {
     @Getter
     @Accessors(fluent = true)
     public static final class HdfsHAConfig extends ConfigReader {
-        private static final String __CONFIG_PATH = "connection.hdfs_ha";
+        private static final String __CONFIG_PATH = "hdfs_ha";
 
         private static class Constants {
             private static final String CONN_NAME = "name";
@@ -181,7 +180,6 @@ public class HdfsHAConnection implements Connection {
             private static final String CONN_ADMIN_CLIENT_ENABLED = "enable_admin";
         }
 
-        private HierarchicalConfiguration<ImmutableNode> node;
         private String name;
         private String nameService;
         private String failoverProvider;
@@ -190,31 +188,30 @@ public class HdfsHAConnection implements Connection {
         private boolean isSecurityEnabled = false;
         private boolean isAdminEnabled = false;
 
-        public HdfsHAConfig(@NonNull XMLConfiguration config, String pathPrefix) {
-            super(config, __CONFIG_PATH, pathPrefix);
+        public HdfsHAConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
+            super(config, __CONFIG_PATH);
         }
 
         public void read() throws ConfigurationException {
-            node = get();
-            if (node == null) {
-                throw new ConfigurationException(String.format("HDFS Configuration not found. [path=%s]", path()));
+            if (get() == null) {
+                throw new ConfigurationException("HDFS Configuration not drt or is NULL");
             }
             try {
-                name = node.getString(Constants.CONN_NAME);
+                name = get().getString(Constants.CONN_NAME);
                 if (Strings.isNullOrEmpty(name)) {
-                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s.%s]", path(), Constants.CONN_NAME));
+                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.CONN_NAME));
                 }
-                nameService = node.getString(Constants.DFS_NAME_SERVICES);
+                nameService = get().getString(Constants.DFS_NAME_SERVICES);
                 if (Strings.isNullOrEmpty(nameService)) {
-                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s.%s]", path(), Constants.DFS_NAME_SERVICES));
+                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.DFS_NAME_SERVICES));
                 }
-                failoverProvider = node.getString(Constants.DFS_FAILOVER_PROVIDER);
+                failoverProvider = get().getString(Constants.DFS_FAILOVER_PROVIDER);
                 if (Strings.isNullOrEmpty(failoverProvider)) {
-                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s.%s]", path(), Constants.DFS_FAILOVER_PROVIDER));
+                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.DFS_FAILOVER_PROVIDER));
                 }
-                String nn = node.getString(Constants.DFS_NAME_NODES);
+                String nn = get().getString(Constants.DFS_NAME_NODES);
                 if (Strings.isNullOrEmpty(nn)) {
-                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s.%s]", path(), Constants.DFS_NAME_NODES));
+                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.DFS_NAME_NODES));
                 }
                 String[] nns = nn.split(";");
                 if (nns.length != 2) {
@@ -235,10 +232,12 @@ public class HdfsHAConnection implements Connection {
                     nameNodeAddresses[ii][0] = key;
                     nameNodeAddresses[ii][1] = address;
                 }
-                isSecurityEnabled = node.getBoolean(Constants.CONN_SECURITY_ENABLED);
-                isAdminEnabled = node.getBoolean(Constants.CONN_ADMIN_CLIENT_ENABLED);
+                if (checkIfNodeExists(null, Constants.CONN_SECURITY_ENABLED))
+                    isSecurityEnabled = get().getBoolean(Constants.CONN_SECURITY_ENABLED);
+                if (checkIfNodeExists(null, Constants.CONN_ADMIN_CLIENT_ENABLED))
+                    isAdminEnabled = get().getBoolean(Constants.CONN_ADMIN_CLIENT_ENABLED);
 
-                parameters = readParameters(node);
+                parameters = readParameters();
             } catch (Throwable t) {
                 throw new ConfigurationException("Error processing HDFS configuration.", t);
             }

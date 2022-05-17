@@ -48,14 +48,14 @@ public class HdfsConnection implements Connection {
      * @throws ConnectionError
      */
     @Override
-    public Connection init(@NonNull XMLConfiguration xmlConfig, String pathPrefix) throws ConnectionError {
+    public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConnectionError {
         synchronized (state) {
             if (state.isConnected()) {
                 close();
             }
             state.clear(EConnectionState.Unknown);
             try {
-                config = new HdfsConfig(xmlConfig, pathPrefix);
+                config = new HdfsConfig(xmlConfig);
                 config.read();
 
                 hdfsConfig = new Configuration();
@@ -74,7 +74,7 @@ public class HdfsConnection implements Connection {
     }
 
     private void enableSecurity(Configuration conf) throws Exception {
-        HdfsSecurityConfig sConfig = new HdfsSecurityConfig(config.config(), config.path());
+        HdfsSecurityConfig sConfig = new HdfsSecurityConfig(config.config());
         sConfig.read();
         sConfig.setup(conf);
     }
@@ -176,9 +176,8 @@ public class HdfsConnection implements Connection {
             private static final String CONN_ADMIN_CLIENT_ENABLED = "enable_admin";
         }
 
-        private static final String __CONFIG_PATH = "connection.hdfs";
+        private static final String __CONFIG_PATH = "hdfs";
 
-        private HierarchicalConfiguration<ImmutableNode> node;
         private String name;
         private String primaryNameNodeUri;
         private String secondaryNameNodeUri;
@@ -187,32 +186,33 @@ public class HdfsConnection implements Connection {
 
         private Map<String, String> parameters;
 
-        public HdfsConfig(@NonNull XMLConfiguration config, String pathPrefix) {
-            super(config, __CONFIG_PATH, pathPrefix);
+        public HdfsConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
+            super(config, __CONFIG_PATH);
         }
 
         public void read() throws ConfigurationException {
-            node = get();
-            if (node == null) {
-                throw new ConfigurationException(String.format("HDFS Configuration not found. [path=%s]", path()));
+            if (get() == null) {
+                throw new ConfigurationException("HDFS Configuration not set or is NULL");
             }
             try {
-                name = node.getString(Constants.CONN_NAME);
+                name = get().getString(Constants.CONN_NAME);
                 if (Strings.isNullOrEmpty(name)) {
-                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s.%s]", path(), Constants.CONN_NAME));
+                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.CONN_NAME));
                 }
-                primaryNameNodeUri = node.getString(Constants.CONN_PRI_NAME_NODE_URI);
+                primaryNameNodeUri = get().getString(Constants.CONN_PRI_NAME_NODE_URI);
                 if (Strings.isNullOrEmpty(primaryNameNodeUri)) {
-                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s.%s]", path(), Constants.CONN_PRI_NAME_NODE_URI));
+                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.CONN_PRI_NAME_NODE_URI));
                 }
-                secondaryNameNodeUri = node.getString(Constants.CONN_SEC_NAME_NODE_URI);
+                secondaryNameNodeUri = get().getString(Constants.CONN_SEC_NAME_NODE_URI);
                 if (Strings.isNullOrEmpty(secondaryNameNodeUri)) {
-                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s.%s]", path(), Constants.CONN_SEC_NAME_NODE_URI));
+                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.CONN_SEC_NAME_NODE_URI));
                 }
-                isSecurityEnabled = node.getBoolean(Constants.CONN_SECURITY_ENABLED);
-                isAdminEnabled = node.getBoolean(Constants.CONN_ADMIN_CLIENT_ENABLED);
+                if (checkIfNodeExists(null, Constants.CONN_SECURITY_ENABLED))
+                    isSecurityEnabled = get().getBoolean(Constants.CONN_SECURITY_ENABLED);
+                if (checkIfNodeExists(null, Constants.CONN_ADMIN_CLIENT_ENABLED))
+                    isAdminEnabled = get().getBoolean(Constants.CONN_ADMIN_CLIENT_ENABLED);
 
-                parameters = readParameters(node);
+                parameters = readParameters();
             } catch (Throwable t) {
                 throw new ConfigurationException("Error processing HDFS configuration.", t);
             }
@@ -232,20 +232,14 @@ public class HdfsConnection implements Connection {
         private static final String HDFS_SECURITY_USERNAME = "kerberos.username";
         private static final String HDFS_SECURITY_KEYTAB = "kerberos.user.keytab";
 
-        private HierarchicalConfiguration<ImmutableNode> node;
-
         private Map<String, String> params;
 
-        public HdfsSecurityConfig(@NonNull XMLConfiguration config, String pathPrefix) {
-            super(config, __CONFIG_PATH, pathPrefix);
+        public HdfsSecurityConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
+            super(config, __CONFIG_PATH);
         }
 
         public void read() throws ConfigurationException {
-            node = get();
-            if (node == null) {
-                throw new ConfigurationException(String.format("HDFS Configuration not found. [path=%s]", path()));
-            }
-            params = readParameters(node);
+            params = readParameters();
         }
 
         public void setup(@NonNull Configuration conf) throws ConfigurationException, IOException {

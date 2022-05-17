@@ -24,7 +24,7 @@ public interface Connection {
 
     String name();
 
-    Connection init(@NonNull XMLConfiguration config, String pathPrefix) throws ConnectionError;
+    Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> config) throws ConnectionError;
 
     Connection connect() throws ConnectionError;
 
