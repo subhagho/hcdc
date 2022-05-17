@@ -8,15 +8,14 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
-import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.client.HdfsAdmin;
 
+import java.io.IOException;
 import java.net.URI;
-import java.util.HashMap;
 import java.util.Map;
 
 @Getter
@@ -54,11 +53,11 @@ public class HdfsHAConnection implements Connection {
     @Override
     public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConnectionError {
         synchronized (state) {
-            if (state.isConnected()) {
-                close();
-            }
-            state.clear(EConnectionState.Unknown);
             try {
+                if (state.isConnected()) {
+                    close();
+                }
+                state.clear(EConnectionState.Unknown);
                 config = new HdfsHAConfig(xmlConfig);
                 config.read();
 
@@ -69,6 +68,9 @@ public class HdfsHAConnection implements Connection {
                 hdfsConfig.set(String.format(Constants.DFS_NAME_NODES, config.nameService), nns);
                 for (String[] nn : config.nameNodeAddresses) {
                     hdfsConfig.set(String.format(Constants.DFS_NAME_NODE_ADDRESS, config.nameService, nn[0]), nn[1]);
+                }
+                if (config.isSecurityEnabled) {
+                    enableSecurity(hdfsConfig);
                 }
                 state.state(EConnectionState.Initialized);
             } catch (Throwable t) {
@@ -136,16 +138,24 @@ public class HdfsHAConnection implements Connection {
      * @return
      */
     @Override
+    public boolean isConnected() {
+        return state.isConnected();
+    }
+
+    /**
+     * @return
+     */
+    @Override
     public HierarchicalConfiguration<ImmutableNode> config() {
         return config.get();
     }
 
     /**
      * @return
-     * @throws ConnectionError
+     * @throws IOException
      */
     @Override
-    public EConnectionState close() throws ConnectionError {
+    public void close() throws IOException {
         synchronized (state) {
             if (state.isConnected()) {
                 state.state(EConnectionState.Closed);
@@ -160,9 +170,8 @@ public class HdfsHAConnection implements Connection {
                 }
             } catch (Exception ex) {
                 state.error(ex);
-                throw new ConnectionError("Error closing HDFS connection.", ex);
+                throw new IOException("Error closing HDFS connection.", ex);
             }
-            return state.state();
         }
     }
 
@@ -174,11 +183,11 @@ public class HdfsHAConnection implements Connection {
         private static class Constants {
             private static final String CONN_NAME = "name";
             private static final String DFS_NAME_SERVICES = "nameservice";
-            private static final String DFS_FAILOVER_PROVIDER = "failover_provider";
+            private static final String DFS_FAILOVER_PROVIDER = "failoverProvider";
             private static final String DFS_NAME_NODES = "namenodes";
 
             private static final String CONN_SECURITY_ENABLED = "security.enabled";
-            private static final String CONN_ADMIN_CLIENT_ENABLED = "enable_admin";
+            private static final String CONN_ADMIN_CLIENT_ENABLED = "enableAdmin";
         }
 
         private String name;

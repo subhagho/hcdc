@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
-import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.hadoop.conf.Configuration;
@@ -50,11 +49,11 @@ public class HdfsConnection implements Connection {
     @Override
     public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConnectionError {
         synchronized (state) {
-            if (state.isConnected()) {
-                close();
-            }
-            state.clear(EConnectionState.Unknown);
             try {
+                if (state.isConnected()) {
+                    close();
+                }
+                state.clear(EConnectionState.Unknown);
                 config = new HdfsConfig(xmlConfig);
                 config.read();
 
@@ -129,16 +128,24 @@ public class HdfsConnection implements Connection {
      * @return
      */
     @Override
+    public boolean isConnected() {
+        return state.isConnected();
+    }
+
+    /**
+     * @return
+     */
+    @Override
     public HierarchicalConfiguration<ImmutableNode> config() {
         return config.get();
     }
 
     /**
      * @return
-     * @throws ConnectionError
+     * @throws IOException
      */
     @Override
-    public EConnectionState close() throws ConnectionError {
+    public void close() throws IOException {
         synchronized (state) {
             if (state.isConnected()) {
                 state.state(EConnectionState.Closed);
@@ -153,9 +160,8 @@ public class HdfsConnection implements Connection {
                 }
             } catch (Exception ex) {
                 state.error(ex);
-                throw new ConnectionError("Error closing HDFS connection.", ex);
+                throw new IOException("Error closing HDFS connection.", ex);
             }
-            return state.state();
         }
     }
 
@@ -174,7 +180,7 @@ public class HdfsConnection implements Connection {
             private static final String CONN_PRI_NAME_NODE_URI = "namenode.primary.URI";
             private static final String CONN_SEC_NAME_NODE_URI = "namenode.secondary.URI";
             private static final String CONN_SECURITY_ENABLED = "security.enabled";
-            private static final String CONN_ADMIN_CLIENT_ENABLED = "enable_admin";
+            private static final String CONN_ADMIN_CLIENT_ENABLED = "enableAdmin";
         }
 
         private static final String __CONFIG_PATH = "hdfs";

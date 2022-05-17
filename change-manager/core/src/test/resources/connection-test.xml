@@ -16,7 +16,7 @@
                 <security>
                     <enabled>false</enabled>
                 </security>
-                <enable_admin>true</enable_admin>
+                <enableAdmin>true</enableAdmin>
             </hdfs>
         </connection>
         <connection>
@@ -24,13 +24,25 @@
             <hdfs_ha>
                 <name>test-hdfs-ha</name>
                 <nameservice>ha-cluster</nameservice>
-                <failover_provider>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider</failover_provider>
+                <failoverProvider>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider</failoverProvider>
                 <namenodes>nn1=192.168.0.2:9000;nn2=192.168.0.3:9000</namenodes>
                 <security>
                     <enabled>false</enabled>
                 </security>
-                <enable_admin>true</enable_admin>
+                <enableAdmin>true</enableAdmin>
             </hdfs_ha>
+        </connection>
+        <connection>
+            <type>ai.sapper.hcdc.core.connections.ZookeeperConnection</type>
+            <zookeeper>
+                <name>test-zk</name>
+                <connectionString>192.168.0.4:2181;192.168.0.5:2181</connectionString>
+                <retry>
+                    <interva>1500</interva>
+                    <retries>5</retries>
+                </retry>
+                <connectionTimeout>10000</connectionTimeout>
+            </zookeeper>
         </connection>
     </connections>
 </configuration>

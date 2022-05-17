@@ -2,10 +2,8 @@ package ai.sapper.hcdc.core.connections;
 
 import ai.sapper.hcdc.common.DefaultLogger;
 import com.google.common.base.Preconditions;
-import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
-import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -16,7 +14,8 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class HdfsConnectionTest {
     private static final String __CONFIG_FILE = "src/test/resources/connection-test.xml";
@@ -29,7 +28,7 @@ class HdfsConnectionTest {
 
     @BeforeAll
     public static void setup() throws Exception {
-        xmlConfiguration = readFile();
+        xmlConfiguration = TestUtils.readFile(__CONFIG_FILE);
         Preconditions.checkState(xmlConfiguration != null);
         manager.init(xmlConfiguration, null);
     }
@@ -86,14 +85,5 @@ class HdfsConnectionTest {
             DefaultLogger.__LOG.error(DefaultLogger.stacktrace(t));
             fail(t);
         }
-    }
-
-    private static XMLConfiguration readFile() throws Exception {
-        File cf = new File(__CONFIG_FILE);
-        if (!cf.exists()) {
-            throw new Exception(String.format("Configuration file not found. ]path=%s]", cf.getAbsolutePath()));
-        }
-        Configurations configs = new Configurations();
-        return configs.xml(cf);
     }
 }

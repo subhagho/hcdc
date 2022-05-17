@@ -3,10 +3,11 @@ package ai.sapper.hcdc.core.connections;
 import ai.sapper.hcdc.common.AbstractState;
 import lombok.NonNull;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
-import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 
-public interface Connection {
+import java.io.Closeable;
+
+public interface Connection extends Closeable {
     enum EConnectionState {
         Unknown, Initialized, Connected, Closed, Error
     }
@@ -32,8 +33,8 @@ public interface Connection {
 
     EConnectionState state();
 
-    HierarchicalConfiguration<ImmutableNode> config();
+    boolean isConnected();
 
-    EConnectionState close() throws ConnectionError;
+    HierarchicalConfiguration<ImmutableNode> config();
 
 }
