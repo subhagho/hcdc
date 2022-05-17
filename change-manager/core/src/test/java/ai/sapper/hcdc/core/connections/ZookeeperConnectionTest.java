@@ -4,6 +4,7 @@ import ai.sapper.hcdc.common.DefaultLogger;
 import com.google.common.base.Preconditions;
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
+import org.apache.curator.utils.ZKPaths;
 import org.apache.zookeeper.CreateMode;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -39,7 +40,7 @@ class ZookeeperConnectionTest {
             assertNotNull(connection);
             connection.connect();
             assertEquals(Connection.EConnectionState.Connected, connection.state());
-            connection.client().create().withMode(CreateMode.PERSISTENT).forPath(__PATH);
+            ZKPaths.mkdirs(connection.client().getZookeeperClient().getZooKeeper(), __PATH);
 
             connection.close();
             assertEquals(Connection.EConnectionState.Closed, connection.state());

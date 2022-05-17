@@ -36,9 +36,9 @@
             <type>ai.sapper.hcdc.core.connections.ZookeeperConnection</type>
             <zookeeper>
                 <name>test-zk</name>
-                <connectionString>192.168.0.4:2181;192.168.0.5:2181</connectionString>
+                <connectionString>192.168.0.5:2181,192.168.0.4:2181</connectionString>
                 <retry>
-                    <interva>1500</interva>
+                    <interval>1500</interval>
                     <retries>5</retries>
                 </retry>
                 <connectionTimeout>10000</connectionTimeout>

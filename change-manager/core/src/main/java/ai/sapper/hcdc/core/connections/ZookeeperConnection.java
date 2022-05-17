@@ -102,7 +102,8 @@ public class ZookeeperConnection implements Connection {
                 try {
                     client = builder.build();
                     client.start();
-                    //client.blockUntilConnected();
+                    client.blockUntilConnected();
+
                     state.state(EConnectionState.Connected);
                 } catch (Throwable t) {
                     state.error(t);
@@ -174,7 +175,7 @@ public class ZookeeperConnection implements Connection {
             private static final String CONFIG_AUTH_HANDLER = "authenticationHandler";
             private static final String CONFIG_RETRY = "retry";
             private static final String CONFIG_RETRY_INTERVAL = "retry.interval";
-            private static final String CONFIG_RETRY_TRIES = "retries";
+            private static final String CONFIG_RETRY_TRIES = "retry.retries";
             private static final String CONFIG_CONN_TIMEOUT = "connectionTimeout";
             private static final String CONFIG_SESSION_TIMEOUT = "sessionTimeout";
             private static final String CONFIG_NAMESPACE = "namespace";
