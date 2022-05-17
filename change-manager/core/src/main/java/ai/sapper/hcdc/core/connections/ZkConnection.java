@@ -17,12 +17,11 @@ public class ZkConnection implements Connection {
 
     /**
      * @param config
-     * @param pathPrefix
      * @return
      * @throws ConnectionError
      */
     @Override
-    public Connection init(@NonNull XMLConfiguration config, String pathPrefix) throws ConnectionError {
+    public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> config) throws ConnectionError {
         return null;
     }
 
@@ -66,13 +65,5 @@ public class ZkConnection implements Connection {
     @Override
     public EConnectionState close() throws ConnectionError {
         return null;
-    }
-
-    public static final class ZkConfig extends ConfigReader {
-        private static final String __CONFIG_PATH = "connection.zookeeper";
-
-        public ZkConfig(@NonNull XMLConfiguration config, String pathPrefix) {
-            super(config, __CONFIG_PATH, pathPrefix);
-        }
     }
 }

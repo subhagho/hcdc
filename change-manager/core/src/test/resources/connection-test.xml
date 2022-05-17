@@ -2,6 +2,7 @@
 <configuration>
     <connections>
         <connection>
+            <type>ai.sapper.hcdc.core.connections.HdfsConnection</type>
             <hdfs>
                 <name>test-hdfs</name>
                 <namenode>
@@ -19,6 +20,7 @@
             </hdfs>
         </connection>
         <connection>
+            <type>ai.sapper.hcdc.core.connections.HdfsHAConnection</type>
             <hdfs_ha>
                 <name>test-hdfs-ha</name>
                 <nameservice>ha-cluster</nameservice>

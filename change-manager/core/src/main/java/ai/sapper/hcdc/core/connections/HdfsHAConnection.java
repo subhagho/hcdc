@@ -43,7 +43,7 @@ public class HdfsHAConnection implements Connection {
      */
     @Override
     public String name() {
-        return null;
+        return config.name;
     }
 
     /**
@@ -93,7 +93,8 @@ public class HdfsHAConnection implements Connection {
     @Override
     public Connection connect() throws ConnectionError {
         synchronized (state) {
-            if (!state.isConnected() && state.state() == EConnectionState.Initialized) {
+            if (!state.isConnected()
+                    && (state.state() == EConnectionState.Initialized || state.state() == EConnectionState.Closed)) {
                 state.clear(EConnectionState.Initialized);
                 try {
                     fileSystem = FileSystem.get(URI.create(String.format("hdfs://%s", config.nameService)), hdfsConfig);
@@ -232,9 +233,9 @@ public class HdfsHAConnection implements Connection {
                     nameNodeAddresses[ii][0] = key;
                     nameNodeAddresses[ii][1] = address;
                 }
-                if (checkIfNodeExists(null, Constants.CONN_SECURITY_ENABLED))
+                if (checkIfNodeExists((String) null, Constants.CONN_SECURITY_ENABLED))
                     isSecurityEnabled = get().getBoolean(Constants.CONN_SECURITY_ENABLED);
-                if (checkIfNodeExists(null, Constants.CONN_ADMIN_CLIENT_ENABLED))
+                if (checkIfNodeExists((String) null, Constants.CONN_ADMIN_CLIENT_ENABLED))
                     isAdminEnabled = get().getBoolean(Constants.CONN_ADMIN_CLIENT_ENABLED);
 
                 parameters = readParameters();

@@ -21,39 +21,27 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 class HdfsHAConnectionTest {
     private static final String __CONFIG_FILE = "src/test/resources/connection-test.xml";
-    private static final String __PATH_PREFIX = "connections";
+    private static final String __CONNECTION_NAME = "test-hdfs-ha";
+
     private static final String __UUID = UUID.randomUUID().toString();
     private static final String __PATH = String.format("/test/hcdc/core/HA/%s", __UUID);
     private static XMLConfiguration xmlConfiguration = null;
-    private static HierarchicalConfiguration<ImmutableNode> config = null;
+    private static ConnectionManager manager = new ConnectionManager();
 
     @BeforeAll
     public static void setup() throws Exception {
         xmlConfiguration = readFile();
         Preconditions.checkState(xmlConfiguration != null);
-        config = xmlConfiguration.configurationAt(__PATH_PREFIX);
-        Preconditions.checkState(config != null);
-    }
-
-    @Test
-    void init() {
-        DefaultLogger.__LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "init"));
-        try {
-            HdfsHAConnection connection = new HdfsHAConnection();
-            connection.init(config);
-        } catch (Throwable t) {
-            DefaultLogger.__LOG.error(DefaultLogger.stacktrace(t));
-            fail(t);
-        }
+        manager.init(xmlConfiguration, null);
     }
 
     @Test
     void connect() {
         DefaultLogger.__LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "connect"));
         try {
-            HdfsHAConnection connection = new HdfsHAConnection();
-            connection.init(config);
+            HdfsHAConnection connection = manager.getConnection(__CONNECTION_NAME, HdfsHAConnection.class);
             connection.connect();
+
             FileSystem fs = connection.fileSystem();
             assertNotNull(fs);
             Path path = new Path(__PATH);
@@ -71,9 +59,9 @@ class HdfsHAConnectionTest {
     void close() {
         DefaultLogger.__LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "close"));
         try {
-            HdfsHAConnection connection = new HdfsHAConnection();
-            connection.init(config);
+            HdfsHAConnection connection = manager.getConnection(__CONNECTION_NAME, HdfsHAConnection.class);
             connection.connect();
+
             FileSystem fs = connection.fileSystem();
             assertNotNull(fs);
             Path path = new Path(__PATH);

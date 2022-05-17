@@ -86,7 +86,8 @@ public class HdfsConnection implements Connection {
     @Override
     public Connection connect() throws ConnectionError {
         synchronized (state) {
-            if (!state.isConnected() && state.state() == EConnectionState.Initialized) {
+            if (!state.isConnected()
+                    && (state.state() == EConnectionState.Initialized || state.state() == EConnectionState.Closed)) {
                 state.clear(EConnectionState.Initialized);
                 try {
                     fileSystem = FileSystem.get(hdfsConfig);
@@ -207,9 +208,9 @@ public class HdfsConnection implements Connection {
                 if (Strings.isNullOrEmpty(secondaryNameNodeUri)) {
                     throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.CONN_SEC_NAME_NODE_URI));
                 }
-                if (checkIfNodeExists(null, Constants.CONN_SECURITY_ENABLED))
+                if (checkIfNodeExists((String) null, Constants.CONN_SECURITY_ENABLED))
                     isSecurityEnabled = get().getBoolean(Constants.CONN_SECURITY_ENABLED);
-                if (checkIfNodeExists(null, Constants.CONN_ADMIN_CLIENT_ENABLED))
+                if (checkIfNodeExists((String) null, Constants.CONN_ADMIN_CLIENT_ENABLED))
                     isAdminEnabled = get().getBoolean(Constants.CONN_ADMIN_CLIENT_ENABLED);
 
                 parameters = readParameters();

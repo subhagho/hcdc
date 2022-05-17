@@ -20,39 +20,27 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class HdfsConnectionTest {
     private static final String __CONFIG_FILE = "src/test/resources/connection-test.xml";
-    private static final String __PATH_PREFIX = "connections";
+    private static final String __CONNECTION_NAME = "test-hdfs";
     private static final String __PATH = UUID.randomUUID().toString();
 
     private static XMLConfiguration xmlConfiguration = null;
-    private static HierarchicalConfiguration<ImmutableNode> config = null;
+
+    private static ConnectionManager manager = new ConnectionManager();
 
     @BeforeAll
     public static void setup() throws Exception {
         xmlConfiguration = readFile();
         Preconditions.checkState(xmlConfiguration != null);
-        config = xmlConfiguration.configurationAt(__PATH_PREFIX);
-        Preconditions.checkState(config != null);
-    }
-
-    @Test
-    void init() {
-        DefaultLogger.__LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "init"));
-        try {
-            HdfsConnection connection = new HdfsConnection();
-            connection.init(config);
-        } catch (Throwable t) {
-            DefaultLogger.__LOG.error(DefaultLogger.stacktrace(t));
-            fail(t);
-        }
+        manager.init(xmlConfiguration, null);
     }
 
     @Test
     void connect() {
         DefaultLogger.__LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "connect"));
         try {
-            HdfsConnection connection = new HdfsConnection();
-            connection.init(config);
+            HdfsConnection connection = manager.getConnection(__CONNECTION_NAME, HdfsConnection.class);
             connection.connect();
+
             FileSystem fs = connection.fileSystem();
             assertNotNull(fs);
             Path path = new Path(String.format("/test/hcdc/core/%s", __PATH));
@@ -70,9 +58,9 @@ class HdfsConnectionTest {
     void close() {
         DefaultLogger.__LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "close"));
         try {
-            HdfsConnection connection = new HdfsConnection();
-            connection.init(config);
+            HdfsConnection connection = manager.getConnection(__CONNECTION_NAME, HdfsConnection.class);
             connection.connect();
+
             FileSystem fs = connection.fileSystem();
             assertNotNull(fs);
             Path path = new Path(String.format("/test/hcdc/core/%s", __PATH));
