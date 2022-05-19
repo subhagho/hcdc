@@ -10,27 +10,44 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 
 import java.io.Closeable;
 import java.nio.ByteBuffer;
+import java.security.PrivilegedActionException;
 
 @Getter
 @Accessors(fluent = true)
-public abstract class MessagingClient<C extends Connection, M, S extends MessageSerDe<M>> implements Closeable {
+public abstract class PubSubClient<C extends Connection, M, S extends MessageSerDe<M>> implements Closeable {
     private C connection;
     private S transformer;
+    private int receiveBatchSize = 1;
+    private int sendBatchSize = 1;
 
-    MessagingClient(@NonNull C connection) {
+    PubSubClient(@NonNull C connection) {
         this.connection = connection;
     }
 
-    public MessagingClient<C, M, S> withTransformer(@NonNull S transformer) {
+    public PubSubClient<C, M, S> withTransformer(@NonNull S transformer) {
         this.transformer = transformer;
         return this;
     }
 
-    public int send(@NonNull M message) throws MessagingError {
+    public PubSubClient<C, M, S> withReceiveBatchSize(int batchSize) {
+        Preconditions.checkArgument(batchSize > 0);
+        receiveBatchSize = batchSize;
+
+        return this;
+    }
+
+    public PubSubClient<C, M, S> withSendBatchSize(int batchSize) {
+        Preconditions.checkArgument(batchSize > 0);
+        sendBatchSize = batchSize;
+
+        return this;
+    }
+
+    public int publish(@NonNull M message) throws MessagingError {
         Preconditions.checkState(transformer != null);
         try {
             ByteBuffer buffer = transformer.serialize(message);
-            sendMessage(buffer);
+            publishMessage(buffer);
 
             return buffer.position();
         } catch (Throwable t) {
@@ -38,10 +55,10 @@ public abstract class MessagingClient<C extends Connection, M, S extends Message
         }
     }
 
-    public M receive(int timeout) throws MessagingError {
+    public M subscribe(int timeout) throws MessagingError {
         Preconditions.checkState(transformer != null);
         try {
-            ByteBuffer buffer = receiveMessage(timeout);
+            ByteBuffer buffer = subscribeMessage(timeout);
             return transformer.deserialize(buffer);
         } catch (Throwable t) {
             throw new MessagingError("Error sending message.", t);
@@ -49,9 +66,8 @@ public abstract class MessagingClient<C extends Connection, M, S extends Message
     }
 
     public abstract void open(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws MessagingError;
-    public abstract void sendMessage(@NonNull ByteBuffer buffer) throws MessagingError;
-
-    public abstract ByteBuffer receiveMessage(int timeout) throws MessagingError;
+    public abstract void publishMessage(@NonNull ByteBuffer buffer) throws MessagingError;
+    public abstract ByteBuffer subscribeMessage(int timeout) throws MessagingError;
 
     public abstract boolean ack(@NonNull String messageId) throws MessagingError;
 }
