@@ -9,6 +9,7 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.kafka.clients.producer.KafkaProducer;
 
 import javax.naming.ConfigurationException;
+import java.io.IOException;
 
 @Getter
 @Accessors(fluent = true)
@@ -57,5 +58,31 @@ public class KafkaProducerConnection<K, V> extends KafkaConnection {
             }
         }
         return this;
+    }
+
+    /**
+     * Closes this stream and releases any system resources associated
+     * with it. If the stream is already closed then invoking this
+     * method has no effect.
+     *
+     * <p> As noted in {@link AutoCloseable#close()}, cases where the
+     * close may fail require careful attention. It is strongly advised
+     * to relinquish the underlying resources and to internally
+     * <em>mark</em> the {@code Closeable} as closed, prior to throwing
+     * the {@code IOException}.
+     *
+     * @throws IOException if an I/O error occurs
+     */
+    @Override
+    public void close() throws IOException {
+        synchronized (state) {
+            if (state.isConnected()) {
+                state.state(EConnectionState.Closed);
+            }
+            if (producer != null) {
+                producer.close();
+                producer = null;
+            }
+        }
     }
 }

@@ -8,6 +8,7 @@ import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -27,7 +28,6 @@ class KafkaConnectionTest {
     private static final String __CONFIG_FILE = "src/test/resources/connection-test.xml";
     private static final String __PRODUCER_NAME = "test-kafka-producer";
     private static final String __CONSUMER_NAME = "test-kafka-consumer";
-    private static final String __TOPIC_NAME = "hcdc-update-channel";
     private static final String __MESSAGE_FILE = "src/test/resources/test-message.txt";
     private static XMLConfiguration xmlConfiguration = null;
 
@@ -64,8 +64,9 @@ class KafkaConnectionTest {
             for (int ii = 0; ii < 10; ii++) {
                 String mid = UUID.randomUUID().toString();
                 String mesg = String.format("[%s] %s", mid, text.toString());
-                producer.producer().send(new ProducerRecord<>(mid, mesg.getBytes(StandardCharsets.UTF_8)));
-
+                ProducerRecord<String, byte[]> record = new ProducerRecord<>(producer.topic(), mid, mesg.getBytes(StandardCharsets.UTF_8));
+                RecordMetadata metadata = producer.producer().send(record).get();
+                DefaultLogger.__LOG.debug(String.format("Message ID: %s [%s]", mid, metadata.toString()));
                 sentIds.put(mid, mesg.length());
             }
             producer.producer().flush();

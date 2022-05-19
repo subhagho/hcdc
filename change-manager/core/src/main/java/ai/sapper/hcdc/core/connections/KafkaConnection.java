@@ -89,22 +89,9 @@ public abstract class KafkaConnection implements Connection {
         return kafkaConfig.config();
     }
 
-    /**
-     * Closes this stream and releases any system resources associated
-     * with it. If the stream is already closed then invoking this
-     * method has no effect.
-     *
-     * <p> As noted in {@link AutoCloseable#close()}, cases where the
-     * close may fail require careful attention. It is strongly advised
-     * to relinquish the underlying resources and to internally
-     * <em>mark</em> the {@code Closeable} as closed, prior to throwing
-     * the {@code IOException}.
-     *
-     * @throws IOException if an I/O error occurs
-     */
-    @Override
-    public void close() throws IOException {
-
+    public String topic() {
+        Preconditions.checkState(kafkaConfig != null);
+        return kafkaConfig.topic;
     }
 
     enum EKafkaClientMode {
@@ -121,6 +108,7 @@ public abstract class KafkaConnection implements Connection {
             private static final String CONFIG_MODE = "mode";
             public static final String CONFIG_PRODUCER_CONFIG = "config.producer";
             public static final String CONFIG_CONSUMER_CONFIG = "config.consumer";
+            public static final String CONFIG_TOPIC = "config.topic";
         }
 
 
@@ -130,6 +118,7 @@ public abstract class KafkaConnection implements Connection {
         private Properties consumerProperties;
         private Properties producerProperties;
         private EKafkaClientMode mode = EKafkaClientMode.Producer;
+        private String topic;
 
         private Map<String, String> parameters;
 
@@ -173,6 +162,11 @@ public abstract class KafkaConnection implements Connection {
                     }
                     consumerProperties = new Properties();
                     consumerProperties.load(new FileInputStream(cf));
+                }
+
+                topic = get().getString(Constants.CONFIG_TOPIC);
+                if (Strings.isNullOrEmpty(topic)) {
+                    throw new ConfigurationException(String.format("Kafka Configuration Error: missing [%s]", Constants.CONFIG_TOPIC));
                 }
 
                 parameters = readParameters();
