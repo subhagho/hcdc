@@ -51,7 +51,7 @@
                 <mode>Producer</mode>
                 <config>
                     <producer>src/test/resources/producer.properties</producer>
-                    <topic>hcdc-test-channel</topic>
+                    <topic>hcdc-test</topic>
                 </config>
             </kafka>
         </connection>
@@ -62,7 +62,7 @@
                 <mode>Consumer</mode>
                 <config>
                     <consumer>src/test/resources/consumer.properties</consumer>
-                    <topic>hcdc-test-channel</topic>
+                    <topic>hcdc-test</topic>
                 </config>
             </kafka>
         </connection>

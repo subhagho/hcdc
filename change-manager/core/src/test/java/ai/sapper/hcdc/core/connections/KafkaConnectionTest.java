@@ -4,6 +4,7 @@ import ai.sapper.hcdc.common.DefaultLogger;
 import ai.sapper.hcdc.core.connections.impl.BasicKafkaConsumer;
 import ai.sapper.hcdc.core.connections.impl.BasicKafkaProducer;
 import com.google.common.base.Preconditions;
+import lombok.NonNull;
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -21,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -28,7 +30,7 @@ class KafkaConnectionTest {
     private static final String __CONFIG_FILE = "src/test/resources/connection-test.xml";
     private static final String __PRODUCER_NAME = "test-kafka-producer";
     private static final String __CONSUMER_NAME = "test-kafka-consumer";
-    private static final String __MESSAGE_FILE = "src/test/resources/test-message.txt";
+    private static final String __MESSAGE_FILE = "src/test/resources/test-message.xml";
     private static XMLConfiguration xmlConfiguration = null;
 
     private static ConnectionManager manager = new ConnectionManager();
@@ -61,31 +63,65 @@ class KafkaConnectionTest {
                 }
             }
             Map<String, Integer> sentIds = new HashMap<>();
+            Thread thread = new Thread(new ConsumerThread(manager));
+            thread.start();
+
             for (int ii = 0; ii < 10; ii++) {
                 String mid = UUID.randomUUID().toString();
                 String mesg = String.format("[%s] %s", mid, text.toString());
                 ProducerRecord<String, byte[]> record = new ProducerRecord<>(producer.topic(), mid, mesg.getBytes(StandardCharsets.UTF_8));
                 RecordMetadata metadata = producer.producer().send(record).get();
-                DefaultLogger.__LOG.debug(String.format("Message ID: %s [%s]", mid, metadata.toString()));
+                DefaultLogger.__LOG.debug("Record sent with key " + mid + " to partition " + metadata.partition()
+                        + " with offset " + metadata.offset());
+
                 sentIds.put(mid, mesg.length());
             }
             producer.producer().flush();
+            thread.join();
 
-            while (true) {
-                ConsumerRecords<String, byte[]> records = consumer.consumer().poll(Duration.ofMillis(1000));
-                for (ConsumerRecord<String, byte[]> record : records) {
-                    String mid = record.key();
-                    String mesg = new String(record.value());
-
-                    assertTrue(sentIds.containsKey(mid));
-                    int len = sentIds.get(mid);
-                    assertEquals(len, mesg.length());
-                }
-                DefaultLogger.__LOG.info(String.format("Fetched [%d] messages...", records.count()));
-            }
         } catch (Throwable t) {
             DefaultLogger.__LOG.error(DefaultLogger.stacktrace(t));
             fail(t);
+        }
+    }
+
+    public static class ConsumerThread implements Runnable {
+        private ConnectionManager manager;
+
+        public ConsumerThread(@NonNull ConnectionManager manager) {
+            this.manager = manager;
+        }
+
+        /**
+         * When an object implementing interface <code>Runnable</code> is used
+         * to create a thread, starting the thread causes the object's
+         * <code>run</code> method to be called in that separately executing
+         * thread.
+         * <p>
+         * The general contract of the method <code>run</code> is that it may
+         * take any action whatsoever.
+         *
+         * @see Thread#run()
+         */
+        @Override
+        public void run() {
+            try {
+                BasicKafkaConsumer consumer = manager.getConnection(__CONSUMER_NAME, BasicKafkaConsumer.class);
+
+                while (true) {
+                    ConsumerRecords<String, byte[]> records = consumer.consumer().poll(Duration.ofMillis(10000));
+                    for (ConsumerRecord<String, byte[]> record : records) {
+                        String mid = record.key();
+                        String mesg = new String(record.value());
+                        DefaultLogger.__LOG.debug(String.format("[KEY=%s]: %s", record.key(), mesg));
+                        System.out.printf("[KEY=%s]: %s%n", record.key(), mesg);
+                    }
+                    DefaultLogger.__LOG.info(String.format("Fetched [%d] messages...", records.count()));
+                    if (records.count() > 0) break;
+                }
+            } catch (Throwable t) {
+                DefaultLogger.__LOG.error(DefaultLogger.stacktrace(t));
+            }
         }
     }
 }
