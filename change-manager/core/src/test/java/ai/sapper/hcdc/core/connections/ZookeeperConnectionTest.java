@@ -3,13 +3,10 @@ package ai.sapper.hcdc.core.connections;
 import ai.sapper.hcdc.common.DefaultLogger;
 import com.google.common.base.Preconditions;
 import org.apache.commons.configuration2.XMLConfiguration;
-import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.curator.utils.ZKPaths;
-import org.apache.zookeeper.CreateMode;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -39,11 +36,11 @@ class ZookeeperConnectionTest {
             ZookeeperConnection connection = manager.getConnection(__CONNECTION_NAME, ZookeeperConnection.class);
             assertNotNull(connection);
             connection.connect();
-            assertEquals(Connection.EConnectionState.Connected, connection.state());
+            assertEquals(Connection.EConnectionState.Connected, connection.connectionState());
             ZKPaths.mkdirs(connection.client().getZookeeperClient().getZooKeeper(), __PATH);
 
             connection.close();
-            assertEquals(Connection.EConnectionState.Closed, connection.state());
+            assertEquals(Connection.EConnectionState.Closed, connection.connectionState());
         } catch (Throwable t) {
             DefaultLogger.__LOG.error(DefaultLogger.stacktrace(t));
             fail(t);

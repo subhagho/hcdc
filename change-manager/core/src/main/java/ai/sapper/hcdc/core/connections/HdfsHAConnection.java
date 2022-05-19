@@ -130,7 +130,7 @@ public class HdfsHAConnection implements Connection {
      * @return
      */
     @Override
-    public EConnectionState state() {
+    public EConnectionState connectionState() {
         return state.state();
     }
 

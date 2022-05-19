@@ -16,6 +16,7 @@ public interface Connection extends Closeable {
 
         public ConnectionState() {
             super(EConnectionState.Error);
+            state(EConnectionState.Unknown);
         }
 
         public boolean isConnected() {
@@ -31,7 +32,7 @@ public interface Connection extends Closeable {
 
     Throwable error();
 
-    EConnectionState state();
+    EConnectionState connectionState();
 
     boolean isConnected();
 

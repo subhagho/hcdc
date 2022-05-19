@@ -65,9 +65,10 @@ public class ConnectionManager {
         Connection connection = cls.newInstance();
         connection.init(node);
         Preconditions.checkState(!Strings.isNullOrEmpty(connection.name()));
-        Preconditions.checkState(connection.state() == Connection.EConnectionState.Initialized);
+        Preconditions.checkState(connection.connectionState() == Connection.EConnectionState.Initialized);
 
         connections.put(connection.name(), connection);
+        __LOG.info(String.format("Initialized connection [type=%s][name=%s]", connection.getClass().getCanonicalName(), connection.name()));
         return connection;
     }
 

@@ -44,5 +44,25 @@
                 <connectionTimeout>10000</connectionTimeout>
             </zookeeper>
         </connection>
+        <connection>
+            <type>ai.sapper.hcdc.core.connections.impl.BasicKafkaProducer</type>
+            <kafka>
+                <name>test-kafka-producer</name>
+                <mode>Producer</mode>
+                <config>
+                    <producer>src/test/resources/producer.properties</producer>
+                </config>
+            </kafka>
+        </connection>
+        <connection>
+            <type>ai.sapper.hcdc.core.connections.impl.BasicKafkaConsumer</type>
+            <kafka>
+                <name>test-kafka-consumer</name>
+                <mode>Consumer</mode>
+                <config>
+                    <consumer>src/test/resources/consumer.properties</consumer>
+                </config>
+            </kafka>
+        </connection>
     </connections>
 </configuration>

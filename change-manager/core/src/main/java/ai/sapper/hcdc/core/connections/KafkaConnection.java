@@ -59,27 +59,18 @@ public abstract class KafkaConnection implements Connection {
 
     /**
      * @return
-     * @throws ConnectionError
-     */
-    @Override
-    public Connection connect() throws ConnectionError {
-        return null;
-    }
-
-    /**
-     * @return
      */
     @Override
     public Throwable error() {
-        return null;
+        return state.error();
     }
 
     /**
      * @return
      */
     @Override
-    public EConnectionState state() {
-        return null;
+    public EConnectionState connectionState() {
+        return state.state();
     }
 
     /**
@@ -87,7 +78,7 @@ public abstract class KafkaConnection implements Connection {
      */
     @Override
     public boolean isConnected() {
-        return false;
+        return (state.isConnected());
     }
 
     /**
@@ -95,7 +86,7 @@ public abstract class KafkaConnection implements Connection {
      */
     @Override
     public HierarchicalConfiguration<ImmutableNode> config() {
-        return null;
+        return kafkaConfig.config();
     }
 
     /**
@@ -148,12 +139,12 @@ public abstract class KafkaConnection implements Connection {
 
         public void read() throws ConfigurationException {
             if (get() == null) {
-                throw new ConfigurationException("HDFS Configuration not drt or is NULL");
+                throw new ConfigurationException("Kafka Configuration not drt or is NULL");
             }
             try {
                 name = get().getString(Constants.CONFIG_NAME);
                 if (Strings.isNullOrEmpty(name)) {
-                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.CONFIG_NAME));
+                    throw new ConfigurationException(String.format("Kafka Configuration Error: missing [%s]", Constants.CONFIG_NAME));
                 }
                 String s = get().getString(Constants.CONFIG_MODE);
                 if (!Strings.isNullOrEmpty(name)) {
@@ -163,7 +154,7 @@ public abstract class KafkaConnection implements Connection {
                 if (mode == EKafkaClientMode.Producer) {
                     producerConfig = get().getString(Constants.CONFIG_PRODUCER_CONFIG);
                     if (Strings.isNullOrEmpty(producerConfig)) {
-                        throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.CONFIG_PRODUCER_CONFIG));
+                        throw new ConfigurationException(String.format("Kafka Configuration Error: missing [%s]", Constants.CONFIG_PRODUCER_CONFIG));
                     }
                     File cf = new File(producerConfig);
                     if (!cf.exists()) {
@@ -174,7 +165,7 @@ public abstract class KafkaConnection implements Connection {
                 } else if (mode == EKafkaClientMode.Consumer) {
                     consumerConfig = get().getString(Constants.CONFIG_CONSUMER_CONFIG);
                     if (Strings.isNullOrEmpty(consumerConfig)) {
-                        throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.CONFIG_CONSUMER_CONFIG));
+                        throw new ConfigurationException(String.format("Kafka Configuration Error: missing [%s]", Constants.CONFIG_CONSUMER_CONFIG));
                     }
                     File cf = new File(consumerConfig);
                     if (!cf.exists()) {
