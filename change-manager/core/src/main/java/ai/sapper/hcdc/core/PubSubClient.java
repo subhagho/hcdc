@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.core;
 
 import ai.sapper.hcdc.core.connections.Connection;
+import ai.sapper.hcdc.core.connections.MessageConnection;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -14,7 +15,7 @@ import java.security.PrivilegedActionException;
 
 @Getter
 @Accessors(fluent = true)
-public abstract class PubSubClient<C extends Connection, M, S extends MessageSerDe<M>> implements Closeable {
+public abstract class PubSubClient<C extends MessageConnection, M, S extends MessageSerDe<M>> implements Closeable {
     private C connection;
     private S transformer;
     private int receiveBatchSize = 1;
@@ -44,7 +45,12 @@ public abstract class PubSubClient<C extends Connection, M, S extends MessageSer
     }
 
     public int publish(@NonNull M message) throws MessagingError {
+        Preconditions.checkState(connection.isConnected());
         Preconditions.checkState(transformer != null);
+        if (!connection.canSend()) {
+            throw new MessagingError(String.format("[%s] Send not enabled in connection", connection.getClass().getCanonicalName()));
+        }
+
         try {
             ByteBuffer buffer = transformer.serialize(message);
             publishMessage(buffer);
@@ -56,12 +62,17 @@ public abstract class PubSubClient<C extends Connection, M, S extends MessageSer
     }
 
     public M subscribe(int timeout) throws MessagingError {
+        Preconditions.checkState(connection.isConnected());
         Preconditions.checkState(transformer != null);
+        if (!connection.canReceive()) {
+            throw new MessagingError(String.format("[%s] Receive not enabled in connection", connection.getClass().getCanonicalName()));
+        }
+
         try {
             ByteBuffer buffer = subscribeMessage(timeout);
             return transformer.deserialize(buffer);
         } catch (Throwable t) {
-            throw new MessagingError("Error sending message.", t);
+            throw new MessagingError("Error receiving message.", t);
         }
     }
 

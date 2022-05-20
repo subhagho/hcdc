@@ -85,4 +85,20 @@ public class KafkaConsumerConnection<K, V> extends KafkaConnection {
             }
         }
     }
+
+    /**
+     * @return
+     */
+    @Override
+    public boolean canSend() {
+        return false;
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public boolean canReceive() {
+        return true;
+    }
 }

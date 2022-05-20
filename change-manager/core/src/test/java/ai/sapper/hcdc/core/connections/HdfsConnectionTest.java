@@ -1,9 +1,8 @@
 package ai.sapper.hcdc.core.connections;
 
-import ai.sapper.hcdc.common.DefaultLogger;
+import ai.sapper.hcdc.common.utils.DefaultLogger;
 import com.google.common.base.Preconditions;
 import org.apache.commons.configuration2.XMLConfiguration;
-import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;

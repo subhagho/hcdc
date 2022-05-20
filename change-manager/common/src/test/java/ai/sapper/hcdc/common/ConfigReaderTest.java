@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.common;
 
+import ai.sapper.hcdc.common.utils.DefaultLogger;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;

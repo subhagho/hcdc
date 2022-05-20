@@ -19,7 +19,7 @@ import java.util.Properties;
 
 @Getter
 @Accessors(fluent = true)
-public abstract class KafkaConnection implements Connection {
+public abstract class KafkaConnection implements MessageConnection {
     @Getter(AccessLevel.NONE)
     protected final ConnectionState state = new ConnectionState();
 

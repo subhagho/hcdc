@@ -1,7 +1,7 @@
 package ai.sapper.hcdc.core.connections;
 
 import ai.sapper.hcdc.common.ConfigReader;
-import ai.sapper.hcdc.common.DefaultLogger;
+import ai.sapper.hcdc.common.utils.DefaultLogger;
 import com.google.common.base.Strings;
 import lombok.AccessLevel;
 import lombok.Getter;

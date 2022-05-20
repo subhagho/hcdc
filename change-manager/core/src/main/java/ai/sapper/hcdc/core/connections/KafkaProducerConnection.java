@@ -85,4 +85,20 @@ public class KafkaProducerConnection<K, V> extends KafkaConnection {
             }
         }
     }
+
+    /**
+     * @return
+     */
+    @Override
+    public boolean canSend() {
+        return true;
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public boolean canReceive() {
+        return false;
+    }
 }

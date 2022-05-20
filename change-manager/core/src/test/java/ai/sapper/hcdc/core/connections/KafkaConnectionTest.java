@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.core.connections;
 
-import ai.sapper.hcdc.common.DefaultLogger;
+import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.connections.impl.BasicKafkaConsumer;
 import ai.sapper.hcdc.core.connections.impl.BasicKafkaProducer;
 import com.google.common.base.Preconditions;
@@ -19,10 +19,8 @@ import java.io.FileReader;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 

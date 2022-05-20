@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.core.connections;
 
-import ai.sapper.hcdc.common.DefaultLogger;
+import ai.sapper.hcdc.common.utils.DefaultLogger;
 import com.google.common.base.Preconditions;
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.curator.utils.ZKPaths;

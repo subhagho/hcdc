@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static ai.sapper.hcdc.common.DefaultLogger.stacktrace;
+import static ai.sapper.hcdc.common.utils.DefaultLogger.stacktrace;
 
 public class ConnectionManager {
     public static Logger __LOG = LoggerFactory.getLogger(ConnectionManager.class);

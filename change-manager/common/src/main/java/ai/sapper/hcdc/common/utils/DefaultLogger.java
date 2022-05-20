@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.common;
+package ai.sapper.hcdc.common.utils;
 
 import lombok.NonNull;
 import org.slf4j.Logger;
