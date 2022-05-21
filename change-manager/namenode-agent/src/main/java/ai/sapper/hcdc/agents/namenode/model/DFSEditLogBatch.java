@@ -66,6 +66,16 @@ public class DFSEditLogBatch {
         }
     }
 
+    public boolean checkAndSetTxnId(long txnId) {
+        Preconditions.checkArgument(txnId >= 0);
+        boolean ret = false;
+        if (txnId > endTnxId) {
+            endTnxId = txnId;
+            ret = true;
+        }
+        return ret;
+    }
+
     public DFSFileTnx get(String path) {
         return files.get(path);
     }
