@@ -22,7 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class KafkaConnectionTest {
     private static final String __CONFIG_FILE = "src/test/resources/connection-test.xml";
