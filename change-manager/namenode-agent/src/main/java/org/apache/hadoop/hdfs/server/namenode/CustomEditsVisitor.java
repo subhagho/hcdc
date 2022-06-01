@@ -1,14 +1,13 @@
-package ai.sapper.hcdc.agents.namenode;
+package org.apache.hadoop.hdfs.server.namenode;
 
+import ai.sapper.hcdc.agents.namenode.DFSAgentError;
 import ai.sapper.hcdc.agents.namenode.model.DFSEditLogBatch;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import lombok.Getter;
 import lombok.NonNull;
-import org.apache.hadoop.hdfs.server.namenode.FSEditLogOp;
 import org.apache.hadoop.hdfs.tools.offlineEditsViewer.OfflineEditsVisitor;
 
 import java.io.IOException;
-import java.text.ParseException;
 
 @Getter
 public class CustomEditsVisitor implements OfflineEditsVisitor {
@@ -59,7 +58,7 @@ public class CustomEditsVisitor implements OfflineEditsVisitor {
     public void visitOp(FSEditLogOp op) throws IOException {
         try {
             parser.parse(op, batch);
-        } catch (ParseException e) {
+        } catch (DFSAgentError e) {
             DefaultLogger.__LOG.error(String.format("Error parsing OP Code [%s]", op.opCode.name()), e);
             throw new IOException(e);
         }

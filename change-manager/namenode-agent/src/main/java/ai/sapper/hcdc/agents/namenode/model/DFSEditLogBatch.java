@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.agents.namenode.model;
 
+import ai.sapper.hcdc.agents.namenode.DFSAgentError;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -16,6 +17,7 @@ import java.util.regex.Pattern;
 @Getter
 @Setter
 public class DFSEditLogBatch {
+
     private static final String REGEX_CURRENT_FILE = "edits_inprogress_(\\d+$)";
     private static final String REGEX_EDIT_LOG_FILE = "edits_(\\d+)-(\\d+$)";
     private final String filename;
@@ -25,7 +27,8 @@ public class DFSEditLogBatch {
     private long endTnxId = -1;
     private boolean isCurrent;
 
-    private final Map<String, DFSFileTnx> files = new HashMap<>();
+    private final Map<String, DFSFileTnx> upserts = new HashMap<>();
+    private final Map<String, DFSFileTnx> deletes = new HashMap<>();
 
     public DFSEditLogBatch(@NonNull String filename) {
         this.filename = filename;
@@ -77,15 +80,28 @@ public class DFSEditLogBatch {
     }
 
     public DFSFileTnx get(String path) {
-        return files.get(path);
+        return upserts.get(path);
     }
 
     public boolean containsFile(String path) {
-        return files.containsKey(path);
+        return upserts.containsKey(path);
     }
 
-    public void add(@NonNull DFSFileTnx fileTnx) {
-        Preconditions.checkArgument(!files.containsKey(fileTnx.getPath()));
-        files.put(fileTnx.getPath(), fileTnx);
+    public void add(@NonNull DFSFileTnx fileTnx, boolean delete) throws DFSAgentError {
+        if (!delete) {
+            if (upserts.containsKey(fileTnx.getPath())) {
+                if (!deletes.containsKey(fileTnx.getPath())) {
+                    throw new DFSAgentError(String.format("Attempt to update/insert duplicate file record. [path=%s]", fileTnx.getPath()));
+                }
+                DFSFileTnx fi = upserts.get(fileTnx.getPath());
+                DFSFileTnx df = deletes.get(fileTnx.getPath());
+                if (df.getStartTnxId() < fi.getEndTnxId()) {
+                    throw new DFSAgentError(String.format("Attempt to update/insert duplicate file record. [path=%s]", fileTnx.getPath()));
+                }
+            }
+            upserts.put(fileTnx.getPath(), fileTnx);
+        } else {
+            deletes.put(fileTnx.getPath(), fileTnx);
+        }
     }
 }

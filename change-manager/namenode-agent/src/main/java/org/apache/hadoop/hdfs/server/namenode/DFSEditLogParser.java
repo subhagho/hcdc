@@ -1,6 +1,8 @@
-package ai.sapper.hcdc.agents.namenode;
+package org.apache.hadoop.hdfs.server.namenode;
 
+import ai.sapper.hcdc.agents.namenode.DFSAgentError;
 import ai.sapper.hcdc.agents.namenode.model.DFSEditLogBatch;
+import ai.sapper.hcdc.agents.namenode.model.DFSFileTnx;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -119,41 +121,81 @@ public class DFSEditLogParser {
     }
 
     private void handleOpClose(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {
-
+        if (op instanceof FSEditLogOp.CloseOp) {
+            FSEditLogOp.CloseOp cop = (FSEditLogOp.CloseOp) op;
+        } else {
+            throw new DFSAgentError(String.format("Invalid Edit Operation. [expected=%s][actual=%s]", FSEditLogOp.CloseOp.class, op.getClass()));
+        }
     }
 
     private void handleOpTruncate(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {
-
+        if (op instanceof FSEditLogOp.TruncateOp) {
+            FSEditLogOp.TruncateOp top = (FSEditLogOp.TruncateOp) op;
+        } else {
+            throw new DFSAgentError(String.format("Invalid Edit Operation. [expected=%s][actual=%s]", FSEditLogOp.TruncateOp.class, op.getClass()));
+        }
     }
 
     private void handleOpRename(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {
-
+        if (op instanceof FSEditLogOp.RenameOp) {
+            FSEditLogOp.RenameOp rop = (FSEditLogOp.RenameOp) op;
+        } else {
+            throw new DFSAgentError(String.format("Invalid Edit Operation. [expected=%s][actual=%s]", FSEditLogOp.RenameOp.class, op.getClass()));
+        }
     }
 
     private void handleOpDelete(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {
-
+        if (op instanceof FSEditLogOp.DeleteOp) {
+            FSEditLogOp.DeleteOp dop = (FSEditLogOp.DeleteOp) op;
+        } else {
+            throw new DFSAgentError(String.format("Invalid Edit Operation. [expected=%s][actual=%s]", FSEditLogOp.DeleteOp.class, op.getClass()));
+        }
     }
 
     private void handleOpUpdateBlocks(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {
-
+        if (op instanceof FSEditLogOp.UpdateBlocksOp) {
+            FSEditLogOp.UpdateBlocksOp ubop = (FSEditLogOp.UpdateBlocksOp) op;
+        } else {
+            throw new DFSAgentError(String.format("Invalid Edit Operation. [expected=%s][actual=%s]", FSEditLogOp.UpdateBlocksOp.class, op.getClass()));
+        }
     }
 
     private void handleOpAppend(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {
-
+        if (op instanceof FSEditLogOp.AppendOp) {
+            FSEditLogOp.AppendOp aop = (FSEditLogOp.AppendOp) op;
+        } else {
+            throw new DFSAgentError(String.format("Invalid Edit Operation. [expected=%s][actual=%s]", FSEditLogOp.AppendOp.class, op.getClass()));
+        }
     }
 
     private void handleOpAddBlock(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {
-
+        if (op instanceof FSEditLogOp.AddBlockOp) {
+            FSEditLogOp.AddBlockOp abop = (FSEditLogOp.AddBlockOp) op;
+        } else {
+            throw new DFSAgentError(String.format("Invalid Edit Operation. [expected=%s][actual=%s]", FSEditLogOp.AddBlockOp.class, op.getClass()));
+        }
     }
 
     /**
      * Operation notifies creation of new file Inode.
      *
-     * @param op - Add Operation
+     * @param op    - Add Operation
      * @param batch - Input Edit Log Batch
      * @throws DFSAgentError
      */
     private void handleOpAdd(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {
-        
+        if (op instanceof FSEditLogOp.AddOp) {
+            FSEditLogOp.AddOp aop = (FSEditLogOp.AddOp) op;
+            DFSFileTnx ft = new DFSFileTnx();
+            ft.setStartTnxId(op.getTransactionId());
+            ft.setEndTnxId(op.getTransactionId());
+            ft.setPath(aop.getPath());
+            ft.setModifiedTimestamp(aop.mtime);
+            ft.setAccessTimestamp(aop.atime);
+
+            batch.add(ft, false);
+        } else {
+            throw new DFSAgentError(String.format("Invalid Edit Operation. [expected=%s][actual=%s]", FSEditLogOp.AddOp.class, op.getClass()));
+        }
     }
 }
