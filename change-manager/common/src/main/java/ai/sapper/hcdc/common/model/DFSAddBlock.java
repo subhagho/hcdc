@@ -14,7 +14,7 @@ public  final class DFSAddBlock extends
   private DFSAddBlock(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
-  private DFSAddBlock() {
+  public DFSAddBlock() {
   }
 
   @java.lang.Override

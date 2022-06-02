@@ -9,6 +9,7 @@ import lombok.Setter;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,7 @@ public class DFSEditLogBatch {
     private long startTnxId = Long.MAX_VALUE;
     private long endTnxId = -1;
     private boolean isCurrent;
+    private final List<DFSLogTransaction<?>> transactions = new ArrayList<>();
 
     public DFSEditLogBatch(@NonNull String filename) {
         this.filename = filename;

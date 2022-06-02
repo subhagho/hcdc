@@ -2,12 +2,9 @@ package org.apache.hadoop.hdfs.server.namenode;
 
 import ai.sapper.hcdc.agents.namenode.DFSAgentError;
 import ai.sapper.hcdc.agents.namenode.model.DFSEditLogBatch;
-import ai.sapper.hcdc.agents.namenode.model.DFSFileTnx;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
-import org.apache.hadoop.hdfs.server.namenode.FSEditLogOp;
-import org.apache.hadoop.hdfs.server.namenode.FSEditLogOpCodes;
 
 
 @Getter
