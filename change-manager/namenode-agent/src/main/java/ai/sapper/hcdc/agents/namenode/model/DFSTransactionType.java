@@ -195,6 +195,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         private long modifiedTime;
         private long accessedTime;
         private boolean overwrite;
+        private final List<DFSBlockType> blocks = new ArrayList<>();
 
         /**
          * @return
@@ -207,7 +208,11 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             DFSAddFile.Builder builder = DFSAddFile.newBuilder();
             builder.setTransaction(getTransactionProto()).setFile(file.getProto());
             builder.setLength(length).setBlockSize(blockSize).setModifiedTime(modifiedTime).setAccessedTime(accessedTime).setOverwrite(overwrite);
-
+            if (!blocks.isEmpty()) {
+                for (DFSBlockType block : blocks) {
+                    builder.addBlocks(block.getProto());
+                }
+            }
             return builder.build();
         }
 
@@ -243,6 +248,15 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             this.modifiedTime = proto.getModifiedTime();
             this.accessedTime = proto.getAccessedTime();
             this.overwrite = proto.getOverwrite();
+
+            List<DFSBlock> bl = proto.getBlocksList();
+            if (bl != null && !bl.isEmpty()) {
+                for (DFSBlock block : bl) {
+                    DFSBlockType bt = new DFSBlockType();
+                    bt.parse(block);
+                    blocks.add(bt);
+                }
+            }
         }
     }
 
@@ -309,6 +323,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         private long modifiedTime;
         private long accessedTime;
         private boolean overwrite;
+        private final List<DFSBlockType> blocks = new ArrayList<>();
 
         /**
          * @return
@@ -322,7 +337,11 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
 
             builder.setTransaction(getTransactionProto()).setFile(file.getProto());
             builder.setLength(length).setBlockSize(blockSize).setModifiedTime(modifiedTime).setAccessedTime(accessedTime).setOverwrite(overwrite);
-
+            if (!blocks.isEmpty()) {
+                for (DFSBlockType block : blocks) {
+                    builder.addBlocks(block.getProto());
+                }
+            }
             return builder.build();
         }
 
@@ -358,6 +377,15 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             this.modifiedTime = proto.getModifiedTime();
             this.accessedTime = proto.getAccessedTime();
             this.overwrite = proto.getOverwrite();
+
+            List<DFSBlock> bl = proto.getBlocksList();
+            if (bl != null && !bl.isEmpty()) {
+                for (DFSBlock block : bl) {
+                    DFSBlockType bt = new DFSBlockType();
+                    bt.parse(block);
+                    blocks.add(bt);
+                }
+            }
         }
     }
 
@@ -366,7 +394,6 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     @Accessors(fluent = true)
     public static class DFSDeleteFileType extends DFSTransactionType<DFSDeleteFile> {
         private DFSFileType file;
-        private long timestamp;
 
         /**
          * @return
@@ -378,7 +405,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
 
             DFSDeleteFile.Builder builder = DFSDeleteFile.newBuilder();
             builder.setTransaction(getTransactionProto()).setFile(file.getProto());
-            builder.setTimestamp(timestamp);
+            builder.setTimestamp(timestamp());
 
             return builder.build();
         }
@@ -410,7 +437,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             file = new DFSFileType();
             file.parse(proto.getFile());
 
-            this.timestamp = proto.getTimestamp();
+            timestamp(proto.getTimestamp());
         }
     }
 
@@ -420,6 +447,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     public static class DFSTruncateBlockType extends DFSTransactionType<DFSTruncateBlock> {
         private DFSFileType file;
         private DFSBlockType block;
+        private long newLength;
 
         /**
          * @return
@@ -431,7 +459,10 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             Preconditions.checkNotNull(block);
 
             DFSTruncateBlock.Builder builder = DFSTruncateBlock.newBuilder();
-            builder.setTransaction(getTransactionProto()).setFile(file.getProto()).setBlock(block.getProto());
+            builder.setTransaction(getTransactionProto())
+                    .setFile(file.getProto())
+                    .setBlock(block.getProto())
+                    .setNewLength(newLength);
 
             return builder.build();
         }
@@ -460,6 +491,8 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             Preconditions.checkArgument(proto.hasFile());
 
             this.parseFrom(proto.getTransaction());
+            this.newLength = proto.getNewLength();
+
             file = new DFSFileType();
             file.parse(proto.getFile());
 

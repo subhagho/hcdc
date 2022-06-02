@@ -15,6 +15,7 @@ public  final class DFSTruncateBlock extends
     super(builder);
   }
   private DFSTruncateBlock() {
+    newLength_ = 0L;
   }
 
   @java.lang.Override
@@ -79,6 +80,11 @@ public  final class DFSTruncateBlock extends
               block_ = subBuilder.buildPartial();
             }
 
+            break;
+          }
+          case 32: {
+
+            newLength_ = input.readUInt64();
             break;
           }
         }
@@ -167,6 +173,15 @@ public  final class DFSTruncateBlock extends
     return getBlock();
   }
 
+  public static final int NEWLENGTH_FIELD_NUMBER = 4;
+  private long newLength_;
+  /**
+   * <code>optional uint64 newLength = 4;</code>
+   */
+  public long getNewLength() {
+    return newLength_;
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -188,6 +203,9 @@ public  final class DFSTruncateBlock extends
     if (block_ != null) {
       output.writeMessage(3, getBlock());
     }
+    if (newLength_ != 0L) {
+      output.writeUInt64(4, newLength_);
+    }
   }
 
   public int getSerializedSize() {
@@ -206,6 +224,10 @@ public  final class DFSTruncateBlock extends
     if (block_ != null) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(3, getBlock());
+    }
+    if (newLength_ != 0L) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt64Size(4, newLength_);
     }
     memoizedSize = size;
     return size;
@@ -238,6 +260,8 @@ public  final class DFSTruncateBlock extends
       result = result && getBlock()
           .equals(other.getBlock());
     }
+    result = result && (getNewLength()
+        == other.getNewLength());
     return result;
   }
 
@@ -260,6 +284,9 @@ public  final class DFSTruncateBlock extends
       hash = (37 * hash) + BLOCK_FIELD_NUMBER;
       hash = (53 * hash) + getBlock().hashCode();
     }
+    hash = (37 * hash) + NEWLENGTH_FIELD_NUMBER;
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getNewLength());
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -396,6 +423,8 @@ public  final class DFSTruncateBlock extends
         block_ = null;
         blockBuilder_ = null;
       }
+      newLength_ = 0L;
+
       return this;
     }
 
@@ -433,6 +462,7 @@ public  final class DFSTruncateBlock extends
       } else {
         result.block_ = blockBuilder_.build();
       }
+      result.newLength_ = newLength_;
       onBuilt();
       return result;
     }
@@ -482,6 +512,9 @@ public  final class DFSTruncateBlock extends
       }
       if (other.hasBlock()) {
         mergeBlock(other.getBlock());
+      }
+      if (other.getNewLength() != 0L) {
+        setNewLength(other.getNewLength());
       }
       onChanged();
       return this;
@@ -858,6 +891,32 @@ public  final class DFSTruncateBlock extends
         block_ = null;
       }
       return blockBuilder_;
+    }
+
+    private long newLength_ ;
+    /**
+     * <code>optional uint64 newLength = 4;</code>
+     */
+    public long getNewLength() {
+      return newLength_;
+    }
+    /**
+     * <code>optional uint64 newLength = 4;</code>
+     */
+    public Builder setNewLength(long value) {
+      
+      newLength_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional uint64 newLength = 4;</code>
+     */
+    public Builder clearNewLength() {
+      
+      newLength_ = 0L;
+      onChanged();
+      return this;
     }
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {

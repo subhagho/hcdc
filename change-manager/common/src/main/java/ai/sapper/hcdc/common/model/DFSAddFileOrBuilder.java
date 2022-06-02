@@ -54,7 +54,31 @@ public interface DFSAddFileOrBuilder extends
   long getAccessedTime();
 
   /**
-   * <code>optional bool overwrite = 7;</code>
+   * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+   */
+  java.util.List<ai.sapper.hcdc.common.model.DFSBlock> 
+      getBlocksList();
+  /**
+   * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+   */
+  ai.sapper.hcdc.common.model.DFSBlock getBlocks(int index);
+  /**
+   * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+   */
+  int getBlocksCount();
+  /**
+   * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+   */
+  java.util.List<? extends ai.sapper.hcdc.common.model.DFSBlockOrBuilder> 
+      getBlocksOrBuilderList();
+  /**
+   * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+   */
+  ai.sapper.hcdc.common.model.DFSBlockOrBuilder getBlocksOrBuilder(
+      int index);
+
+  /**
+   * <code>optional bool overwrite = 8;</code>
    */
   boolean getOverwrite();
 }

@@ -19,6 +19,7 @@ public  final class DFSAddFile extends
     blockSize_ = 0L;
     modifiedTime_ = 0L;
     accessedTime_ = 0L;
+    blocks_ = java.util.Collections.emptyList();
     overwrite_ = false;
   }
 
@@ -93,7 +94,16 @@ public  final class DFSAddFile extends
             accessedTime_ = input.readUInt64();
             break;
           }
-          case 56: {
+          case 58: {
+            if (!((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
+              blocks_ = new java.util.ArrayList<ai.sapper.hcdc.common.model.DFSBlock>();
+              mutable_bitField0_ |= 0x00000040;
+            }
+            blocks_.add(
+                input.readMessage(ai.sapper.hcdc.common.model.DFSBlock.parser(), extensionRegistry));
+            break;
+          }
+          case 64: {
 
             overwrite_ = input.readBool();
             break;
@@ -106,6 +116,9 @@ public  final class DFSAddFile extends
       throw new com.google.protobuf.InvalidProtocolBufferException(
           e).setUnfinishedMessage(this);
     } finally {
+      if (((mutable_bitField0_ & 0x00000040) == 0x00000040)) {
+        blocks_ = java.util.Collections.unmodifiableList(blocks_);
+      }
       makeExtensionsImmutable();
     }
   }
@@ -121,6 +134,7 @@ public  final class DFSAddFile extends
             ai.sapper.hcdc.common.model.DFSAddFile.class, ai.sapper.hcdc.common.model.DFSAddFile.Builder.class);
   }
 
+  private int bitField0_;
   public static final int TRANSACTION_FIELD_NUMBER = 1;
   private ai.sapper.hcdc.common.model.DFSTransaction transaction_;
   /**
@@ -199,10 +213,45 @@ public  final class DFSAddFile extends
     return accessedTime_;
   }
 
-  public static final int OVERWRITE_FIELD_NUMBER = 7;
+  public static final int BLOCKS_FIELD_NUMBER = 7;
+  private java.util.List<ai.sapper.hcdc.common.model.DFSBlock> blocks_;
+  /**
+   * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+   */
+  public java.util.List<ai.sapper.hcdc.common.model.DFSBlock> getBlocksList() {
+    return blocks_;
+  }
+  /**
+   * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+   */
+  public java.util.List<? extends ai.sapper.hcdc.common.model.DFSBlockOrBuilder> 
+      getBlocksOrBuilderList() {
+    return blocks_;
+  }
+  /**
+   * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+   */
+  public int getBlocksCount() {
+    return blocks_.size();
+  }
+  /**
+   * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+   */
+  public ai.sapper.hcdc.common.model.DFSBlock getBlocks(int index) {
+    return blocks_.get(index);
+  }
+  /**
+   * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+   */
+  public ai.sapper.hcdc.common.model.DFSBlockOrBuilder getBlocksOrBuilder(
+      int index) {
+    return blocks_.get(index);
+  }
+
+  public static final int OVERWRITE_FIELD_NUMBER = 8;
   private boolean overwrite_;
   /**
-   * <code>optional bool overwrite = 7;</code>
+   * <code>optional bool overwrite = 8;</code>
    */
   public boolean getOverwrite() {
     return overwrite_;
@@ -238,8 +287,11 @@ public  final class DFSAddFile extends
     if (accessedTime_ != 0L) {
       output.writeUInt64(6, accessedTime_);
     }
+    for (int i = 0; i < blocks_.size(); i++) {
+      output.writeMessage(7, blocks_.get(i));
+    }
     if (overwrite_ != false) {
-      output.writeBool(7, overwrite_);
+      output.writeBool(8, overwrite_);
     }
   }
 
@@ -272,9 +324,13 @@ public  final class DFSAddFile extends
       size += com.google.protobuf.CodedOutputStream
         .computeUInt64Size(6, accessedTime_);
     }
+    for (int i = 0; i < blocks_.size(); i++) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(7, blocks_.get(i));
+    }
     if (overwrite_ != false) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBoolSize(7, overwrite_);
+        .computeBoolSize(8, overwrite_);
     }
     memoizedSize = size;
     return size;
@@ -310,6 +366,8 @@ public  final class DFSAddFile extends
         == other.getModifiedTime());
     result = result && (getAccessedTime()
         == other.getAccessedTime());
+    result = result && getBlocksList()
+        .equals(other.getBlocksList());
     result = result && (getOverwrite()
         == other.getOverwrite());
     return result;
@@ -342,6 +400,10 @@ public  final class DFSAddFile extends
     hash = (37 * hash) + ACCESSEDTIME_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
         getAccessedTime());
+    if (getBlocksCount() > 0) {
+      hash = (37 * hash) + BLOCKS_FIELD_NUMBER;
+      hash = (53 * hash) + getBlocksList().hashCode();
+    }
     hash = (37 * hash) + OVERWRITE_FIELD_NUMBER;
     hash = (53 * hash) + com.google.protobuf.Internal.hashBoolean(
         getOverwrite());
@@ -459,6 +521,7 @@ public  final class DFSAddFile extends
     private void maybeForceBuilderInitialization() {
       if (com.google.protobuf.GeneratedMessageV3
               .alwaysUseFieldBuilders) {
+        getBlocksFieldBuilder();
       }
     }
     public Builder clear() {
@@ -483,6 +546,12 @@ public  final class DFSAddFile extends
 
       accessedTime_ = 0L;
 
+      if (blocksBuilder_ == null) {
+        blocks_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000040);
+      } else {
+        blocksBuilder_.clear();
+      }
       overwrite_ = false;
 
       return this;
@@ -507,6 +576,8 @@ public  final class DFSAddFile extends
 
     public ai.sapper.hcdc.common.model.DFSAddFile buildPartial() {
       ai.sapper.hcdc.common.model.DFSAddFile result = new ai.sapper.hcdc.common.model.DFSAddFile(this);
+      int from_bitField0_ = bitField0_;
+      int to_bitField0_ = 0;
       if (transactionBuilder_ == null) {
         result.transaction_ = transaction_;
       } else {
@@ -521,7 +592,17 @@ public  final class DFSAddFile extends
       result.blockSize_ = blockSize_;
       result.modifiedTime_ = modifiedTime_;
       result.accessedTime_ = accessedTime_;
+      if (blocksBuilder_ == null) {
+        if (((bitField0_ & 0x00000040) == 0x00000040)) {
+          blocks_ = java.util.Collections.unmodifiableList(blocks_);
+          bitField0_ = (bitField0_ & ~0x00000040);
+        }
+        result.blocks_ = blocks_;
+      } else {
+        result.blocks_ = blocksBuilder_.build();
+      }
       result.overwrite_ = overwrite_;
+      result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
     }
@@ -581,6 +662,32 @@ public  final class DFSAddFile extends
       if (other.getAccessedTime() != 0L) {
         setAccessedTime(other.getAccessedTime());
       }
+      if (blocksBuilder_ == null) {
+        if (!other.blocks_.isEmpty()) {
+          if (blocks_.isEmpty()) {
+            blocks_ = other.blocks_;
+            bitField0_ = (bitField0_ & ~0x00000040);
+          } else {
+            ensureBlocksIsMutable();
+            blocks_.addAll(other.blocks_);
+          }
+          onChanged();
+        }
+      } else {
+        if (!other.blocks_.isEmpty()) {
+          if (blocksBuilder_.isEmpty()) {
+            blocksBuilder_.dispose();
+            blocksBuilder_ = null;
+            blocks_ = other.blocks_;
+            bitField0_ = (bitField0_ & ~0x00000040);
+            blocksBuilder_ = 
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                 getBlocksFieldBuilder() : null;
+          } else {
+            blocksBuilder_.addAllMessages(other.blocks_);
+          }
+        }
+      }
       if (other.getOverwrite() != false) {
         setOverwrite(other.getOverwrite());
       }
@@ -609,6 +716,7 @@ public  final class DFSAddFile extends
       }
       return this;
     }
+    private int bitField0_;
 
     private ai.sapper.hcdc.common.model.DFSTransaction transaction_ = null;
     private com.google.protobuf.SingleFieldBuilderV3<
@@ -948,15 +1056,255 @@ public  final class DFSAddFile extends
       return this;
     }
 
+    private java.util.List<ai.sapper.hcdc.common.model.DFSBlock> blocks_ =
+      java.util.Collections.emptyList();
+    private void ensureBlocksIsMutable() {
+      if (!((bitField0_ & 0x00000040) == 0x00000040)) {
+        blocks_ = new java.util.ArrayList<ai.sapper.hcdc.common.model.DFSBlock>(blocks_);
+        bitField0_ |= 0x00000040;
+       }
+    }
+
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        ai.sapper.hcdc.common.model.DFSBlock, ai.sapper.hcdc.common.model.DFSBlock.Builder, ai.sapper.hcdc.common.model.DFSBlockOrBuilder> blocksBuilder_;
+
+    /**
+     * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+     */
+    public java.util.List<ai.sapper.hcdc.common.model.DFSBlock> getBlocksList() {
+      if (blocksBuilder_ == null) {
+        return java.util.Collections.unmodifiableList(blocks_);
+      } else {
+        return blocksBuilder_.getMessageList();
+      }
+    }
+    /**
+     * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+     */
+    public int getBlocksCount() {
+      if (blocksBuilder_ == null) {
+        return blocks_.size();
+      } else {
+        return blocksBuilder_.getCount();
+      }
+    }
+    /**
+     * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+     */
+    public ai.sapper.hcdc.common.model.DFSBlock getBlocks(int index) {
+      if (blocksBuilder_ == null) {
+        return blocks_.get(index);
+      } else {
+        return blocksBuilder_.getMessage(index);
+      }
+    }
+    /**
+     * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+     */
+    public Builder setBlocks(
+        int index, ai.sapper.hcdc.common.model.DFSBlock value) {
+      if (blocksBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureBlocksIsMutable();
+        blocks_.set(index, value);
+        onChanged();
+      } else {
+        blocksBuilder_.setMessage(index, value);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+     */
+    public Builder setBlocks(
+        int index, ai.sapper.hcdc.common.model.DFSBlock.Builder builderForValue) {
+      if (blocksBuilder_ == null) {
+        ensureBlocksIsMutable();
+        blocks_.set(index, builderForValue.build());
+        onChanged();
+      } else {
+        blocksBuilder_.setMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+     */
+    public Builder addBlocks(ai.sapper.hcdc.common.model.DFSBlock value) {
+      if (blocksBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureBlocksIsMutable();
+        blocks_.add(value);
+        onChanged();
+      } else {
+        blocksBuilder_.addMessage(value);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+     */
+    public Builder addBlocks(
+        int index, ai.sapper.hcdc.common.model.DFSBlock value) {
+      if (blocksBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureBlocksIsMutable();
+        blocks_.add(index, value);
+        onChanged();
+      } else {
+        blocksBuilder_.addMessage(index, value);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+     */
+    public Builder addBlocks(
+        ai.sapper.hcdc.common.model.DFSBlock.Builder builderForValue) {
+      if (blocksBuilder_ == null) {
+        ensureBlocksIsMutable();
+        blocks_.add(builderForValue.build());
+        onChanged();
+      } else {
+        blocksBuilder_.addMessage(builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+     */
+    public Builder addBlocks(
+        int index, ai.sapper.hcdc.common.model.DFSBlock.Builder builderForValue) {
+      if (blocksBuilder_ == null) {
+        ensureBlocksIsMutable();
+        blocks_.add(index, builderForValue.build());
+        onChanged();
+      } else {
+        blocksBuilder_.addMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+     */
+    public Builder addAllBlocks(
+        java.lang.Iterable<? extends ai.sapper.hcdc.common.model.DFSBlock> values) {
+      if (blocksBuilder_ == null) {
+        ensureBlocksIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, blocks_);
+        onChanged();
+      } else {
+        blocksBuilder_.addAllMessages(values);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+     */
+    public Builder clearBlocks() {
+      if (blocksBuilder_ == null) {
+        blocks_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000040);
+        onChanged();
+      } else {
+        blocksBuilder_.clear();
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+     */
+    public Builder removeBlocks(int index) {
+      if (blocksBuilder_ == null) {
+        ensureBlocksIsMutable();
+        blocks_.remove(index);
+        onChanged();
+      } else {
+        blocksBuilder_.remove(index);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+     */
+    public ai.sapper.hcdc.common.model.DFSBlock.Builder getBlocksBuilder(
+        int index) {
+      return getBlocksFieldBuilder().getBuilder(index);
+    }
+    /**
+     * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+     */
+    public ai.sapper.hcdc.common.model.DFSBlockOrBuilder getBlocksOrBuilder(
+        int index) {
+      if (blocksBuilder_ == null) {
+        return blocks_.get(index);  } else {
+        return blocksBuilder_.getMessageOrBuilder(index);
+      }
+    }
+    /**
+     * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+     */
+    public java.util.List<? extends ai.sapper.hcdc.common.model.DFSBlockOrBuilder> 
+         getBlocksOrBuilderList() {
+      if (blocksBuilder_ != null) {
+        return blocksBuilder_.getMessageOrBuilderList();
+      } else {
+        return java.util.Collections.unmodifiableList(blocks_);
+      }
+    }
+    /**
+     * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+     */
+    public ai.sapper.hcdc.common.model.DFSBlock.Builder addBlocksBuilder() {
+      return getBlocksFieldBuilder().addBuilder(
+          ai.sapper.hcdc.common.model.DFSBlock.getDefaultInstance());
+    }
+    /**
+     * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+     */
+    public ai.sapper.hcdc.common.model.DFSBlock.Builder addBlocksBuilder(
+        int index) {
+      return getBlocksFieldBuilder().addBuilder(
+          index, ai.sapper.hcdc.common.model.DFSBlock.getDefaultInstance());
+    }
+    /**
+     * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
+     */
+    public java.util.List<ai.sapper.hcdc.common.model.DFSBlock.Builder> 
+         getBlocksBuilderList() {
+      return getBlocksFieldBuilder().getBuilderList();
+    }
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        ai.sapper.hcdc.common.model.DFSBlock, ai.sapper.hcdc.common.model.DFSBlock.Builder, ai.sapper.hcdc.common.model.DFSBlockOrBuilder> 
+        getBlocksFieldBuilder() {
+      if (blocksBuilder_ == null) {
+        blocksBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+            ai.sapper.hcdc.common.model.DFSBlock, ai.sapper.hcdc.common.model.DFSBlock.Builder, ai.sapper.hcdc.common.model.DFSBlockOrBuilder>(
+                blocks_,
+                ((bitField0_ & 0x00000040) == 0x00000040),
+                getParentForChildren(),
+                isClean());
+        blocks_ = null;
+      }
+      return blocksBuilder_;
+    }
+
     private boolean overwrite_ ;
     /**
-     * <code>optional bool overwrite = 7;</code>
+     * <code>optional bool overwrite = 8;</code>
      */
     public boolean getOverwrite() {
       return overwrite_;
     }
     /**
-     * <code>optional bool overwrite = 7;</code>
+     * <code>optional bool overwrite = 8;</code>
      */
     public Builder setOverwrite(boolean value) {
       
@@ -965,7 +1313,7 @@ public  final class DFSAddFile extends
       return this;
     }
     /**
-     * <code>optional bool overwrite = 7;</code>
+     * <code>optional bool overwrite = 8;</code>
      */
     public Builder clearOverwrite() {
       

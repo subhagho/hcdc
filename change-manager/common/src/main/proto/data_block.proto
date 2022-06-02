@@ -28,6 +28,12 @@ message DFSFile {
   int64 inodeId = 3;
 }
 
+message DFSBlock {
+  int64 blockId = 1;
+  int64 size = 2;
+  int64 generationStamp = 3;
+}
+
 message DFSAddFile {
   DFSTransaction transaction = 1;
   DFSFile file = 2;
@@ -35,7 +41,8 @@ message DFSAddFile {
   uint64 blockSize = 4;
   uint64 modifiedTime = 5;
   uint64 accessedTime = 6;
-  bool overwrite = 7;
+  repeated DFSBlock blocks = 7;
+  bool overwrite = 8;
 }
 
 message DFSAppendFile {
@@ -48,12 +55,6 @@ message DFSDeleteFile {
   DFSTransaction transaction = 1;
   DFSFile file = 2;
   uint64 timestamp = 3;
-}
-
-message DFSBlock {
-  int64 blockId = 1;
-  int64 size = 2;
-  int64 generationStamp = 3;
 }
 
 message DFSAddBlock {
@@ -73,6 +74,7 @@ message DFSTruncateBlock {
   DFSTransaction transaction = 1;
   DFSFile file = 2;
   DFSBlock block = 3;
+  uint64 newLength = 4;
 }
 
 message DFSCloseFile {

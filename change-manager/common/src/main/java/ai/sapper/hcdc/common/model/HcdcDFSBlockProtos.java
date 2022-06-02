@@ -25,6 +25,11 @@ public final class HcdcDFSBlockProtos {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_ai_sapper_hcdc_common_model_DFSFile_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_ai_sapper_hcdc_common_model_DFSBlock_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_ai_sapper_hcdc_common_model_DFSBlock_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_ai_sapper_hcdc_common_model_DFSAddFile_descriptor;
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -39,11 +44,6 @@ public final class HcdcDFSBlockProtos {
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_ai_sapper_hcdc_common_model_DFSDeleteFile_fieldAccessorTable;
-  static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_ai_sapper_hcdc_common_model_DFSBlock_descriptor;
-  static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_ai_sapper_hcdc_common_model_DFSBlock_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_ai_sapper_hcdc_common_model_DFSAddBlock_descriptor;
   static final 
@@ -82,46 +82,48 @@ public final class HcdcDFSBlockProtos {
       "\003\022\021\n\rCONCAT_DELETE\020\004\022\021\n\rUPDATE_BLOCKS\020\005\022" +
       "\n\n\006DELETE\020\006\022\n\n\006APPEND\020\007\022\014\n\010TRUNCATE\020\010\"(\n" +
       "\007DFSFile\022\014\n\004path\030\002 \001(\t\022\017\n\007inodeId\030\003 \001(\003\"" +
-      "\344\001\n\nDFSAddFile\022@\n\013transaction\030\001 \001(\0132+.ai",
-      "_sapper_hcdc_common_model.DFSTransaction" +
-      "\0222\n\004file\030\002 \001(\0132$.ai_sapper_hcdc_common_m" +
-      "odel.DFSFile\022\016\n\006length\030\003 \001(\004\022\021\n\tblockSiz" +
-      "e\030\004 \001(\004\022\024\n\014modifiedTime\030\005 \001(\004\022\024\n\014accesse" +
-      "dTime\030\006 \001(\004\022\021\n\toverwrite\030\007 \001(\010\"\227\001\n\rDFSAp" +
-      "pendFile\022@\n\013transaction\030\001 \001(\0132+.ai_sappe" +
-      "r_hcdc_common_model.DFSTransaction\0222\n\004fi" +
-      "le\030\002 \001(\0132$.ai_sapper_hcdc_common_model.D" +
-      "FSFile\022\020\n\010newBlock\030\003 \001(\010\"\230\001\n\rDFSDeleteFi" +
-      "le\022@\n\013transaction\030\001 \001(\0132+.ai_sapper_hcdc",
+      "B\n\010DFSBlock\022\017\n\007blockId\030\001 \001(\003\022\014\n\004size\030\002 \001",
+      "(\003\022\027\n\017generationStamp\030\003 \001(\003\"\233\002\n\nDFSAddFi" +
+      "le\022@\n\013transaction\030\001 \001(\0132+.ai_sapper_hcdc" +
       "_common_model.DFSTransaction\0222\n\004file\030\002 \001" +
       "(\0132$.ai_sapper_hcdc_common_model.DFSFile" +
-      "\022\021\n\ttimestamp\030\003 \001(\004\"B\n\010DFSBlock\022\017\n\007block" +
-      "Id\030\001 \001(\003\022\014\n\004size\030\002 \001(\003\022\027\n\017generationStam" +
-      "p\030\003 \001(\003\"\376\001\n\013DFSAddBlock\022@\n\013transaction\030\001" +
-      " \001(\0132+.ai_sapper_hcdc_common_model.DFSTr" +
-      "ansaction\0222\n\004file\030\002 \001(\0132$.ai_sapper_hcdc" +
-      "_common_model.DFSFile\022?\n\020penultimateBloc" +
-      "k\030\003 \001(\0132%.ai_sapper_hcdc_common_model.DF" +
-      "SBlock\0228\n\tlastBlock\030\004 \001(\0132%.ai_sapper_hc",
-      "dc_common_model.DFSBlock\"\276\001\n\017DFSUpdateBl" +
-      "ocks\022@\n\013transaction\030\001 \001(\0132+.ai_sapper_hc" +
-      "dc_common_model.DFSTransaction\0222\n\004file\030\002" +
-      " \001(\0132$.ai_sapper_hcdc_common_model.DFSFi" +
-      "le\0225\n\006blocks\030\003 \003(\0132%.ai_sapper_hcdc_comm" +
-      "on_model.DFSBlock\"\276\001\n\020DFSTruncateBlock\022@" +
+      "\022\016\n\006length\030\003 \001(\004\022\021\n\tblockSize\030\004 \001(\004\022\024\n\014m" +
+      "odifiedTime\030\005 \001(\004\022\024\n\014accessedTime\030\006 \001(\004\022" +
+      "5\n\006blocks\030\007 \003(\0132%.ai_sapper_hcdc_common_" +
+      "model.DFSBlock\022\021\n\toverwrite\030\010 \001(\010\"\227\001\n\rDF" +
+      "SAppendFile\022@\n\013transaction\030\001 \001(\0132+.ai_sa" +
+      "pper_hcdc_common_model.DFSTransaction\0222\n",
+      "\004file\030\002 \001(\0132$.ai_sapper_hcdc_common_mode" +
+      "l.DFSFile\022\020\n\010newBlock\030\003 \001(\010\"\230\001\n\rDFSDelet" +
+      "eFile\022@\n\013transaction\030\001 \001(\0132+.ai_sapper_h" +
+      "cdc_common_model.DFSTransaction\0222\n\004file\030" +
+      "\002 \001(\0132$.ai_sapper_hcdc_common_model.DFSF" +
+      "ile\022\021\n\ttimestamp\030\003 \001(\004\"\376\001\n\013DFSAddBlock\022@" +
       "\n\013transaction\030\001 \001(\0132+.ai_sapper_hcdc_com" +
       "mon_model.DFSTransaction\0222\n\004file\030\002 \001(\0132$" +
-      ".ai_sapper_hcdc_common_model.DFSFile\0224\n\005" +
-      "block\030\003 \001(\0132%.ai_sapper_hcdc_common_mode",
-      "l.DFSBlock\"\235\002\n\014DFSCloseFile\022@\n\013transacti" +
-      "on\030\001 \001(\0132+.ai_sapper_hcdc_common_model.D" +
-      "FSTransaction\0222\n\004file\030\002 \001(\0132$.ai_sapper_" +
-      "hcdc_common_model.DFSFile\022\016\n\006length\030\003 \001(" +
-      "\004\022\021\n\tblockSize\030\004 \001(\004\022\024\n\014modifiedTime\030\005 \001" +
-      "(\004\022\024\n\014accessedTime\030\006 \001(\004\0225\n\006blocks\030\007 \003(\013" +
-      "2%.ai_sapper_hcdc_common_model.DFSBlock\022" +
-      "\021\n\toverwrite\030\010 \001(\010B3\n\033ai.sapper.hcdc.com" +
-      "mon.modelB\022HcdcDFSBlockProtosP\001b\006proto3"
+      ".ai_sapper_hcdc_common_model.DFSFile\022?\n\020" +
+      "penultimateBlock\030\003 \001(\0132%.ai_sapper_hcdc_",
+      "common_model.DFSBlock\0228\n\tlastBlock\030\004 \001(\013" +
+      "2%.ai_sapper_hcdc_common_model.DFSBlock\"" +
+      "\276\001\n\017DFSUpdateBlocks\022@\n\013transaction\030\001 \001(\013" +
+      "2+.ai_sapper_hcdc_common_model.DFSTransa" +
+      "ction\0222\n\004file\030\002 \001(\0132$.ai_sapper_hcdc_com" +
+      "mon_model.DFSFile\0225\n\006blocks\030\003 \003(\0132%.ai_s" +
+      "apper_hcdc_common_model.DFSBlock\"\321\001\n\020DFS" +
+      "TruncateBlock\022@\n\013transaction\030\001 \001(\0132+.ai_" +
+      "sapper_hcdc_common_model.DFSTransaction\022" +
+      "2\n\004file\030\002 \001(\0132$.ai_sapper_hcdc_common_mo",
+      "del.DFSFile\0224\n\005block\030\003 \001(\0132%.ai_sapper_h" +
+      "cdc_common_model.DFSBlock\022\021\n\tnewLength\030\004" +
+      " \001(\004\"\235\002\n\014DFSCloseFile\022@\n\013transaction\030\001 \001" +
+      "(\0132+.ai_sapper_hcdc_common_model.DFSTran" +
+      "saction\0222\n\004file\030\002 \001(\0132$.ai_sapper_hcdc_c" +
+      "ommon_model.DFSFile\022\016\n\006length\030\003 \001(\004\022\021\n\tb" +
+      "lockSize\030\004 \001(\004\022\024\n\014modifiedTime\030\005 \001(\004\022\024\n\014" +
+      "accessedTime\030\006 \001(\004\0225\n\006blocks\030\007 \003(\0132%.ai_" +
+      "sapper_hcdc_common_model.DFSBlock\022\021\n\tove" +
+      "rwrite\030\010 \001(\010B3\n\033ai.sapper.hcdc.common.mo",
+      "delB\022HcdcDFSBlockProtosP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -147,30 +149,30 @@ public final class HcdcDFSBlockProtos {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ai_sapper_hcdc_common_model_DFSFile_descriptor,
         new java.lang.String[] { "Path", "InodeId", });
-    internal_static_ai_sapper_hcdc_common_model_DFSAddFile_descriptor =
+    internal_static_ai_sapper_hcdc_common_model_DFSBlock_descriptor =
       getDescriptor().getMessageTypes().get(2);
+    internal_static_ai_sapper_hcdc_common_model_DFSBlock_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_ai_sapper_hcdc_common_model_DFSBlock_descriptor,
+        new java.lang.String[] { "BlockId", "Size", "GenerationStamp", });
+    internal_static_ai_sapper_hcdc_common_model_DFSAddFile_descriptor =
+      getDescriptor().getMessageTypes().get(3);
     internal_static_ai_sapper_hcdc_common_model_DFSAddFile_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ai_sapper_hcdc_common_model_DFSAddFile_descriptor,
-        new java.lang.String[] { "Transaction", "File", "Length", "BlockSize", "ModifiedTime", "AccessedTime", "Overwrite", });
+        new java.lang.String[] { "Transaction", "File", "Length", "BlockSize", "ModifiedTime", "AccessedTime", "Blocks", "Overwrite", });
     internal_static_ai_sapper_hcdc_common_model_DFSAppendFile_descriptor =
-      getDescriptor().getMessageTypes().get(3);
+      getDescriptor().getMessageTypes().get(4);
     internal_static_ai_sapper_hcdc_common_model_DFSAppendFile_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ai_sapper_hcdc_common_model_DFSAppendFile_descriptor,
         new java.lang.String[] { "Transaction", "File", "NewBlock", });
     internal_static_ai_sapper_hcdc_common_model_DFSDeleteFile_descriptor =
-      getDescriptor().getMessageTypes().get(4);
+      getDescriptor().getMessageTypes().get(5);
     internal_static_ai_sapper_hcdc_common_model_DFSDeleteFile_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ai_sapper_hcdc_common_model_DFSDeleteFile_descriptor,
         new java.lang.String[] { "Transaction", "File", "Timestamp", });
-    internal_static_ai_sapper_hcdc_common_model_DFSBlock_descriptor =
-      getDescriptor().getMessageTypes().get(5);
-    internal_static_ai_sapper_hcdc_common_model_DFSBlock_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_ai_sapper_hcdc_common_model_DFSBlock_descriptor,
-        new java.lang.String[] { "BlockId", "Size", "GenerationStamp", });
     internal_static_ai_sapper_hcdc_common_model_DFSAddBlock_descriptor =
       getDescriptor().getMessageTypes().get(6);
     internal_static_ai_sapper_hcdc_common_model_DFSAddBlock_fieldAccessorTable = new
@@ -188,7 +190,7 @@ public final class HcdcDFSBlockProtos {
     internal_static_ai_sapper_hcdc_common_model_DFSTruncateBlock_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ai_sapper_hcdc_common_model_DFSTruncateBlock_descriptor,
-        new java.lang.String[] { "Transaction", "File", "Block", });
+        new java.lang.String[] { "Transaction", "File", "Block", "NewLength", });
     internal_static_ai_sapper_hcdc_common_model_DFSCloseFile_descriptor =
       getDescriptor().getMessageTypes().get(9);
     internal_static_ai_sapper_hcdc_common_model_DFSCloseFile_fieldAccessorTable = new

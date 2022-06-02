@@ -29,7 +29,7 @@ public class CustomEditsVisitor implements OfflineEditsVisitor {
     public void start(int version) throws IOException {
         this.version = version;
 
-        batch.setVersion(version);
+        batch.version(version);
         batch.setup();
 
         parser = new DFSEditLogParser();

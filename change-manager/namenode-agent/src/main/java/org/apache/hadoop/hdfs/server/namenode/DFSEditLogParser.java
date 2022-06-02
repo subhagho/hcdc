@@ -2,9 +2,12 @@ package org.apache.hadoop.hdfs.server.namenode;
 
 import ai.sapper.hcdc.agents.namenode.DFSAgentError;
 import ai.sapper.hcdc.agents.namenode.model.DFSEditLogBatch;
+import ai.sapper.hcdc.agents.namenode.model.DFSTransactionType;
+import ai.sapper.hcdc.common.model.DFSTransaction;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
+import org.apache.hadoop.hdfs.protocol.Block;
 
 
 @Getter
@@ -72,19 +75,19 @@ public class DFSEditLogParser {
 
     public void parse(@NonNull FSEditLogOp op, @NonNull DFSEditLogBatch batch) throws DFSAgentError {
         if (op.opCode == FSEditLogOpCodes.OP_START_LOG_SEGMENT) {
-            if (op.getTransactionId() != batch.getStartTnxId()) {
+            if (op.getTransactionId() != batch.startTnxId()) {
                 throw new DFSAgentError(
                         String.format("Start transaction ID mismatch. [expected=%d][actual=%d]",
-                                op.getTransactionId(), batch.getStartTnxId()));
+                                op.getTransactionId(), batch.startTnxId()));
             }
         } else if (op.opCode == FSEditLogOpCodes.OP_END_LOG_SEGMENT) {
             if (batch.isCurrent()) {
-                batch.setEndTnxId(op.getTransactionId());
+                batch.endTnxId(op.getTransactionId());
             } else {
-                if (op.getTransactionId() != batch.getEndTnxId()) {
+                if (op.getTransactionId() != batch.endTnxId()) {
                     throw new DFSAgentError(
                             String.format("Start transaction ID mismatch. [expected=%d][actual=%d]",
-                                    op.getTransactionId(), batch.getStartTnxId()));
+                                    op.getTransactionId(), batch.endTnxId()));
                 }
             }
         } else {
@@ -104,9 +107,6 @@ public class DFSEditLogParser {
                 case OP_DELETE:
                     handleOpDelete(op, batch);
                     break;
-                case OP_RENAME:
-                    handleOpRename(op, batch);
-                    break;
                 case OP_TRUNCATE:
                     handleOpTruncate(op, batch);
                     break;
@@ -120,6 +120,32 @@ public class DFSEditLogParser {
     private void handleOpClose(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {
         if (op instanceof FSEditLogOp.CloseOp) {
             FSEditLogOp.CloseOp cop = (FSEditLogOp.CloseOp) op;
+            DFSTransactionType.DFSCloseFileType cft = new DFSTransactionType.DFSCloseFileType();
+
+            cft.id(cop.txid);
+            cft.op(DFSTransaction.Operation.CLOSE)
+                    .timestamp(cop.mtime);
+            cft.file(new DFSTransactionType.DFSFileType()
+                    .path(cop.path)
+                    .inodeId(cop.inodeId));
+            cft.length(cop.length)
+                    .blockSize(cop.blockSize)
+                    .modifiedTime(cop.mtime)
+                    .accessedTime(cop.atime)
+                    .overwrite(cop.overwrite);
+
+            if (cop.blocks != null && cop.blocks.length > 0) {
+                for (int ii = 0; ii < cop.blocks.length; ii++) {
+                    DFSTransactionType.DFSBlockType bt = new DFSTransactionType.DFSBlockType();
+                    bt.blockId(cop.blocks[ii].getBlockId());
+                    bt.size(cop.blocks[ii].getNumBytes());
+                    bt.generationStamp(cop.blocks[ii].getGenerationStamp());
+
+                    cft.blocks().add(bt);
+                }
+            }
+            batch.transactions().add(cft);
+
         } else {
             throw new DFSAgentError(String.format("Invalid Edit Operation. [expected=%s][actual=%s]", FSEditLogOp.CloseOp.class, op.getClass()));
         }
@@ -128,22 +154,35 @@ public class DFSEditLogParser {
     private void handleOpTruncate(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {
         if (op instanceof FSEditLogOp.TruncateOp) {
             FSEditLogOp.TruncateOp top = (FSEditLogOp.TruncateOp) op;
+            DFSTransactionType.DFSTruncateBlockType tr = new DFSTransactionType.DFSTruncateBlockType();
+
+            tr.id(top.txid)
+                    .op(DFSTransaction.Operation.TRUNCATE)
+                    .timestamp(top.timestamp);
+            tr.file(new DFSTransactionType.DFSFileType().path(top.src));
+            tr.block(new DFSTransactionType.DFSBlockType()
+                    .blockId(top.truncateBlock.getBlockId())
+                    .size(top.truncateBlock.getNumBytes())
+                    .generationStamp(top.truncateBlock.getGenerationStamp()));
+            tr.newLength(top.newLength);
+
+            batch.transactions().add(tr);
         } else {
             throw new DFSAgentError(String.format("Invalid Edit Operation. [expected=%s][actual=%s]", FSEditLogOp.TruncateOp.class, op.getClass()));
-        }
-    }
-
-    private void handleOpRename(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {
-        if (op instanceof FSEditLogOp.RenameOp) {
-            FSEditLogOp.RenameOp rop = (FSEditLogOp.RenameOp) op;
-        } else {
-            throw new DFSAgentError(String.format("Invalid Edit Operation. [expected=%s][actual=%s]", FSEditLogOp.RenameOp.class, op.getClass()));
         }
     }
 
     private void handleOpDelete(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {
         if (op instanceof FSEditLogOp.DeleteOp) {
             FSEditLogOp.DeleteOp dop = (FSEditLogOp.DeleteOp) op;
+            DFSTransactionType.DFSDeleteFileType del = new DFSTransactionType.DFSDeleteFileType();
+
+            del.id(dop.txid)
+                    .op(DFSTransaction.Operation.DELETE)
+                    .timestamp(dop.timestamp);
+            del.file(new DFSTransactionType.DFSFileType().path(dop.path));
+
+            batch.transactions().add(del);
         } else {
             throw new DFSAgentError(String.format("Invalid Edit Operation. [expected=%s][actual=%s]", FSEditLogOp.DeleteOp.class, op.getClass()));
         }
@@ -152,6 +191,22 @@ public class DFSEditLogParser {
     private void handleOpUpdateBlocks(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {
         if (op instanceof FSEditLogOp.UpdateBlocksOp) {
             FSEditLogOp.UpdateBlocksOp ubop = (FSEditLogOp.UpdateBlocksOp) op;
+            DFSTransactionType.DFSUpdateBlocksType upd = new DFSTransactionType.DFSUpdateBlocksType();
+
+            upd.id(ubop.txid).op(DFSTransaction.Operation.UPDATE_BLOCKS);
+            upd.file(new DFSTransactionType.DFSFileType().path(ubop.path));
+            if (ubop.blocks != null && ubop.blocks.length > 0) {
+                for (int ii = 0; ii < ubop.blocks.length; ii++) {
+                    DFSTransactionType.DFSBlockType bt = new DFSTransactionType.DFSBlockType();
+                    bt.blockId(ubop.blocks[ii].getBlockId());
+                    bt.size(ubop.blocks[ii].getNumBytes());
+                    bt.generationStamp(ubop.blocks[ii].getGenerationStamp());
+
+                    upd.blocks().add(bt);
+                }
+            }
+
+            batch.transactions().add(upd);
         } else {
             throw new DFSAgentError(String.format("Invalid Edit Operation. [expected=%s][actual=%s]", FSEditLogOp.UpdateBlocksOp.class, op.getClass()));
         }
@@ -160,6 +215,14 @@ public class DFSEditLogParser {
     private void handleOpAppend(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {
         if (op instanceof FSEditLogOp.AppendOp) {
             FSEditLogOp.AppendOp aop = (FSEditLogOp.AppendOp) op;
+            DFSTransactionType.DFSAppendFileType aft = new DFSTransactionType.DFSAppendFileType();
+
+            aft.id(aop.txid)
+                    .op(DFSTransaction.Operation.APPEND);
+            aft.file(new DFSTransactionType.DFSFileType().path(aop.path));
+            aft.newBlock(aop.newBlock);
+
+            batch.transactions().add(aft);
         } else {
             throw new DFSAgentError(String.format("Invalid Edit Operation. [expected=%s][actual=%s]", FSEditLogOp.AppendOp.class, op.getClass()));
         }
@@ -168,6 +231,32 @@ public class DFSEditLogParser {
     private void handleOpAddBlock(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {
         if (op instanceof FSEditLogOp.AddBlockOp) {
             FSEditLogOp.AddBlockOp abop = (FSEditLogOp.AddBlockOp) op;
+            DFSTransactionType.DFSAddBlockType abt = new DFSTransactionType.DFSAddBlockType();
+
+            abt.id(abop.txid)
+                    .op(DFSTransaction.Operation.ADD_BLOCK);
+            abt.file(new DFSTransactionType.DFSFileType().path(abop.getPath()));
+
+            if (abop.getPenultimateBlock() != null) {
+                Block pb = abop.getPenultimateBlock();
+                DFSTransactionType.DFSBlockType bt = new DFSTransactionType.DFSBlockType();
+                bt.blockId(pb.getBlockId());
+                bt.size(pb.getNumBytes());
+                bt.generationStamp(pb.getGenerationStamp());
+
+                abt.penultimateBlock(bt);
+            }
+            if (abop.getLastBlock() != null) {
+                Block lb = abop.getLastBlock();
+                DFSTransactionType.DFSBlockType bt = new DFSTransactionType.DFSBlockType();
+                bt.blockId(lb.getBlockId());
+                bt.size(lb.getNumBytes());
+                bt.generationStamp(lb.getGenerationStamp());
+
+                abt.lastBlock(bt);
+            }
+
+            batch.transactions().add(abt);
         } else {
             throw new DFSAgentError(String.format("Invalid Edit Operation. [expected=%s][actual=%s]", FSEditLogOp.AddBlockOp.class, op.getClass()));
         }
@@ -183,6 +272,28 @@ public class DFSEditLogParser {
     private void handleOpAdd(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {
         if (op instanceof FSEditLogOp.AddOp) {
             FSEditLogOp.AddOp aop = (FSEditLogOp.AddOp) op;
+            DFSTransactionType.DFSAddFileType aft = new DFSTransactionType.DFSAddFileType();
+
+            aft.id(aop.txid)
+                    .op(DFSTransaction.Operation.APPEND);
+            aft.file(new DFSTransactionType.DFSFileType().path(aop.path).inodeId(aop.inodeId));
+            aft.length(aop.length)
+                    .blockSize(aop.blockSize)
+                    .modifiedTime(aop.mtime)
+                    .accessedTime(aop.atime)
+                    .overwrite(aop.overwrite);
+
+            if (aop.blocks != null && aop.blocks.length > 0) {
+                for (int ii = 0; ii < aop.blocks.length; ii++) {
+                    DFSTransactionType.DFSBlockType bt = new DFSTransactionType.DFSBlockType();
+                    bt.blockId(aop.blocks[ii].getBlockId());
+                    bt.size(aop.blocks[ii].getNumBytes());
+                    bt.generationStamp(aop.blocks[ii].getGenerationStamp());
+
+                    aft.blocks().add(bt);
+                }
+            }
+            batch.transactions().add(aft);
 
         } else {
             throw new DFSAgentError(String.format("Invalid Edit Operation. [expected=%s][actual=%s]", FSEditLogOp.AddOp.class, op.getClass()));

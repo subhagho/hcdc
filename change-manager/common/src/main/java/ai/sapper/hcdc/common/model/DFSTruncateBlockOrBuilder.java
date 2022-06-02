@@ -45,4 +45,9 @@ public interface DFSTruncateBlockOrBuilder extends
    * <code>optional .ai_sapper_hcdc_common_model.DFSBlock block = 3;</code>
    */
   ai.sapper.hcdc.common.model.DFSBlockOrBuilder getBlockOrBuilder();
+
+  /**
+   * <code>optional uint64 newLength = 4;</code>
+   */
+  long getNewLength();
 }

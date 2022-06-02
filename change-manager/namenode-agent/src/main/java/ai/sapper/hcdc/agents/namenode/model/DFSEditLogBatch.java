@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,6 +15,7 @@ import java.util.regex.Pattern;
 
 @Getter
 @Setter
+@Accessors(fluent = true)
 public class DFSEditLogBatch {
 
     private static final String REGEX_CURRENT_FILE = "edits_inprogress_(\\d+$)";
