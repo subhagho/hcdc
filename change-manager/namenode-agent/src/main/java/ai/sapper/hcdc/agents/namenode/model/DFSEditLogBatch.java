@@ -1,7 +1,5 @@
 package ai.sapper.hcdc.agents.namenode.model;
 
-import ai.sapper.hcdc.agents.namenode.DFSAgentError;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
@@ -10,9 +8,7 @@ import lombok.Setter;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,7 +24,7 @@ public class DFSEditLogBatch {
     private long startTnxId = Long.MAX_VALUE;
     private long endTnxId = -1;
     private boolean isCurrent;
-    private final List<DFSLogTransaction<?>> transactions = new ArrayList<>();
+    private final List<DFSTransactionType<?>> transactions = new ArrayList<>();
 
     public DFSEditLogBatch(@NonNull String filename) {
         this.filename = filename;
