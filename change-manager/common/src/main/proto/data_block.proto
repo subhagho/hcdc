@@ -1,0 +1,87 @@
+syntax = "proto3";
+
+package ai_sapper_hcdc_common_model;
+
+option java_multiple_files = true;
+option java_package = "ai.sapper.hcdc.common.model";
+option java_outer_classname = "HcdcDFSBlockProtos";
+
+message DFSTransaction {
+  enum Operation {
+    ADD_FILE = 0;
+    ADD_BLOCK = 1;
+    CLOSE = 2;
+    RENAME = 3;
+    CONCAT_DELETE = 4;
+    UPDATE_BLOCKS = 5;
+    DELETE = 6;
+    APPEND = 7;
+    TRUNCATE = 8;
+  }
+  int64 transactionId = 1;
+  Operation op = 2;
+  uint64 timestamp = 3;
+}
+
+message DFSFile {
+  string path = 2;
+  int64 inodeId = 3;
+}
+
+message DFSAddFile {
+  DFSTransaction transaction = 1;
+  DFSFile file = 2;
+  uint64 length = 3;
+  uint64 blockSize = 4;
+  uint64 modifiedTime = 5;
+  uint64 accessedTime = 6;
+  bool overwrite = 7;
+}
+
+message DFSAppendFile {
+  DFSTransaction transaction = 1;
+  DFSFile file = 2;
+  bool newBlock = 3;
+}
+
+message DFSDeleteFile {
+  DFSTransaction transaction = 1;
+  DFSFile file = 2;
+  uint64 timestamp = 3;
+}
+
+message DFSBlock {
+  int64 blockId = 1;
+  int64 size = 2;
+  int64 generationStamp = 3;
+}
+
+message DFSAddBlock {
+  DFSTransaction transaction = 1;
+  DFSFile file = 2;
+  DFSBlock penultimateBlock = 3;
+  DFSBlock lastBlock = 4;
+}
+
+message DFSUpdateBlocks {
+  DFSTransaction transaction = 1;
+  DFSFile file = 2;
+  repeated DFSBlock blocks = 3;
+}
+
+message DFSTruncateBlock {
+  DFSTransaction transaction = 1;
+  DFSFile file = 2;
+  DFSBlock block = 3;
+}
+
+message DFSCloseFile {
+  DFSTransaction transaction = 1;
+  DFSFile file = 2;
+  uint64 length = 3;
+  uint64 blockSize = 4;
+  uint64 modifiedTime = 5;
+  uint64 accessedTime = 6;
+  repeated DFSBlock blocks = 7;
+  bool overwrite = 8;
+}

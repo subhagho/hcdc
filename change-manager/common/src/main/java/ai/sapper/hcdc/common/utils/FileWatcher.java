@@ -58,7 +58,6 @@ public class FileWatcher implements Runnable {
                 for (WatchEvent<?> event : wk.pollEvents()) {
                     //we only register "ENTRY_MODIFY" so the context is always a Path.
                     final Path changed = (Path) event.context();
-                    System.out.println(changed);
                     if (changed.endsWith(filename)) {
                         callback.handle(changed.toAbsolutePath().toString());
                     }

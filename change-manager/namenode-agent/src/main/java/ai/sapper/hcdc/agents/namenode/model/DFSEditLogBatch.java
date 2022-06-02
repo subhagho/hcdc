@@ -10,6 +10,7 @@ import lombok.Setter;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,9 +27,6 @@ public class DFSEditLogBatch {
     private long startTnxId = Long.MAX_VALUE;
     private long endTnxId = -1;
     private boolean isCurrent;
-
-    private final Map<String, DFSFileTnx> upserts = new HashMap<>();
-    private final Map<String, DFSFileTnx> deletes = new HashMap<>();
 
     public DFSEditLogBatch(@NonNull String filename) {
         this.filename = filename;
@@ -69,39 +67,4 @@ public class DFSEditLogBatch {
         }
     }
 
-    public boolean checkAndSetTxnId(long txnId) {
-        Preconditions.checkArgument(txnId >= 0);
-        boolean ret = false;
-        if (txnId > endTnxId) {
-            endTnxId = txnId;
-            ret = true;
-        }
-        return ret;
-    }
-
-    public DFSFileTnx get(String path) {
-        return upserts.get(path);
-    }
-
-    public boolean containsFile(String path) {
-        return upserts.containsKey(path);
-    }
-
-    public void add(@NonNull DFSFileTnx fileTnx, boolean delete) throws DFSAgentError {
-        if (!delete) {
-            if (upserts.containsKey(fileTnx.getPath())) {
-                if (!deletes.containsKey(fileTnx.getPath())) {
-                    throw new DFSAgentError(String.format("Attempt to update/insert duplicate file record. [path=%s]", fileTnx.getPath()));
-                }
-                DFSFileTnx fi = upserts.get(fileTnx.getPath());
-                DFSFileTnx df = deletes.get(fileTnx.getPath());
-                if (df.getStartTnxId() < fi.getEndTnxId()) {
-                    throw new DFSAgentError(String.format("Attempt to update/insert duplicate file record. [path=%s]", fileTnx.getPath()));
-                }
-            }
-            upserts.put(fileTnx.getPath(), fileTnx);
-        } else {
-            deletes.put(fileTnx.getPath(), fileTnx);
-        }
-    }
 }

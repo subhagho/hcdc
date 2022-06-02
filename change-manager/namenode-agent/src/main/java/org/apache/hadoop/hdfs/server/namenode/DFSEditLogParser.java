@@ -186,14 +186,7 @@ public class DFSEditLogParser {
     private void handleOpAdd(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {
         if (op instanceof FSEditLogOp.AddOp) {
             FSEditLogOp.AddOp aop = (FSEditLogOp.AddOp) op;
-            DFSFileTnx ft = new DFSFileTnx();
-            ft.setStartTnxId(op.getTransactionId());
-            ft.setEndTnxId(op.getTransactionId());
-            ft.setPath(aop.getPath());
-            ft.setModifiedTimestamp(aop.mtime);
-            ft.setAccessTimestamp(aop.atime);
 
-            batch.add(ft, false);
         } else {
             throw new DFSAgentError(String.format("Invalid Edit Operation. [expected=%s][actual=%s]", FSEditLogOp.AddOp.class, op.getClass()));
         }
