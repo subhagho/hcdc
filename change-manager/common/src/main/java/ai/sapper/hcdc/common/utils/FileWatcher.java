@@ -31,7 +31,6 @@ public class FileWatcher implements Runnable {
 
     public FileWatcher(@NonNull String file) {
         File fi = new File(file);
-        Preconditions.checkState(fi.exists());
 
         directory = fi.getParent();
         filename = fi.getName();

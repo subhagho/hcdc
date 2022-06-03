@@ -66,6 +66,8 @@ public class FileWatcherFactory {
                 try {
                     if (!stop(name)) {
                         DefaultLogger.__LOG.warn(String.format("Failed to stop watcher. [name=%s]", name));
+                    } else {
+                        DefaultLogger.__LOG.debug(String.format("Stopped watcher. [name=%s]", name));
                     }
                 } catch (InterruptedException ie) {
                     DefaultLogger.__LOG.error(String.format("Error stopping watcher. [name=%s]", name), ie);
