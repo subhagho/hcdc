@@ -7,6 +7,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import lombok.ToString;
 import lombok.experimental.Accessors;
 
 import java.util.ArrayList;
@@ -87,6 +88,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     @Getter
     @Setter
     @Accessors(fluent = true)
+    @ToString
     public static class DFSFileType {
         private String path;
         private long inodeId;
@@ -104,6 +106,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     @Getter
     @Setter
     @Accessors(fluent = true)
+    @ToString
     public static class DFSBlockType {
         private long blockId;
         private long size;
@@ -123,6 +126,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     @Getter
     @Setter
     @Accessors(fluent = true)
+    @ToString
     public static class DFSAddBlockType extends DFSTransactionType<DFSAddBlock> {
         private DFSFileType file;
         private DFSBlockType penultimateBlock;
@@ -188,6 +192,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     @Getter
     @Setter
     @Accessors(fluent = true)
+    @ToString
     public static class DFSAddFileType extends DFSTransactionType<DFSAddFile> {
         private DFSFileType file;
         private long length;
@@ -263,6 +268,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     @Getter
     @Setter
     @Accessors(fluent = true)
+    @ToString
     public static class DFSAppendFileType extends DFSTransactionType<DFSAppendFile> {
         private DFSFileType file;
         private boolean newBlock;
@@ -316,6 +322,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     @Getter
     @Setter
     @Accessors(fluent = true)
+    @ToString
     public static final class DFSCloseFileType extends DFSTransactionType<DFSCloseFile> {
         private DFSFileType file;
         private long length;
@@ -392,6 +399,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     @Getter
     @Setter
     @Accessors(fluent = true)
+    @ToString
     public static class DFSDeleteFileType extends DFSTransactionType<DFSDeleteFile> {
         private DFSFileType file;
 
@@ -444,6 +452,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     @Getter
     @Setter
     @Accessors(fluent = true)
+    @ToString
     public static class DFSTruncateBlockType extends DFSTransactionType<DFSTruncateBlock> {
         private DFSFileType file;
         private DFSBlockType block;
@@ -504,6 +513,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     @Getter
     @Setter
     @Accessors(fluent = true)
+    @ToString
     public static class DFSUpdateBlocksType extends DFSTransactionType<DFSUpdateBlocks> {
         private DFSFileType file;
         private final List<DFSBlockType> blocks = new ArrayList<>();
