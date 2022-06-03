@@ -13,28 +13,21 @@ public class FileWatcherFactory {
     private static final Map<String, FileWatcher> watchers = new HashMap<>();
     private static final Map<String, Thread> runners = new HashMap<>();
 
-    public static FileWatcher create(@NonNull String name, @NonNull String filepath, @NonNull FileWatcher.FileWatcherCallback callback) throws IOException {
+    public static FileWatcher create(@NonNull String name, @NonNull String directory, String regex, @NonNull FileWatcher.FileWatcherCallback callback) throws IOException {
         synchronized (watchers) {
             if (watchers.containsKey(name)) {
                 FileWatcher watcher = watchers.get(name);
                 Preconditions.checkNotNull(watcher);
-                Path np = FileSystems.getDefault().getPath(filepath);
-                if (np.toAbsolutePath().equals(watcher.path().toAbsolutePath())) {
-                    return watcher;
-                } else {
-                    throw new IOException(
-                            String.format("Watcher with name already registered with different path. [path=%s]",
-                                    watcher.path().toAbsolutePath().toString()));
-                }
+                return watcher;
             }
-            FileWatcher watcher = new FileWatcher(filepath).withCallback(callback);
+            FileWatcher watcher = new FileWatcher(directory, regex).withCallback(callback);
             Thread runner = new Thread(watcher);
             runners.put(name, runner);
             watchers.put(name, watcher);
 
             runner.start();
-            DefaultLogger.__LOG.debug(String.format("Created new file watcher. [name=%s, path=%s]",
-                    name, watcher.path().toAbsolutePath()));
+            DefaultLogger.__LOG.debug(String.format("Created new file watcher. [name=%s, path=%s, regex=%s]",
+                    name, watcher.directory(), watcher.regex()));
             return watcher;
         }
     }

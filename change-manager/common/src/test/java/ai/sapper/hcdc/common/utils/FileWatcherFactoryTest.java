@@ -7,9 +7,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,14 +30,17 @@ class FileWatcherFactoryTest {
                 file.delete();
             }
 
-            FileWatcher watcher = FileWatcherFactory.create("TEST", file.getAbsolutePath(), new TestFileWatcherCallback());
+            FileWatcher watcher = FileWatcherFactory.create("TEST", d.getAbsolutePath(), ".+\\.dat", new TestFileWatcherCallback());
+            Thread.sleep(5000);
             try (FileOutputStream fos = new FileOutputStream(file)) {
                 for (int ii = 0; ii < 10; ii++) {
                     String msg = String.format("[LINE=%d]\n", ii);
                     fos.write(msg.getBytes(StandardCharsets.UTF_8));
-                    Thread.sleep(5000);
+                    Thread.sleep(1000);
                 }
             }
+            file.delete();
+            Thread.sleep(5000);
             FileWatcherFactory.shutdown();
         } catch (Throwable t) {
             fail(t);
@@ -54,10 +55,13 @@ class FileWatcherFactoryTest {
          * @throws IOException
          */
         @Override
-        public void handle(@NonNull String path) throws IOException {
+        public void handle(@NonNull String path, WatchEvent.Kind<?> eventKind) throws IOException {
             Path fp = Paths.get(path);
-
-            DefaultLogger.__LOG.info(String.format("[%d] [%s] [size=%d]", count++, fp.toString(), Files.size(fp)));
+            if (eventKind.equals(StandardWatchEventKinds.ENTRY_DELETE)) {
+                DefaultLogger.__LOG.info(String.format("[%d] [%s] [%s]", count++, eventKind.name(), fp.toString()));
+            } else {
+                DefaultLogger.__LOG.info(String.format("[%d] [%s] [%s] [size=%d]", count++, eventKind.name(), fp.toString(), Files.size(fp)));
+            }
         }
     }
 }
