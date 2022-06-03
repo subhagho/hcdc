@@ -87,3 +87,16 @@ message DFSCloseFile {
   repeated DFSBlock blocks = 7;
   bool overwrite = 8;
 }
+
+message DFSRenameFile {
+  enum RenameOpts {
+    NONE = 0;
+    OVERWRITE = 1;
+    TO_TRASH = 2;
+  }
+  DFSTransaction transaction = 1;
+  DFSFile srcFile = 2;
+  DFSFile destFile = 3;
+  uint64 length = 4;
+  RenameOpts opts = 5;
+}

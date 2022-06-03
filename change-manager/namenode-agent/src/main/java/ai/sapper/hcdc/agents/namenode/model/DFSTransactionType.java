@@ -91,7 +91,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     @ToString
     public static class DFSFileType {
         private String path;
-        private long inodeId;
+        private long inodeId = Long.MIN_VALUE;
 
         public DFSFile getProto() {
             return DFSFile.newBuilder().setPath(path).setInodeId(inodeId).build();
@@ -569,6 +569,70 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
                 bt.parse(block);
                 blocks.add(bt);
             }
+        }
+    }
+
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    @ToString
+    public static final class DFSRenameFileType extends DFSTransactionType<DFSRenameFile> {
+        private DFSFileType source;
+        private DFSFileType dest;
+        private long length;
+        private DFSRenameFile.RenameOpts opts = DFSRenameFile.RenameOpts.NONE;
+
+        /**
+         * @return
+         * @throws DFSAgentError
+         */
+        @Override
+        public DFSRenameFile convertToProto() throws DFSAgentError {
+            Preconditions.checkNotNull(source);
+            Preconditions.checkNotNull(dest);
+
+            DFSRenameFile.Builder builder = DFSRenameFile.newBuilder();
+            builder.setTransaction(getTransactionProto())
+                    .setSrcFile(source.getProto())
+                    .setDestFile(dest.getProto())
+                    .setLength(length)
+                    .setOpts(opts);
+
+            return builder.build();
+        }
+
+        /**
+         * @param data
+         * @throws DFSAgentError
+         */
+        @Override
+        public void parseFrom(byte[] data) throws DFSAgentError {
+            try {
+                DFSRenameFile addFile = DFSRenameFile.parseFrom(data);
+                parseFrom(addFile);
+            } catch (InvalidProtocolBufferException e) {
+                throw new DFSAgentError(String.format("Error reading from byte array. [type=%s]", getClass().getCanonicalName()), e);
+            }
+        }
+
+        /**
+         * @param proto
+         * @throws DFSAgentError
+         */
+        @Override
+        public void parseFrom(DFSRenameFile proto) throws DFSAgentError {
+            Preconditions.checkArgument(proto.hasTransaction());
+            Preconditions.checkArgument(proto.hasSrcFile());
+            Preconditions.checkArgument(proto.hasDestFile());
+
+            this.parseFrom(proto.getTransaction());
+            source = new DFSFileType();
+            source.parse(proto.getSrcFile());
+            dest = new DFSFileType();
+            dest.parse(proto.getDestFile());
+
+            length = proto.getLength();
+            opts = proto.getOpts();
         }
     }
 }

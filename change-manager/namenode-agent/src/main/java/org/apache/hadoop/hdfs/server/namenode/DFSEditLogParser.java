@@ -3,10 +3,12 @@ package org.apache.hadoop.hdfs.server.namenode;
 import ai.sapper.hcdc.agents.namenode.DFSAgentError;
 import ai.sapper.hcdc.agents.namenode.model.DFSEditLogBatch;
 import ai.sapper.hcdc.agents.namenode.model.DFSTransactionType;
+import ai.sapper.hcdc.common.model.DFSRenameFile;
 import ai.sapper.hcdc.common.model.DFSTransaction;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
+import org.apache.hadoop.fs.Options;
 import org.apache.hadoop.hdfs.protocol.Block;
 
 
@@ -113,7 +115,37 @@ public class DFSEditLogParser {
                 case OP_CLOSE:
                     handleOpClose(op, batch);
                     break;
+                case OP_RENAME:
+                    handleOpRename(op, batch);
+                    break;
             }
+        }
+    }
+
+    private void handleOpRename(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {
+        if (op instanceof FSEditLogOp.RenameOp) {
+            FSEditLogOp.RenameOp rop = (FSEditLogOp.RenameOp) op;
+            DFSTransactionType.DFSRenameFileType rft = new DFSTransactionType.DFSRenameFileType();
+
+            rft.id(rop.txid)
+                    .op(DFSTransaction.Operation.RENAME);
+            rft.source(new DFSTransactionType.DFSFileType().path(rop.src))
+                    .dest(new DFSTransactionType.DFSFileType().path(rop.dst));
+            rft.length(rop.length);
+            if (rop.options != null && rop.options.length > 0) {
+                for (Options.Rename rn : rop.options) {
+                    if (rn == Options.Rename.TO_TRASH) {
+                        rft.opts(DFSRenameFile.RenameOpts.TO_TRASH);
+                        break;
+                    } else if (rn == Options.Rename.OVERWRITE) {
+                        rft.opts(DFSRenameFile.RenameOpts.OVERWRITE);
+                    }
+                }
+            }
+
+            batch.transactions().add(rft);
+        } else {
+            throw new DFSAgentError(String.format("Invalid Edit Operation. [expected=%s][actual=%s]", FSEditLogOp.RenameOp.class, op.getClass()));
         }
     }
 

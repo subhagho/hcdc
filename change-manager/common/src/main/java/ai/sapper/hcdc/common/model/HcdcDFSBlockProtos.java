@@ -64,6 +64,11 @@ public final class HcdcDFSBlockProtos {
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_ai_sapper_hcdc_common_model_DFSCloseFile_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_ai_sapper_hcdc_common_model_DFSRenameFile_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_ai_sapper_hcdc_common_model_DFSRenameFile_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -122,8 +127,17 @@ public final class HcdcDFSBlockProtos {
       "lockSize\030\004 \001(\004\022\024\n\014modifiedTime\030\005 \001(\004\022\024\n\014" +
       "accessedTime\030\006 \001(\004\0225\n\006blocks\030\007 \003(\0132%.ai_" +
       "sapper_hcdc_common_model.DFSBlock\022\021\n\tove" +
-      "rwrite\030\010 \001(\010B3\n\033ai.sapper.hcdc.common.mo",
-      "delB\022HcdcDFSBlockProtosP\001b\006proto3"
+      "rwrite\030\010 \001(\010\"\312\002\n\rDFSRenameFile\022@\n\013transa",
+      "ction\030\001 \001(\0132+.ai_sapper_hcdc_common_mode" +
+      "l.DFSTransaction\0225\n\007srcFile\030\002 \001(\0132$.ai_s" +
+      "apper_hcdc_common_model.DFSFile\0226\n\010destF" +
+      "ile\030\003 \001(\0132$.ai_sapper_hcdc_common_model." +
+      "DFSFile\022\016\n\006length\030\004 \001(\004\022C\n\004opts\030\005 \001(\01625." +
+      "ai_sapper_hcdc_common_model.DFSRenameFil" +
+      "e.RenameOpts\"3\n\nRenameOpts\022\010\n\004NONE\020\000\022\r\n\t" +
+      "OVERWRITE\020\001\022\014\n\010TO_TRASH\020\002B3\n\033ai.sapper.h" +
+      "cdc.common.modelB\022HcdcDFSBlockProtosP\001b\006" +
+      "proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -197,6 +211,12 @@ public final class HcdcDFSBlockProtos {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ai_sapper_hcdc_common_model_DFSCloseFile_descriptor,
         new java.lang.String[] { "Transaction", "File", "Length", "BlockSize", "ModifiedTime", "AccessedTime", "Blocks", "Overwrite", });
+    internal_static_ai_sapper_hcdc_common_model_DFSRenameFile_descriptor =
+      getDescriptor().getMessageTypes().get(10);
+    internal_static_ai_sapper_hcdc_common_model_DFSRenameFile_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_ai_sapper_hcdc_common_model_DFSRenameFile_descriptor,
+        new java.lang.String[] { "Transaction", "SrcFile", "DestFile", "Length", "Opts", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)
