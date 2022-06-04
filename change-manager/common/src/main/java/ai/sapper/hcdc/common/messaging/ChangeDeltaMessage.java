@@ -2,7 +2,6 @@ package ai.sapper.hcdc.common.messaging;
 
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 
 @Getter
 public class ChangeDeltaMessage implements IMessage<String, ChangeDeltaData> {

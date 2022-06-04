@@ -2,7 +2,6 @@ package ai.sapper.hcdc.agents.namenode;
 
 import ai.sapper.hcdc.common.AbstractState;
 import ai.sapper.hcdc.common.ConfigReader;
-import ai.sapper.hcdc.core.connections.ConnectionError;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
 import com.google.common.base.Preconditions;
@@ -20,8 +19,7 @@ import org.slf4j.LoggerFactory;
 @Getter
 @Accessors(fluent = true)
 public class NameNodeEnv {
-    public static Logger __LOG = LoggerFactory.getLogger(NameNodeEnv.class);
-
+    public static Logger LOG = LoggerFactory.getLogger(NameNodeEnv.class);
 
     private static final String NN_IGNORE_TNX = "%s.IGNORE";
 
@@ -101,6 +99,14 @@ public class NameNodeEnv {
     public static NameNodeEnv get() {
         Preconditions.checkState(__instance.state.isAvailable());
         return __instance;
+    }
+
+    public static ConnectionManager connectionManager() {
+        return get().connectionManager;
+    }
+
+    public static ZkStateManager stateManager() {
+        return get().stateManager;
     }
 
     public enum ENameNEnvState {
