@@ -6,11 +6,12 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 
+import java.io.Closeable;
 import java.util.List;
 
 @Getter
 @Accessors(fluent = true)
-public abstract class MessageReceiver<M> {
+public abstract class MessageReceiver<M> implements Closeable {
     private MessageConnection connection;
     private int batchSize = 1;
 
