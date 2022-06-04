@@ -15,6 +15,8 @@ import java.util.regex.Pattern;
 @Getter
 @Accessors(fluent = true)
 public class FileWatcher implements Runnable {
+    private static final long __POLL_TIMEOUT = 100;
+
     private final String directory;
     private final String regex;
     private final Pattern pattern;
@@ -49,7 +51,7 @@ public class FileWatcher implements Runnable {
                     StandardWatchEventKinds.ENTRY_CREATE);
 
             while (running) {
-                final WatchKey wk = watchService.poll(100, TimeUnit.MILLISECONDS);
+                final WatchKey wk = watchService.poll(__POLL_TIMEOUT, TimeUnit.MILLISECONDS);
                 if (wk != null) {
                     for (WatchEvent<?> event : wk.pollEvents()) {
                         //we only register "ENTRY_MODIFY" so the context is always a Path.
