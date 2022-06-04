@@ -140,11 +140,11 @@ public final class HcdcDFSBlockProtos {
       "ommon_model.DFSFile\022\016\n\006length\030\004 \001(\004\022C\n\004o" +
       "pts\030\005 \001(\01625.ai_sapper_hcdc_common_model." +
       "DFSRenameFile.RenameOpts\"3\n\nRenameOpts\022\010" +
-      "\n\004NONE\020\000\022\r\n\tOVERWRITE\020\001\022\014\n\010TO_TRASH\020\002\"O\n" +
+      "\n\004NONE\020\000\022\r\n\tOVERWRITE\020\001\022\014\n\010TO_TRASH\020\002\"_\n" +
       "\013DFSIgnoreTx\022@\n\013transaction\030\001 \001(\0132+.ai_s" +
-      "apper_hcdc_common_model.DFSTransactionB3",
-      "\n\033ai.sapper.hcdc.common.modelB\022HcdcDFSBl" +
-      "ockProtosP\001b\006proto3"
+      "apper_hcdc_common_model.DFSTransaction\022\016",
+      "\n\006opCode\030\002 \001(\tB3\n\033ai.sapper.hcdc.common." +
+      "modelB\022HcdcDFSBlockProtosP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -229,7 +229,7 @@ public final class HcdcDFSBlockProtos {
     internal_static_ai_sapper_hcdc_common_model_DFSIgnoreTx_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ai_sapper_hcdc_common_model_DFSIgnoreTx_descriptor,
-        new java.lang.String[] { "Transaction", });
+        new java.lang.String[] { "Transaction", "OpCode", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

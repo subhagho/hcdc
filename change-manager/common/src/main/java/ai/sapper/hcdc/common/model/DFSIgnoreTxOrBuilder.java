@@ -19,4 +19,14 @@ public interface DFSIgnoreTxOrBuilder extends
    * <code>optional .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
    */
   ai.sapper.hcdc.common.model.DFSTransactionOrBuilder getTransactionOrBuilder();
+
+  /**
+   * <code>optional string opCode = 2;</code>
+   */
+  java.lang.String getOpCode();
+  /**
+   * <code>optional string opCode = 2;</code>
+   */
+  com.google.protobuf.ByteString
+      getOpCodeBytes();
 }

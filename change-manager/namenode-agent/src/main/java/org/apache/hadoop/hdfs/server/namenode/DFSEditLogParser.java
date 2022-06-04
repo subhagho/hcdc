@@ -118,8 +118,18 @@ public class DFSEditLogParser {
                 case OP_RENAME:
                     handleOpRename(op, batch);
                     break;
+                default:
+                    handleDefault(op, batch);
             }
         }
+    }
+
+    private void handleDefault(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {
+        DFSTransactionType.DFSIgnoreTxType ift = new DFSTransactionType.DFSIgnoreTxType();
+        ift.id(op.getTransactionId()).op(DFSTransaction.Operation.IGNORE);
+        ift.opCode(op.opCode.name());
+
+        batch.transactions().add(ift);
     }
 
     private void handleOpRename(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {

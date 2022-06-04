@@ -839,7 +839,12 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         }
     }
 
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    @ToString
     public static class DFSIgnoreTxType extends DFSTransactionType<DFSIgnoreTx> {
+        private String opCode;
 
         /**
          * @return
@@ -849,7 +854,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         public DFSIgnoreTx convertToProto() throws DFSAgentError {
             DFSIgnoreTx.Builder builder = DFSIgnoreTx.newBuilder();
 
-            return builder.setTransaction(getTransactionProto()).build();
+            return builder.setTransaction(getTransactionProto()).setOpCode(opCode).build();
         }
 
         /**
@@ -874,6 +879,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         public void parseFrom(DFSIgnoreTx proto) throws DFSAgentError {
             Preconditions.checkArgument(proto.hasTransaction());
             this.parseFrom(proto.getTransaction());
+            this.opCode = proto.getOpCode();
         }
 
         /**

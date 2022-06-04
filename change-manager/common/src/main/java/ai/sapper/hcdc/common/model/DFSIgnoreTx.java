@@ -15,6 +15,7 @@ public  final class DFSIgnoreTx extends
     super(builder);
   }
   private DFSIgnoreTx() {
+    opCode_ = "";
   }
 
   @java.lang.Override
@@ -53,6 +54,12 @@ public  final class DFSIgnoreTx extends
               transaction_ = subBuilder.buildPartial();
             }
 
+            break;
+          }
+          case 18: {
+            java.lang.String s = input.readStringRequireUtf8();
+
+            opCode_ = s;
             break;
           }
         }
@@ -99,6 +106,40 @@ public  final class DFSIgnoreTx extends
     return getTransaction();
   }
 
+  public static final int OPCODE_FIELD_NUMBER = 2;
+  private volatile java.lang.Object opCode_;
+  /**
+   * <code>optional string opCode = 2;</code>
+   */
+  public java.lang.String getOpCode() {
+    java.lang.Object ref = opCode_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      opCode_ = s;
+      return s;
+    }
+  }
+  /**
+   * <code>optional string opCode = 2;</code>
+   */
+  public com.google.protobuf.ByteString
+      getOpCodeBytes() {
+    java.lang.Object ref = opCode_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      opCode_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
@@ -114,6 +155,9 @@ public  final class DFSIgnoreTx extends
     if (transaction_ != null) {
       output.writeMessage(1, getTransaction());
     }
+    if (!getOpCodeBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, opCode_);
+    }
   }
 
   public int getSerializedSize() {
@@ -124,6 +168,9 @@ public  final class DFSIgnoreTx extends
     if (transaction_ != null) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(1, getTransaction());
+    }
+    if (!getOpCodeBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, opCode_);
     }
     memoizedSize = size;
     return size;
@@ -146,6 +193,8 @@ public  final class DFSIgnoreTx extends
       result = result && getTransaction()
           .equals(other.getTransaction());
     }
+    result = result && getOpCode()
+        .equals(other.getOpCode());
     return result;
   }
 
@@ -160,6 +209,8 @@ public  final class DFSIgnoreTx extends
       hash = (37 * hash) + TRANSACTION_FIELD_NUMBER;
       hash = (53 * hash) + getTransaction().hashCode();
     }
+    hash = (37 * hash) + OPCODE_FIELD_NUMBER;
+    hash = (53 * hash) + getOpCode().hashCode();
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -284,6 +335,8 @@ public  final class DFSIgnoreTx extends
         transaction_ = null;
         transactionBuilder_ = null;
       }
+      opCode_ = "";
+
       return this;
     }
 
@@ -311,6 +364,7 @@ public  final class DFSIgnoreTx extends
       } else {
         result.transaction_ = transactionBuilder_.build();
       }
+      result.opCode_ = opCode_;
       onBuilt();
       return result;
     }
@@ -354,6 +408,10 @@ public  final class DFSIgnoreTx extends
       if (other == ai.sapper.hcdc.common.model.DFSIgnoreTx.getDefaultInstance()) return this;
       if (other.hasTransaction()) {
         mergeTransaction(other.getTransaction());
+      }
+      if (!other.getOpCode().isEmpty()) {
+        opCode_ = other.opCode_;
+        onChanged();
       }
       onChanged();
       return this;
@@ -496,6 +554,75 @@ public  final class DFSIgnoreTx extends
         transaction_ = null;
       }
       return transactionBuilder_;
+    }
+
+    private java.lang.Object opCode_ = "";
+    /**
+     * <code>optional string opCode = 2;</code>
+     */
+    public java.lang.String getOpCode() {
+      java.lang.Object ref = opCode_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        opCode_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>optional string opCode = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getOpCodeBytes() {
+      java.lang.Object ref = opCode_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        opCode_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>optional string opCode = 2;</code>
+     */
+    public Builder setOpCode(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  
+      opCode_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional string opCode = 2;</code>
+     */
+    public Builder clearOpCode() {
+      
+      opCode_ = getDefaultInstance().getOpCode();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional string opCode = 2;</code>
+     */
+    public Builder setOpCodeBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      
+      opCode_ = value;
+      onChanged();
+      return this;
     }
     public final Builder setUnknownFields(
         final com.google.protobuf.UnknownFieldSet unknownFields) {

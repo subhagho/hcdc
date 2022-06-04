@@ -104,4 +104,5 @@ message DFSRenameFile {
 
 message DFSIgnoreTx {
   DFSTransaction transaction = 1;
+  string opCode = 2;
 }
