@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.core.messaging;
+package ai.sapper.hcdc.common.messaging;
 
 public interface IMessage<K, V> {
     K key();

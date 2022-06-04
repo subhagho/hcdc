@@ -17,6 +17,7 @@ message DFSTransaction {
     DELETE = 6;
     APPEND = 7;
     TRUNCATE = 8;
+    IGNORE = 9;
   }
   int64 transactionId = 1;
   Operation op = 2;
@@ -99,4 +100,8 @@ message DFSRenameFile {
   DFSFile destFile = 3;
   uint64 length = 4;
   RenameOpts opts = 5;
+}
+
+message DFSIgnoreTx {
+  DFSTransaction transaction = 1;
 }

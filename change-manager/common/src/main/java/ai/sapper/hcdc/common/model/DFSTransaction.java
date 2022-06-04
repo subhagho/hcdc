@@ -125,6 +125,10 @@ public  final class DFSTransaction extends
      * <code>TRUNCATE = 8;</code>
      */
     TRUNCATE(8),
+    /**
+     * <code>IGNORE = 9;</code>
+     */
+    IGNORE(9),
     UNRECOGNIZED(-1),
     ;
 
@@ -164,6 +168,10 @@ public  final class DFSTransaction extends
      * <code>TRUNCATE = 8;</code>
      */
     public static final int TRUNCATE_VALUE = 8;
+    /**
+     * <code>IGNORE = 9;</code>
+     */
+    public static final int IGNORE_VALUE = 9;
 
 
     public final int getNumber() {
@@ -193,6 +201,7 @@ public  final class DFSTransaction extends
         case 6: return DELETE;
         case 7: return APPEND;
         case 8: return TRUNCATE;
+        case 9: return IGNORE;
         default: return null;
       }
     }
