@@ -2,10 +2,20 @@
 <configuration>
     <agent>
         <namespace>ha-cluster</namespace>
+        <hadoop>
+            <home>/opt/hadoop</home>
+            <config>/opt/hadoop/conf/hdfs.conf</config>
+        </hadoop>
         <connections>
             <path>config</path>
             <hdfs-admin>test-hdfs</hdfs-admin>
         </connections>
+        <state>
+            <manager>
+                <basePath>/hcdc/agent/namenode</basePath>
+                <connection>test-zk</connection>
+            </manager>
+        </state>
     </agent>
     <config>
         <connections>

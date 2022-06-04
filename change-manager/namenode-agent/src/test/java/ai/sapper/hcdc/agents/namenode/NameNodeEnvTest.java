@@ -26,6 +26,7 @@ class NameNodeEnvTest {
             NameNodeEnv.setup(xmlConfiguration, __CONFIG_PATH);
             DefaultLogger.__LOG.info(String.format("Name Node Agent environment initialized. [namespace=%s]", NameNodeEnv.get().namespace()));
             assertNotNull(NameNodeEnv.get().hdfsConnection());
+            assertNotNull(NameNodeEnv.get().stateManager().connection());
 
             NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose();
             assertEquals(NameNodeEnv.ENameNEnvState.Disposed, state);

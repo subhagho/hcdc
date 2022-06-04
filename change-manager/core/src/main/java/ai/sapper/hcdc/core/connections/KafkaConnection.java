@@ -170,7 +170,7 @@ public abstract class KafkaConnection implements MessageConnection {
 
                 parameters = readParameters();
             } catch (Throwable t) {
-                throw new ConfigurationException("Error processing HDFS configuration.", t);
+                throw new ConfigurationException("Error processing Kafka configuration.", t);
             }
         }
     }

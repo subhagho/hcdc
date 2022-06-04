@@ -28,12 +28,16 @@ public class NameNodeEnv {
     private final NameNEnvState state = new NameNEnvState();
 
     private NameNEnvConfig config;
+    private HierarchicalConfiguration<ImmutableNode> configNode;
     private ConnectionManager connectionManager;
     private HdfsConnection hdfsConnection;
+    private ZkStateManager stateManager;
 
     public NameNodeEnv init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig, String pathPrefix) throws NameNodeError {
         try {
             if (state.isAvailable()) return this;
+
+            configNode = xmlConfig.configurationAt(pathPrefix);
 
             this.config = new NameNEnvConfig(xmlConfig, pathPrefix);
             this.config.read();
@@ -45,6 +49,10 @@ public class NameNodeEnv {
             if (hdfsConnection == null) {
                 throw new ConfigurationException("HDFS Admin connection not found.");
             }
+
+            stateManager = new ZkStateManager();
+            stateManager.init(configNode, connectionManager);
+
             state.state(ENameNEnvState.Initialized);
             return this;
         } catch (Throwable t) {
