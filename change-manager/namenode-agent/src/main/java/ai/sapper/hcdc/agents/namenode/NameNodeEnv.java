@@ -2,6 +2,7 @@ package ai.sapper.hcdc.agents.namenode;
 
 import ai.sapper.hcdc.common.AbstractState;
 import ai.sapper.hcdc.common.ConfigReader;
+import ai.sapper.hcdc.common.utils.NetUtils;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
 import com.google.common.base.Preconditions;
@@ -11,11 +12,16 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
+import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.hadoop.hdfs.server.namenode.ZkStateManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.net.InetAddress;
+import java.util.List;
 
 @Getter
 @Accessors(fluent = true)
@@ -31,6 +37,8 @@ public class NameNodeEnv {
     private ConnectionManager connectionManager;
     private HdfsConnection hdfsConnection;
     private ZkStateManager stateManager;
+    private List<InetAddress> hostIPs;
+    private HierarchicalConfiguration<ImmutableNode> hdfsConfig;
 
     public NameNodeEnv init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig, String pathPrefix) throws NameNodeError {
         try {
@@ -41,6 +49,8 @@ public class NameNodeEnv {
             this.config = new NameNEnvConfig(xmlConfig, pathPrefix);
             this.config.read();
 
+            hostIPs = NetUtils.getInetAddresses();
+
             connectionManager = new ConnectionManager();
             connectionManager.init(xmlConfig, config.connectionConfigPath);
 
@@ -48,6 +58,9 @@ public class NameNodeEnv {
             if (hdfsConnection == null) {
                 throw new ConfigurationException("HDFS Admin connection not found.");
             }
+            if (!hdfsConnection.isConnected()) hdfsConnection.connect();
+
+            readHdfsConfig();
 
             stateManager = new ZkStateManager();
             stateManager.init(configNode, connectionManager, config.namespace);
@@ -57,6 +70,20 @@ public class NameNodeEnv {
         } catch (Throwable t) {
             state.error(t);
             throw new NameNodeError(t);
+        }
+    }
+
+    private void readHdfsConfig() throws Exception {
+        File cf = new File(config.hadoopConfFile);
+        if (!cf.exists()) {
+            throw new Exception(String.format("Configuration file not found. ]path=%s]", cf.getAbsolutePath()));
+        }
+        Configurations configs = new Configurations();
+        hdfsConfig = configs.xml(cf);
+
+        List<HierarchicalConfiguration<ImmutableNode>> properties = hdfsConfig.configurationsAt(NameNEnvConfig.Constants.HDFS_CONFIG_PROPERTY);
+        if (properties == null || properties.isEmpty()) {
+            throw new ConfigurationException(String.format("Failed to read HDFS configuration. [file=%s]", cf.getAbsolutePath()));
         }
     }
 
@@ -141,6 +168,15 @@ public class NameNodeEnv {
             private static final String CONFIG_HADOOP_HOME = "hadoop.home";
 
             private static final String CONFIG_HADOOP_CONFIG = "hadoop.config";
+
+            private static final String HDFS_CONFIG_PROPERTY = "property";
+            private static final String HDFS_CONFIG_PROPERTY_NAME = "name";
+            private static final String HDFS_CONFIG_PROPERTY_VALUE = "value";
+
+            private static final String HDFS_NN_DATA_DIR = "dfs.namenode.name.dir";
+            private static final String HDFS_NN_NAMESPACE = "dfs.nameservices";
+            private static final String HDFS_NN_NODES = "dfs.ha.namenodes.%s";
+            private static final String HDFS_NN_HTTP_ADDR = "dfs.namenode.http-address.%s.%s";
         }
 
         private String namespace;
@@ -148,6 +184,7 @@ public class NameNodeEnv {
         private String hdfsAdminConnection;
         private String hadoopHome;
         private String hadoopConfFile;
+        private String nnDataDir;
 
         public NameNEnvConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config, @NonNull String path) {
             super(config, path);

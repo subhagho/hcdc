@@ -49,10 +49,9 @@ public class ZkStateManager {
             config.read();
 
             connection = manger.getConnection(config.zkConnection, ZookeeperConnection.class);
+            if (!connection.isConnected()) connection.connect();
             CuratorFramework client = connection().client();
-            if (!connection.isConnected()) {
-                throw new StateManagerError("Error initializing ZooKeeper connection.");
-            }
+
             zkPath = String.format("%s%s%s", basePath(), Constants.ZK_PATH_SUFFIX, namespace);
             if (client.checkExists().forPath(zkPath) == null) {
                 String path = client.create().creatingParentContainersIfNeeded().forPath(zkPath);

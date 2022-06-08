@@ -4,7 +4,7 @@
         <namespace>ha-cluster</namespace>
         <hadoop>
             <home>/opt/hadoop</home>
-            <config>/opt/hadoop/conf/hdfs.conf</config>
+            <config>src/test/resources/hdfs-site.xml</config>
         </hadoop>
         <connections>
             <path>config</path>
