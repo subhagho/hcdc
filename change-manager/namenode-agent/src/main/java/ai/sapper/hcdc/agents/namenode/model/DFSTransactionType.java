@@ -2,10 +2,11 @@ package ai.sapper.hcdc.agents.namenode.model;
 
 import ai.sapper.hcdc.agents.namenode.DFSAgentError;
 import ai.sapper.hcdc.agents.namenode.NameNodeEnv;
-import ai.sapper.hcdc.common.messaging.ChangeDeltaData;
 import ai.sapper.hcdc.common.messaging.ChangeDeltaMessage;
 import ai.sapper.hcdc.common.model.*;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.Getter;
 import lombok.NonNull;
@@ -13,6 +14,7 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
+import java.io.InvalidClassException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -96,14 +98,24 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
      * @param message
      * @throws DFSAgentError
      */
-    public void parseFrom(@NonNull ChangeDeltaMessage message) throws DFSAgentError {
-        Preconditions.checkNotNull(message.getData());
-        Preconditions.checkArgument(getClass().getCanonicalName().compareTo(message.getData().getType()) == 0);
+    public static DFSTransactionType<?> parseProtoFrom(byte[] message) throws DFSAgentError {
+        try {
+            Preconditions.checkArgument(message != null && message.length > 0);
+            DFSChangeDelta delta = DFSChangeDelta.parseFrom(message);
+            if (Strings.isNullOrEmpty(delta.getType())) {
+                throw new InvalidProtocolBufferException("NULL/Empty field. [type]");
+            }
+            Class<?> cls = Class.forName(delta.getType());
+            Object obj = cls.newInstance();
+            if (!(obj instanceof DFSTransactionType)) {
+                throw new InvalidClassException(String.format("Specified type is not a valid transaction type. [type=%s]", cls.getCanonicalName()));
+            }
+            DFSTransactionType<?> data = (DFSTransactionType<?>) obj;
+            data.parseFrom(delta.getBody().toByteArray());
 
-        parseFrom(message.getData().getData());
-        long txId = Long.parseLong(message.getData().getTxId());
-        if (txId != this.id()) {
-            throw new DFSAgentError(String.format("Transaction ID mismatch. [expected=%d][actual=%d]", id(), txId));
+            return data;
+        } catch (Exception ex) {
+            throw new DFSAgentError(ex);
         }
     }
 
@@ -268,14 +280,14 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             DFSAddBlock proto = convertToProto();
 
             message.setKey(proto.getFile().getPath());
-            ChangeDeltaData data = new ChangeDeltaData();
-            data.setType(proto.getClass().getCanonicalName());
-            data.setEntity(proto.getFile().getPath());
-            data.setNamespace(NameNodeEnv.get().namespace());
-            data.setTimestamp(System.currentTimeMillis());
-            data.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
-            data.setData(proto.toByteArray());
-            message.setData(data);
+            DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
+            builder.setNamespace(NameNodeEnv.get().namespace());
+            builder.setType(proto.getClass().getCanonicalName());
+            builder.setEntity(proto.getFile().getPath());
+            builder.setTimestamp(System.currentTimeMillis());
+            builder.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
+            builder.setBody(ByteString.copyFrom(proto.toByteArray()));
+            message.setData(builder.build());
 
             return message;
         }
@@ -367,14 +379,14 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             DFSAddFile proto = convertToProto();
 
             message.setKey(proto.getFile().getPath());
-            ChangeDeltaData data = new ChangeDeltaData();
-            data.setType(proto.getClass().getCanonicalName());
-            data.setEntity(proto.getFile().getPath());
-            data.setNamespace(NameNodeEnv.get().namespace());
-            data.setTimestamp(System.currentTimeMillis());
-            data.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
-            data.setData(proto.toByteArray());
-            message.setData(data);
+            DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
+            builder.setNamespace(NameNodeEnv.get().namespace());
+            builder.setType(proto.getClass().getCanonicalName());
+            builder.setEntity(proto.getFile().getPath());
+            builder.setTimestamp(System.currentTimeMillis());
+            builder.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
+            builder.setBody(ByteString.copyFrom(proto.toByteArray()));
+            message.setData(builder.build());
 
             return message;
         }
@@ -443,14 +455,14 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             DFSAppendFile proto = convertToProto();
 
             message.setKey(proto.getFile().getPath());
-            ChangeDeltaData data = new ChangeDeltaData();
-            data.setType(proto.getClass().getCanonicalName());
-            data.setEntity(proto.getFile().getPath());
-            data.setNamespace(NameNodeEnv.get().namespace());
-            data.setTimestamp(System.currentTimeMillis());
-            data.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
-            data.setData(proto.toByteArray());
-            message.setData(data);
+            DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
+            builder.setNamespace(NameNodeEnv.get().namespace());
+            builder.setType(proto.getClass().getCanonicalName());
+            builder.setEntity(proto.getFile().getPath());
+            builder.setTimestamp(System.currentTimeMillis());
+            builder.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
+            builder.setBody(ByteString.copyFrom(proto.toByteArray()));
+            message.setData(builder.build());
 
             return message;
         }
@@ -543,14 +555,14 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             DFSCloseFile proto = convertToProto();
 
             message.setKey(proto.getFile().getPath());
-            ChangeDeltaData data = new ChangeDeltaData();
-            data.setType(proto.getClass().getCanonicalName());
-            data.setEntity(proto.getFile().getPath());
-            data.setNamespace(NameNodeEnv.get().namespace());
-            data.setTimestamp(System.currentTimeMillis());
-            data.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
-            data.setData(proto.toByteArray());
-            message.setData(data);
+            DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
+            builder.setNamespace(NameNodeEnv.get().namespace());
+            builder.setType(proto.getClass().getCanonicalName());
+            builder.setEntity(proto.getFile().getPath());
+            builder.setTimestamp(System.currentTimeMillis());
+            builder.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
+            builder.setBody(ByteString.copyFrom(proto.toByteArray()));
+            message.setData(builder.build());
 
             return message;
         }
@@ -619,14 +631,14 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             DFSDeleteFile proto = convertToProto();
 
             message.setKey(proto.getFile().getPath());
-            ChangeDeltaData data = new ChangeDeltaData();
-            data.setType(proto.getClass().getCanonicalName());
-            data.setEntity(proto.getFile().getPath());
-            data.setNamespace(NameNodeEnv.get().namespace());
-            data.setTimestamp(System.currentTimeMillis());
-            data.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
-            data.setData(proto.toByteArray());
-            message.setData(data);
+            DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
+            builder.setNamespace(NameNodeEnv.get().namespace());
+            builder.setType(proto.getClass().getCanonicalName());
+            builder.setEntity(proto.getFile().getPath());
+            builder.setTimestamp(System.currentTimeMillis());
+            builder.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
+            builder.setBody(ByteString.copyFrom(proto.toByteArray()));
+            message.setData(builder.build());
 
             return message;
         }
@@ -703,14 +715,14 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             DFSTruncateBlock proto = convertToProto();
 
             message.setKey(proto.getFile().getPath());
-            ChangeDeltaData data = new ChangeDeltaData();
-            data.setType(proto.getClass().getCanonicalName());
-            data.setEntity(proto.getFile().getPath());
-            data.setNamespace(NameNodeEnv.get().namespace());
-            data.setTimestamp(System.currentTimeMillis());
-            data.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
-            data.setData(proto.toByteArray());
-            message.setData(data);
+            DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
+            builder.setNamespace(NameNodeEnv.get().namespace());
+            builder.setType(proto.getClass().getCanonicalName());
+            builder.setEntity(proto.getFile().getPath());
+            builder.setTimestamp(System.currentTimeMillis());
+            builder.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
+            builder.setBody(ByteString.copyFrom(proto.toByteArray()));
+            message.setData(builder.build());
 
             return message;
         }
@@ -788,14 +800,14 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             DFSUpdateBlocks proto = convertToProto();
 
             message.setKey(proto.getFile().getPath());
-            ChangeDeltaData data = new ChangeDeltaData();
-            data.setType(proto.getClass().getCanonicalName());
-            data.setEntity(proto.getFile().getPath());
-            data.setNamespace(NameNodeEnv.get().namespace());
-            data.setTimestamp(System.currentTimeMillis());
-            data.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
-            data.setData(proto.toByteArray());
-            message.setData(data);
+            DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
+            builder.setNamespace(NameNodeEnv.get().namespace());
+            builder.setType(proto.getClass().getCanonicalName());
+            builder.setEntity(proto.getFile().getPath());
+            builder.setTimestamp(System.currentTimeMillis());
+            builder.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
+            builder.setBody(ByteString.copyFrom(proto.toByteArray()));
+            message.setData(builder.build());
 
             return message;
         }
@@ -875,14 +887,14 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             DFSRenameFile proto = convertToProto();
 
             message.setKey(proto.getDestFile().getPath());
-            ChangeDeltaData data = new ChangeDeltaData();
-            data.setType(proto.getClass().getCanonicalName());
-            data.setEntity(proto.getDestFile().getPath());
-            data.setNamespace(NameNodeEnv.get().namespace());
-            data.setTimestamp(System.currentTimeMillis());
-            data.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
-            data.setData(proto.toByteArray());
-            message.setData(data);
+            DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
+            builder.setNamespace(NameNodeEnv.get().namespace());
+            builder.setType(proto.getClass().getCanonicalName());
+            builder.setEntity(proto.getDestFile().getPath());
+            builder.setTimestamp(System.currentTimeMillis());
+            builder.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
+            builder.setBody(ByteString.copyFrom(proto.toByteArray()));
+            message.setData(builder.build());
 
             return message;
         }
@@ -941,14 +953,14 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             DFSIgnoreTx proto = convertToProto();
 
             message.setKey(NameNodeEnv.get().ignoreTnxKey());
-            ChangeDeltaData data = new ChangeDeltaData();
-            data.setType(proto.getClass().getCanonicalName());
-            data.setEntity(NameNodeEnv.get().ignoreTnxKey());
-            data.setNamespace(NameNodeEnv.get().namespace());
-            data.setTimestamp(System.currentTimeMillis());
-            data.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
-            data.setData(proto.toByteArray());
-            message.setData(data);
+            DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
+            builder.setNamespace(NameNodeEnv.get().namespace());
+            builder.setType(proto.getClass().getCanonicalName());
+            builder.setEntity("");
+            builder.setTimestamp(System.currentTimeMillis());
+            builder.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
+            builder.setBody(ByteString.copyFrom(proto.toByteArray()));
+            message.setData(builder.build());
 
             return message;
         }

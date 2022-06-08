@@ -106,3 +106,12 @@ message DFSIgnoreTx {
   DFSTransaction transaction = 1;
   string opCode = 2;
 }
+
+message DFSChangeDelta {
+  string namespace = 1;
+  string txId = 2;
+  string entity = 3;
+  string type = 4;
+  uint64 timestamp = 5;
+  bytes body = 6;
+}

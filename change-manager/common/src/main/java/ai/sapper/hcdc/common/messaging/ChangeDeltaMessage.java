@@ -1,18 +1,19 @@
 package ai.sapper.hcdc.common.messaging;
 
+import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import lombok.Getter;
 import lombok.NonNull;
 
 @Getter
-public class ChangeDeltaMessage implements IMessage<String, ChangeDeltaData> {
+public class ChangeDeltaMessage implements IMessage<String, DFSChangeDelta> {
     private String key;
-    private ChangeDeltaData data;
+    private DFSChangeDelta data;
 
     public void setKey(@NonNull String key) {
         this.key = key;
     }
 
-    public void setData(@NonNull ChangeDeltaData data) {
+    public void setData(@NonNull DFSChangeDelta data) {
         this.data = data;
     }
 
@@ -28,7 +29,7 @@ public class ChangeDeltaMessage implements IMessage<String, ChangeDeltaData> {
      * @return
      */
     @Override
-    public ChangeDeltaData value() {
+    public DFSChangeDelta value() {
         return data;
     }
 }

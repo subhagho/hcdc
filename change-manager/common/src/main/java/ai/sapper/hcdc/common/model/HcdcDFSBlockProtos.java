@@ -74,6 +74,11 @@ public final class HcdcDFSBlockProtos {
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_ai_sapper_hcdc_common_model_DFSIgnoreTx_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_ai_sapper_hcdc_common_model_DFSChangeDelta_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_ai_sapper_hcdc_common_model_DFSChangeDelta_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -143,8 +148,11 @@ public final class HcdcDFSBlockProtos {
       "\n\004NONE\020\000\022\r\n\tOVERWRITE\020\001\022\014\n\010TO_TRASH\020\002\"_\n" +
       "\013DFSIgnoreTx\022@\n\013transaction\030\001 \001(\0132+.ai_s" +
       "apper_hcdc_common_model.DFSTransaction\022\016",
-      "\n\006opCode\030\002 \001(\tB3\n\033ai.sapper.hcdc.common." +
-      "modelB\022HcdcDFSBlockProtosP\001b\006proto3"
+      "\n\006opCode\030\002 \001(\t\"p\n\016DFSChangeDelta\022\021\n\tname" +
+      "space\030\001 \001(\t\022\014\n\004txId\030\002 \001(\t\022\016\n\006entity\030\003 \001(" +
+      "\t\022\014\n\004type\030\004 \001(\t\022\021\n\ttimestamp\030\005 \001(\004\022\014\n\004bo" +
+      "dy\030\006 \001(\014B3\n\033ai.sapper.hcdc.common.modelB" +
+      "\022HcdcDFSBlockProtosP\001b\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -230,6 +238,12 @@ public final class HcdcDFSBlockProtos {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ai_sapper_hcdc_common_model_DFSIgnoreTx_descriptor,
         new java.lang.String[] { "Transaction", "OpCode", });
+    internal_static_ai_sapper_hcdc_common_model_DFSChangeDelta_descriptor =
+      getDescriptor().getMessageTypes().get(12);
+    internal_static_ai_sapper_hcdc_common_model_DFSChangeDelta_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_ai_sapper_hcdc_common_model_DFSChangeDelta_descriptor,
+        new java.lang.String[] { "Namespace", "TxId", "Entity", "Type", "Timestamp", "Body", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)
