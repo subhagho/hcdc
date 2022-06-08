@@ -1,5 +1,6 @@
 package org.apache.hadoop.hdfs.server.namenode;
 
+import ai.sapper.hcdc.agents.namenode.model.NameNodeAgentState;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
@@ -28,14 +29,6 @@ public class ZkStateManager {
         public static final String ZK_PATH_SUFFIX = "/hcdc/agent/namenode";
     }
 
-    @Getter
-    @Setter
-    public static class NameNodeAgentState {
-        private String namespace;
-        private long updatedTime;
-        private long lastTxId;
-    }
-
     private ZookeeperConnection connection;
     private ZkStateManagerConfig config;
     private String zkPath;
@@ -52,16 +45,16 @@ public class ZkStateManager {
             if (!connection.isConnected()) connection.connect();
             CuratorFramework client = connection().client();
 
-            zkPath = String.format("%s%s%s", basePath(), Constants.ZK_PATH_SUFFIX, namespace);
+            zkPath = String.format("%s%s/%s", basePath(), Constants.ZK_PATH_SUFFIX, namespace);
             if (client.checkExists().forPath(zkPath) == null) {
                 String path = client.create().creatingParentContainersIfNeeded().forPath(zkPath);
                 if (Strings.isNullOrEmpty(path)) {
                     throw new StateManagerError(String.format("Error creating ZK base path. [path=%s]", basePath()));
                 }
                 agentState = new NameNodeAgentState();
-                agentState.namespace = namespace;
-                agentState.lastTxId = 0;
-                agentState.updatedTime = 0;
+                agentState.setNamespace(namespace);
+                agentState.setLastTxId(0);
+                agentState.setUpdatedTime(0);
 
                 String json = mapper.writeValueAsString(agentState);
                 client.setData().forPath(zkPath, json.getBytes(StandardCharsets.UTF_8));
@@ -72,8 +65,8 @@ public class ZkStateManager {
                 }
                 String json = new String(data);
                 agentState = mapper.readValue(json, NameNodeAgentState.class);
-                if (agentState.namespace.compareTo(namespace) != 0) {
-                    throw new StateManagerError(String.format("Invalid state data: namespace mismatch. [expected=%s][actual=%s]", namespace, agentState.namespace));
+                if (agentState.getNamespace().compareTo(namespace) != 0) {
+                    throw new StateManagerError(String.format("Invalid state data: namespace mismatch. [expected=%s][actual=%s]", namespace, agentState.getNamespace()));
                 }
             }
             return this;
@@ -85,14 +78,14 @@ public class ZkStateManager {
     public NameNodeAgentState update(long txId) throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
-        Preconditions.checkArgument(txId > agentState.lastTxId);
+        Preconditions.checkArgument(txId > agentState.getLastTxId());
 
         synchronized (this) {
             try {
                 CuratorFramework client = connection().client();
 
-                agentState.lastTxId = txId;
-                agentState.updatedTime = System.currentTimeMillis();
+                agentState.setLastTxId(txId);
+                agentState.setUpdatedTime(System.currentTimeMillis());
 
                 String json = mapper.writeValueAsString(agentState);
                 client.setData().forPath(zkPath, json.getBytes(StandardCharsets.UTF_8));

@@ -12,7 +12,7 @@
         </connections>
         <state>
             <manager>
-                <basePath>/hcdc/agent/namenode</basePath>
+                <basePath>/test</basePath>
                 <connection>test-zk</connection>
             </manager>
         </state>
