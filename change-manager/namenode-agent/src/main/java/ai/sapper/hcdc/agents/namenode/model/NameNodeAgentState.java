@@ -1,12 +1,17 @@
 package ai.sapper.hcdc.agents.namenode.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import ai.sapper.hcdc.common.AbstractState;
 
-@Getter
-@Setter
 public class NameNodeAgentState {
-    private String namespace;
-    private long updatedTime;
-    private long lastTxId;
+    public enum EAgentState {
+        Unknown, Active, StandBy, Error, Stopped
+    }
+
+    public static class AgentState extends AbstractState<EAgentState> {
+
+        public AgentState() {
+            super(EAgentState.Error);
+            state(EAgentState.Unknown);
+        }
+    }
 }

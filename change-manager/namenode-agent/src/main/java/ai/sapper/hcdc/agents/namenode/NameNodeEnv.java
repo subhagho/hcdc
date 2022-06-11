@@ -1,7 +1,9 @@
 package ai.sapper.hcdc.agents.namenode;
 
+import ai.sapper.hcdc.agents.namenode.model.NameNodeAgentState;
 import ai.sapper.hcdc.common.AbstractState;
 import ai.sapper.hcdc.common.ConfigReader;
+import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.common.utils.NetUtils;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
@@ -39,6 +41,8 @@ public class NameNodeEnv {
     private ZkStateManager stateManager;
     private List<InetAddress> hostIPs;
     private HierarchicalConfiguration<ImmutableNode> hdfsConfig;
+
+    private final NameNodeAgentState.AgentState agentState = new NameNodeAgentState.AgentState();
 
     public NameNodeEnv init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig, String pathPrefix) throws NameNodeError {
         try {
@@ -88,9 +92,20 @@ public class NameNodeEnv {
     }
 
     public ENameNEnvState stop() {
+        if (agentState.state() == NameNodeAgentState.EAgentState.Active
+                || agentState.state() == NameNodeAgentState.EAgentState.StandBy) {
+            agentState.state(NameNodeAgentState.EAgentState.Stopped);
+        }
         if (state.isAvailable()) {
+            try {
+                stateManager.heartbeat(config.nnInstanceName, agentState);
+            } catch (Exception ex) {
+                DefaultLogger.__LOG.error(ex.getLocalizedMessage());
+                DefaultLogger.__LOG.debug(DefaultLogger.stacktrace(ex));
+            }
             state.state(ENameNEnvState.Disposed);
         }
+
         return state.state();
     }
 
@@ -185,6 +200,7 @@ public class NameNodeEnv {
         private String hadoopHome;
         private String hadoopConfFile;
         private String nnDataDir;
+        private String nnInstanceName;
 
         public NameNEnvConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config, @NonNull String path) {
             super(config, path);

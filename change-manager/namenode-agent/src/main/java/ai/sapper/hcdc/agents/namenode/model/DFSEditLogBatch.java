@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.agents.namenode.model;
 
+import ai.sapper.hcdc.agents.namenode.DFSEditsFileFinder;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
@@ -17,9 +18,6 @@ import java.util.regex.Pattern;
 @Setter
 @Accessors(fluent = true)
 public class DFSEditLogBatch {
-
-    private static final String REGEX_CURRENT_FILE = "edits_inprogress_(\\d+$)";
-    private static final String REGEX_EDIT_LOG_FILE = "edits_(\\d+)-(\\d+$)";
     private final String filename;
 
     private long version;
@@ -38,7 +36,7 @@ public class DFSEditLogBatch {
             throw new IOException(String.format("DFS Edit Log: File not found. [path=%s]", inf.getAbsolutePath()));
         }
         String name = inf.getName();
-        Pattern pattern = Pattern.compile(REGEX_CURRENT_FILE);
+        Pattern pattern = Pattern.compile(DFSEditsFileFinder.REGEX_CURRENT_FILE);
         Matcher matcher = pattern.matcher(name);
         if (matcher.matches()) {
             String sTnxId = matcher.group(1);
@@ -48,7 +46,7 @@ public class DFSEditLogBatch {
             startTnxId = Long.parseLong(sTnxId);
             isCurrent = true;
         } else {
-            pattern = Pattern.compile(REGEX_EDIT_LOG_FILE);
+            pattern = Pattern.compile(DFSEditsFileFinder.REGEX_EDIT_LOG_FILE);
             matcher = pattern.matcher(name);
             if (!matcher.matches()) {
                 throw new IOException(String.format("Invalid Edit Log file. [name=%s][path=%s]", name, inf.getAbsolutePath()));

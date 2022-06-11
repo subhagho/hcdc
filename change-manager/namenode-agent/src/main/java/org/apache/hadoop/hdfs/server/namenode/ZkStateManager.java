@@ -1,25 +1,23 @@
 package org.apache.hadoop.hdfs.server.namenode;
 
 import ai.sapper.hcdc.agents.namenode.model.NameNodeAgentState;
+import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
-import ai.sapper.hcdc.core.connections.state.DFSFileState;
 import ai.sapper.hcdc.core.connections.state.StateManagerError;
+import ai.sapper.hcdc.core.model.Heartbeat;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.curator.framework.CuratorFramework;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 @Getter
@@ -27,12 +25,13 @@ import java.nio.charset.StandardCharsets;
 public class ZkStateManager {
     public static class Constants {
         public static final String ZK_PATH_SUFFIX = "/hcdc/agent/namenode";
+        public static final String ZK_PATH_HEARTBEAT = "/heartbeat";
     }
 
     private ZookeeperConnection connection;
     private ZkStateManagerConfig config;
     private String zkPath;
-    private NameNodeAgentState agentState;
+    private NameNodeTxState agentTxState;
     private ObjectMapper mapper = new ObjectMapper();
 
     public ZkStateManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
@@ -51,12 +50,12 @@ public class ZkStateManager {
                 if (Strings.isNullOrEmpty(path)) {
                     throw new StateManagerError(String.format("Error creating ZK base path. [path=%s]", basePath()));
                 }
-                agentState = new NameNodeAgentState();
-                agentState.setNamespace(namespace);
-                agentState.setLastTxId(0);
-                agentState.setUpdatedTime(0);
+                agentTxState = new NameNodeTxState();
+                agentTxState.setNamespace(namespace);
+                agentTxState.setLastTxId(0);
+                agentTxState.setUpdatedTime(0);
 
-                String json = mapper.writeValueAsString(agentState);
+                String json = mapper.writeValueAsString(agentTxState);
                 client.setData().forPath(zkPath, json.getBytes(StandardCharsets.UTF_8));
             } else {
                 byte[] data = client.getData().forPath(zkPath);
@@ -64,9 +63,9 @@ public class ZkStateManager {
                     throw new StateManagerError(String.format("ZooKeeper state data corrupted. [path=%s]", zkPath));
                 }
                 String json = new String(data);
-                agentState = mapper.readValue(json, NameNodeAgentState.class);
-                if (agentState.getNamespace().compareTo(namespace) != 0) {
-                    throw new StateManagerError(String.format("Invalid state data: namespace mismatch. [expected=%s][actual=%s]", namespace, agentState.getNamespace()));
+                agentTxState = mapper.readValue(json, NameNodeTxState.class);
+                if (agentTxState.getNamespace().compareTo(namespace) != 0) {
+                    throw new StateManagerError(String.format("Invalid state data: namespace mismatch. [expected=%s][actual=%s]", namespace, agentTxState.getNamespace()));
                 }
             }
             return this;
@@ -75,22 +74,50 @@ public class ZkStateManager {
         }
     }
 
-    public NameNodeAgentState update(long txId) throws StateManagerError {
+    public NameNodeTxState update(long txId, @NonNull String currentEditsLog) throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
-        Preconditions.checkArgument(txId > agentState.getLastTxId());
+        Preconditions.checkArgument(txId > agentTxState.getLastTxId());
 
         synchronized (this) {
             try {
                 CuratorFramework client = connection().client();
 
-                agentState.setLastTxId(txId);
-                agentState.setUpdatedTime(System.currentTimeMillis());
+                agentTxState.setLastTxId(txId);
+                agentTxState.setUpdatedTime(System.currentTimeMillis());
+                agentTxState.setCurrentEditsLogFile(currentEditsLog);
 
-                String json = mapper.writeValueAsString(agentState);
+                String json = mapper.writeValueAsString(agentTxState);
                 client.setData().forPath(zkPath, json.getBytes(StandardCharsets.UTF_8));
 
-                return agentState;
+                return agentTxState;
+            } catch (Exception ex) {
+                throw new StateManagerError(ex);
+            }
+        }
+    }
+
+    public Heartbeat heartbeat(@NonNull String name, @NonNull NameNodeAgentState.AgentState state) throws StateManagerError {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
+        synchronized (this) {
+            try {
+                CuratorFramework client = connection().client();
+                String path = String.format("%s/%s", zkPath, Constants.ZK_PATH_HEARTBEAT);
+
+                Heartbeat heartbeat = new Heartbeat();
+                heartbeat.setName(name);
+                heartbeat.setType(state.getClass().getCanonicalName());
+                heartbeat.setState(state.state().name());
+                if (state.hasError()) {
+                    heartbeat.setError(state.error());
+                }
+                heartbeat.setTimestamp(System.currentTimeMillis());
+
+                String json = mapper.writeValueAsString(heartbeat);
+                client.setData().forPath(path, json.getBytes(StandardCharsets.UTF_8));
+
+                return heartbeat;
             } catch (Exception ex) {
                 throw new StateManagerError(ex);
             }
