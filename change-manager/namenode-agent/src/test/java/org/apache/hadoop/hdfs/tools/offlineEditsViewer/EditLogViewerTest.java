@@ -37,7 +37,7 @@ class EditLogViewerTest {
     @Test
     void runFor() {
         try {
-            List<DFSEditLogBatch> batches = EditsLogViewer.runFor(SOURCE_DIR, 7, 24);
+            List<DFSEditLogBatch> batches = EditsLogViewer.readEditsInRange(SOURCE_DIR, 7, 24);
             assertNotNull(batches);
             for (DFSEditLogBatch batch : batches) {
                 List<DFSTransactionType<?>> transactions = batch.transactions();

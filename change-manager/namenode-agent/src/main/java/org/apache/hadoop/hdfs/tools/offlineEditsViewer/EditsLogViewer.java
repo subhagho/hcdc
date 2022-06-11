@@ -40,7 +40,7 @@ public class EditsLogViewer {
         run(filename, -1, -1);
     }
 
-    public static List<DFSEditLogBatch> runFor(@NonNull String dir, long startTxId, long endTxId) throws DFSAgentError {
+    public static List<DFSEditLogBatch> readEditsInRange(@NonNull String dir, long startTxId, long endTxId) throws DFSAgentError {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(dir));
 
         try {

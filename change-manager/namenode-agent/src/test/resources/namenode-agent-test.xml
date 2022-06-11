@@ -2,6 +2,7 @@
 <configuration>
     <agent>
         <namespace>ha-cluster</namespace>
+        <instance>nn1</instance>
         <hadoop>
             <home>/opt/hadoop</home>
             <config>src/test/resources/hdfs-site.xml</config>
@@ -12,7 +13,7 @@
         </connections>
         <state>
             <manager>
-                <basePath>/test</basePath>
+                <basePath>/local/test</basePath>
                 <connection>test-zk</connection>
             </manager>
         </state>

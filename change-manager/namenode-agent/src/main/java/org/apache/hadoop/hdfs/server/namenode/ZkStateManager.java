@@ -3,6 +3,7 @@ package org.apache.hadoop.hdfs.server.namenode;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeAgentState;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
 import ai.sapper.hcdc.common.ConfigReader;
+import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
 import ai.sapper.hcdc.core.connections.state.StateManagerError;
@@ -32,7 +33,7 @@ public class ZkStateManager {
     private ZkStateManagerConfig config;
     private String zkPath;
     private NameNodeTxState agentTxState;
-    private ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
 
     public ZkStateManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                                @NonNull ConnectionManager manger, @NonNull String namespace) throws StateManagerError {
@@ -44,7 +45,7 @@ public class ZkStateManager {
             if (!connection.isConnected()) connection.connect();
             CuratorFramework client = connection().client();
 
-            zkPath = String.format("%s%s/%s", basePath(), Constants.ZK_PATH_SUFFIX, namespace);
+            zkPath = PathUtils.formatZkPath(String.format("%s%s/%s", basePath(), Constants.ZK_PATH_SUFFIX, namespace));
             if (client.checkExists().forPath(zkPath) == null) {
                 String path = client.create().creatingParentContainersIfNeeded().forPath(zkPath);
                 if (Strings.isNullOrEmpty(path)) {
@@ -103,8 +104,13 @@ public class ZkStateManager {
         synchronized (this) {
             try {
                 CuratorFramework client = connection().client();
-                String path = String.format("%s/%s", zkPath, Constants.ZK_PATH_HEARTBEAT);
-
+                String path = PathUtils.formatZkPath(String.format("%s/%s", zkPath, Constants.ZK_PATH_HEARTBEAT));
+                if (client.checkExists().forPath(path) == null) {
+                    path = client.create().creatingParentContainersIfNeeded().forPath(path);
+                    if (Strings.isNullOrEmpty(path)) {
+                        throw new StateManagerError(String.format("Error creating ZK base path. [path=%s]", basePath()));
+                    }
+                }
                 Heartbeat heartbeat = new Heartbeat();
                 heartbeat.setName(name);
                 heartbeat.setType(state.getClass().getCanonicalName());
@@ -121,6 +127,26 @@ public class ZkStateManager {
             } catch (Exception ex) {
                 throw new StateManagerError(ex);
             }
+        }
+    }
+
+    public Heartbeat heartbeat(@NonNull String name) throws StateManagerError {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
+
+        try {
+            CuratorFramework client = connection().client();
+            String path = PathUtils.formatZkPath(String.format("%s/%s", zkPath, Constants.ZK_PATH_HEARTBEAT));
+            if (client.checkExists().forPath(path) != null) {
+                byte[] data = client.getData().forPath(path);
+                if (data != null && data.length > 0) {
+                    String json = new String(data, StandardCharsets.UTF_8);
+                    return mapper.readValue(json, Heartbeat.class);
+                }
+            }
+            return null;
+        } catch (Exception ex) {
+            throw new StateManagerError(ex);
         }
     }
 

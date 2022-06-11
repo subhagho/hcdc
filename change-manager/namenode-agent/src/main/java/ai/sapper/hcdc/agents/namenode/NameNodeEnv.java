@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.agents.namenode;
 
 import ai.sapper.hcdc.agents.namenode.model.NameNodeAgentState;
+import ai.sapper.hcdc.agents.namenode.model.NameNodeStatus;
 import ai.sapper.hcdc.common.AbstractState;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
@@ -24,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.net.InetAddress;
 import java.util.List;
+import java.util.Properties;
 
 @Getter
 @Accessors(fluent = true)
@@ -41,6 +43,7 @@ public class NameNodeEnv {
     private ZkStateManager stateManager;
     private List<InetAddress> hostIPs;
     private HierarchicalConfiguration<ImmutableNode> hdfsConfig;
+    private NameNodeAdminClient adminClient;
 
     private final NameNodeAgentState.AgentState agentState = new NameNodeAgentState.AgentState();
 
@@ -66,8 +69,17 @@ public class NameNodeEnv {
 
             readHdfsConfig();
 
+            adminClient = new NameNodeAdminClient(config.nameNodeAdminUrl);
+
             stateManager = new ZkStateManager();
             stateManager.init(configNode, connectionManager, config.namespace);
+
+            NameNodeStatus status = adminClient().status();
+            if (status != null) {
+                agentState.parseState(status.getState());
+            }
+
+            stateManager.heartbeat(config.nameNodeInstanceName, agentState);
 
             state.state(ENameNEnvState.Initialized);
             return this;
@@ -85,10 +97,56 @@ public class NameNodeEnv {
         Configurations configs = new Configurations();
         hdfsConfig = configs.xml(cf);
 
-        List<HierarchicalConfiguration<ImmutableNode>> properties = hdfsConfig.configurationsAt(NameNEnvConfig.Constants.HDFS_CONFIG_PROPERTY);
-        if (properties == null || properties.isEmpty()) {
+        List<HierarchicalConfiguration<ImmutableNode>> nodes = hdfsConfig.configurationsAt(NameNEnvConfig.Constants.HDFS_CONFIG_PROPERTY);
+        if (nodes == null || nodes.isEmpty()) {
             throw new ConfigurationException(String.format("Failed to read HDFS configuration. [file=%s]", cf.getAbsolutePath()));
         }
+        Properties props = new Properties();
+        for (HierarchicalConfiguration<ImmutableNode> node : nodes) {
+            String sn = node.getString(NameNEnvConfig.Constants.HDFS_CONFIG_PROPERTY_NAME);
+            String vn = node.getString(NameNEnvConfig.Constants.HDFS_CONFIG_PROPERTY_VALUE);
+            if (!Strings.isNullOrEmpty(sn)) {
+                props.put(sn, vn);
+            }
+        }
+        config.nameNodeDataDir = props.getProperty(NameNEnvConfig.Constants.HDFS_NN_DATA_DIR);
+        if (Strings.isNullOrEmpty(config.nameNodeDataDir)) {
+            throw new Exception(String.format("HDFS Configuration not found. [name=%s][file=%s]",
+                    NameNEnvConfig.Constants.HDFS_NN_DATA_DIR, cf.getAbsolutePath()));
+        }
+        String ns = props.getProperty(NameNEnvConfig.Constants.HDFS_NN_NAMESPACE);
+        if (Strings.isNullOrEmpty(ns)) {
+            throw new Exception(String.format("HDFS Configuration not found. [name=%s][file=%s]",
+                    NameNEnvConfig.Constants.HDFS_NN_NAMESPACE, cf.getAbsolutePath()));
+        }
+        if (ns.compareToIgnoreCase(config.namespace) != 0) {
+            throw new Exception(String.format("HDFS Namespace mismatch. [expected=%s][actual=%s]", ns, config.namespace));
+        }
+        String nnKey = String.format(NameNEnvConfig.Constants.HDFS_NN_NODES, ns);
+        String nns = props.getProperty(nnKey);
+        if (Strings.isNullOrEmpty(nns)) {
+            throw new Exception(String.format("HDFS Configuration not found. [name=%s][file=%s]", nnKey, cf.getAbsolutePath()));
+        }
+        String[] parts = nns.split(",");
+        String nn = null;
+        for (String part : parts) {
+            if (part.trim().compareToIgnoreCase(config.nameNodeInstanceName) == 0) {
+                nn = part.trim();
+                break;
+            }
+        }
+        if (Strings.isNullOrEmpty(nn)) {
+            throw new Exception(
+                    String.format("NameNode instance not found in HDFS configuration. [instance=%s][namenodes=%s][file=%s]",
+                            config.nameNodeInstanceName, nns, cf.getAbsolutePath()));
+        }
+        LOG.info(String.format("Using NameNode instance [%s.%s]", ns, nn));
+        String urlKey = String.format(NameNEnvConfig.Constants.HDFS_NN_HTTP_ADDR, ns, nn);
+        config.nameNodeAdminUrl = props.getProperty(urlKey);
+        if (Strings.isNullOrEmpty(config.nameNodeAdminUrl)) {
+            throw new Exception(String.format("NameNode Admin URL not found. [name=%s][file=%s]", urlKey, cf.getAbsolutePath()));
+        }
+        LOG.info(String.format("Using NameNode Admin UR [%s]", config.nameNodeAdminUrl));
     }
 
     public ENameNEnvState stop() {
@@ -98,7 +156,7 @@ public class NameNodeEnv {
         }
         if (state.isAvailable()) {
             try {
-                stateManager.heartbeat(config.nnInstanceName, agentState);
+                stateManager.heartbeat(config.nameNodeInstanceName, agentState);
             } catch (Exception ex) {
                 DefaultLogger.__LOG.error(ex.getLocalizedMessage());
                 DefaultLogger.__LOG.debug(DefaultLogger.stacktrace(ex));
@@ -177,6 +235,7 @@ public class NameNodeEnv {
     public static class NameNEnvConfig extends ConfigReader {
         private static class Constants {
             private static final String CONFIG_NAMESPACE = "namespace";
+            private static final String CONFIG_INSTANCE = "instance";
             private static final String CONFIG_CONNECTIONS = "connections.path";
             private static final String CONFIG_CONNECTION_HDFS = "connections.hdfs-admin";
 
@@ -195,12 +254,13 @@ public class NameNodeEnv {
         }
 
         private String namespace;
+        private String nameNodeInstanceName;
         private String connectionConfigPath;
         private String hdfsAdminConnection;
         private String hadoopHome;
         private String hadoopConfFile;
-        private String nnDataDir;
-        private String nnInstanceName;
+        private String nameNodeDataDir;
+        private String nameNodeAdminUrl;
 
         public NameNEnvConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config, @NonNull String path) {
             super(config, path);
@@ -214,6 +274,10 @@ public class NameNodeEnv {
                 namespace = get().getString(Constants.CONFIG_NAMESPACE);
                 if (Strings.isNullOrEmpty(namespace)) {
                     throw new ConfigurationException(String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_NAMESPACE));
+                }
+                nameNodeInstanceName = get().getString(Constants.CONFIG_INSTANCE);
+                if (Strings.isNullOrEmpty(nameNodeInstanceName)) {
+                    throw new ConfigurationException(String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_INSTANCE));
                 }
                 connectionConfigPath = get().getString(Constants.CONFIG_CONNECTIONS);
                 if (Strings.isNullOrEmpty(connectionConfigPath)) {
