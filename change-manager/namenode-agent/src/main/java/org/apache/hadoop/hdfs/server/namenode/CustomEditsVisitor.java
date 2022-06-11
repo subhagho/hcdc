@@ -12,11 +12,23 @@ import java.io.IOException;
 @Getter
 public class CustomEditsVisitor implements OfflineEditsVisitor {
     private int version;
+    private long startTxId = -1;
+    private long endTxId = -1;
     private final DFSEditLogBatch batch;
     private DFSEditLogParser parser;
 
     public CustomEditsVisitor(@NonNull String filename) {
         batch = new DFSEditLogBatch(filename);
+    }
+
+    public CustomEditsVisitor withStartTxId(long startTxId) {
+        this.startTxId = startTxId;
+        return this;
+    }
+
+    public CustomEditsVisitor withEndTxId(long endTxId) {
+        this.endTxId = endTxId;
+        return this;
     }
 
     /**
@@ -32,7 +44,7 @@ public class CustomEditsVisitor implements OfflineEditsVisitor {
         batch.version(version);
         batch.setup();
 
-        parser = new DFSEditLogParser();
+        parser = new DFSEditLogParser().withStartTxId(startTxId).withEndTxId(endTxId);
     }
 
     /**
