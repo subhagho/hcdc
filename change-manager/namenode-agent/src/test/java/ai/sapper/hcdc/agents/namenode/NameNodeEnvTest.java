@@ -1,6 +1,5 @@
 package ai.sapper.hcdc.agents.namenode;
 
-import ai.sapper.hcdc.agents.namenode.model.NameNodeAgentState;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.model.Heartbeat;
 import com.google.common.base.Preconditions;

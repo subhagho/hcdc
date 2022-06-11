@@ -4,7 +4,6 @@ import ai.sapper.hcdc.agents.namenode.model.JMXResponse;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeStatus;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Strings;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
@@ -13,9 +12,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 
-import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriBuilder;
 
 
 @Getter

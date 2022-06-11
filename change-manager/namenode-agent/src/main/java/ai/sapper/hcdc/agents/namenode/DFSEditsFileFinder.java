@@ -4,7 +4,6 @@ import com.google.common.base.Strings;
 import lombok.NonNull;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
