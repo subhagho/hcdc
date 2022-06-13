@@ -26,4 +26,5 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-jetty:2.7.0'
 
     implementation 'com.opencsv:opencsv:5.6'
+    implementation 'org.apache.parquet:parquet-hadoop-bundle:1.12.3'
 }

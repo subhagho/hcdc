@@ -17,16 +17,16 @@ import java.util.*;
 @Getter
 @Accessors(fluent = true)
 public abstract class InputDataReader<T> {
-    public enum EDataType {
+    public enum EInputFormat {
         CVS
     }
 
-    private final EDataType dataType;
+    private final EInputFormat dataType;
     private final String filename;
     private final List<T> records = new ArrayList<>();
     private final Map<String, Integer> header = new HashMap<>();
 
-    public InputDataReader(@NonNull String filename, @NonNull EDataType dataType) {
+    public InputDataReader(@NonNull String filename, @NonNull InputDataReader.EInputFormat dataType) {
         this.filename = filename;
         this.dataType = dataType;
     }

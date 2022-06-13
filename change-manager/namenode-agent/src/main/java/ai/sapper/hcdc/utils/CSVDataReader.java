@@ -1,7 +1,6 @@
 package ai.sapper.hcdc.utils;
 
 import ai.sapper.hcdc.common.utils.DefaultLogger;
-import com.google.common.base.Strings;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReaderHeaderAware;
@@ -15,11 +14,13 @@ import java.util.List;
 import java.util.Map;
 
 public class CSVDataReader extends InputDataReader<List<String>> {
+
     private char separator = ',';
 
     public CSVDataReader(@NonNull String filename, char separator) {
-        super(filename, EDataType.CVS);
-        this.separator = separator;
+        super(filename, EInputFormat.CVS);
+        if (separator != Character.MIN_VALUE)
+            this.separator = separator;
     }
 
     /**
