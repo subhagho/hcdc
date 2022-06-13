@@ -17,6 +17,7 @@
                 <connection>test-zk</connection>
             </manager>
         </state>
+        <useSSL>false</useSSL>
     </agent>
     <config>
         <connections>

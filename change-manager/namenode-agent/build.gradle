@@ -24,4 +24,6 @@ dependencies {
         exclude group: 'org.apache.logging.log4j', module: 'log4j-to-slf4j'
     }
     implementation 'org.springframework.boot:spring-boot-starter-jetty:2.7.0'
+
+    implementation 'com.opencsv:opencsv:5.6'
 }

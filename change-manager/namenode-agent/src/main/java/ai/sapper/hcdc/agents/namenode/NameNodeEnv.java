@@ -69,7 +69,7 @@ public class NameNodeEnv {
 
             readHdfsConfig();
 
-            adminClient = new NameNodeAdminClient(config.nameNodeAdminUrl);
+            adminClient = new NameNodeAdminClient(config.nameNodeAdminUrl, config.useSSL);
 
             stateManager = new ZkStateManager();
             stateManager.init(configNode, connectionManager, config.namespace);
@@ -77,6 +77,8 @@ public class NameNodeEnv {
             NameNodeStatus status = adminClient().status();
             if (status != null) {
                 agentState.parseState(status.getState());
+            } else {
+                throw new NameNodeError(String.format("Error fetching NameNode status. [url=%s]", adminClient.url()));
             }
 
             stateManager.heartbeat(config.nameNodeInstanceName, agentState);
@@ -141,7 +143,7 @@ public class NameNodeEnv {
                             config.nameNodeInstanceName, nns, cf.getAbsolutePath()));
         }
         LOG.info(String.format("Using NameNode instance [%s.%s]", ns, nn));
-        String urlKey = String.format(NameNEnvConfig.Constants.HDFS_NN_HTTP_ADDR, ns, nn);
+        String urlKey = String.format(NameNEnvConfig.Constants.HDFS_NN_URL, ns, nn);
         config.nameNodeAdminUrl = props.getProperty(urlKey);
         if (Strings.isNullOrEmpty(config.nameNodeAdminUrl)) {
             throw new Exception(String.format("NameNode Admin URL not found. [name=%s][file=%s]", urlKey, cf.getAbsolutePath()));
@@ -250,7 +252,9 @@ public class NameNodeEnv {
             private static final String HDFS_NN_DATA_DIR = "dfs.namenode.name.dir";
             private static final String HDFS_NN_NAMESPACE = "dfs.nameservices";
             private static final String HDFS_NN_NODES = "dfs.ha.namenodes.%s";
-            private static final String HDFS_NN_HTTP_ADDR = "dfs.namenode.http-address.%s.%s";
+            private static final String HDFS_NN_URL = "dfs.namenode.http-address.%s.%s";
+
+            private static final String HDFS_NN_USE_HTTPS = "useSSL";
         }
 
         private String namespace;
@@ -261,6 +265,7 @@ public class NameNodeEnv {
         private String hadoopConfFile;
         private String nameNodeDataDir;
         private String nameNodeAdminUrl;
+        private boolean useSSL = true;
 
         public NameNEnvConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config, @NonNull String path) {
             super(config, path);
@@ -296,6 +301,10 @@ public class NameNodeEnv {
                 hadoopConfFile = get().getString(Constants.CONFIG_HADOOP_CONFIG);
                 if (Strings.isNullOrEmpty(hadoopConfFile)) {
                     throw new ConfigurationException(String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_HADOOP_CONFIG));
+                }
+                String s = get().getString(Constants.HDFS_NN_USE_HTTPS);
+                if (!Strings.isNullOrEmpty(s)) {
+                    useSSL = Boolean.parseBoolean(s);
                 }
             } catch (Throwable t) {
                 throw new ConfigurationException("Error processing HDFS configuration.", t);

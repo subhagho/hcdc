@@ -1,8 +1,8 @@
 package ai.sapper.hcdc.agents.namenode;
 
-import ai.sapper.hcdc.agents.namenode.model.JMXResponse;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeStatus;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
+import ai.sapper.hcdc.core.model.JMXResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
@@ -13,6 +13,7 @@ import lombok.NonNull;
 import lombok.experimental.Accessors;
 
 import javax.ws.rs.core.MediaType;
+import java.util.Map;
 
 
 @Getter
@@ -20,14 +21,19 @@ import javax.ws.rs.core.MediaType;
 public class NameNodeAdminClient {
     public static class Constants {
         public static String PATH_NN_STATUS = "jmx?qry=Hadoop:service=NameNode,name=NameNodeStatus";
+        public static String REGEX_NAME = ".*(service=NameNode,name=NameNodeStatus)";
     }
 
     private final ObjectMapper mapper = new ObjectMapper();
     private final String url;
 
-    public NameNodeAdminClient(@NonNull String url) {
+    public NameNodeAdminClient(@NonNull String url, boolean useSSL) {
         if (!url.startsWith("http")) {
-            url = String.format("http://%s", url);
+            if (useSSL) {
+                url = String.format("https://%s", url);
+            } else {
+                url = String.format("http://%s", url);
+            }
         }
         this.url = url;
     }
@@ -41,9 +47,9 @@ public class NameNodeAdminClient {
             WebResource wr = client.resource(up);
             String json = wr.accept(MediaType.APPLICATION_JSON).get(String.class);
             JMXResponse response = mapper.readValue(json, JMXResponse.class);
-
-            if (response.getBeans() != null && !response.getBeans().isEmpty()) {
-                NameNodeStatus status = new NameNodeStatus().parse(response.getBeans().get(0));
+            Map<String, String> bean = response.findBeanByName(Constants.REGEX_NAME);
+            if (bean != null) {
+                NameNodeStatus status = new NameNodeStatus().parse(bean);
                 DefaultLogger.__LOG.info(
                         String.format("[%s] Received NN state [State=%s][Transition Time=%d]",
                                 status.getHost(), status.getState(), status.getLastHATransitionTime()));
