@@ -1,6 +1,5 @@
 package ai.sapper.hcdc.utils;
 
-import ai.sapper.hcdc.agents.namenode.NameNodeEnv;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
@@ -21,14 +20,17 @@ import org.apache.hadoop.fs.Path;
 
 import javax.naming.ConfigurationException;
 import java.io.File;
+import java.util.List;
 
 public class HadoopDataLoader {
     @Parameter(names = {"--config", "-c"}, description = "Configuration File path", required = true)
     private String configfile;
-    @Parameter(names = {"--type", "-t"}, description = "File extention to load", required = true)
-    private String type;
+    @Parameter(names = {"--input", "-i"}, description = "Input Data Format (CSV)", required = true)
+    private String inputFormat;
     @Parameter(names = {"--data", "-d"}, description = "Directory path to load data from.", required = true)
     private String dataFolder;
+    @Parameter(names = {"--output", "-o"}, description = "Output Data Format (Parquet, Avro)", required = true)
+    private String outputFormat;
     private HierarchicalConfiguration<ImmutableNode> config;
     private LoaderConfig loaderConfig;
     private ConnectionManager connectionManager;
@@ -52,11 +54,30 @@ public class HadoopDataLoader {
             if (!fs.exists(basePath)) {
                 fs.mkdirs(basePath);
             }
+            read(new File(dataFolder));
+
         } catch (Throwable t) {
             DefaultLogger.__LOG.error(t.getLocalizedMessage());
             DefaultLogger.__LOG.debug(DefaultLogger.stacktrace(t));
             throw new Exception(t);
         }
+    }
+
+    private void read(@NonNull File dir) throws Exception {
+        Preconditions.checkArgument(dir.isDirectory());
+        File[] files = dir.listFiles();
+        if (files != null && files.length > 0) {
+            for (File file : files) {
+                if (file.isDirectory()) read(file);
+                if (InputDataReader.EInputFormat.isValidFile(file.getName())) {
+                    process(file);
+                }
+            }
+        }
+    }
+
+    private void process(@NonNull File file) throws Exception {
+
     }
 
     private XMLConfiguration readConfigFile(@NonNull String configFile) throws Exception {
@@ -66,6 +87,30 @@ public class HadoopDataLoader {
         }
         Configurations configs = new Configurations();
         return configs.xml(cf);
+    }
+
+    private InputDataReader<List<String>> getReader(String filename) throws Exception {
+        InputDataReader.EInputFormat f = InputDataReader.EInputFormat.parse(inputFormat);
+        if (f == null) {
+            throw new Exception(String.format("Invalid Input format type. [type=%s]", inputFormat));
+        }
+        switch (f) {
+            case CVS:
+                return new CSVDataReader(filename, ',');
+        }
+        throw new Exception(String.format("Input format not supported. [format=%s]", f.name()));
+    }
+
+    private OutputDataWriter<List<String>> getWriter(String dir, String filename) throws Exception {
+        OutputDataWriter.EOutputFormat f = OutputDataWriter.EOutputFormat.parse(outputFormat);
+        if (f == null) {
+            throw new Exception(String.format("Invalid Output format type. [type=%s]", outputFormat));
+        }
+        switch (f) {
+            case Parquet:
+                return new ParquetDataWriter(dir, filename, fs);
+        }
+        throw new Exception(String.format("Output format not supported. [format=%s]", f.name()));
     }
 
     @Getter

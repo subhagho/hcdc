@@ -18,7 +18,25 @@ import java.util.*;
 @Accessors(fluent = true)
 public abstract class InputDataReader<T> {
     public enum EInputFormat {
-        CVS
+        CVS;
+
+        public static boolean isValidFile(@NonNull String filename) {
+            String[] parts = filename.split("\\.");
+            if (parts.length > 1) {
+                String ext = parts[parts.length - 1];
+                for (EInputFormat f : EInputFormat.values()) {
+                    if (f.name().compareToIgnoreCase(ext) == 0) return true;
+                }
+            }
+            return false;
+        }
+
+        public static EInputFormat parse(@NonNull String value) {
+            for (EInputFormat f : EInputFormat.values()) {
+                if (f.name().compareToIgnoreCase(value) == 0) return f;
+            }
+            return null;
+        }
     }
 
     private final EInputFormat dataType;

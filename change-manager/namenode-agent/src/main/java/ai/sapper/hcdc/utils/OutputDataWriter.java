@@ -14,7 +14,18 @@ import java.util.Map;
 public abstract class OutputDataWriter<T> {
 
     public enum EOutputFormat {
-        Parquet, Avro
+        Parquet, Avro;
+
+        public static String getExt(@NonNull EOutputFormat f) {
+            return f.name().toLowerCase();
+        }
+
+        public static EOutputFormat parse(@NonNull String value) {
+            for (EOutputFormat f : EOutputFormat.values()) {
+                if (f.name().compareToIgnoreCase(value) == 0) return f;
+            }
+            return null;
+        }
     }
 
     private final String path;
@@ -29,5 +40,5 @@ public abstract class OutputDataWriter<T> {
         this.format = format;
     }
 
-    public abstract void write(@NonNull Map<String, Integer> header, @NonNull List<T> records) throws IOException;
+    public abstract void write(String name, @NonNull Map<String, Integer> header, @NonNull List<T> records) throws IOException;
 }
