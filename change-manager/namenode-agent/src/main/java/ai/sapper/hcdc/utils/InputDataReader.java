@@ -5,20 +5,13 @@ import lombok.NonNull;
 import lombok.experimental.Accessors;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Getter
 @Accessors(fluent = true)
 public abstract class InputDataReader<T> {
     public enum EInputFormat {
-        CVS;
+        CSV;
 
         public static boolean isValidFile(@NonNull String filename) {
             String[] parts = filename.split("\\.");
@@ -47,17 +40,6 @@ public abstract class InputDataReader<T> {
     public InputDataReader(@NonNull String filename, @NonNull InputDataReader.EInputFormat dataType) {
         this.filename = filename;
         this.dataType = dataType;
-    }
-
-    public String getFilePath() throws IOException {
-        Path path = Paths.get(filename);
-        BasicFileAttributes attrs = Files.readAttributes(path.toAbsolutePath(), BasicFileAttributes.class);
-
-        FileTime ft = attrs.lastModifiedTime();
-        Date dt = new Date(ft.toMillis());
-        DateFormat df = new SimpleDateFormat("yyyy/MM/dd/HH");
-
-        return df.format(dt);
     }
 
     public abstract void read() throws IOException;

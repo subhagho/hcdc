@@ -18,7 +18,7 @@ public class CSVDataReader extends InputDataReader<List<String>> {
     private char separator = ',';
 
     public CSVDataReader(@NonNull String filename, char separator) {
-        super(filename, EInputFormat.CVS);
+        super(filename, EInputFormat.CSV);
         if (separator != Character.MIN_VALUE)
             this.separator = separator;
     }

@@ -15,11 +15,13 @@ import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.commons.configuration2.tree.ImmutableNode;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
 import javax.naming.ConfigurationException;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 public class HadoopDataLoader {
@@ -42,6 +44,7 @@ public class HadoopDataLoader {
         try {
             config = readConfigFile(configfile);
             loaderConfig = new LoaderConfig(config);
+            loaderConfig.read();
 
             connectionManager = new ConnectionManager();
             connectionManager.init(config, loaderConfig.connectionPath);
@@ -77,7 +80,53 @@ public class HadoopDataLoader {
     }
 
     private void process(@NonNull File file) throws Exception {
+        InputDataReader<List<String>> reader = getReader(file.getAbsolutePath());
+        reader.read();
 
+        List<List<String>> records = reader.records();
+        if (records != null && !records.isEmpty()) {
+            String folder = getFolderName(file);
+            String datePath = OutputDataWriter.getFilePath(file.getAbsolutePath());
+            OutputDataWriter.EOutputFormat f = OutputDataWriter.EOutputFormat.parse(outputFormat);
+            Preconditions.checkNotNull(f);
+            String dir = String.format("%s/%s/%s", basePath, folder, datePath);
+            int index = 1;
+            int arrayIndex = 0;
+            OutputDataWriter<List<String>> writer = null;
+            while (true) {
+                String filename = String.format("%s_%d.%s", folder, index, f.name().toLowerCase());
+                writer = getWriter(dir, filename);
+
+                List<List<String>> batch = nextBatch(records, arrayIndex);
+                if (batch == null) break;
+                writer.write(folder, reader.header(), batch);
+
+                arrayIndex += batch.size();
+                index++;
+            }
+        }
+    }
+
+    private List<List<String>> nextBatch(List<List<String>> records, int startIndex) {
+        if (startIndex >= records.size()) return null;
+
+        List<List<String>> batch = new ArrayList<>();
+        long size = 0;
+        for (int ii = startIndex; ii < records.size(); ii++) {
+            long rsize = 0;
+            List<String> record = records.get(ii);
+            for (String r : record) {
+                rsize += (r.length() * 8L);
+            }
+            if (size + rsize > loaderConfig.batchSize) break;
+            batch.add(record);
+            size += rsize;
+        }
+        return batch;
+    }
+
+    private String getFolderName(File file) {
+        return FilenameUtils.removeExtension(file.getName());
     }
 
     private XMLConfiguration readConfigFile(@NonNull String configFile) throws Exception {
@@ -95,7 +144,7 @@ public class HadoopDataLoader {
             throw new Exception(String.format("Invalid Input format type. [type=%s]", inputFormat));
         }
         switch (f) {
-            case CVS:
+            case CSV:
                 return new CSVDataReader(filename, ',');
         }
         throw new Exception(String.format("Input format not supported. [format=%s]", f.name()));
@@ -123,7 +172,7 @@ public class HadoopDataLoader {
         private static final String CONFIG_BASE_DIR = "baseDir";
 
         private String connectionPath;
-        private long batchSize = 1024 * 1024 * 15;
+        private long batchSize = 1024 * 1024 * 16;
         private String baseDir;
         private String connectionToUse;
 
