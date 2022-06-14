@@ -86,41 +86,45 @@ public class HadoopDataLoader {
     }
 
     private void process(@NonNull File file) throws Exception {
-        InputDataReader<List<String>> reader = getReader(file.getAbsolutePath());
-        int index = 1;
+        try (InputDataReader<List<String>> reader = getReader(file.getAbsolutePath())) {
+            int index = 1;
 
-        while (true) {
-            List<List<String>> records = reader.read();
-            if (records != null && !records.isEmpty()) {
-                String folder = getFolderName(file);
-                String datePath = OutputDataWriter.getFilePath(file.getAbsolutePath());
-                OutputDataWriter.EOutputFormat f = OutputDataWriter.EOutputFormat.parse(outputFormat);
-                Preconditions.checkNotNull(f);
-                String dir = String.format("%s/%s/%s", basePath, folder, datePath);
-                String tdir = String.format("%s/%s", tempDir, dir);
+            while (true) {
+                List<List<String>> records = reader.read();
+                if (records != null && !records.isEmpty()) {
+                    String folder = getFolderName(file);
+                    String datePath = OutputDataWriter.getDatePath();
+                    OutputDataWriter.EOutputFormat f = OutputDataWriter.EOutputFormat.parse(outputFormat);
+                    Preconditions.checkNotNull(f);
+                    String dir = String.format("%s/%s/%s", basePath, folder, datePath);
+                    String tdir = String.format("%s/%s", tempDir, dir);
 
-                File td = new File(tdir);
-                if (!td.exists()) {
-                    td.mkdirs();
-                }
-                DefaultLogger.__LOG.debug(String.format("Writing local files to [%s]", td.getAbsolutePath()));
-                int arrayIndex = 0;
-                OutputDataWriter<List<String>> writer = null;
-                while (true) {
-                    String filename = String.format("%s_%d.%s", folder, index, f.name().toLowerCase());
+                    File td = new File(tdir);
+                    if (!td.exists()) {
+                        td.mkdirs();
+                    }
+                    DefaultLogger.__LOG.debug(String.format("Writing local files to [%s]", td.getAbsolutePath()));
+                    int arrayIndex = 0;
+                    OutputDataWriter<List<String>> writer = null;
+                    while (true) {
+                        String filename = String.format("%s_%d.%s", folder, index, f.name().toLowerCase());
+                        writer = getWriter(tdir, filename);
+                        Preconditions.checkNotNull(writer);
+                        try {
+                            List<List<String>> batch = nextBatch(records, arrayIndex);
+                            if (batch == null) break;
+                            writer.write(folder, reader.header(), batch);
 
-                    writer = getWriter(tdir, filename);
+                            upload(String.format("%s/%s", td.getAbsolutePath(), filename), dir, filename);
 
-                    List<List<String>> batch = nextBatch(records, arrayIndex);
-                    if (batch == null) break;
-                    writer.write(folder, reader.header(), batch);
-
-                    upload(String.format("%s/%s", td.getAbsolutePath(), filename), dir, filename);
-
-                    arrayIndex += batch.size();
-                    index++;
-                }
-            } else break;
+                            arrayIndex += batch.size();
+                            index++;
+                        } finally {
+                            writer.close();
+                        }
+                    }
+                } else break;
+            }
         }
     }
 

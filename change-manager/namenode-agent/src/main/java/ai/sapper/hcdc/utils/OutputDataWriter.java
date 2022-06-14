@@ -5,6 +5,7 @@ import lombok.NonNull;
 import lombok.experimental.Accessors;
 import org.apache.hadoop.fs.FileSystem;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,7 +20,7 @@ import java.util.Map;
 
 @Getter
 @Accessors(fluent = true)
-public abstract class OutputDataWriter<T> {
+public abstract class OutputDataWriter<T> implements Closeable {
 
     public enum EOutputFormat {
         Parquet, Avro;
@@ -55,6 +56,13 @@ public abstract class OutputDataWriter<T> {
 
         FileTime ft = attrs.lastModifiedTime();
         Date dt = new Date(ft.toMillis());
+        DateFormat df = new SimpleDateFormat("yyyy/MM/dd/HH");
+
+        return df.format(dt);
+    }
+
+    public static String getDatePath() throws IOException {
+        Date dt = new Date();
         DateFormat df = new SimpleDateFormat("yyyy/MM/dd/HH");
 
         return df.format(dt);

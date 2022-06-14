@@ -34,7 +34,6 @@ public class CSVDataReader extends InputDataReader<List<String>> {
                 CSVParser parser = new CSVParserBuilder().withSeparator(separator).build();
                 reader
                         = new CSVReaderHeaderAwareBuilder(new FileReader(filename()))
-                        .withSkipLines(startIndex)
                         .withCSVParser(parser)
                         .build();
             }
@@ -100,6 +99,9 @@ public class CSVDataReader extends InputDataReader<List<String>> {
      */
     @Override
     public void close() throws IOException {
-
+        if (reader != null) {
+            reader.close();
+            reader = null;
+        }
     }
 }
