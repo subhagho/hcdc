@@ -48,7 +48,7 @@ public class HadoopDataLoader {
 
     public void run() throws Exception {
         try {
-            config = readConfigFile(configfile);
+            config = ConfigReader.read(configfile);
             loaderConfig = new LoaderConfig(config);
             loaderConfig.read();
 
@@ -165,15 +165,6 @@ public class HadoopDataLoader {
 
     private String getFolderName(File file) {
         return FilenameUtils.removeExtension(file.getName());
-    }
-
-    private XMLConfiguration readConfigFile(@NonNull String configFile) throws Exception {
-        File cf = new File(configFile);
-        if (!cf.exists()) {
-            throw new Exception(String.format("Configuration file not found. ]path=%s]", cf.getAbsolutePath()));
-        }
-        Configurations configs = new Configurations();
-        return configs.xml(cf);
     }
 
     private InputDataReader<List<String>> getReader(String filename) throws Exception {

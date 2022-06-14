@@ -1,7 +1,11 @@
 package ai.sapper.hcdc.core.connections.state;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -11,12 +15,13 @@ public class DFSBlockState {
     private long updatedTime;
     private long dataSize = 0;
     private long lastTnxId;
+    private List<BlockTnxDelta> transactions;
 
-    @Getter
-    @Setter
-    public static class BlockTnxDelta {
-        private long startOffset;
-        private long endOffset;
-        private long tnxId;
+    public DFSBlockState add(@NonNull BlockTnxDelta transaction) {
+        if (transactions == null)
+            transactions = new ArrayList<>();
+        transactions.add(transaction);
+
+        return this;
     }
 }

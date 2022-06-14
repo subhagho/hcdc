@@ -6,6 +6,8 @@ import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
+import ai.sapper.hcdc.core.connections.state.DFSBlockState;
+import ai.sapper.hcdc.core.connections.state.DFSFileState;
 import ai.sapper.hcdc.core.connections.state.StateManagerError;
 import ai.sapper.hcdc.core.model.Heartbeat;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -143,6 +145,113 @@ public class ZkStateManager {
                     String json = new String(data, StandardCharsets.UTF_8);
                     return mapper.readValue(json, Heartbeat.class);
                 }
+            }
+            return null;
+        } catch (Exception ex) {
+            throw new StateManagerError(ex);
+        }
+    }
+
+    public DFSFileState create(@NonNull DFSFileState fileState) throws StateManagerError {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(fileState.getHdfsFilePath()));
+        try {
+            CuratorFramework client = connection().client();
+            String path = PathUtils.formatZkPath(String.format("%s/%s", zkPath, fileState.getHdfsFilePath()));
+            if (client.checkExists().forPath(path) != null) {
+                throw new StateManagerError(String.format("File record already exists. [path=%s]", fileState.getHdfsFilePath()));
+            } else {
+                client.create().creatingParentContainersIfNeeded().forPath(path);
+            }
+            fileState.setZkPath(path);
+            fileState.setTimestamp(System.currentTimeMillis());
+            String json = mapper.writeValueAsString(fileState);
+            client.setData().forPath(path, json.getBytes(StandardCharsets.UTF_8));
+
+            return fileState;
+        } catch (Exception ex) {
+            throw new StateManagerError(ex);
+        }
+    }
+
+    public DFSFileState update(@NonNull DFSFileState fileState) throws StateManagerError {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(fileState.getHdfsFilePath()));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(fileState.getZkPath()));
+        try {
+            CuratorFramework client = connection().client();
+            String path = fileState.getZkPath();
+            if (client.checkExists().forPath(path) == null) {
+                throw new StateManagerError(String.format("File record not found. [path=%s]", fileState.getHdfsFilePath()));
+            }
+            fileState.setTimestamp(System.currentTimeMillis());
+            String json = mapper.writeValueAsString(fileState);
+            client.setData().forPath(path, json.getBytes(StandardCharsets.UTF_8));
+
+            return fileState;
+        } catch (Exception ex) {
+            throw new StateManagerError(ex);
+        }
+    }
+
+    public void delete(@NonNull String hdfsPath) throws StateManagerError {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(hdfsPath));
+
+        try {
+            CuratorFramework client = connection().client();
+            String path = PathUtils.formatZkPath(String.format("%s/%s", zkPath, hdfsPath));
+            if (client.checkExists().forPath(path) == null) {
+                throw new StateManagerError(String.format("File record not found. [path=%s]", hdfsPath));
+            }
+            client.delete().deletingChildrenIfNeeded().forPath(path);
+
+        } catch (Exception ex) {
+            throw new StateManagerError(ex);
+        }
+    }
+
+    public void markDeleted(@NonNull String hdfsPath) throws StateManagerError {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(hdfsPath));
+
+        try {
+            CuratorFramework client = connection().client();
+            String path = PathUtils.formatZkPath(String.format("%s/%s", zkPath, hdfsPath));
+            if (client.checkExists().forPath(path) == null) {
+                throw new StateManagerError(String.format("File record not found. [path=%s]", hdfsPath));
+            }
+            DFSFileState fstate = get(hdfsPath);
+            if (fstate == null) {
+                throw new StateManagerError(String.format("File record data is NULL. [path=%s]", hdfsPath));
+            }
+            fstate.setDeleted(true);
+
+            update(fstate);
+        } catch (Exception ex) {
+            throw new StateManagerError(ex);
+        }
+    }
+
+    public DFSFileState get(@NonNull String hdfsPath) throws StateManagerError {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(hdfsPath));
+
+        try {
+            CuratorFramework client = connection().client();
+            String path = PathUtils.formatZkPath(String.format("%s/%s", zkPath, hdfsPath));
+            if (client.checkExists().forPath(path) == null) {
+                throw new StateManagerError(String.format("File record already exists. [path=%s]", hdfsPath));
+            }
+            byte[] data = client.getData().forPath(path);
+            if (data != null && data.length > 0) {
+                String json = new String(data, StandardCharsets.UTF_8);
+                return mapper.readValue(json, DFSFileState.class);
             }
             return null;
         } catch (Exception ex) {
