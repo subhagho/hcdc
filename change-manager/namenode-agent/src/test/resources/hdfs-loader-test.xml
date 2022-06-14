@@ -2,7 +2,7 @@
 <configuration>
     <loader>
         <batchSize>8388608</batchSize>
-        <baseDir>/test/hdcc/loader/parquet</baseDir>
+        <baseDir>/test/hcdc/loader/parquet</baseDir>
         <connections>
             <path>config</path>
             <use>test-hdfs</use>

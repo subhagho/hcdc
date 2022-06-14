@@ -4,12 +4,13 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
 
 @Getter
 @Accessors(fluent = true)
-public abstract class InputDataReader<T> {
+public abstract class InputDataReader<T> implements Closeable {
     public enum EInputFormat {
         CSV;
 
@@ -34,13 +35,19 @@ public abstract class InputDataReader<T> {
 
     private final EInputFormat dataType;
     private final String filename;
-    private final List<T> records = new ArrayList<>();
     private final Map<String, Integer> header = new HashMap<>();
+    protected int startIndex = 0;
+    private long batchSize = -1;
 
     public InputDataReader(@NonNull String filename, @NonNull InputDataReader.EInputFormat dataType) {
         this.filename = filename;
         this.dataType = dataType;
     }
 
-    public abstract void read() throws IOException;
+    public InputDataReader<T> withBatchSize(long batchSize) {
+        this.batchSize = batchSize;
+        return this;
+    }
+
+    public abstract List<T> read() throws IOException;
 }

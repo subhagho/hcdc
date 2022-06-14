@@ -16,11 +16,13 @@ import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
 import javax.naming.ConfigurationException;
-import java.io.File;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,6 +35,10 @@ public class HadoopDataLoader {
     private String dataFolder;
     @Parameter(names = {"--output", "-o"}, description = "Output Data Format (Parquet, Avro)", required = true)
     private String outputFormat;
+    @Parameter(names = {"--tmp", "-t"}, description = "Temp directory to use to create local files. [DEFAULT=System.getProperty(\"java.io.tmpdir\")]")
+    private String tempDir = System.getProperty("java.io.tmpdir");
+    @Parameter(names = {"--batchSize", "-b"}, description = "Batch Size to read input data. [Output files will also be limited to this batch size] [DEFAULT=8192]")
+    private int readBatchSize = 1024 * 16;
     private HierarchicalConfiguration<ImmutableNode> config;
     private LoaderConfig loaderConfig;
     private ConnectionManager connectionManager;
@@ -81,28 +87,56 @@ public class HadoopDataLoader {
 
     private void process(@NonNull File file) throws Exception {
         InputDataReader<List<String>> reader = getReader(file.getAbsolutePath());
-        reader.read();
+        int index = 1;
 
-        List<List<String>> records = reader.records();
-        if (records != null && !records.isEmpty()) {
-            String folder = getFolderName(file);
-            String datePath = OutputDataWriter.getFilePath(file.getAbsolutePath());
-            OutputDataWriter.EOutputFormat f = OutputDataWriter.EOutputFormat.parse(outputFormat);
-            Preconditions.checkNotNull(f);
-            String dir = String.format("%s/%s/%s", basePath, folder, datePath);
-            int index = 1;
-            int arrayIndex = 0;
-            OutputDataWriter<List<String>> writer = null;
-            while (true) {
-                String filename = String.format("%s_%d.%s", folder, index, f.name().toLowerCase());
-                writer = getWriter(dir, filename);
+        while (true) {
+            List<List<String>> records = reader.read();
+            if (records != null && !records.isEmpty()) {
+                String folder = getFolderName(file);
+                String datePath = OutputDataWriter.getFilePath(file.getAbsolutePath());
+                OutputDataWriter.EOutputFormat f = OutputDataWriter.EOutputFormat.parse(outputFormat);
+                Preconditions.checkNotNull(f);
+                String dir = String.format("%s/%s/%s", basePath, folder, datePath);
+                String tdir = String.format("%s/%s", tempDir, dir);
 
-                List<List<String>> batch = nextBatch(records, arrayIndex);
-                if (batch == null) break;
-                writer.write(folder, reader.header(), batch);
+                File td = new File(tdir);
+                if (!td.exists()) {
+                    td.mkdirs();
+                }
+                DefaultLogger.__LOG.debug(String.format("Writing local files to [%s]", td.getAbsolutePath()));
+                int arrayIndex = 0;
+                OutputDataWriter<List<String>> writer = null;
+                while (true) {
+                    String filename = String.format("%s_%d.%s", folder, index, f.name().toLowerCase());
 
-                arrayIndex += batch.size();
-                index++;
+                    writer = getWriter(tdir, filename);
+
+                    List<List<String>> batch = nextBatch(records, arrayIndex);
+                    if (batch == null) break;
+                    writer.write(folder, reader.header(), batch);
+
+                    upload(String.format("%s/%s", td.getAbsolutePath(), filename), dir, filename);
+
+                    arrayIndex += batch.size();
+                    index++;
+                }
+            } else break;
+        }
+    }
+
+    private void upload(String source, String dir, String filename) throws IOException {
+        Path path = new Path(String.format("%s/%s", dir, filename));
+        try (FSDataOutputStream fsDataOutputStream = fs.create(path, true)) {
+            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fsDataOutputStream, StandardCharsets.UTF_8))) {
+                File file = new File(source);    //creates a new file instance
+                FileReader fr = new FileReader(file);   //reads the file
+                try (BufferedReader reader = new BufferedReader(fr)) {  //creates a buffering character input stream
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        writer.write(line);
+                        writer.newLine();
+                    }
+                }
             }
         }
     }
@@ -145,7 +179,7 @@ public class HadoopDataLoader {
         }
         switch (f) {
             case CSV:
-                return new CSVDataReader(filename, ',');
+                return new CSVDataReader(filename, ',').withBatchSize(readBatchSize);
         }
         throw new Exception(String.format("Input format not supported. [format=%s]", f.name()));
     }

@@ -17,7 +17,9 @@ class HadoopDataLoaderTest {
                 "--output",
                 "parquet",
                 "--data",
-                "src/test/resources/data"};
+                "src/test/resources/data",
+                "--tmp",
+                "/Work/temp/output/test"};
         HadoopDataLoader.main(args);
     }
 }

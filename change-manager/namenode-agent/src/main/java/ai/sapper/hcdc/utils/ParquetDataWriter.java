@@ -13,6 +13,7 @@ import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.PrimitiveType;
 import org.apache.parquet.schema.Type;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +34,10 @@ public class ParquetDataWriter extends OutputDataWriter<List<String>> {
     public void write(String name, @NonNull Map<String, Integer> header, @NonNull List<List<String>> records) throws IOException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
         String file = String.format("%s/%s", path(), filename());
+        File f = new File(file);
+        if (f.exists()) {
+            f.delete();
+        }
         try {
             MessageType mt = getSchema(name, header);
             Path path = new Path(path());

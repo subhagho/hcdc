@@ -14,10 +14,10 @@ class CSVDataReaderTest {
     void read() {
         try {
             CSVDataReader reader = new CSVDataReader(__INPUT_FILE, Character.MIN_VALUE);
-            reader.read();
-            assertNotNull(reader.records());
-            assertTrue(reader.records().size() > 0);
-            for (List<String> record : reader.records()) {
+            List<List<String>> records = reader.read();
+            assertNotNull(records);
+            assertTrue(records.size() > 0);
+            for (List<String> record : records) {
                 DefaultLogger.__LOG.info(record.toString());
             }
         } catch (Exception ex) {
