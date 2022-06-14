@@ -18,9 +18,15 @@ import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.tools.offlineImageViewer.OfflineImageViewer;
+import org.apache.hadoop.hdfs.tools.offlineImageViewer.XmlImageVisitor;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import javax.naming.ConfigurationException;
-import java.io.File;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.*;
 
 @Getter
 @Accessors(fluent = true)
@@ -39,7 +45,7 @@ public class NameNodeReplicator {
     private String configfile;
     @Parameter(names = {"--tmp", "-t"}, description = "Temp directory to use to create local files. [DEFAULT=System.getProperty(\"java.io.tmpdir\")]")
     private String tempDir = System.getProperty("java.io.tmpdir");
-    
+
     public void init() throws NameNodeError {
         try {
             config = ConfigReader.read(configfile);
@@ -69,12 +75,43 @@ public class NameNodeReplicator {
 
     public void run() throws NameNodeError {
         try {
-
+            String output = generateFSImageSnapshot();
+            DefaultLogger.__LOG.info(String.format("Generated FS Image XML. [path=%s]", output));
+            readFSImageXml(output);
         } catch (Throwable t) {
             DefaultLogger.__LOG.error(t.getLocalizedMessage());
             DefaultLogger.__LOG.debug(DefaultLogger.stacktrace(t));
             throw new NameNodeError(t);
         }
+    }
+
+    private void readFSImageXml(String file) throws Exception {
+        try (InputStream inputStream = new FileInputStream(file)) {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            dbf.setValidating(true);
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document doc = db.parse(inputStream);
+
+            // optional, but recommended
+            // read this -
+            // http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
+            doc.getDocumentElement().normalize();
+
+            Element rootNode = doc.getDocumentElement();
+
+        }
+    }
+
+    private String generateFSImageSnapshot() throws Exception {
+        File fsImage = new File(fsImageFile);
+        Preconditions.checkState(fsImage.exists());
+
+        String output = String.format("%s/%s.xml", tempDir, fsImage.getName());
+        XmlImageVisitor visitor = new XmlImageVisitor(output, false);
+        OfflineImageViewer d = new OfflineImageViewer(fsImage.getAbsolutePath(), visitor, false);
+        d.go();
+
+        return output;
     }
 
     @Getter
