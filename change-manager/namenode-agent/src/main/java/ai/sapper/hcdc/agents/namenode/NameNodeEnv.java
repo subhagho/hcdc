@@ -6,8 +6,10 @@ import ai.sapper.hcdc.common.AbstractState;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.common.utils.NetUtils;
+import ai.sapper.hcdc.core.DistributedLock;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
+import ai.sapper.hcdc.core.connections.ZookeeperConnection;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -24,7 +26,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.InetAddress;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 @Getter
@@ -44,16 +48,17 @@ public class NameNodeEnv {
     private List<InetAddress> hostIPs;
     private HierarchicalConfiguration<ImmutableNode> hdfsConfig;
     private NameNodeAdminClient adminClient;
+    private final Map<String, DistributedLock> locks = new HashMap<>();
 
     private final NameNodeAgentState.AgentState agentState = new NameNodeAgentState.AgentState();
 
-    public NameNodeEnv init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig, String pathPrefix) throws NameNodeError {
+    public NameNodeEnv init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws NameNodeError {
         try {
             if (state.isAvailable()) return this;
 
-            configNode = xmlConfig.configurationAt(pathPrefix);
+            configNode = xmlConfig.configurationAt(NameNEnvConfig.Constants.__CONFIG_PATH);
 
-            this.config = new NameNEnvConfig(xmlConfig, pathPrefix);
+            this.config = new NameNEnvConfig(xmlConfig);
             this.config.read();
 
             hostIPs = NetUtils.getInetAddresses();
@@ -81,6 +86,8 @@ public class NameNodeEnv {
                 throw new NameNodeError(String.format("Error fetching NameNode status. [url=%s]", adminClient.url()));
             }
 
+            readLocks();
+
             stateManager.heartbeat(config.nameNodeInstanceName, agentState);
 
             state.state(ENameNEnvState.Initialized);
@@ -88,6 +95,21 @@ public class NameNodeEnv {
         } catch (Throwable t) {
             state.error(t);
             throw new NameNodeError(t);
+        }
+    }
+
+    private void readLocks() throws Exception {
+        List<HierarchicalConfiguration<ImmutableNode>> nodes = configNode.configurationsAt(NameNEnvConfig.Constants.CONFIG_LOCK);
+        for (HierarchicalConfiguration<ImmutableNode> node : nodes) {
+            String name = node.getString(NameNEnvConfig.Constants.CONFIG_LOCK_NAME);
+            String conn = node.getString(NameNEnvConfig.Constants.CONFIG_LOCK_CONN);
+            String path = name;
+            if (node.containsKey(NameNEnvConfig.Constants.CONFIG_LOCK_NODE)) {
+                path = node.getString(NameNEnvConfig.Constants.CONFIG_LOCK_NODE);
+            }
+            ZookeeperConnection connection = connectionManager.getConnection(conn, ZookeeperConnection.class);
+            DistributedLock lock = new DistributedLock(config.namespace, path, stateManager.basePath()).withConnection(connection);
+            locks.put(name, lock);
         }
     }
 
@@ -185,11 +207,16 @@ public class NameNodeEnv {
         return config.hadoopConfFile;
     }
 
+    public DistributedLock lock(String name) {
+        if (locks.containsKey(name)) return locks.get(name);
+        return null;
+    }
+
     public static final NameNodeEnv __instance = new NameNodeEnv();
 
-    public static NameNodeEnv setup(@NonNull HierarchicalConfiguration<ImmutableNode> config, String pathPrefix) throws NameNodeError {
+    public static NameNodeEnv setup(@NonNull HierarchicalConfiguration<ImmutableNode> config) throws NameNodeError {
         synchronized (__instance) {
-            return __instance.init(config, pathPrefix);
+            return __instance.init(config);
         }
     }
 
@@ -210,6 +237,10 @@ public class NameNodeEnv {
 
     public static ZkStateManager stateManager() {
         return get().stateManager;
+    }
+
+    public static DistributedLock globalLock() {
+        return get().lock(NameNEnvConfig.Constants.LOCK_GLOBAL);
     }
 
     public enum ENameNEnvState {
@@ -236,6 +267,7 @@ public class NameNodeEnv {
     @Accessors(fluent = true)
     public static class NameNEnvConfig extends ConfigReader {
         private static class Constants {
+            private static final String __CONFIG_PATH = "agent";
             private static final String CONFIG_NAMESPACE = "namespace";
             private static final String CONFIG_INSTANCE = "instance";
             private static final String CONFIG_CONNECTIONS = "connections.path";
@@ -255,6 +287,12 @@ public class NameNodeEnv {
             private static final String HDFS_NN_URL = "dfs.namenode.http-address.%s.%s";
 
             private static final String HDFS_NN_USE_HTTPS = "useSSL";
+            private static final String CONFIG_LOCKS = "locks";
+            private static final String CONFIG_LOCK = String.format("%s.lock", CONFIG_LOCKS);
+            private static final String CONFIG_LOCK_NAME = "name";
+            private static final String CONFIG_LOCK_CONN = "connection";
+            private static final String CONFIG_LOCK_NODE = "lock-node";
+            private static final String LOCK_GLOBAL = "global";
         }
 
         private String namespace;
@@ -267,8 +305,8 @@ public class NameNodeEnv {
         private String nameNodeAdminUrl;
         private boolean useSSL = true;
 
-        public NameNEnvConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config, @NonNull String path) {
-            super(config, path);
+        public NameNEnvConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
+            super(config, Constants.__CONFIG_PATH);
         }
 
         public void read() throws ConfigurationException {

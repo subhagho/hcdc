@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.core;
 
+import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -19,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Getter
+@Accessors(fluent = true)
 public class DistributedLock extends ReentrantLock implements Closeable {
     private static final int DEFAULT_LOCK_TIMEOUT = 500;
 
@@ -28,12 +30,17 @@ public class DistributedLock extends ReentrantLock implements Closeable {
     @Getter(AccessLevel.NONE)
     private InterProcessMutex mutex = null;
     private ZookeeperConnection connection;
+    private final String zkBasePath;
 
-    public DistributedLock(@NonNull LockId id) {
+    public DistributedLock(@NonNull LockId id, @NonNull String zkBasePath) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(zkBasePath));
         this.id = id;
+        this.zkBasePath = zkBasePath;
     }
 
-    public DistributedLock(@NonNull String namespace, @NonNull String name) {
+    public DistributedLock(@NonNull String namespace, @NonNull String name, @NonNull String zkBasePath) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(zkBasePath));
+        this.zkBasePath = zkBasePath;
         id = new LockId(namespace, name);
     }
 
@@ -52,7 +59,7 @@ public class DistributedLock extends ReentrantLock implements Closeable {
     }
 
     private String lockPath() {
-        return String.format("%s/__locks/%s", id.namespace, id.name);
+        return PathUtils.formatZkPath(String.format("%s/%s/__locks/%s", zkBasePath, id.namespace, id.name));
     }
 
     /**

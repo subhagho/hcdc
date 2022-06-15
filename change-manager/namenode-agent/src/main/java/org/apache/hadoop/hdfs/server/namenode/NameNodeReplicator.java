@@ -1,37 +1,42 @@
 package org.apache.hadoop.hdfs.server.namenode;
 
+import ai.sapper.hcdc.agents.namenode.NameNodeEnv;
 import ai.sapper.hcdc.agents.namenode.NameNodeError;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
-import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
-import ai.sapper.hcdc.utils.HadoopDataLoader;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.tools.offlineImageViewer.OfflineImageViewer;
 import org.apache.hadoop.hdfs.tools.offlineImageViewer.XmlImageVisitor;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 import javax.naming.ConfigurationException;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Getter
 @Accessors(fluent = true)
 public class NameNodeReplicator {
-    private ConnectionManager connectionManager;
+    private static class Constants {
+        private static final String NODE_INODES = "INodeSection.inode";
+        private static final String NODE_TX_ID = "NameSection.txid";
+        private static final String NODE_DIR_SECTION = "INodeDirectorySection";
+        private static final String NODE_DIR_NODE = String.format("%s.directory", NODE_DIR_SECTION);
+    }
+
     private ZookeeperConnection zkConnection;
     private HdfsConnection hdfsConnection;
     private FileSystem fs;
@@ -46,24 +51,28 @@ public class NameNodeReplicator {
     @Parameter(names = {"--tmp", "-t"}, description = "Temp directory to use to create local files. [DEFAULT=System.getProperty(\"java.io.tmpdir\")]")
     private String tempDir = System.getProperty("java.io.tmpdir");
 
+    private long txnId;
+    private final Map<Long, DFSInode> inodes = new HashMap<>();
+    private final Map<Long, DFSDirectory> directoryMap = new HashMap<>();
+
     public void init() throws NameNodeError {
         try {
             config = ConfigReader.read(configfile);
+            NameNodeEnv.setup(config);
             replicatorConfig = new ReplicatorConfig(config);
             replicatorConfig.read();
 
-            connectionManager = new ConnectionManager();
-            connectionManager.init(config, replicatorConfig.connectionPath);
-
-            hdfsConnection = connectionManager.getConnection(replicatorConfig().hdfsConnection(), HdfsConnection.class);
+            hdfsConnection = NameNodeEnv.connectionManager().getConnection(replicatorConfig().hdfsConnection(), HdfsConnection.class);
+            Preconditions.checkNotNull(hdfsConnection);
             hdfsConnection.connect();
 
-            zkConnection = connectionManager.getConnection(replicatorConfig().zkConnection(), ZookeeperConnection.class);
+            zkConnection = NameNodeEnv.connectionManager().getConnection(replicatorConfig().zkConnection(), ZookeeperConnection.class);
+            Preconditions.checkNotNull(zkConnection);
             zkConnection.connect();
 
             fs = hdfsConnection.fileSystem();
-            stateManager = new ZkStateManager();
-            stateManager.init(config, connectionManager, replicatorConfig.namespace);
+            stateManager = NameNodeEnv.stateManager();
+            Preconditions.checkNotNull(stateManager);
 
         } catch (Throwable t) {
             DefaultLogger.__LOG.error(t.getLocalizedMessage());
@@ -75,9 +84,14 @@ public class NameNodeReplicator {
 
     public void run() throws NameNodeError {
         try {
-            String output = generateFSImageSnapshot();
-            DefaultLogger.__LOG.info(String.format("Generated FS Image XML. [path=%s]", output));
-            readFSImageXml(output);
+            NameNodeEnv.globalLock().lock();
+            try {
+                String output = generateFSImageSnapshot();
+                DefaultLogger.__LOG.info(String.format("Generated FS Image XML. [path=%s]", output));
+                readFSImageXml(output);
+            } finally {
+                NameNodeEnv.globalLock().unlock();
+            }
         } catch (Throwable t) {
             DefaultLogger.__LOG.error(t.getLocalizedMessage());
             DefaultLogger.__LOG.debug(DefaultLogger.stacktrace(t));
@@ -86,20 +100,33 @@ public class NameNodeReplicator {
     }
 
     private void readFSImageXml(String file) throws Exception {
-        try (InputStream inputStream = new FileInputStream(file)) {
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            dbf.setValidating(true);
-            DocumentBuilder db = dbf.newDocumentBuilder();
-            Document doc = db.parse(inputStream);
-
-            // optional, but recommended
-            // read this -
-            // http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
-            doc.getDocumentElement().normalize();
-
-            Element rootNode = doc.getDocumentElement();
-
+        HierarchicalConfiguration<ImmutableNode> rootNode = ConfigReader.read(file);
+        String s = rootNode.getString(Constants.NODE_TX_ID);
+        if (Strings.isNullOrEmpty(s)) {
+            throw new NameNodeError(String.format("NameNode Last Transaction ID not found. [file=%s]", file));
         }
+        txnId = Long.parseLong(s);
+
+        List<HierarchicalConfiguration<ImmutableNode>> nodes = rootNode.configurationsAt(Constants.NODE_INODES);
+        if (nodes != null && !nodes.isEmpty()) {
+            for (HierarchicalConfiguration<ImmutableNode> node : nodes) {
+                DFSInode inode = readInode(node);
+                if (inode != null) {
+                    inodes.put(inode.id, inode);
+                }
+            }
+        }
+        List<HierarchicalConfiguration<ImmutableNode>> dnodes = rootNode.configurationsAt(Constants.NODE_DIR_NODE);
+        if (dnodes != null && !dnodes.isEmpty()) {
+            for (HierarchicalConfiguration<ImmutableNode> node : dnodes) {
+                DFSDirectory dir = new DFSDirectory().read(node);
+                directoryMap.put(dir.id, dir);
+            }
+        }
+    }
+
+    private DFSInode readInode(HierarchicalConfiguration<ImmutableNode> node) throws Exception {
+        return new DFSInode().read(node);
     }
 
     private String generateFSImageSnapshot() throws Exception {
@@ -118,46 +145,32 @@ public class NameNodeReplicator {
     @Accessors(fluent = true)
     public static class ReplicatorConfig extends ConfigReader {
         private static final String __CONFIG_PATH = "replicator";
-        private static final String CONFIG_CONNECTIONS = "connections.path";
         private static final String CONFIG_CONNECTION_ZK = "connections.zk";
         private static final String CONFIG_CONNECTION_HDFS = "connections.hdfs";
         private static final String CONFIG_ZK_BASE_PATH = "basePath";
-        private static final String CONFIG_NAMESPACE = "namespace";
 
-        private String connectionPath;
         private String zkConnection;
         private String hdfsConnection;
         private String zkBasePath;
-        private String namespace;
 
         public ReplicatorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);
         }
 
         public void read() throws ConfigurationException {
-            connectionPath = get().getString(CONFIG_CONNECTIONS);
-            if (Strings.isNullOrEmpty(connectionPath)) {
-                throw new ConfigurationException(String.format("HDFS Data Loader Configuration Error: missing [%s]", CONFIG_CONNECTIONS));
-            }
-
             zkConnection = get().getString(CONFIG_CONNECTION_ZK);
             if (Strings.isNullOrEmpty(zkConnection)) {
-                throw new ConfigurationException(String.format("HDFS Data Loader Configuration Error: missing [%s]", CONFIG_CONNECTION_ZK));
+                throw new ConfigurationException(String.format("NameNode Replicator Configuration Error: missing [%s]", CONFIG_CONNECTION_ZK));
             }
 
             hdfsConnection = get().getString(CONFIG_CONNECTION_HDFS);
             if (Strings.isNullOrEmpty(hdfsConnection)) {
-                throw new ConfigurationException(String.format("HDFS Data Loader Configuration Error: missing [%s]", CONFIG_CONNECTION_HDFS));
+                throw new ConfigurationException(String.format("NameNode Replicator Configuration Error: missing [%s]", CONFIG_CONNECTION_HDFS));
             }
 
             zkBasePath = get().getString(CONFIG_ZK_BASE_PATH);
             if (Strings.isNullOrEmpty(zkBasePath)) {
-                throw new ConfigurationException(String.format("HDFS Data Loader Configuration Error: missing [%s]", CONFIG_ZK_BASE_PATH));
-            }
-
-            namespace = get().getString(CONFIG_NAMESPACE);
-            if (Strings.isNullOrEmpty(namespace)) {
-                throw new ConfigurationException(String.format("HDFS Data Loader Configuration Error: missing [%s]", CONFIG_NAMESPACE));
+                throw new ConfigurationException(String.format("NameNode Replicator Configuration Error: missing [%s]", CONFIG_ZK_BASE_PATH));
             }
         }
     }
@@ -170,6 +183,113 @@ public class NameNodeReplicator {
             replicator.run();
         } catch (Throwable t) {
             t.printStackTrace();
+        }
+    }
+
+    public enum EInodeType {
+        FILE, DIRECTORY, SYMLINK
+    }
+
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    public static class DFSInode {
+        private static final String NODE_INODE_ID = "id";
+        private static final String NODE_INODE_TYPE = "type";
+        private static final String NODE_INODE_NAME = "name";
+        private static final String NODE_INODE_MTIME = "mtime";
+        private static final String NODE_INODE_ATIME = "atime";
+        private static final String NODE_INODE_BS = "preferredBlockSize";
+        private static final String NODE_INODE_PERM = "permission";
+
+        private static final String NODE_INODE_BLOCKS = "blocks";
+        private static final String NODE_INODE_BLOCK = String.format("%s.block", NODE_INODE_BLOCKS);
+
+        private long id;
+        private EInodeType type;
+        private String name;
+        private long mTime;
+        private long aTime;
+        private long preferredBlockSize;
+        private String user;
+        private String group;
+
+        private List<DFSInodeBlock> blocks;
+
+        public DFSInode read(@NonNull HierarchicalConfiguration<ImmutableNode> node) throws Exception {
+            id = node.getLong(NODE_INODE_ID);
+            String s = node.getString(NODE_INODE_TYPE);
+            if (Strings.isNullOrEmpty(s)) {
+                throw new Exception(String.format("Missing Inode field. [field=%s]", NODE_INODE_TYPE));
+            }
+            type = EInodeType.valueOf(s);
+            name = node.getString(NODE_INODE_NAME);
+            if (node.containsKey(NODE_INODE_MTIME)) {
+                mTime = node.getLong(NODE_INODE_MTIME);
+            }
+            if (node.containsKey(NODE_INODE_ATIME)) {
+                aTime = node.getLong(NODE_INODE_ATIME);
+            }
+            if (node.containsKey(NODE_INODE_BS)) {
+                preferredBlockSize = node.getLong(NODE_INODE_BS);
+            }
+            s = node.getString(NODE_INODE_PERM);
+            if (!Strings.isNullOrEmpty(s)) {
+                String[] parts = s.split(":");
+                if (parts.length == 3) {
+                    user = parts[0];
+                    group = parts[1];
+                }
+            }
+            List<HierarchicalConfiguration<ImmutableNode>> nodes = node.configurationsAt(NODE_INODE_BLOCK);
+            if (nodes != null && !nodes.isEmpty()) {
+                blocks = new ArrayList<>();
+                for (HierarchicalConfiguration<ImmutableNode> nn : nodes) {
+                    DFSInodeBlock block = new DFSInodeBlock().read(nn);
+                    blocks.add(block);
+                }
+            }
+            return this;
+        }
+    }
+
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    public static class DFSInodeBlock {
+        private static final String NODE_BLOCK_ID = "id";
+        private static final String NODE_BLOCK_NB = "numBytes";
+        private static final String NODE_BLOCK_GEN = "genstamp";
+
+        private long id;
+        private long numBytes;
+        private long genStamp;
+
+        public DFSInodeBlock read(@NonNull HierarchicalConfiguration<ImmutableNode> node) throws Exception {
+            id = node.getLong(NODE_BLOCK_ID);
+            numBytes = node.getLong(NODE_BLOCK_NB);
+            genStamp = node.getLong(NODE_BLOCK_GEN);
+
+            return this;
+        }
+    }
+
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    public static class DFSDirectory {
+        private static final String NODE_DIR_ID = "parent";
+        private static final String NODE_DIR_CHILD = "child";
+
+        private long id;
+        private List<Long> children;
+
+        public DFSDirectory read(@NonNull HierarchicalConfiguration<ImmutableNode> node) throws Exception {
+            id = node.getLong(NODE_DIR_ID);
+            if (node.containsKey(NODE_DIR_CHILD)) {
+                children = node.getList(Long.class, NODE_DIR_CHILD);
+            }
+            return this;
         }
     }
 }

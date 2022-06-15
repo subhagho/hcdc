@@ -13,12 +13,26 @@
         </connections>
         <state>
             <manager>
-                <basePath>/local/test</basePath>
+                <basePath>/local/test/state</basePath>
                 <connection>test-zk</connection>
             </manager>
         </state>
         <useSSL>false</useSSL>
+        <locks>
+            <lock>
+                <name>global</name>
+                <connection>test-zk</connection>
+                <lock-node>NN-GLOBAL-LOCK</lock-node>
+            </lock>
+        </locks>
     </agent>
+    <replicator>
+        <connections>
+            <zk>test-zk</zk>
+            <hdfs>test-hdfs</hdfs>
+        </connections>
+        <basePath>/test/hcdc/namenode/replica</basePath>
+    </replicator>
     <config>
         <connections>
             <connection>

@@ -6,7 +6,6 @@ import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
-import ai.sapper.hcdc.core.connections.state.DFSBlockState;
 import ai.sapper.hcdc.core.connections.state.DFSFileState;
 import ai.sapper.hcdc.core.connections.state.StateManagerError;
 import ai.sapper.hcdc.core.model.Heartbeat;
