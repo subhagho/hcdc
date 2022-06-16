@@ -20,7 +20,7 @@ import java.util.Map;
 
 @Getter
 @Accessors(fluent = true)
-public class HdfsHAConnection implements Connection {
+public class HdfsHAConnection extends HdfsConnection {
     private static class Constants {
         private static final String DFS_NAME_SERVICES = "dfs.nameservices";
         private static final String DFS_FAILOVER_PROVIDER = "dfs.client.failover.proxy.provider.%s";
@@ -28,14 +28,7 @@ public class HdfsHAConnection implements Connection {
         private static final String DFS_NAME_NODE_ADDRESS = "dfs.namenode.rpc-address.%s.%s";
     }
 
-    @Getter(AccessLevel.NONE)
-    private final ConnectionState state = new ConnectionState();
-
     private HdfsHAConfig config;
-
-    private Configuration hdfsConfig = null;
-    private FileSystem fileSystem;
-    private HdfsAdmin adminClient;
 
     /**
      * @return
@@ -81,13 +74,6 @@ public class HdfsHAConnection implements Connection {
         return this;
     }
 
-
-    private void enableSecurity(Configuration conf) throws Exception {
-        HdfsConnection.HdfsSecurityConfig sConfig = new HdfsConnection.HdfsSecurityConfig(config.config());
-        sConfig.read();
-        sConfig.setup(conf);
-    }
-
     /**
      * @return
      * @throws ConnectionError
@@ -122,57 +108,8 @@ public class HdfsHAConnection implements Connection {
      * @return
      */
     @Override
-    public Throwable error() {
-        return state.error();
-    }
-
-    /**
-     * @return
-     */
-    @Override
-    public EConnectionState connectionState() {
-        return state.state();
-    }
-
-    /**
-     * @return
-     */
-    @Override
-    public boolean isConnected() {
-        return state.isConnected();
-    }
-
-    /**
-     * @return
-     */
-    @Override
     public HierarchicalConfiguration<ImmutableNode> config() {
         return config.get();
-    }
-
-    /**
-     * @return
-     * @throws IOException
-     */
-    @Override
-    public void close() throws IOException {
-        synchronized (state) {
-            if (state.isConnected()) {
-                state.state(EConnectionState.Closed);
-            }
-            try {
-                if (fileSystem != null) {
-                    fileSystem.close();
-                    fileSystem = null;
-                }
-                if (adminClient != null) {
-                    adminClient = null;
-                }
-            } catch (Exception ex) {
-                state.error(ex);
-                throw new IOException("Error closing HDFS connection.", ex);
-            }
-        }
     }
 
     @Getter

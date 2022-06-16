@@ -27,11 +27,11 @@ public class HdfsConnection implements Connection {
     private static final String HDFS_PARAM_DFS_IMPLEMENTATION = "fs.hdfs.impl";
 
     @Getter(AccessLevel.NONE)
-    private final ConnectionState state = new ConnectionState();
+    protected final ConnectionState state = new ConnectionState();
     private HdfsConfig config;
-    private Configuration hdfsConfig = null;
-    private FileSystem fileSystem;
-    private HdfsAdmin adminClient;
+    protected Configuration hdfsConfig = null;
+    protected FileSystem fileSystem;
+    protected HdfsAdmin adminClient;
 
     /**
      * @return
@@ -72,7 +72,7 @@ public class HdfsConnection implements Connection {
         return this;
     }
 
-    private void enableSecurity(Configuration conf) throws Exception {
+    protected void enableSecurity(Configuration conf) throws Exception {
         HdfsSecurityConfig sConfig = new HdfsSecurityConfig(config.config());
         sConfig.read();
         sConfig.setup(conf);
