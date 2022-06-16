@@ -3,7 +3,6 @@ package ai.sapper.hcdc.core.connections;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import com.google.common.base.Strings;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -14,7 +13,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.client.HdfsAdmin;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 
