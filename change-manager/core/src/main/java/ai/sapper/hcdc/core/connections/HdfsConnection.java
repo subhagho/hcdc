@@ -12,6 +12,7 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.hdfs.DFSClient;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.client.HdfsAdmin;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -32,6 +33,7 @@ public class HdfsConnection implements Connection {
     protected Configuration hdfsConfig = null;
     protected FileSystem fileSystem;
     protected HdfsAdmin adminClient;
+    protected DFSClient dfsClient;
 
     /**
      * @return
@@ -98,6 +100,7 @@ public class HdfsConnection implements Connection {
                             hdfsConfig.set(key, config.parameters.get(key));
                         }
                     }
+                    dfsClient = new DFSClient(URI.create(config.primaryNameNodeUri), hdfsConfig);
                     state.state(EConnectionState.Connected);
                 } catch (Throwable t) {
                     state.error(t);

@@ -11,6 +11,7 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.hdfs.DFSClient;
 import org.apache.hadoop.hdfs.client.HdfsAdmin;
 
 import java.net.URI;
@@ -92,6 +93,8 @@ public class HdfsHAConnection extends HdfsConnection {
                             hdfsConfig.set(key, config.parameters.get(key));
                         }
                     }
+                    dfsClient = new DFSClient(URI.create(String.format("hdfs://%s", config.nameService)), hdfsConfig);
+
                     state.state(EConnectionState.Connected);
                 } catch (Throwable t) {
                     state.error(t);

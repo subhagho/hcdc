@@ -18,9 +18,7 @@ import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.hdfs.tools.offlineImageViewer.OfflineImageViewer;
 import org.apache.hadoop.hdfs.tools.offlineImageViewer.PBImageXmlWriter;
-import org.apache.hadoop.hdfs.tools.offlineImageViewer.XmlImageVisitor;
 
 import javax.naming.ConfigurationException;
 import java.io.File;

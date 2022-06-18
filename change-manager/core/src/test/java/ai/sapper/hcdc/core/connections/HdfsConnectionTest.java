@@ -78,7 +78,10 @@ class HdfsConnectionTest {
                     }
                 }
             }
-
+            try (InputStream is = fs.open(path)) {
+                byte[] buffer = new byte[4096];
+                int l = is.read(buffer, 0, 4096);
+            }
             connection.close();
         } catch (Throwable t) {
             DefaultLogger.__LOG.error(DefaultLogger.stacktrace(t));

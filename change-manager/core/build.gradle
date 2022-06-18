@@ -8,7 +8,7 @@ version '1.0-SNAPSHOT'
 dependencies {
     implementation project(':common')
 
-    implementation 'org.apache.hadoop:hadoop-client:3.3.3'
+    implementation 'org.apache.hadoop:hadoop-client:2.10.2'
     implementation 'org.apache.curator:curator-recipes:5.2.1'
     implementation 'org.apache.kafka:kafka-clients:3.2.0'
 
