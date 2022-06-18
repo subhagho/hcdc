@@ -55,7 +55,11 @@ public class HDFSBlockReader extends DFSInputStream {
         }
         ExtendedBlock block = lb.getBlock();
         if (generationStamp < block.getGenerationStamp()) {
-            length = (int) (offset + length > block.getNumBytes() ? (block.getNumBytes() - offset) : length);
+            if (length < 0) {
+                length = (int) (block.getNumBytes() - offset);
+            } else {
+                length = (int) (offset + length > block.getNumBytes() ? (block.getNumBytes() - offset) : length);
+            }
 
             HDFSBlockData data = new HDFSBlockData();
             data.path(src);
@@ -72,7 +76,9 @@ public class HDFSBlockReader extends DFSInputStream {
             ByteBuffer buffer = ByteBuffer.wrap(da);
             Map<ExtendedBlock, Set<DatanodeInfo>> corruptedBlockMap = new HashMap<>();
             try {
-                fetchBlockByteRange(lb, offset, offset + length, buffer, corruptedBlockMap);
+                fetchBlockByteRange(lb, offset, (offset + length - 1), buffer, corruptedBlockMap);
+                buffer.rewind();
+                data.data(buffer);
             } catch (IOException e) {
                 throw new DFSError(e);
             } finally {
