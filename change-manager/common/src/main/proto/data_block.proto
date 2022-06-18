@@ -1,10 +1,10 @@
-syntax = "proto3";
+syntax = "proto2";
 
 package ai_sapper_hcdc_common_model;
 
 option java_multiple_files = true;
 option java_package = "ai.sapper.hcdc.common.model";
-option java_outer_classname = "HcdcDFSBlockProtos";
+option java_outer_classname = "DFSBlockProto";
 
 message DFSTransaction {
   enum Operation {
@@ -19,74 +19,74 @@ message DFSTransaction {
     TRUNCATE = 8;
     IGNORE = 9;
   }
-  int64 transactionId = 1;
-  Operation op = 2;
-  uint64 timestamp = 3;
+  required int64 transactionId = 1;
+  required Operation op = 2;
+  required uint64 timestamp = 3;
 }
 
 message DFSFile {
-  string path = 2;
-  int64 inodeId = 3;
+  required string path = 2;
+  required int64 inodeId = 3;
 }
 
 message DFSBlock {
-  int64 blockId = 1;
-  int64 size = 2;
-  int64 generationStamp = 3;
+  required int64 blockId = 1;
+  required int64 size = 2;
+  required int64 generationStamp = 3;
 }
 
 message DFSAddFile {
-  DFSTransaction transaction = 1;
-  DFSFile file = 2;
-  uint64 length = 3;
-  uint64 blockSize = 4;
-  uint64 modifiedTime = 5;
-  uint64 accessedTime = 6;
+  required DFSTransaction transaction = 1;
+  required DFSFile file = 2;
+  required uint64 length = 3;
+  required uint64 blockSize = 4;
+  required uint64 modifiedTime = 5;
+  required uint64 accessedTime = 6;
   repeated DFSBlock blocks = 7;
-  bool overwrite = 8;
+  optional bool overwrite = 8;
 }
 
 message DFSAppendFile {
-  DFSTransaction transaction = 1;
-  DFSFile file = 2;
-  bool newBlock = 3;
+  required DFSTransaction transaction = 1;
+  required DFSFile file = 2;
+  optional bool newBlock = 3;
 }
 
 message DFSDeleteFile {
-  DFSTransaction transaction = 1;
-  DFSFile file = 2;
-  uint64 timestamp = 3;
+  required DFSTransaction transaction = 1;
+  required DFSFile file = 2;
+  required uint64 timestamp = 3;
 }
 
 message DFSAddBlock {
-  DFSTransaction transaction = 1;
-  DFSFile file = 2;
-  DFSBlock penultimateBlock = 3;
-  DFSBlock lastBlock = 4;
+  required DFSTransaction transaction = 1;
+  required DFSFile file = 2;
+  optional DFSBlock penultimateBlock = 3;
+  required DFSBlock lastBlock = 4;
 }
 
 message DFSUpdateBlocks {
-  DFSTransaction transaction = 1;
-  DFSFile file = 2;
+  required DFSTransaction transaction = 1;
+  required DFSFile file = 2;
   repeated DFSBlock blocks = 3;
 }
 
 message DFSTruncateBlock {
-  DFSTransaction transaction = 1;
-  DFSFile file = 2;
-  DFSBlock block = 3;
-  uint64 newLength = 4;
+  required DFSTransaction transaction = 1;
+  required DFSFile file = 2;
+  required DFSBlock block = 3;
+  required uint64 newLength = 4;
 }
 
 message DFSCloseFile {
-  DFSTransaction transaction = 1;
-  DFSFile file = 2;
-  uint64 length = 3;
-  uint64 blockSize = 4;
-  uint64 modifiedTime = 5;
-  uint64 accessedTime = 6;
+  required DFSTransaction transaction = 1;
+  required DFSFile file = 2;
+  required uint64 length = 3;
+  required uint64 blockSize = 4;
+  required uint64 modifiedTime = 5;
+  required uint64 accessedTime = 6;
   repeated DFSBlock blocks = 7;
-  bool overwrite = 8;
+  optional bool overwrite = 8;
 }
 
 message DFSRenameFile {
@@ -95,23 +95,23 @@ message DFSRenameFile {
     OVERWRITE = 1;
     TO_TRASH = 2;
   }
-  DFSTransaction transaction = 1;
-  DFSFile srcFile = 2;
-  DFSFile destFile = 3;
-  uint64 length = 4;
-  RenameOpts opts = 5;
+  required DFSTransaction transaction = 1;
+  required DFSFile srcFile = 2;
+  required DFSFile destFile = 3;
+  required uint64 length = 4;
+  required RenameOpts opts = 5;
 }
 
 message DFSIgnoreTx {
-  DFSTransaction transaction = 1;
-  string opCode = 2;
+  required DFSTransaction transaction = 1;
+  required string opCode = 2;
 }
 
 message DFSChangeDelta {
-  string namespace = 1;
-  string txId = 2;
-  string entity = 3;
-  string type = 4;
-  uint64 timestamp = 5;
-  bytes body = 6;
+  required string namespace = 1;
+  required string txId = 2;
+  required string entity = 3;
+  required string type = 4;
+  required uint64 timestamp = 5;
+  required bytes body = 6;
 }

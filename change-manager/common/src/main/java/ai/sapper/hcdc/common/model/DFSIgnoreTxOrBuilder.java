@@ -3,29 +3,34 @@
 
 package ai.sapper.hcdc.common.model;
 
-public interface DFSIgnoreTxOrBuilder extends
-    // @@protoc_insertion_point(interface_extends:ai_sapper_hcdc_common_model.DFSIgnoreTx)
-    com.google.protobuf.MessageOrBuilder {
+public interface DFSIgnoreTxOrBuilder
+    extends com.google.protobuf.MessageOrBuilder {
 
+  // required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
    */
   boolean hasTransaction();
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
    */
   ai.sapper.hcdc.common.model.DFSTransaction getTransaction();
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
    */
   ai.sapper.hcdc.common.model.DFSTransactionOrBuilder getTransactionOrBuilder();
 
+  // required string opCode = 2;
   /**
-   * <code>optional string opCode = 2;</code>
+   * <code>required string opCode = 2;</code>
+   */
+  boolean hasOpCode();
+  /**
+   * <code>required string opCode = 2;</code>
    */
   java.lang.String getOpCode();
   /**
-   * <code>optional string opCode = 2;</code>
+   * <code>required string opCode = 2;</code>
    */
   com.google.protobuf.ByteString
       getOpCodeBytes();

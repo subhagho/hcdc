@@ -3,60 +3,68 @@
 
 package ai.sapper.hcdc.common.model;
 
-public interface DFSRenameFileOrBuilder extends
-    // @@protoc_insertion_point(interface_extends:ai_sapper_hcdc_common_model.DFSRenameFile)
-    com.google.protobuf.MessageOrBuilder {
+public interface DFSRenameFileOrBuilder
+    extends com.google.protobuf.MessageOrBuilder {
 
+  // required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
    */
   boolean hasTransaction();
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
    */
   ai.sapper.hcdc.common.model.DFSTransaction getTransaction();
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
    */
   ai.sapper.hcdc.common.model.DFSTransactionOrBuilder getTransactionOrBuilder();
 
+  // required .ai_sapper_hcdc_common_model.DFSFile srcFile = 2;
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSFile srcFile = 2;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSFile srcFile = 2;</code>
    */
   boolean hasSrcFile();
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSFile srcFile = 2;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSFile srcFile = 2;</code>
    */
   ai.sapper.hcdc.common.model.DFSFile getSrcFile();
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSFile srcFile = 2;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSFile srcFile = 2;</code>
    */
   ai.sapper.hcdc.common.model.DFSFileOrBuilder getSrcFileOrBuilder();
 
+  // required .ai_sapper_hcdc_common_model.DFSFile destFile = 3;
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSFile destFile = 3;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSFile destFile = 3;</code>
    */
   boolean hasDestFile();
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSFile destFile = 3;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSFile destFile = 3;</code>
    */
   ai.sapper.hcdc.common.model.DFSFile getDestFile();
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSFile destFile = 3;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSFile destFile = 3;</code>
    */
   ai.sapper.hcdc.common.model.DFSFileOrBuilder getDestFileOrBuilder();
 
+  // required uint64 length = 4;
   /**
-   * <code>optional uint64 length = 4;</code>
+   * <code>required uint64 length = 4;</code>
+   */
+  boolean hasLength();
+  /**
+   * <code>required uint64 length = 4;</code>
    */
   long getLength();
 
+  // required .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
    */
-  int getOptsValue();
+  boolean hasOpts();
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
    */
   ai.sapper.hcdc.common.model.DFSRenameFile.RenameOpts getOpts();
 }

@@ -3,57 +3,86 @@
 
 package ai.sapper.hcdc.common.model;
 
-public interface DFSChangeDeltaOrBuilder extends
-    // @@protoc_insertion_point(interface_extends:ai_sapper_hcdc_common_model.DFSChangeDelta)
-    com.google.protobuf.MessageOrBuilder {
+public interface DFSChangeDeltaOrBuilder
+    extends com.google.protobuf.MessageOrBuilder {
 
+  // required string namespace = 1;
   /**
-   * <code>optional string namespace = 1;</code>
+   * <code>required string namespace = 1;</code>
+   */
+  boolean hasNamespace();
+  /**
+   * <code>required string namespace = 1;</code>
    */
   java.lang.String getNamespace();
   /**
-   * <code>optional string namespace = 1;</code>
+   * <code>required string namespace = 1;</code>
    */
   com.google.protobuf.ByteString
       getNamespaceBytes();
 
+  // required string txId = 2;
   /**
-   * <code>optional string txId = 2;</code>
+   * <code>required string txId = 2;</code>
+   */
+  boolean hasTxId();
+  /**
+   * <code>required string txId = 2;</code>
    */
   java.lang.String getTxId();
   /**
-   * <code>optional string txId = 2;</code>
+   * <code>required string txId = 2;</code>
    */
   com.google.protobuf.ByteString
       getTxIdBytes();
 
+  // required string entity = 3;
   /**
-   * <code>optional string entity = 3;</code>
+   * <code>required string entity = 3;</code>
+   */
+  boolean hasEntity();
+  /**
+   * <code>required string entity = 3;</code>
    */
   java.lang.String getEntity();
   /**
-   * <code>optional string entity = 3;</code>
+   * <code>required string entity = 3;</code>
    */
   com.google.protobuf.ByteString
       getEntityBytes();
 
+  // required string type = 4;
   /**
-   * <code>optional string type = 4;</code>
+   * <code>required string type = 4;</code>
+   */
+  boolean hasType();
+  /**
+   * <code>required string type = 4;</code>
    */
   java.lang.String getType();
   /**
-   * <code>optional string type = 4;</code>
+   * <code>required string type = 4;</code>
    */
   com.google.protobuf.ByteString
       getTypeBytes();
 
+  // required uint64 timestamp = 5;
   /**
-   * <code>optional uint64 timestamp = 5;</code>
+   * <code>required uint64 timestamp = 5;</code>
+   */
+  boolean hasTimestamp();
+  /**
+   * <code>required uint64 timestamp = 5;</code>
    */
   long getTimestamp();
 
+  // required bytes body = 6;
   /**
-   * <code>optional bytes body = 6;</code>
+   * <code>required bytes body = 6;</code>
+   */
+  boolean hasBody();
+  /**
+   * <code>required bytes body = 6;</code>
    */
   com.google.protobuf.ByteString getBody();
 }

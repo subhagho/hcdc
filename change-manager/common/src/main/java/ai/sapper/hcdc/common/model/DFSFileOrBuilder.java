@@ -3,22 +3,31 @@
 
 package ai.sapper.hcdc.common.model;
 
-public interface DFSFileOrBuilder extends
-    // @@protoc_insertion_point(interface_extends:ai_sapper_hcdc_common_model.DFSFile)
-    com.google.protobuf.MessageOrBuilder {
+public interface DFSFileOrBuilder
+    extends com.google.protobuf.MessageOrBuilder {
 
+  // required string path = 2;
   /**
-   * <code>optional string path = 2;</code>
+   * <code>required string path = 2;</code>
+   */
+  boolean hasPath();
+  /**
+   * <code>required string path = 2;</code>
    */
   java.lang.String getPath();
   /**
-   * <code>optional string path = 2;</code>
+   * <code>required string path = 2;</code>
    */
   com.google.protobuf.ByteString
       getPathBytes();
 
+  // required int64 inodeId = 3;
   /**
-   * <code>optional int64 inodeId = 3;</code>
+   * <code>required int64 inodeId = 3;</code>
+   */
+  boolean hasInodeId();
+  /**
+   * <code>required int64 inodeId = 3;</code>
    */
   long getInodeId();
 }

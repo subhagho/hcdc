@@ -3,36 +3,38 @@
 
 package ai.sapper.hcdc.common.model;
 
-public interface DFSUpdateBlocksOrBuilder extends
-    // @@protoc_insertion_point(interface_extends:ai_sapper_hcdc_common_model.DFSUpdateBlocks)
-    com.google.protobuf.MessageOrBuilder {
+public interface DFSUpdateBlocksOrBuilder
+    extends com.google.protobuf.MessageOrBuilder {
 
+  // required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
    */
   boolean hasTransaction();
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
    */
   ai.sapper.hcdc.common.model.DFSTransaction getTransaction();
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
    */
   ai.sapper.hcdc.common.model.DFSTransactionOrBuilder getTransactionOrBuilder();
 
+  // required .ai_sapper_hcdc_common_model.DFSFile file = 2;
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
    */
   boolean hasFile();
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
    */
   ai.sapper.hcdc.common.model.DFSFile getFile();
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
    */
   ai.sapper.hcdc.common.model.DFSFileOrBuilder getFileOrBuilder();
 
+  // repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 3;
   /**
    * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 3;</code>
    */

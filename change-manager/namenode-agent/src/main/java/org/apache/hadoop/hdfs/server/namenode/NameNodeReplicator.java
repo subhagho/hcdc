@@ -16,12 +16,16 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.tree.ImmutableNode;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.tools.offlineImageViewer.OfflineImageViewer;
+import org.apache.hadoop.hdfs.tools.offlineImageViewer.PBImageXmlWriter;
 import org.apache.hadoop.hdfs.tools.offlineImageViewer.XmlImageVisitor;
 
 import javax.naming.ConfigurationException;
 import java.io.File;
+import java.io.PrintStream;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -134,9 +138,11 @@ public class NameNodeReplicator {
         Preconditions.checkState(fsImage.exists());
 
         String output = String.format("%s/%s.xml", tempDir, fsImage.getName());
-        XmlImageVisitor visitor = new XmlImageVisitor(output, false);
-        OfflineImageViewer d = new OfflineImageViewer(fsImage.getAbsolutePath(), visitor, false);
-        d.go();
+        Configuration conf = new Configuration();
+        try (PrintStream out = new PrintStream(output)) {
+            new PBImageXmlWriter(conf, out).visit(new RandomAccessFile(fsImage.getAbsolutePath(),
+                    "r"));
+        }
 
         return output;
     }

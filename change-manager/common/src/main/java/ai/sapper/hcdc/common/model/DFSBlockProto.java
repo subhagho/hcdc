@@ -3,8 +3,8 @@
 
 package ai.sapper.hcdc.common.model;
 
-public final class HcdcDFSBlockProtos {
-  private HcdcDFSBlockProtos() {}
+public final class DFSBlockProto {
+  private DFSBlockProto() {}
   public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
   }
@@ -145,8 +145,8 @@ public final class HcdcDFSBlockProtos {
       "\n\006opCode\030\002 \002(\t\"p\n\016DFSChangeDelta\022\021\n\tname" +
       "space\030\001 \002(\t\022\014\n\004txId\030\002 \002(\t\022\016\n\006entity\030\003 \002(" +
       "\t\022\014\n\004type\030\004 \002(\t\022\021\n\ttimestamp\030\005 \002(\004\022\014\n\004bo" +
-      "dy\030\006 \002(\014B3\n\033ai.sapper.hcdc.common.modelB" +
-      "\022HcdcDFSBlockProtosP\001"
+      "dy\030\006 \002(\014B.\n\033ai.sapper.hcdc.common.modelB" +
+      "\rDFSBlockProtoP\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {

@@ -3,56 +3,78 @@
 
 package ai.sapper.hcdc.common.model;
 
-public interface DFSAddFileOrBuilder extends
-    // @@protoc_insertion_point(interface_extends:ai_sapper_hcdc_common_model.DFSAddFile)
-    com.google.protobuf.MessageOrBuilder {
+public interface DFSAddFileOrBuilder
+    extends com.google.protobuf.MessageOrBuilder {
 
+  // required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
    */
   boolean hasTransaction();
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
    */
   ai.sapper.hcdc.common.model.DFSTransaction getTransaction();
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
    */
   ai.sapper.hcdc.common.model.DFSTransactionOrBuilder getTransactionOrBuilder();
 
+  // required .ai_sapper_hcdc_common_model.DFSFile file = 2;
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
    */
   boolean hasFile();
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
    */
   ai.sapper.hcdc.common.model.DFSFile getFile();
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
    */
   ai.sapper.hcdc.common.model.DFSFileOrBuilder getFileOrBuilder();
 
+  // required uint64 length = 3;
   /**
-   * <code>optional uint64 length = 3;</code>
+   * <code>required uint64 length = 3;</code>
+   */
+  boolean hasLength();
+  /**
+   * <code>required uint64 length = 3;</code>
    */
   long getLength();
 
+  // required uint64 blockSize = 4;
   /**
-   * <code>optional uint64 blockSize = 4;</code>
+   * <code>required uint64 blockSize = 4;</code>
+   */
+  boolean hasBlockSize();
+  /**
+   * <code>required uint64 blockSize = 4;</code>
    */
   long getBlockSize();
 
+  // required uint64 modifiedTime = 5;
   /**
-   * <code>optional uint64 modifiedTime = 5;</code>
+   * <code>required uint64 modifiedTime = 5;</code>
+   */
+  boolean hasModifiedTime();
+  /**
+   * <code>required uint64 modifiedTime = 5;</code>
    */
   long getModifiedTime();
 
+  // required uint64 accessedTime = 6;
   /**
-   * <code>optional uint64 accessedTime = 6;</code>
+   * <code>required uint64 accessedTime = 6;</code>
+   */
+  boolean hasAccessedTime();
+  /**
+   * <code>required uint64 accessedTime = 6;</code>
    */
   long getAccessedTime();
 
+  // repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;
   /**
    * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
    */
@@ -77,6 +99,11 @@ public interface DFSAddFileOrBuilder extends
   ai.sapper.hcdc.common.model.DFSBlockOrBuilder getBlocksOrBuilder(
       int index);
 
+  // optional bool overwrite = 8;
+  /**
+   * <code>optional bool overwrite = 8;</code>
+   */
+  boolean hasOverwrite();
   /**
    * <code>optional bool overwrite = 8;</code>
    */

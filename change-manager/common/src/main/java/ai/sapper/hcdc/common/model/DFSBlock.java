@@ -7,30 +7,38 @@ package ai.sapper.hcdc.common.model;
  * Protobuf type {@code ai_sapper_hcdc_common_model.DFSBlock}
  */
 public  final class DFSBlock extends
-    com.google.protobuf.GeneratedMessageV3 implements
-    // @@protoc_insertion_point(message_implements:ai_sapper_hcdc_common_model.DFSBlock)
-    DFSBlockOrBuilder {
+    com.google.protobuf.GeneratedMessage
+    implements DFSBlockOrBuilder {
   // Use DFSBlock.newBuilder() to construct.
-  private DFSBlock(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+  private DFSBlock(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
     super(builder);
+    this.unknownFields = builder.getUnknownFields();
   }
-  private DFSBlock() {
-    blockId_ = 0L;
-    size_ = 0L;
-    generationStamp_ = 0L;
+  private DFSBlock(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+  private static final DFSBlock defaultInstance;
+  public static DFSBlock getDefaultInstance() {
+    return defaultInstance;
   }
 
+  public DFSBlock getDefaultInstanceForType() {
+    return defaultInstance;
+  }
+
+  private final com.google.protobuf.UnknownFieldSet unknownFields;
   @java.lang.Override
   public final com.google.protobuf.UnknownFieldSet
-  getUnknownFields() {
-    return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
+      getUnknownFields() {
+    return this.unknownFields;
   }
   private DFSBlock(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
-    this();
+    initFields();
     int mutable_bitField0_ = 0;
+    com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+        com.google.protobuf.UnknownFieldSet.newBuilder();
     try {
       boolean done = false;
       while (!done) {
@@ -40,23 +48,24 @@ public  final class DFSBlock extends
             done = true;
             break;
           default: {
-            if (!input.skipField(tag)) {
+            if (!parseUnknownField(input, unknownFields,
+                                   extensionRegistry, tag)) {
               done = true;
             }
             break;
           }
           case 8: {
-
+            bitField0_ |= 0x00000001;
             blockId_ = input.readInt64();
             break;
           }
           case 16: {
-
+            bitField0_ |= 0x00000002;
             size_ = input.readInt64();
             break;
           }
           case 24: {
-
+            bitField0_ |= 0x00000004;
             generationStamp_ = input.readInt64();
             break;
           }
@@ -66,134 +75,157 @@ public  final class DFSBlock extends
       throw e.setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
       throw new com.google.protobuf.InvalidProtocolBufferException(
-          e).setUnfinishedMessage(this);
+          e.getMessage()).setUnfinishedMessage(this);
     } finally {
+      this.unknownFields = unknownFields.build();
       makeExtensionsImmutable();
     }
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return ai.sapper.hcdc.common.model.HcdcDFSBlockProtos.internal_static_ai_sapper_hcdc_common_model_DFSBlock_descriptor;
+    return ai.sapper.hcdc.common.model.DFSBlockProto.internal_static_ai_sapper_hcdc_common_model_DFSBlock_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return ai.sapper.hcdc.common.model.HcdcDFSBlockProtos.internal_static_ai_sapper_hcdc_common_model_DFSBlock_fieldAccessorTable
+    return ai.sapper.hcdc.common.model.DFSBlockProto.internal_static_ai_sapper_hcdc_common_model_DFSBlock_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
             ai.sapper.hcdc.common.model.DFSBlock.class, ai.sapper.hcdc.common.model.DFSBlock.Builder.class);
   }
 
+  public static com.google.protobuf.Parser<DFSBlock> PARSER =
+      new com.google.protobuf.AbstractParser<DFSBlock>() {
+    public DFSBlock parsePartialFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return new DFSBlock(input, extensionRegistry);
+    }
+  };
+
+  @java.lang.Override
+  public com.google.protobuf.Parser<DFSBlock> getParserForType() {
+    return PARSER;
+  }
+
+  private int bitField0_;
+  // required int64 blockId = 1;
   public static final int BLOCKID_FIELD_NUMBER = 1;
   private long blockId_;
   /**
-   * <code>optional int64 blockId = 1;</code>
+   * <code>required int64 blockId = 1;</code>
+   */
+  public boolean hasBlockId() {
+    return ((bitField0_ & 0x00000001) == 0x00000001);
+  }
+  /**
+   * <code>required int64 blockId = 1;</code>
    */
   public long getBlockId() {
     return blockId_;
   }
 
+  // required int64 size = 2;
   public static final int SIZE_FIELD_NUMBER = 2;
   private long size_;
   /**
-   * <code>optional int64 size = 2;</code>
+   * <code>required int64 size = 2;</code>
+   */
+  public boolean hasSize() {
+    return ((bitField0_ & 0x00000002) == 0x00000002);
+  }
+  /**
+   * <code>required int64 size = 2;</code>
    */
   public long getSize() {
     return size_;
   }
 
+  // required int64 generationStamp = 3;
   public static final int GENERATIONSTAMP_FIELD_NUMBER = 3;
   private long generationStamp_;
   /**
-   * <code>optional int64 generationStamp = 3;</code>
+   * <code>required int64 generationStamp = 3;</code>
+   */
+  public boolean hasGenerationStamp() {
+    return ((bitField0_ & 0x00000004) == 0x00000004);
+  }
+  /**
+   * <code>required int64 generationStamp = 3;</code>
    */
   public long getGenerationStamp() {
     return generationStamp_;
   }
 
+  private void initFields() {
+    blockId_ = 0L;
+    size_ = 0L;
+    generationStamp_ = 0L;
+  }
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
-    if (isInitialized == 1) return true;
-    if (isInitialized == 0) return false;
+    if (isInitialized != -1) return isInitialized == 1;
 
+    if (!hasBlockId()) {
+      memoizedIsInitialized = 0;
+      return false;
+    }
+    if (!hasSize()) {
+      memoizedIsInitialized = 0;
+      return false;
+    }
+    if (!hasGenerationStamp()) {
+      memoizedIsInitialized = 0;
+      return false;
+    }
     memoizedIsInitialized = 1;
     return true;
   }
 
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
-    if (blockId_ != 0L) {
+    getSerializedSize();
+    if (((bitField0_ & 0x00000001) == 0x00000001)) {
       output.writeInt64(1, blockId_);
     }
-    if (size_ != 0L) {
+    if (((bitField0_ & 0x00000002) == 0x00000002)) {
       output.writeInt64(2, size_);
     }
-    if (generationStamp_ != 0L) {
+    if (((bitField0_ & 0x00000004) == 0x00000004)) {
       output.writeInt64(3, generationStamp_);
     }
+    getUnknownFields().writeTo(output);
   }
 
+  private int memoizedSerializedSize = -1;
   public int getSerializedSize() {
-    int size = memoizedSize;
+    int size = memoizedSerializedSize;
     if (size != -1) return size;
 
     size = 0;
-    if (blockId_ != 0L) {
+    if (((bitField0_ & 0x00000001) == 0x00000001)) {
       size += com.google.protobuf.CodedOutputStream
         .computeInt64Size(1, blockId_);
     }
-    if (size_ != 0L) {
+    if (((bitField0_ & 0x00000002) == 0x00000002)) {
       size += com.google.protobuf.CodedOutputStream
         .computeInt64Size(2, size_);
     }
-    if (generationStamp_ != 0L) {
+    if (((bitField0_ & 0x00000004) == 0x00000004)) {
       size += com.google.protobuf.CodedOutputStream
         .computeInt64Size(3, generationStamp_);
     }
-    memoizedSize = size;
+    size += getUnknownFields().getSerializedSize();
+    memoizedSerializedSize = size;
     return size;
   }
 
   private static final long serialVersionUID = 0L;
   @java.lang.Override
-  public boolean equals(final java.lang.Object obj) {
-    if (obj == this) {
-     return true;
-    }
-    if (!(obj instanceof ai.sapper.hcdc.common.model.DFSBlock)) {
-      return super.equals(obj);
-    }
-    ai.sapper.hcdc.common.model.DFSBlock other = (ai.sapper.hcdc.common.model.DFSBlock) obj;
-
-    boolean result = true;
-    result = result && (getBlockId()
-        == other.getBlockId());
-    result = result && (getSize()
-        == other.getSize());
-    result = result && (getGenerationStamp()
-        == other.getGenerationStamp());
-    return result;
-  }
-
-  @java.lang.Override
-  public int hashCode() {
-    if (memoizedHashCode != 0) {
-      return memoizedHashCode;
-    }
-    int hash = 41;
-    hash = (19 * hash) + getDescriptorForType().hashCode();
-    hash = (37 * hash) + BLOCKID_FIELD_NUMBER;
-    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
-        getBlockId());
-    hash = (37 * hash) + SIZE_FIELD_NUMBER;
-    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
-        getSize());
-    hash = (37 * hash) + GENERATIONSTAMP_FIELD_NUMBER;
-    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
-        getGenerationStamp());
-    hash = (29 * hash) + unknownFields.hashCode();
-    memoizedHashCode = hash;
-    return hash;
+  protected java.lang.Object writeReplace()
+      throws java.io.ObjectStreamException {
+    return super.writeReplace();
   }
 
   public static ai.sapper.hcdc.common.model.DFSBlock parseFrom(
@@ -219,57 +251,46 @@ public  final class DFSBlock extends
   }
   public static ai.sapper.hcdc.common.model.DFSBlock parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static ai.sapper.hcdc.common.model.DFSBlock parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
   public static ai.sapper.hcdc.common.model.DFSBlock parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input);
+    return PARSER.parseDelimitedFrom(input);
   }
   public static ai.sapper.hcdc.common.model.DFSBlock parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseDelimitedFrom(input, extensionRegistry);
   }
   public static ai.sapper.hcdc.common.model.DFSBlock parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input);
+    return PARSER.parseFrom(input);
   }
   public static ai.sapper.hcdc.common.model.DFSBlock parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return com.google.protobuf.GeneratedMessageV3
-        .parseWithIOException(PARSER, input, extensionRegistry);
+    return PARSER.parseFrom(input, extensionRegistry);
   }
 
+  public static Builder newBuilder() { return Builder.create(); }
   public Builder newBuilderForType() { return newBuilder(); }
-  public static Builder newBuilder() {
-    return DEFAULT_INSTANCE.toBuilder();
-  }
   public static Builder newBuilder(ai.sapper.hcdc.common.model.DFSBlock prototype) {
-    return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    return newBuilder().mergeFrom(prototype);
   }
-  public Builder toBuilder() {
-    return this == DEFAULT_INSTANCE
-        ? new Builder() : new Builder().mergeFrom(this);
-  }
+  public Builder toBuilder() { return newBuilder(this); }
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -277,17 +298,16 @@ public  final class DFSBlock extends
    * Protobuf type {@code ai_sapper_hcdc_common_model.DFSBlock}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-      // @@protoc_insertion_point(builder_implements:ai_sapper_hcdc_common_model.DFSBlock)
-      ai.sapper.hcdc.common.model.DFSBlockOrBuilder {
+      com.google.protobuf.GeneratedMessage.Builder<Builder>
+     implements ai.sapper.hcdc.common.model.DFSBlockOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return ai.sapper.hcdc.common.model.HcdcDFSBlockProtos.internal_static_ai_sapper_hcdc_common_model_DFSBlock_descriptor;
+      return ai.sapper.hcdc.common.model.DFSBlockProto.internal_static_ai_sapper_hcdc_common_model_DFSBlock_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return ai.sapper.hcdc.common.model.HcdcDFSBlockProtos.internal_static_ai_sapper_hcdc_common_model_DFSBlock_fieldAccessorTable
+      return ai.sapper.hcdc.common.model.DFSBlockProto.internal_static_ai_sapper_hcdc_common_model_DFSBlock_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               ai.sapper.hcdc.common.model.DFSBlock.class, ai.sapper.hcdc.common.model.DFSBlock.Builder.class);
     }
@@ -298,29 +318,36 @@ public  final class DFSBlock extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessageV3
-              .alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
       }
     }
+    private static Builder create() {
+      return new Builder();
+    }
+
     public Builder clear() {
       super.clear();
       blockId_ = 0L;
-
+      bitField0_ = (bitField0_ & ~0x00000001);
       size_ = 0L;
-
+      bitField0_ = (bitField0_ & ~0x00000002);
       generationStamp_ = 0L;
-
+      bitField0_ = (bitField0_ & ~0x00000004);
       return this;
+    }
+
+    public Builder clone() {
+      return create().mergeFrom(buildPartial());
     }
 
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return ai.sapper.hcdc.common.model.HcdcDFSBlockProtos.internal_static_ai_sapper_hcdc_common_model_DFSBlock_descriptor;
+      return ai.sapper.hcdc.common.model.DFSBlockProto.internal_static_ai_sapper_hcdc_common_model_DFSBlock_descriptor;
     }
 
     public ai.sapper.hcdc.common.model.DFSBlock getDefaultInstanceForType() {
@@ -337,39 +364,25 @@ public  final class DFSBlock extends
 
     public ai.sapper.hcdc.common.model.DFSBlock buildPartial() {
       ai.sapper.hcdc.common.model.DFSBlock result = new ai.sapper.hcdc.common.model.DFSBlock(this);
+      int from_bitField0_ = bitField0_;
+      int to_bitField0_ = 0;
+      if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+        to_bitField0_ |= 0x00000001;
+      }
       result.blockId_ = blockId_;
+      if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+        to_bitField0_ |= 0x00000002;
+      }
       result.size_ = size_;
+      if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+        to_bitField0_ |= 0x00000004;
+      }
       result.generationStamp_ = generationStamp_;
+      result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
     }
 
-    public Builder clone() {
-      return (Builder) super.clone();
-    }
-    public Builder setField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.setField(field, value);
-    }
-    public Builder clearField(
-        com.google.protobuf.Descriptors.FieldDescriptor field) {
-      return (Builder) super.clearField(field);
-    }
-    public Builder clearOneof(
-        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-      return (Builder) super.clearOneof(oneof);
-    }
-    public Builder setRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        int index, Object value) {
-      return (Builder) super.setRepeatedField(field, index, value);
-    }
-    public Builder addRepeatedField(
-        com.google.protobuf.Descriptors.FieldDescriptor field,
-        Object value) {
-      return (Builder) super.addRepeatedField(field, value);
-    }
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof ai.sapper.hcdc.common.model.DFSBlock) {
         return mergeFrom((ai.sapper.hcdc.common.model.DFSBlock)other);
@@ -381,20 +394,32 @@ public  final class DFSBlock extends
 
     public Builder mergeFrom(ai.sapper.hcdc.common.model.DFSBlock other) {
       if (other == ai.sapper.hcdc.common.model.DFSBlock.getDefaultInstance()) return this;
-      if (other.getBlockId() != 0L) {
+      if (other.hasBlockId()) {
         setBlockId(other.getBlockId());
       }
-      if (other.getSize() != 0L) {
+      if (other.hasSize()) {
         setSize(other.getSize());
       }
-      if (other.getGenerationStamp() != 0L) {
+      if (other.hasGenerationStamp()) {
         setGenerationStamp(other.getGenerationStamp());
       }
-      onChanged();
+      this.mergeUnknownFields(other.getUnknownFields());
       return this;
     }
 
     public final boolean isInitialized() {
+      if (!hasBlockId()) {
+        
+        return false;
+      }
+      if (!hasSize()) {
+        
+        return false;
+      }
+      if (!hasGenerationStamp()) {
+        
+        return false;
+      }
       return true;
     }
 
@@ -407,7 +432,7 @@ public  final class DFSBlock extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (ai.sapper.hcdc.common.model.DFSBlock) e.getUnfinishedMessage();
-        throw e.unwrapIOException();
+        throw e;
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -415,130 +440,115 @@ public  final class DFSBlock extends
       }
       return this;
     }
+    private int bitField0_;
 
+    // required int64 blockId = 1;
     private long blockId_ ;
     /**
-     * <code>optional int64 blockId = 1;</code>
+     * <code>required int64 blockId = 1;</code>
+     */
+    public boolean hasBlockId() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>required int64 blockId = 1;</code>
      */
     public long getBlockId() {
       return blockId_;
     }
     /**
-     * <code>optional int64 blockId = 1;</code>
+     * <code>required int64 blockId = 1;</code>
      */
     public Builder setBlockId(long value) {
-      
+      bitField0_ |= 0x00000001;
       blockId_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>optional int64 blockId = 1;</code>
+     * <code>required int64 blockId = 1;</code>
      */
     public Builder clearBlockId() {
-      
+      bitField0_ = (bitField0_ & ~0x00000001);
       blockId_ = 0L;
       onChanged();
       return this;
     }
 
+    // required int64 size = 2;
     private long size_ ;
     /**
-     * <code>optional int64 size = 2;</code>
+     * <code>required int64 size = 2;</code>
+     */
+    public boolean hasSize() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    /**
+     * <code>required int64 size = 2;</code>
      */
     public long getSize() {
       return size_;
     }
     /**
-     * <code>optional int64 size = 2;</code>
+     * <code>required int64 size = 2;</code>
      */
     public Builder setSize(long value) {
-      
+      bitField0_ |= 0x00000002;
       size_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>optional int64 size = 2;</code>
+     * <code>required int64 size = 2;</code>
      */
     public Builder clearSize() {
-      
+      bitField0_ = (bitField0_ & ~0x00000002);
       size_ = 0L;
       onChanged();
       return this;
     }
 
+    // required int64 generationStamp = 3;
     private long generationStamp_ ;
     /**
-     * <code>optional int64 generationStamp = 3;</code>
+     * <code>required int64 generationStamp = 3;</code>
+     */
+    public boolean hasGenerationStamp() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>required int64 generationStamp = 3;</code>
      */
     public long getGenerationStamp() {
       return generationStamp_;
     }
     /**
-     * <code>optional int64 generationStamp = 3;</code>
+     * <code>required int64 generationStamp = 3;</code>
      */
     public Builder setGenerationStamp(long value) {
-      
+      bitField0_ |= 0x00000004;
       generationStamp_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>optional int64 generationStamp = 3;</code>
+     * <code>required int64 generationStamp = 3;</code>
      */
     public Builder clearGenerationStamp() {
-      
+      bitField0_ = (bitField0_ & ~0x00000004);
       generationStamp_ = 0L;
       onChanged();
       return this;
     }
-    public final Builder setUnknownFields(
-        final com.google.protobuf.UnknownFieldSet unknownFields) {
-      return this;
-    }
-
-    public final Builder mergeUnknownFields(
-        final com.google.protobuf.UnknownFieldSet unknownFields) {
-      return this;
-    }
-
 
     // @@protoc_insertion_point(builder_scope:ai_sapper_hcdc_common_model.DFSBlock)
   }
 
-  // @@protoc_insertion_point(class_scope:ai_sapper_hcdc_common_model.DFSBlock)
-  private static final ai.sapper.hcdc.common.model.DFSBlock DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new ai.sapper.hcdc.common.model.DFSBlock();
+    defaultInstance = new DFSBlock(true);
+    defaultInstance.initFields();
   }
 
-  public static ai.sapper.hcdc.common.model.DFSBlock getDefaultInstance() {
-    return DEFAULT_INSTANCE;
-  }
-
-  private static final com.google.protobuf.Parser<DFSBlock>
-      PARSER = new com.google.protobuf.AbstractParser<DFSBlock>() {
-    public DFSBlock parsePartialFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-        return new DFSBlock(input, extensionRegistry);
-    }
-  };
-
-  public static com.google.protobuf.Parser<DFSBlock> parser() {
-    return PARSER;
-  }
-
-  @java.lang.Override
-  public com.google.protobuf.Parser<DFSBlock> getParserForType() {
-    return PARSER;
-  }
-
-  public ai.sapper.hcdc.common.model.DFSBlock getDefaultInstanceForType() {
-    return DEFAULT_INSTANCE;
-  }
-
+  // @@protoc_insertion_point(class_scope:ai_sapper_hcdc_common_model.DFSBlock)
 }
 

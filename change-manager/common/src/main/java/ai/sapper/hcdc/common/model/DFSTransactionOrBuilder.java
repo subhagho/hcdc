@@ -3,26 +3,36 @@
 
 package ai.sapper.hcdc.common.model;
 
-public interface DFSTransactionOrBuilder extends
-    // @@protoc_insertion_point(interface_extends:ai_sapper_hcdc_common_model.DFSTransaction)
-    com.google.protobuf.MessageOrBuilder {
+public interface DFSTransactionOrBuilder
+    extends com.google.protobuf.MessageOrBuilder {
 
+  // required int64 transactionId = 1;
   /**
-   * <code>optional int64 transactionId = 1;</code>
+   * <code>required int64 transactionId = 1;</code>
+   */
+  boolean hasTransactionId();
+  /**
+   * <code>required int64 transactionId = 1;</code>
    */
   long getTransactionId();
 
+  // required .ai_sapper_hcdc_common_model.DFSTransaction.Operation op = 2;
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSTransaction.Operation op = 2;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction.Operation op = 2;</code>
    */
-  int getOpValue();
+  boolean hasOp();
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSTransaction.Operation op = 2;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction.Operation op = 2;</code>
    */
   ai.sapper.hcdc.common.model.DFSTransaction.Operation getOp();
 
+  // required uint64 timestamp = 3;
   /**
-   * <code>optional uint64 timestamp = 3;</code>
+   * <code>required uint64 timestamp = 3;</code>
+   */
+  boolean hasTimestamp();
+  /**
+   * <code>required uint64 timestamp = 3;</code>
    */
   long getTimestamp();
 }
