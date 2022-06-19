@@ -14,6 +14,7 @@ public class DFSBlockState {
     private long createdTime;
     private long updatedTime;
     private long dataSize = 0;
+    private long blockSize;
     private long lastTnxId;
     private List<BlockTnxDelta> transactions;
 
@@ -23,5 +24,13 @@ public class DFSBlockState {
         transactions.add(transaction);
 
         return this;
+    }
+
+    public boolean hasTransactions() {
+        return (transactions != null && !transactions.isEmpty());
+    }
+
+    public boolean isComplete() {
+        return (dataSize == blockSize);
     }
 }

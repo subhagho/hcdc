@@ -1,4 +1,4 @@
-package org.apache.hadoop.hdfs;
+package ai.sapper.hcdc.core.model;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -17,7 +17,7 @@ public class DFSFileState {
     private long updatedTime;
     private long numBlocks;
     private long blockSize;
-    private long dataLength;
+    private long dataSize;
     private long lastTnxId;
     private long timestamp;
     private boolean deleted = false;
@@ -48,5 +48,9 @@ public class DFSFileState {
             blocks.sort(new DFSBlockComparator());
         }
         return blocks;
+    }
+
+    public boolean hasBlocks() {
+        return (blocks != null && !blocks.isEmpty());
     }
 }

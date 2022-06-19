@@ -9,4 +9,5 @@ public class BlockTnxDelta {
     private long startOffset;
     private long endOffset;
     private long tnxId;
+    private long timestamp;
 }

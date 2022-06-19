@@ -1,5 +1,6 @@
 package org.apache.hadoop.hdfs;
 
+import ai.sapper.hcdc.core.model.HDFSBlockData;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
