@@ -158,7 +158,11 @@ public class ZkStateManager {
         }
     }
 
-    public DFSFileState create(@NonNull String path, long createdTime, long blockSize, long txId) throws StateManagerError {
+    public DFSFileState create(@NonNull String path,
+                               long inodeId,
+                               long createdTime,
+                               long blockSize,
+                               long txId) throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
         try {
@@ -169,6 +173,7 @@ public class ZkStateManager {
                 throw new IOException("Path already exists.");
             }
             DFSFileState fs = new DFSFileState();
+            fs.setId(inodeId);
             fs.setZkPath(zp);
             fs.setHdfsFilePath(path);
             fs.setCreatedTime(createdTime);

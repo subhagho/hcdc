@@ -2,12 +2,10 @@ package ai.sapper.hcdc.common.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.NonNull;
 
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 
 public class JSONUtils {
     private static final ObjectMapper mapper = new ObjectMapper();

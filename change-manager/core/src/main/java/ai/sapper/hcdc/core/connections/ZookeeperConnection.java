@@ -13,7 +13,6 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
@@ -81,7 +80,7 @@ public class ZookeeperConnection implements Connection {
                     builder.zkClientConfig(new ZKClientConfig(zkf));
                 }
                 */
-                 
+
                 state.state(EConnectionState.Initialized);
             } catch (Throwable t) {
                 state.error(t);

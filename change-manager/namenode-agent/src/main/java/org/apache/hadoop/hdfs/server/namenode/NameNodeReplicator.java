@@ -7,7 +7,6 @@ import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
-import ai.sapper.hcdc.core.connections.state.DFSBlockState;
 import ai.sapper.hcdc.core.connections.state.DFSFileState;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -113,7 +112,7 @@ public class NameNodeReplicator {
             if (inode.type == EInodeType.DIRECTORY) continue;
             DefaultLogger.__LOG.debug(String.format("Copying HDFS file entry. [path=%s]", inode.path()));
 
-            DFSFileState fileState = stateManager.create(inode.path(), inode.mTime, inode.preferredBlockSize, txnId);
+            DFSFileState fileState = stateManager.create(inode.path(), inode.id, inode.mTime, inode.preferredBlockSize, txnId);
             if (inode.blocks != null && !inode.blocks.isEmpty()) {
                 for (DFSInodeBlock block : inode.blocks) {
                     fileState = stateManager.addOrUpdateBlock(fileState.getHdfsFilePath(), block.id, inode.mTime, block.numBytes, txnId);

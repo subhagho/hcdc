@@ -3,7 +3,6 @@ package ai.sapper.hcdc.core.connections.state;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
-import net.minidev.json.annotate.JsonIgnore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +10,7 @@ import java.util.List;
 @Getter
 @Setter
 public class DFSFileState {
+    private long id;
     private String zkPath;
     private String hdfsFilePath;
     private long createdTime;
