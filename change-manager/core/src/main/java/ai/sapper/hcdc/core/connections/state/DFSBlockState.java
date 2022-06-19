@@ -3,6 +3,7 @@ package ai.sapper.hcdc.core.connections.state;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import net.minidev.json.annotate.JsonIgnore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +31,7 @@ public class DFSBlockState {
         return (transactions != null && !transactions.isEmpty());
     }
 
-    public boolean isComplete() {
+    public boolean blockIsFull() {
         return (dataSize == blockSize);
     }
 }

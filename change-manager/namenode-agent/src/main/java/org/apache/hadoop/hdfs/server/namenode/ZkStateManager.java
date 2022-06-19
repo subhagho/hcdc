@@ -344,13 +344,15 @@ public class ZkStateManager {
         try {
             CuratorFramework client = connection().client();
             String path = getFilePath(null);
-            client.delete().deletingChildrenIfNeeded().forPath(path);
+            if (client.checkExists().forPath(path) != null) {
+                client.delete().deletingChildrenIfNeeded().forPath(path);
+            }
         } catch (Exception ex) {
             throw new StateManagerError(ex);
         }
     }
 
-    private String getFilePath(String hdfsPath) {
+    public String getFilePath(String hdfsPath) {
         if (Strings.isNullOrEmpty(hdfsPath)) {
             return PathUtils.formatZkPath(String.format("%s/%s", zkPath, Constants.ZK_PATH_FILES));
         } else {

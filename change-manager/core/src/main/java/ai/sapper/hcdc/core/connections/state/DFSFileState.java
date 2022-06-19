@@ -28,7 +28,7 @@ public class DFSFileState {
             blocks = new ArrayList<>();
         blocks.add(block);
         numBlocks++;
-        
+
         return this;
     }
 
@@ -43,8 +43,7 @@ public class DFSFileState {
         return null;
     }
 
-    @JsonIgnore
-    public List<DFSBlockState> getSorted() {
+    public List<DFSBlockState> sortedBlocks() {
         if (blocks != null && !blocks.isEmpty()) {
             blocks.sort(new DFSBlockComparator());
         }

@@ -94,7 +94,8 @@ public class NameNodeReplicator {
                 String output = generateFSImageSnapshot();
                 DefaultLogger.__LOG.info(String.format("Generated FS Image XML. [path=%s]", output));
                 readFSImageXml(output);
-
+                DefaultLogger.__LOG.warn(String.format("WARNING: Will delete existing file structure, if present. [path=%s]", stateManager.getFilePath(null)));
+                stateManager.deleteAll();
                 copy();
             } finally {
                 NameNodeEnv.globalLock().unlock();
