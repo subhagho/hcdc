@@ -12,7 +12,6 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
-import org.apache.zookeeper.client.ZKClientConfig;
 
 import java.io.File;
 import java.io.IOException;
@@ -73,6 +72,7 @@ public class ZookeeperConnection implements Connection {
                     builder.sessionTimeoutMs(config.sessionTimeout);
                 }
 
+                /*
                 if (!Strings.isNullOrEmpty(config.zookeeperConfig)) {
                     File zkf = new File(config.zookeeperConfig);
                     if (!zkf.exists()) {
@@ -80,6 +80,8 @@ public class ZookeeperConnection implements Connection {
                     }
                     builder.zkClientConfig(new ZKClientConfig(zkf));
                 }
+                */
+                 
                 state.state(EConnectionState.Initialized);
             } catch (Throwable t) {
                 state.error(t);

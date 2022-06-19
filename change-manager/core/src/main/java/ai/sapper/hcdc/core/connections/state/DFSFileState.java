@@ -27,7 +27,8 @@ public class DFSFileState {
         if (blocks == null)
             blocks = new ArrayList<>();
         blocks.add(block);
-
+        numBlocks++;
+        
         return this;
     }
 

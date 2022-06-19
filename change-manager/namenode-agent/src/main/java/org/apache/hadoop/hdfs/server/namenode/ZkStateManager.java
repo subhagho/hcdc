@@ -158,7 +158,7 @@ public class ZkStateManager {
         }
     }
 
-    public DFSFileState create(@NonNull String path, long createdTime, long txId) throws StateManagerError {
+    public DFSFileState create(@NonNull String path, long createdTime, long blockSize, long txId) throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
         try {
@@ -173,6 +173,7 @@ public class ZkStateManager {
             fs.setHdfsFilePath(path);
             fs.setCreatedTime(createdTime);
             fs.setUpdatedTime(createdTime);
+            fs.setBlockSize(blockSize);
             fs.setDeleted(false);
             fs.setTimestamp(System.currentTimeMillis());
             fs.setLastTnxId(txId);
@@ -209,7 +210,6 @@ public class ZkStateManager {
                 bs.setCreatedTime(updatedTime);
                 bs.setBlockSize(fs.getBlockSize());
                 fs.add(bs);
-
             } else {
                 prevDataSize = bs.getDataSize();
             }

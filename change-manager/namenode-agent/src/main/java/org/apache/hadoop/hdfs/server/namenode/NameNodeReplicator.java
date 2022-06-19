@@ -4,8 +4,11 @@ import ai.sapper.hcdc.agents.namenode.NameNodeEnv;
 import ai.sapper.hcdc.agents.namenode.NameNodeError;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
+import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
+import ai.sapper.hcdc.core.connections.state.DFSBlockState;
+import ai.sapper.hcdc.core.connections.state.DFSFileState;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.base.Preconditions;
@@ -91,6 +94,8 @@ public class NameNodeReplicator {
                 String output = generateFSImageSnapshot();
                 DefaultLogger.__LOG.info(String.format("Generated FS Image XML. [path=%s]", output));
                 readFSImageXml(output);
+
+                copy();
             } finally {
                 NameNodeEnv.globalLock().unlock();
             }
@@ -98,6 +103,25 @@ public class NameNodeReplicator {
             DefaultLogger.__LOG.error(t.getLocalizedMessage());
             DefaultLogger.__LOG.debug(DefaultLogger.stacktrace(t));
             throw new NameNodeError(t);
+        }
+    }
+
+    private void copy() throws Exception {
+        for (long id : inodes.keySet()) {
+            DFSInode inode = inodes.get(id);
+            if (inode.type == EInodeType.DIRECTORY) continue;
+            DefaultLogger.__LOG.debug(String.format("Copying HDFS file entry. [path=%s]", inode.path()));
+
+            DFSFileState fileState = stateManager.create(inode.path(), inode.mTime, inode.preferredBlockSize, txnId);
+            if (inode.blocks != null && !inode.blocks.isEmpty()) {
+                for (DFSInodeBlock block : inode.blocks) {
+                    fileState = stateManager.addOrUpdateBlock(fileState.getHdfsFilePath(), block.id, inode.mTime, block.numBytes, txnId);
+                }
+            }
+            if (DefaultLogger.__LOG.isDebugEnabled()) {
+                String json = JSONUtils.asString(fileState, DFSFileState.class);
+                DefaultLogger.__LOG.debug(json);
+            }
         }
     }
 
@@ -125,6 +149,36 @@ public class NameNodeReplicator {
                 directoryMap.put(dir.id, dir);
             }
         }
+        long rid = findRootInodeId();
+        Preconditions.checkState(rid >= 0);
+        findChildren(rid);
+    }
+
+    private void findChildren(long id) {
+        if (directoryMap.containsKey(id)) {
+            DFSInode inode = inodes.get(id);
+            Preconditions.checkNotNull(inode);
+            if (inode.children != null && !inode.children.isEmpty()) return;
+            DFSDirectory dir = directoryMap.get(id);
+            if (dir.children != null && !dir.children.isEmpty()) {
+                for (long cid : dir.children) {
+                    DFSInode cnode = inodes.get(cid);
+                    Preconditions.checkNotNull(cnode);
+                    inode.addChild(cnode);
+                    findChildren(cnode.id);
+                }
+            }
+        }
+    }
+
+    private long findRootInodeId() {
+        for (long id : inodes.keySet()) {
+            DFSInode inode = inodes.get(id);
+            if (Strings.isNullOrEmpty(inode.name)) {
+                return id;
+            }
+        }
+        return -1L;
     }
 
     private DFSInode readInode(HierarchicalConfiguration<ImmutableNode> node) throws Exception {
@@ -217,8 +271,26 @@ public class NameNodeReplicator {
         private long preferredBlockSize;
         private String user;
         private String group;
+        private DFSInode parent = null;
+        private Map<Long, DFSInode> children;
 
         private List<DFSInodeBlock> blocks;
+
+        public DFSInode addChild(@NonNull DFSInode child) {
+            if (children == null) {
+                children = new HashMap<>();
+            }
+            children.put(child.id, child);
+            child.parent = this;
+
+            return this;
+        }
+
+        public String path() {
+            if (parent == null) return "";
+            String pp = parent.path();
+            return String.format("%s/%s", pp, name);
+        }
 
         public DFSInode read(@NonNull HierarchicalConfiguration<ImmutableNode> node) throws Exception {
             id = node.getLong(NODE_INODE_ID);
