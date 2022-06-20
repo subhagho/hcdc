@@ -11,11 +11,11 @@ import java.util.List;
 
 @Getter
 @Accessors(fluent = true)
-public abstract class MessageReceiver<M> implements Closeable {
+public abstract class MessageReceiver<I, M extends MessageHandle<I, M>> implements Closeable {
     private MessageConnection connection;
     private int batchSize = 1;
 
-    public MessageReceiver<M> withConnection(@NonNull MessageConnection connection) {
+    public MessageReceiver<I, M> withConnection(@NonNull MessageConnection connection) {
         Preconditions.checkArgument(connection.isConnected());
         Preconditions.checkArgument(connection.canReceive());
 
@@ -23,18 +23,22 @@ public abstract class MessageReceiver<M> implements Closeable {
         return this;
     }
 
-    public MessageReceiver<M> withBatchSize(int batchSize) {
+    public MessageReceiver<I, M> withBatchSize(int batchSize) {
         Preconditions.checkArgument(batchSize > 0);
         this.batchSize = batchSize;
 
         return this;
     }
 
-    public abstract M receive() throws MessagingError;
+    public abstract MessageHandle<I, M> receive() throws MessagingError;
 
-    public abstract M receive(long timeout) throws MessagingError;
+    public abstract MessageHandle<I, M> receive(long timeout) throws MessagingError;
 
-    public abstract List<M> nextBatch() throws MessagingError;
+    public abstract List<MessageHandle<I, M>> nextBatch() throws MessagingError;
 
-    public abstract List<M> nextBatch(long timeout) throws MessagingError;
+    public abstract List<MessageHandle<I, M>> nextBatch(long timeout) throws MessagingError;
+
+    public abstract void ack(@NonNull I messageId) throws MessagingError;
+
+    public abstract void ack(@NonNull List<I> messageIds) throws MessagingError;
 }

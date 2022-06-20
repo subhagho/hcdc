@@ -48,7 +48,6 @@ public abstract class KafkaConnection implements MessageConnection {
             kafkaConfig = new KafkaConfig(xmlConfig);
             kafkaConfig.read();
 
-
         } catch (Throwable t) {
             state.error(t);
             throw new ConnectionError("Error opening HDFS connection.", t);
@@ -112,10 +111,8 @@ public abstract class KafkaConnection implements MessageConnection {
 
 
         private String name;
-        private String consumerConfig;
-        private String producerConfig;
-        private Properties consumerProperties;
-        private Properties producerProperties;
+        private String configPath;
+        private Properties properties;
         private EKafkaClientMode mode = EKafkaClientMode.Producer;
         private String topic;
 
@@ -140,27 +137,27 @@ public abstract class KafkaConnection implements MessageConnection {
                 }
 
                 if (mode == EKafkaClientMode.Producer) {
-                    producerConfig = get().getString(Constants.CONFIG_PRODUCER_CONFIG);
-                    if (Strings.isNullOrEmpty(producerConfig)) {
+                    configPath = get().getString(Constants.CONFIG_PRODUCER_CONFIG);
+                    if (Strings.isNullOrEmpty(configPath)) {
                         throw new ConfigurationException(String.format("Kafka Configuration Error: missing [%s]", Constants.CONFIG_PRODUCER_CONFIG));
                     }
-                    File cf = new File(producerConfig);
+                    File cf = new File(configPath);
                     if (!cf.exists()) {
                         throw new ConfigurationException(String.format("Invalid Producer configuration file. [path=%s]", cf.getAbsolutePath()));
                     }
-                    producerProperties = new Properties();
-                    producerProperties.load(new FileInputStream(cf));
+                    properties = new Properties();
+                    properties.load(new FileInputStream(cf));
                 } else if (mode == EKafkaClientMode.Consumer) {
-                    consumerConfig = get().getString(Constants.CONFIG_CONSUMER_CONFIG);
-                    if (Strings.isNullOrEmpty(consumerConfig)) {
+                    configPath = get().getString(Constants.CONFIG_CONSUMER_CONFIG);
+                    if (Strings.isNullOrEmpty(configPath)) {
                         throw new ConfigurationException(String.format("Kafka Configuration Error: missing [%s]", Constants.CONFIG_CONSUMER_CONFIG));
                     }
-                    File cf = new File(consumerConfig);
+                    File cf = new File(configPath);
                     if (!cf.exists()) {
                         throw new ConfigurationException(String.format("Invalid Consumer configuration file. [path=%s]", cf.getAbsolutePath()));
                     }
-                    consumerProperties = new Properties();
-                    consumerProperties.load(new FileInputStream(cf));
+                    properties = new Properties();
+                    properties.load(new FileInputStream(cf));
                 }
 
                 topic = get().getString(Constants.CONFIG_TOPIC);

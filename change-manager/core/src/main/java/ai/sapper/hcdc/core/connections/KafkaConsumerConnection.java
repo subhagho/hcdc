@@ -49,7 +49,7 @@ public class KafkaConsumerConnection<K, V> extends KafkaConnection {
         synchronized (state) {
             Preconditions.checkState(connectionState() == EConnectionState.Initialized);
             try {
-                consumer = new KafkaConsumer<K, V>(kafkaConfig().consumerProperties());
+                consumer = new KafkaConsumer<K, V>(kafkaConfig().properties());
                 consumer.subscribe(Collections.singletonList(kafkaConfig().topic()));
                 state.state(EConnectionState.Connected);
             } catch (Throwable t) {

@@ -48,7 +48,7 @@ public class KafkaProducerConnection<K, V> extends KafkaConnection {
             Preconditions.checkState(connectionState() == EConnectionState.Initialized);
             if (!state.isConnected()) {
                 try {
-                    producer = new KafkaProducer<K, V>(kafkaConfig().producerProperties());
+                    producer = new KafkaProducer<K, V>(kafkaConfig().properties());
 
                     state.state(EConnectionState.Connected);
                 } catch (Throwable t) {

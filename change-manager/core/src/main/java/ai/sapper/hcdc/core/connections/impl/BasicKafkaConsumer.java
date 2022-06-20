@@ -19,8 +19,8 @@ public class BasicKafkaConsumer extends KafkaConsumerConnection<String, byte[]> 
     @Override
     public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConnectionError {
         super.init(xmlConfig);
-        kafkaConfig().consumerProperties().put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,   StringDeserializer.class.getName());
-        kafkaConfig().consumerProperties().put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class.getName());
+        kafkaConfig().properties().put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,   StringDeserializer.class.getName());
+        kafkaConfig().properties().put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class.getName());
 
         return this;
     }
