@@ -1,20 +1,20 @@
 package ai.sapper.hcdc.core.messaging;
 
 import ai.sapper.hcdc.core.connections.impl.BasicKafkaConsumer;
-import ai.sapper.hcdc.core.connections.impl.BasicKafkaProducer;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.List;
 
-public class HCDCKafkaReceiver extends MessageReceiver<HCDCMessageHandle> {
+public class HCDCKafkaReceiver extends MessageReceiver<String, byte[]> {
     /**
      * @return
      * @throws MessagingError
      */
     @Override
-    public HCDCMessageHandle receive() throws MessagingError {
+    public AbstractMap.SimpleEntry<String, byte[]> receive() throws MessagingError {
         return null;
     }
 
@@ -24,7 +24,7 @@ public class HCDCKafkaReceiver extends MessageReceiver<HCDCMessageHandle> {
      * @throws MessagingError
      */
     @Override
-    public HCDCMessageHandle receive(long timeout) throws MessagingError {
+    public AbstractMap.SimpleEntry<String, byte[]> receive(long timeout) throws MessagingError {
         return null;
     }
 
@@ -33,7 +33,7 @@ public class HCDCKafkaReceiver extends MessageReceiver<HCDCMessageHandle> {
      * @throws MessagingError
      */
     @Override
-    public List<HCDCMessageHandle> nextBatch() throws MessagingError {
+    public List<AbstractMap.SimpleEntry<String, byte[]>> nextBatch() throws MessagingError {
         return null;
     }
 
@@ -43,7 +43,7 @@ public class HCDCKafkaReceiver extends MessageReceiver<HCDCMessageHandle> {
      * @throws MessagingError
      */
     @Override
-    public List<HCDCMessageHandle> nextBatch(long timeout) throws MessagingError {
+    public List<AbstractMap.SimpleEntry<String, byte[]>> nextBatch(long timeout) throws MessagingError {
         return null;
     }
 

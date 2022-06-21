@@ -7,11 +7,12 @@ import lombok.NonNull;
 import lombok.experimental.Accessors;
 
 import java.io.Closeable;
+import java.util.AbstractMap;
 import java.util.List;
 
 @Getter
 @Accessors(fluent = true)
-public abstract class MessageReceiver<I, M extends MessageHandle<I, M>> implements Closeable {
+public abstract class MessageReceiver<I, M> implements Closeable {
     private MessageConnection connection;
     private int batchSize = 1;
 
@@ -30,13 +31,13 @@ public abstract class MessageReceiver<I, M extends MessageHandle<I, M>> implemen
         return this;
     }
 
-    public abstract MessageHandle<I, M> receive() throws MessagingError;
+    public abstract AbstractMap.SimpleEntry<I, M> receive() throws MessagingError;
 
-    public abstract MessageHandle<I, M> receive(long timeout) throws MessagingError;
+    public abstract AbstractMap.SimpleEntry<I, M> receive(long timeout) throws MessagingError;
 
-    public abstract List<MessageHandle<I, M>> nextBatch() throws MessagingError;
+    public abstract List<AbstractMap.SimpleEntry<I, M>> nextBatch() throws MessagingError;
 
-    public abstract List<MessageHandle<I, M>> nextBatch(long timeout) throws MessagingError;
+    public abstract List<AbstractMap.SimpleEntry<I, M>> nextBatch(long timeout) throws MessagingError;
 
     public abstract void ack(@NonNull I messageId) throws MessagingError;
 

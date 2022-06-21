@@ -1,8 +1,6 @@
 package ai.sapper.hcdc.core.messaging;
 
-import ai.sapper.hcdc.common.messaging.ChangeDeltaMessage;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
-import ai.sapper.hcdc.core.connections.KafkaProducerConnection;
 import ai.sapper.hcdc.core.connections.impl.BasicKafkaProducer;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
