@@ -106,6 +106,44 @@ public class ZkStateManager {
         }
     }
 
+    public NameNodeTxState update(@NonNull String currentFSImageFile) throws StateManagerError {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
+
+        synchronized (this) {
+            try {
+                CuratorFramework client = connection().client();
+
+                agentTxState.setUpdatedTime(System.currentTimeMillis());
+                agentTxState.setCurrentFSImageFile(currentFSImageFile);
+                String json = mapper.writeValueAsString(agentTxState);
+                client.setData().forPath(zkPath, json.getBytes(StandardCharsets.UTF_8));
+
+                return agentTxState;
+            } catch (Exception ex) {
+                throw new StateManagerError(ex);
+            }
+        }
+    }
+
+    public NameNodeTxState readState() throws StateManagerError {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
+        synchronized (this) {
+            try {
+                CuratorFramework client = connection().client();
+                byte[] data = client.getData().forPath(zkPath);
+                if (data != null && data.length > 0) {
+                    String json = new String(data, StandardCharsets.UTF_8);
+                    return mapper.readValue(json, NameNodeTxState.class);
+                }
+                throw new StateManagerError(String.format("NameNode State not found. [path=%s]", zkPath));
+            } catch (Exception ex) {
+                throw new StateManagerError(ex);
+            }
+        }
+    }
+
     public Heartbeat heartbeat(@NonNull String name, @NonNull NameNodeAgentState.AgentState state) throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());

@@ -182,8 +182,8 @@ public class NameNodeEnv {
             try {
                 stateManager.heartbeat(config.nameNodeInstanceName, agentState);
             } catch (Exception ex) {
-                DefaultLogger.__LOG.error(ex.getLocalizedMessage());
-                DefaultLogger.__LOG.debug(DefaultLogger.stacktrace(ex));
+                DefaultLogger.LOG.error(ex.getLocalizedMessage());
+                DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
             }
             state.state(ENameNEnvState.Disposed);
         }

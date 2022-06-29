@@ -34,7 +34,7 @@ class HdfsHAConnectionTest {
 
     @Test
     void connect() {
-        DefaultLogger.__LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "connect"));
+        DefaultLogger.LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "connect"));
         try {
             HdfsHAConnection connection = manager.getConnection(__CONNECTION_NAME, HdfsHAConnection.class);
             connection.connect();
@@ -47,14 +47,14 @@ class HdfsHAConnectionTest {
             }
 
         } catch (Throwable t) {
-            DefaultLogger.__LOG.error(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
             fail(t);
         }
     }
 
     @Test
     void close() {
-        DefaultLogger.__LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "close"));
+        DefaultLogger.LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "close"));
         try {
             HdfsHAConnection connection = manager.getConnection(__CONNECTION_NAME, HdfsHAConnection.class);
             connection.connect();
@@ -81,7 +81,7 @@ class HdfsHAConnectionTest {
 
             connection.close();
         } catch (Throwable t) {
-            DefaultLogger.__LOG.error(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
             fail(t);
         }
     }

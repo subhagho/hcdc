@@ -31,7 +31,7 @@ public class EditsLogViewer {
 
             batch = visitor.getBatch();
         } catch (Throwable t) {
-            DefaultLogger.__LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
             throw new DFSAgentError(t);
         }
     }
@@ -48,7 +48,7 @@ public class EditsLogViewer {
             List<String> files = DFSEditsFileFinder.findEditsFiles(dir, startTxId, endTxId);
             if (files != null && !files.isEmpty()) {
                 for (String file : files) {
-                    DefaultLogger.__LOG.info(String.format("Reading transactions from edits file. [%s][startTx=%d, endTx=%d]", file, startTxId, endTxId));
+                    DefaultLogger.LOG.info(String.format("Reading transactions from edits file. [%s][startTx=%d, endTx=%d]", file, startTxId, endTxId));
                     EditsLogViewer viewer = new EditsLogViewer();
                     viewer.run(file, startTxId, endTxId);
 

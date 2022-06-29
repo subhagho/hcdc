@@ -79,8 +79,8 @@ public class NameNodeReplicator {
             Preconditions.checkNotNull(stateManager);
 
         } catch (Throwable t) {
-            DefaultLogger.__LOG.error(t.getLocalizedMessage());
-            DefaultLogger.__LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOG.error(t.getLocalizedMessage());
+            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
             throw new NameNodeError(t);
         }
     }
@@ -91,17 +91,17 @@ public class NameNodeReplicator {
             NameNodeEnv.globalLock().lock();
             try {
                 String output = generateFSImageSnapshot();
-                DefaultLogger.__LOG.info(String.format("Generated FS Image XML. [path=%s]", output));
+                DefaultLogger.LOG.info(String.format("Generated FS Image XML. [path=%s]", output));
                 readFSImageXml(output);
-                DefaultLogger.__LOG.warn(String.format("WARNING: Will delete existing file structure, if present. [path=%s]", stateManager.getFilePath(null)));
+                DefaultLogger.LOG.warn(String.format("WARNING: Will delete existing file structure, if present. [path=%s]", stateManager.getFilePath(null)));
                 stateManager.deleteAll();
                 copy();
             } finally {
                 NameNodeEnv.globalLock().unlock();
             }
         } catch (Throwable t) {
-            DefaultLogger.__LOG.error(t.getLocalizedMessage());
-            DefaultLogger.__LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOG.error(t.getLocalizedMessage());
+            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
             throw new NameNodeError(t);
         }
     }
@@ -110,7 +110,7 @@ public class NameNodeReplicator {
         for (long id : inodes.keySet()) {
             DFSInode inode = inodes.get(id);
             if (inode.type == EInodeType.DIRECTORY) continue;
-            DefaultLogger.__LOG.debug(String.format("Copying HDFS file entry. [path=%s]", inode.path()));
+            DefaultLogger.LOG.debug(String.format("Copying HDFS file entry. [path=%s]", inode.path()));
 
             DFSFileState fileState = stateManager.create(inode.path(), inode.id, inode.mTime, inode.preferredBlockSize, txnId);
             if (inode.blocks != null && !inode.blocks.isEmpty()) {
@@ -118,9 +118,9 @@ public class NameNodeReplicator {
                     fileState = stateManager.addOrUpdateBlock(fileState.getHdfsFilePath(), block.id, inode.mTime, block.numBytes, txnId);
                 }
             }
-            if (DefaultLogger.__LOG.isDebugEnabled()) {
+            if (DefaultLogger.LOG.isDebugEnabled()) {
                 String json = JSONUtils.asString(fileState, DFSFileState.class);
-                DefaultLogger.__LOG.debug(json);
+                DefaultLogger.LOG.debug(json);
             }
         }
     }

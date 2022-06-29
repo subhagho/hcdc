@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.agents.namenode;
 
+import ai.sapper.hcdc.common.utils.DefaultLogger;
 import com.google.common.base.Strings;
 import lombok.NonNull;
 
@@ -13,6 +14,33 @@ import java.util.regex.Pattern;
 public class DFSEditsFileFinder {
     public static final String REGEX_CURRENT_FILE = "edits_inprogress_(\\d+$)";
     public static final String REGEX_EDIT_LOG_FILE = "edits_(\\d+)-(\\d+$)";
+
+    public static String getCurrentEditsFile(@NonNull String rootPath) throws IOException {
+        File dir = new File(rootPath);
+        if (!dir.exists()) {
+            throw new IOException(String.format("Specified root directory not found. [path=%s]", dir.getAbsolutePath()));
+        }
+        if (!dir.canRead()) {
+            throw new IOException(String.format("Error reading specified root directory. [path=%s]", dir.getAbsolutePath()));
+        }
+        Pattern pattern = Pattern.compile(REGEX_CURRENT_FILE);
+        File[] files = dir.listFiles();
+        if (files != null && files.length > 0) {
+            for (File file : files) {
+                String name = file.getName();
+                Matcher m = pattern.matcher(name);
+                if (m.matches()) {
+                    String s = m.group(1);
+                    if (!Strings.isNullOrEmpty(s)) {
+                        long txid = Long.parseLong(s);
+                        DefaultLogger.LOG.debug(String.format("[START TX ID=%d] [file=%s]", txid, file.getAbsolutePath()));
+                        return file.getAbsolutePath();
+                    }
+                }
+            }
+        }
+        return null;
+    }
 
     public static List<String> findEditsFiles(@NonNull String rootPath, long startTx, long endTx) throws IOException {
         File dir = new File(rootPath);

@@ -26,7 +26,7 @@ class EditLogViewerTest {
             assertNotNull(transactions);
             assertTrue(transactions.size() > 0);
             for (DFSTransactionType<?> tnx : transactions) {
-                DefaultLogger.__LOG.info(tnx.toString());
+                DefaultLogger.LOG.info(tnx.toString());
             }
         } catch (Throwable t) {
             t.printStackTrace();
@@ -43,12 +43,12 @@ class EditLogViewerTest {
                 List<DFSTransactionType<?>> transactions = batch.transactions();
                 assertNotNull(transactions);
                 if (transactions.size() > 0) {
-                    DefaultLogger.__LOG.info(String.format("Transactions found in edits file. [file=%s]", batch.filename()));
+                    DefaultLogger.LOG.info(String.format("Transactions found in edits file. [file=%s]", batch.filename()));
                     for (DFSTransactionType<?> tnx : transactions) {
-                        DefaultLogger.__LOG.info(tnx.toString());
+                        DefaultLogger.LOG.info(tnx.toString());
                     }
                 } else {
-                    DefaultLogger.__LOG.warn(String.format("No Transactions found in edits file. [file=%s]", batch.filename()));
+                    DefaultLogger.LOG.warn(String.format("No Transactions found in edits file. [file=%s]", batch.filename()));
                 }
             }
         } catch (Throwable t) {

@@ -31,7 +31,7 @@ class ZookeeperConnectionTest {
 
     @Test
     void connect() {
-        DefaultLogger.__LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "connect"));
+        DefaultLogger.LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "connect"));
         try {
             ZookeeperConnection connection = manager.getConnection(__CONNECTION_NAME, ZookeeperConnection.class);
             assertNotNull(connection);
@@ -42,7 +42,7 @@ class ZookeeperConnectionTest {
             connection.close();
             assertEquals(Connection.EConnectionState.Closed, connection.connectionState());
         } catch (Throwable t) {
-            DefaultLogger.__LOG.error(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
             fail(t);
         }
     }

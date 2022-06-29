@@ -176,7 +176,7 @@ public class HdfsHAConnection extends HdfsConnection {
                     String key = parts[0].trim();
                     String address = parts[1].trim();
 
-                    DefaultLogger.__LOG.info(String.format("Registering namenode [%s -> %s]...", key, address));
+                    DefaultLogger.LOG.info(String.format("Registering namenode [%s -> %s]...", key, address));
                     nameNodeAddresses[ii][0] = key;
                     nameNodeAddresses[ii][1] = address;
                 }

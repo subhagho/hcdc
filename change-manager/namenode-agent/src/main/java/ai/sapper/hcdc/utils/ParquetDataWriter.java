@@ -54,7 +54,7 @@ public class ParquetDataWriter extends OutputDataWriter<List<String>> {
             }
 
         } catch (Exception ex) {
-            DefaultLogger.__LOG.debug(DefaultLogger.stacktrace(ex));
+            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
             throw new IOException(ex);
         }
     }

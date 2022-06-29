@@ -31,7 +31,7 @@ class NameNodeReplicatorTest {
             NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose();
             assertEquals(NameNodeEnv.ENameNEnvState.Disposed, state);
         } catch (Throwable t) {
-            DefaultLogger.__LOG.error(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
             fail(t);
         }
     }

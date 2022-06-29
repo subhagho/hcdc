@@ -50,7 +50,7 @@ public class NameNodeAdminClient {
             Map<String, String> bean = response.findBeanByName(Constants.REGEX_NAME);
             if (bean != null) {
                 NameNodeStatus status = new NameNodeStatus().parse(bean);
-                DefaultLogger.__LOG.info(
+                DefaultLogger.LOG.info(
                         String.format("[%s] Received NN state [State=%s][Transition Time=%d]",
                                 status.getHost(), status.getState(), status.getLastHATransitionTime()));
                 return status;

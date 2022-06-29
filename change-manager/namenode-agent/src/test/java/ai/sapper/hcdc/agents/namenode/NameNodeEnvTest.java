@@ -25,7 +25,7 @@ class NameNodeEnvTest {
     void init() {
         try {
             NameNodeEnv.setup(xmlConfiguration);
-            DefaultLogger.__LOG.info(String.format("Name Node Agent environment initialized. [namespace=%s]", NameNodeEnv.get().namespace()));
+            DefaultLogger.LOG.info(String.format("Name Node Agent environment initialized. [namespace=%s]", NameNodeEnv.get().namespace()));
             assertNotNull(NameNodeEnv.get().hdfsConnection());
             assertNotNull(NameNodeEnv.stateManager().connection());
 
@@ -35,7 +35,7 @@ class NameNodeEnvTest {
             NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose();
             assertEquals(NameNodeEnv.ENameNEnvState.Disposed, state);
         } catch (Throwable t) {
-            DefaultLogger.__LOG.error(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
             fail(t);
         }
     }

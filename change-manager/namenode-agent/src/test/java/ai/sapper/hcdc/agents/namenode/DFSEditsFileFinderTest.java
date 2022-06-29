@@ -17,20 +17,20 @@ class DFSEditsFileFinderTest {
             List<String> paths = DFSEditsFileFinder.findEditsFiles(SOURCE_DIR, 7, 17);
             assertNotNull(paths);
             for (String path : paths) {
-                DefaultLogger.__LOG.info(String.format("Files in Range [%s]", path));
+                DefaultLogger.LOG.info(String.format("Files in Range [%s]", path));
             }
             paths = DFSEditsFileFinder.findEditsFiles(SOURCE_DIR, -1, 17);
             assertNotNull(paths);
             for (String path : paths) {
-                DefaultLogger.__LOG.info(String.format("File till TX [%s]", path));
+                DefaultLogger.LOG.info(String.format("File till TX [%s]", path));
             }
             paths = DFSEditsFileFinder.findEditsFiles(SOURCE_DIR, 17, -1);
             assertNotNull(paths);
             for (String path : paths) {
-                DefaultLogger.__LOG.info(String.format("Files with Start TX [%s]", path));
+                DefaultLogger.LOG.info(String.format("Files with Start TX [%s]", path));
             }
         } catch (Throwable t) {
-            DefaultLogger.__LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
             fail(t);
         }
     }

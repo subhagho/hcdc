@@ -159,7 +159,7 @@ public class FileConnection implements Connection {
         }
         String fname = filename();
         String file = String.format("%s/%s", config.dir.getAbsolutePath(), fname);
-        DefaultLogger.__LOG.info(String.format("Opened new file for write. [path=%s]", file));
+        DefaultLogger.LOG.info(String.format("Opened new file for write. [path=%s]", file));
 
         writer = new FileOutputStream(file);
     }

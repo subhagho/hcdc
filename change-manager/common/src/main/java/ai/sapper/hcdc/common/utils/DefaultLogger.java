@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class DefaultLogger {
-    public static Logger __LOG = LoggerFactory.getLogger("ai.sapper.hcdc");
+    public static Logger LOG = LoggerFactory.getLogger("ai.sapper.hcdc");
 
     public static String error(Throwable err, String format, Object... args) {
         String mesg = String.format(format, args);
