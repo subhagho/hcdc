@@ -83,4 +83,11 @@ public class ConnectionManager {
         }
         return null;
     }
+
+    public void addConnection(@NonNull String name, @NonNull Connection connection) throws ConnectionError {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
+        if (connections.containsKey(name))
+            throw new ConnectionError(String.format("Connection with name already exists. [name=%s]", name));
+        connections.put(name, connection);
+    }
 }

@@ -85,9 +85,7 @@ public class HCDCKafkaReceiver extends MessageReceiver<String, DFSChangeDelta> {
                 for (ConsumerRecord<String, byte[]> record : records) {
                     DFSChangeDelta cd = DFSChangeDelta.parseFrom(record.value());
                     array.add(new AbstractMap.SimpleEntry<>(record.key(), cd));
-                    OffsetData od = new OffsetData(record.key(), record);
-
-                    offsetMap.put(record.key(), od);
+                    offsetMap.put(record.key(), new OffsetData(record.key(), record));
                 }
                 return array;
             }

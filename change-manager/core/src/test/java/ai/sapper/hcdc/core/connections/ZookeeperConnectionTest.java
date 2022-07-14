@@ -7,6 +7,7 @@ import org.apache.curator.utils.ZKPaths;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,7 +16,8 @@ class ZookeeperConnectionTest {
     private static final String __CONFIG_FILE = "src/test/resources/connection-test.xml";
     private static final String __CONNECTION_NAME = "test-zk";
     private static final String __UUID = UUID.randomUUID().toString();
-    private static final String __PATH = String.format("/test/hcdc/core/zookeeper/%s", __UUID);
+    private static final String __BASE_PATH = "/test/hcdc/core/zookeeper";
+    private static final String __PATH = String.format("%s/%s", __BASE_PATH, __UUID);
 
     private static XMLConfiguration xmlConfiguration = null;
 
@@ -38,6 +40,10 @@ class ZookeeperConnectionTest {
             connection.connect();
             assertEquals(Connection.EConnectionState.Connected, connection.connectionState());
             ZKPaths.mkdirs(connection.client().getZookeeperClient().getZooKeeper(), __PATH);
+
+            List<String> paths = connection.client().getChildren().forPath(__BASE_PATH);
+            assertNotNull(paths);
+            DefaultLogger.LOG.debug(String.format("PATHS : [%s]", paths));
 
             connection.close();
             assertEquals(Connection.EConnectionState.Closed, connection.connectionState());

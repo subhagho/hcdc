@@ -21,12 +21,15 @@ public class DFSFileState {
     private long lastTnxId;
     private long timestamp;
     private boolean deleted = false;
+    private boolean snapshotSent = false;
+
     private List<DFSBlockState> blocks;
 
     public DFSFileState add(@NonNull DFSBlockState block) {
         if (blocks == null)
             blocks = new ArrayList<>();
         blocks.add(block);
+
         numBlocks++;
 
         return this;
