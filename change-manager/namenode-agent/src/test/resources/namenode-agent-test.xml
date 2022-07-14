@@ -28,10 +28,8 @@
     </agent>
     <replicator>
         <connections>
-            <zk>test-zk</zk>
             <hdfs>test-hdfs</hdfs>
         </connections>
-        <basePath>/test/hcdc/namenode/replica</basePath>
     </replicator>
     <config>
         <connections>

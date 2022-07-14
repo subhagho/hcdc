@@ -70,9 +70,9 @@ public class NameNodeReplicator {
             Preconditions.checkNotNull(hdfsConnection);
             hdfsConnection.connect();
 
-            zkConnection = NameNodeEnv.connectionManager().getConnection(replicatorConfig().zkConnection(), ZookeeperConnection.class);
+            zkConnection = NameNodeEnv.stateManager().connection();
             Preconditions.checkNotNull(zkConnection);
-            zkConnection.connect();
+            if (!zkConnection.isConnected()) zkConnection.connect();
 
             fs = hdfsConnection.fileSystem();
             stateManager = NameNodeEnv.stateManager();
@@ -85,7 +85,6 @@ public class NameNodeReplicator {
         }
     }
 
-
     public void run() throws NameNodeError {
         try {
             NameNodeEnv.globalLock().lock();
@@ -96,6 +95,7 @@ public class NameNodeReplicator {
                 DefaultLogger.LOG.warn(String.format("WARNING: Will delete existing file structure, if present. [path=%s]", stateManager.getFilePath(null)));
                 stateManager.deleteAll();
                 copy();
+                stateManager.setup(txnId);
             } finally {
                 NameNodeEnv.globalLock().unlock();
             }
@@ -203,32 +203,19 @@ public class NameNodeReplicator {
     @Accessors(fluent = true)
     public static class ReplicatorConfig extends ConfigReader {
         private static final String __CONFIG_PATH = "replicator";
-        private static final String CONFIG_CONNECTION_ZK = "connections.zk";
         private static final String CONFIG_CONNECTION_HDFS = "connections.hdfs";
         private static final String CONFIG_ZK_BASE_PATH = "basePath";
 
-        private String zkConnection;
         private String hdfsConnection;
-        private String zkBasePath;
 
         public ReplicatorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);
         }
 
         public void read() throws ConfigurationException {
-            zkConnection = get().getString(CONFIG_CONNECTION_ZK);
-            if (Strings.isNullOrEmpty(zkConnection)) {
-                throw new ConfigurationException(String.format("NameNode Replicator Configuration Error: missing [%s]", CONFIG_CONNECTION_ZK));
-            }
-
             hdfsConnection = get().getString(CONFIG_CONNECTION_HDFS);
             if (Strings.isNullOrEmpty(hdfsConnection)) {
                 throw new ConfigurationException(String.format("NameNode Replicator Configuration Error: missing [%s]", CONFIG_CONNECTION_HDFS));
-            }
-
-            zkBasePath = get().getString(CONFIG_ZK_BASE_PATH);
-            if (Strings.isNullOrEmpty(zkBasePath)) {
-                throw new ConfigurationException(String.format("NameNode Replicator Configuration Error: missing [%s]", CONFIG_ZK_BASE_PATH));
             }
         }
     }

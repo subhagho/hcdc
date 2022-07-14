@@ -11,11 +11,14 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import javax.naming.ConfigurationException;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Properties;
 
 @Getter
 @Accessors(fluent = true)
 public class KafkaConsumerConnection<K, V> extends KafkaConnection {
+    private static final String CONFIG_MAX_POLL_RECORDS = "max.poll.records";
     private KafkaConsumer<K, V> consumer;
+    private int batchSize = 8; // Default BatchSize is 8
 
     /**
      * @param xmlConfig
@@ -29,6 +32,13 @@ public class KafkaConsumerConnection<K, V> extends KafkaConnection {
             try {
                 if (kafkaConfig().mode() != EKafkaClientMode.Consumer) {
                     throw new ConfigurationException("Connection not initialized in Consumer mode.");
+                }
+                Properties props = kafkaConfig().properties();
+                if (props.containsKey(CONFIG_MAX_POLL_RECORDS)) {
+                    String s = props.getProperty(CONFIG_MAX_POLL_RECORDS);
+                    batchSize = Integer.parseInt(s);
+                } else {
+                    props.setProperty(CONFIG_MAX_POLL_RECORDS, String.valueOf(batchSize));
                 }
 
                 state.state(EConnectionState.Initialized);
