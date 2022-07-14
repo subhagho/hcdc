@@ -17,6 +17,7 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.data.Stat;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,7 @@ public class DomainManager {
     private DomainManagerConfig config;
     private Map<String, DomainFilterMatcher> matchers;
     private final ObjectMapper mapper = new ObjectMapper();
+    private final List<FilterAddCallback> callbacks = new ArrayList<>();
 
     public DomainManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                               @NonNull ConnectionManager manger) throws ConfigurationException {
@@ -59,6 +61,11 @@ public class DomainManager {
         }
     }
 
+    public DomainManager withFilterAddCallback(@NonNull FilterAddCallback callback) {
+        callbacks.add(callback);
+        return this;
+    }
+
     private void readFilters() throws Exception {
         String path = getZkPath();
         CuratorFramework client = zkConnection.client();
@@ -75,6 +82,11 @@ public class DomainManager {
                         DomainFilter df = mapper.readValue(json, DomainFilter.class);
                         DomainFilterMatcher m = new DomainFilterMatcher(df);
                         matchers.put(df.getName(), m);
+                        if (!callbacks.isEmpty()) {
+                            for (FilterAddCallback callback : callbacks) {
+                                callback.onStart(m);
+                            }
+                        }
                     }
                 }
                 if (!matchers.isEmpty()) {
@@ -126,7 +138,12 @@ public class DomainManager {
         CuratorFramework client = zkConnection.client();
         String json = mapper.writeValueAsString(matcher.filter());
         Stat stat = client.setData().forPath(getZkPath(domain), json.getBytes(StandardCharsets.UTF_8));
-        
+
+        if (!callbacks.isEmpty()) {
+            for (FilterAddCallback callback : callbacks) {
+                callback.process(matcher, path);
+            }
+        }
         return matcher.filter();
     }
 
