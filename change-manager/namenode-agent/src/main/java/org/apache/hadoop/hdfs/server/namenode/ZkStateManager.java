@@ -2,7 +2,6 @@ package org.apache.hadoop.hdfs.server.namenode;
 
 import ai.sapper.hcdc.agents.namenode.model.NameNodeAgentState;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
-import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
@@ -20,7 +19,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
-import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.curator.framework.CuratorFramework;
 

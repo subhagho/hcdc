@@ -12,7 +12,6 @@ import org.apache.kafka.common.header.internals.RecordHeader;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -23,10 +22,8 @@ public class HCDCKafkaSender extends MessageSender<String, DFSChangeDelta> {
     private String topic = null;
     private KafkaPartitioner<String> partitioner;
 
-    public HCDCKafkaSender withTopic(@NonNull String topic) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(topic));
+    public HCDCKafkaSender withTopic(String topic) {
         this.topic = topic;
-
         return this;
     }
 

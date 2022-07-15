@@ -1,6 +1,5 @@
 package ai.sapper.hcdc.core.messaging;
 
-import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.core.connections.MessageConnection;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
@@ -8,7 +7,6 @@ import lombok.NonNull;
 import lombok.experimental.Accessors;
 
 import java.io.Closeable;
-import java.util.AbstractMap;
 import java.util.List;
 
 @Getter

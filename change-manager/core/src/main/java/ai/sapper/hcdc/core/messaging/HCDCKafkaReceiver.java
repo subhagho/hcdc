@@ -34,7 +34,7 @@ public class HCDCKafkaReceiver extends MessageReceiver<String, DFSChangeDelta> {
     private BasicKafkaConsumer consumer = null;
     private String topic;
 
-    public HCDCKafkaReceiver withTopic(@NonNull String topic) {
+    public HCDCKafkaReceiver withTopic(String topic) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(topic));
         this.topic = topic;
 
