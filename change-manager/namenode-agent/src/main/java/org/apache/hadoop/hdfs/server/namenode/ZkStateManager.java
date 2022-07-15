@@ -11,6 +11,7 @@ import ai.sapper.hcdc.core.connections.state.BlockTnxDelta;
 import ai.sapper.hcdc.core.connections.state.DFSBlockState;
 import ai.sapper.hcdc.core.connections.state.DFSFileState;
 import ai.sapper.hcdc.core.connections.state.StateManagerError;
+import ai.sapper.hcdc.core.filters.DomainManager;
 import ai.sapper.hcdc.core.model.Heartbeat;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
@@ -451,11 +452,7 @@ public class ZkStateManager {
 
     @Getter
     @Accessors(fluent = true)
-    public static class ZkStateManagerConfig extends ConfigReader {
-        private static final class Constants {
-            private static final String CONFIG_ZK_BASE = "basePath";
-            private static final String CONFIG_ZK_CONNECTION = "connection";
-        }
+    public static class ZkStateManagerConfig extends DomainManager.DomainManagerConfig {
 
         private static final String __CONFIG_PATH = "state.manager";
 
@@ -464,28 +461,6 @@ public class ZkStateManager {
 
         public ZkStateManagerConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);
-        }
-
-        public void read() throws ConfigurationException {
-            if (get() == null) {
-                throw new ConfigurationException("Kafka Configuration not drt or is NULL");
-            }
-            try {
-                basePath = get().getString(Constants.CONFIG_ZK_BASE);
-                if (Strings.isNullOrEmpty(basePath)) {
-                    throw new ConfigurationException(String.format("State Manager Configuration Error: missing [%s]", Constants.CONFIG_ZK_BASE));
-                }
-                basePath = basePath.trim();
-                if (basePath.endsWith("/")) {
-                    basePath = basePath.substring(0, basePath.length() - 2);
-                }
-                zkConnection = get().getString(Constants.CONFIG_ZK_CONNECTION);
-                if (Strings.isNullOrEmpty(zkConnection)) {
-                    throw new ConfigurationException(String.format("State Manager Configuration Error: missing [%s]", Constants.CONFIG_ZK_CONNECTION));
-                }
-            } catch (Throwable t) {
-                throw new ConfigurationException("Error processing State Manager configuration.", t);
-            }
         }
     }
 }

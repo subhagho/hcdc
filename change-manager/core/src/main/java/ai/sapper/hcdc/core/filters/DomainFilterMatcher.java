@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.core;
+package ai.sapper.hcdc.core.filters;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -17,16 +17,18 @@ public class DomainFilterMatcher {
         private Pattern pattern;
     }
 
-    private final DomainFilter filter;
+    private final DomainFilters filters;
     private final List<PathFilter> patterns;
 
-    public DomainFilterMatcher(@NonNull DomainFilter filter) {
-        this.filter = filter;
-        patterns = new ArrayList<>(filter.getFilters().size());
-        for (String path : filter.getFilters().keySet()) {
+    public DomainFilterMatcher(@NonNull DomainFilters filters) {
+        this.filters = filters;
+        patterns = new ArrayList<>(filters.getFilters().size());
+        for (String path : filters.keySet()) {
             PathFilter pf = new PathFilter();
             pf.path = path;
-            pf.pattern = Pattern.compile(filter.getFilters().get(path));
+            pf.pattern = Pattern.compile(filters.get(path).getRegex());
+
+            patterns.add(pf);
         }
     }
 
@@ -45,14 +47,14 @@ public class DomainFilterMatcher {
         return false;
     }
 
-    public DomainFilter add(@NonNull String path, @NonNull String regex) {
-        filter.add(path, regex);
+    public DomainFilters add(@NonNull String path, @NonNull String regex) {
+        filters.add(path, regex);
 
         PathFilter pf = new PathFilter();
         pf.path = path;
-        pf.pattern = Pattern.compile(filter.getFilters().get(path));
+        pf.pattern = Pattern.compile(filters.get(path).getRegex());
         patterns.add(pf);
 
-        return filter;
+        return filters;
     }
 }

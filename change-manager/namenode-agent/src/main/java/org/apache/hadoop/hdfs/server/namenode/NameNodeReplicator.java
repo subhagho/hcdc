@@ -204,12 +204,15 @@ public class NameNodeReplicator {
     public static class ReplicatorConfig extends ConfigReader {
         private static final String __CONFIG_PATH = "replicator";
         private static final String CONFIG_CONNECTION_HDFS = "connections.hdfs";
-        private static final String CONFIG_ZK_BASE_PATH = "basePath";
 
         private String hdfsConnection;
 
         public ReplicatorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);
+        }
+
+        public ReplicatorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config, @NonNull String configPath) {
+            super(config, configPath);
         }
 
         public void read() throws ConfigurationException {

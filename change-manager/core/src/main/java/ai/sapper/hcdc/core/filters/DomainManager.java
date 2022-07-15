@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.core;
+package ai.sapper.hcdc.core.filters;
 
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.utils.PathUtils;
@@ -79,7 +79,7 @@ public class DomainManager {
                     byte[] data = client.getData().forPath(dp);
                     if (data != null && data.length > 0) {
                         String json = new String(data, StandardCharsets.UTF_8);
-                        DomainFilter df = mapper.readValue(json, DomainFilter.class);
+                        DomainFilters df = mapper.readValue(json, DomainFilters.class);
                         DomainFilterMatcher m = new DomainFilterMatcher(df);
                         matchers.put(df.getName(), m);
                         if (!callbacks.isEmpty()) {
@@ -112,19 +112,19 @@ public class DomainManager {
             Map<String, DomainFilterMatcher> ms = matchers;
             for (String d : matchers.keySet()) {
                 DomainFilterMatcher m = ms.get(d);
-                if (m.matches(path)) return m.filter().getName();
+                if (m.matches(path)) return m.filters().getName();
             }
         }
         return null;
     }
 
-    public DomainFilter add(@NonNull String domain, @NonNull String path, @NonNull String regex) throws Exception {
+    public DomainFilters add(@NonNull String domain, @NonNull String path, @NonNull String regex) throws Exception {
         Preconditions.checkNotNull(zkConnection);
         Preconditions.checkState(zkConnection.isConnected());
 
         DomainFilterMatcher matcher = null;
         if (!matchers.containsKey(domain)) {
-            DomainFilter df = new DomainFilter();
+            DomainFilters df = new DomainFilters();
             df.setName(domain);
             df.add(path, regex);
 
@@ -136,7 +136,7 @@ public class DomainManager {
         }
 
         CuratorFramework client = zkConnection.client();
-        String json = mapper.writeValueAsString(matcher.filter());
+        String json = mapper.writeValueAsString(matcher.filters());
         Stat stat = client.setData().forPath(getZkPath(domain), json.getBytes(StandardCharsets.UTF_8));
 
         if (!callbacks.isEmpty()) {
@@ -144,15 +144,15 @@ public class DomainManager {
                 callback.process(matcher, path);
             }
         }
-        return matcher.filter();
+        return matcher.filters();
     }
 
     @Getter
     @Accessors(fluent = true)
     public static class DomainManagerConfig extends ConfigReader {
-        private static final class Constants {
-            private static final String CONFIG_ZK_BASE = "basePath";
-            private static final String CONFIG_ZK_CONNECTION = "connection";
+        public static final class Constants {
+            public static final String CONFIG_ZK_BASE = "basePath";
+            public static final String CONFIG_ZK_CONNECTION = "connection";
         }
 
         private static final String __CONFIG_PATH = "state.manager";
@@ -162,6 +162,10 @@ public class DomainManager {
 
         public DomainManagerConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);
+        }
+
+        public DomainManagerConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config, @NonNull String configPath) {
+            super(config, configPath);
         }
 
         public void read() throws ConfigurationException {

@@ -30,7 +30,7 @@ public class HCDCKafkaSender extends MessageSender<String, DFSChangeDelta> {
         return this;
     }
 
-    public HCDCKafkaSender withPartitioner(@NonNull KafkaPartitioner<String> partitioner) {
+    public HCDCKafkaSender withPartitioner(KafkaPartitioner<String> partitioner) {
         this.partitioner = partitioner;
         return this;
     }
