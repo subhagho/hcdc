@@ -5,6 +5,50 @@ import com.google.common.base.Preconditions;
 import lombok.NonNull;
 
 public class ChangeDeltaSerDe {
+    public static <T> MessageObject<String, DFSChangeDelta> create(@NonNull String namespace,
+                                                                   @NonNull Object data,
+                                                                   @NonNull Class<? extends T> type) throws Exception {
+        DFSChangeDelta delta = null;
+        String key = null;
+        if (type.equals(DFSAddFile.class)) {
+            delta = create(namespace, (DFSAddFile) data);
+            key = delta.getEntity();
+        } else if (type.equals(DFSAppendFile.class)) {
+            delta = create(namespace, (DFSAppendFile) data);
+            key = delta.getEntity();
+        } else if (type.equals(DFSDeleteFile.class)) {
+            delta = create(namespace, (DFSDeleteFile) data);
+            key = delta.getEntity();
+        } else if (type.equals(DFSAddBlock.class)) {
+            delta = create(namespace, (DFSAddBlock) data);
+            key = delta.getEntity();
+        } else if (type.equals(DFSUpdateBlocks.class)) {
+            delta = create(namespace, (DFSUpdateBlocks) data);
+            key = delta.getEntity();
+        } else if (type.equals(DFSTruncateBlock.class)) {
+            delta = create(namespace, (DFSTruncateBlock) data);
+            key = delta.getEntity();
+        } else if (type.equals(DFSCloseFile.class)) {
+            delta = create(namespace, (DFSCloseFile) data);
+            key = delta.getEntity();
+        } else if (type.equals(DFSRenameFile.class)) {
+            delta = create(namespace, (DFSRenameFile) data);
+            key = delta.getEntity();
+        } else if (type.equals(DFSIgnoreTx.class)) {
+            delta = create(namespace, (DFSIgnoreTx) data);
+            key = String.format("IGNORE:%s", delta.getTxId());
+        } else {
+            throw new MessagingError(String.format("Invalid Message DataType. [type=%s]", type.getCanonicalName()));
+        }
+        MessageObject<String, DFSChangeDelta> message = new KafkaMessage<>();
+        message.id(String.format("%s:%s", namespace, delta.getTxId()));
+        message.correlationId(String.valueOf(delta.getTxId()));
+        message.key(key);
+        message.value(delta);
+
+        return message;
+    }
+
     public static DFSChangeDelta create(@NonNull String namespace,
                                         @NonNull DFSAddFile data) throws Exception {
         return DFSChangeDelta.newBuilder()
