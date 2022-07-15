@@ -22,7 +22,6 @@ public class DFSBlockState {
         if (transactions == null)
             transactions = new ArrayList<>();
         transactions.add(transaction);
-
         return this;
     }
 

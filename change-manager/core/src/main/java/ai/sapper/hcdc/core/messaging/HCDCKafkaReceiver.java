@@ -3,6 +3,7 @@ package ai.sapper.hcdc.core.messaging;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.core.connections.impl.BasicKafkaConsumer;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import lombok.NonNull;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -27,17 +28,25 @@ public class HCDCKafkaReceiver extends MessageReceiver<String, DFSChangeDelta> {
     }
 
     private static final long DEFAULT_RECEIVE_TIMEOUT = 30000; // 30 secs default timeout.
-    private Queue<AbstractMap.SimpleEntry<String, DFSChangeDelta>> cache = null;
+    private Queue<MessageObject<String, DFSChangeDelta>> cache = null;
     private Map<String, OffsetData> offsetMap = new HashMap<>();
 
     private BasicKafkaConsumer consumer = null;
+    private String topic;
+
+    public HCDCKafkaReceiver withTopic(@NonNull String topic) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(topic));
+        this.topic = topic;
+
+        return this;
+    }
 
     /**
      * @return
      * @throws MessagingError
      */
     @Override
-    public AbstractMap.SimpleEntry<String, DFSChangeDelta> receive() throws MessagingError {
+    public MessageObject<String, DFSChangeDelta> receive() throws MessagingError {
         return receive(DEFAULT_RECEIVE_TIMEOUT);
     }
 
@@ -47,10 +56,10 @@ public class HCDCKafkaReceiver extends MessageReceiver<String, DFSChangeDelta> {
      * @throws MessagingError
      */
     @Override
-    public AbstractMap.SimpleEntry<String, DFSChangeDelta> receive(long timeout) throws MessagingError {
+    public MessageObject<String, DFSChangeDelta> receive(long timeout) throws MessagingError {
         checkState();
         if (cache.isEmpty()) {
-            List<AbstractMap.SimpleEntry<String, DFSChangeDelta>> batch = nextBatch(timeout);
+            List<MessageObject<String, DFSChangeDelta>> batch = nextBatch(timeout);
             if (batch != null) {
                 cache.addAll(batch);
             }
@@ -66,7 +75,7 @@ public class HCDCKafkaReceiver extends MessageReceiver<String, DFSChangeDelta> {
      * @throws MessagingError
      */
     @Override
-    public List<AbstractMap.SimpleEntry<String, DFSChangeDelta>> nextBatch() throws MessagingError {
+    public List<MessageObject<String, DFSChangeDelta>> nextBatch() throws MessagingError {
         return nextBatch(DEFAULT_RECEIVE_TIMEOUT);
     }
 
@@ -76,15 +85,17 @@ public class HCDCKafkaReceiver extends MessageReceiver<String, DFSChangeDelta> {
      * @throws MessagingError
      */
     @Override
-    public List<AbstractMap.SimpleEntry<String, DFSChangeDelta>> nextBatch(long timeout) throws MessagingError {
+    public List<MessageObject<String, DFSChangeDelta>> nextBatch(long timeout) throws MessagingError {
         checkState();
         try {
             ConsumerRecords<String, byte[]> records = consumer.consumer().poll(timeout);
             if (records != null && records.count() > 0) {
-                List<AbstractMap.SimpleEntry<String, DFSChangeDelta>> array = new ArrayList<>(records.count());
+                List<MessageObject<String, DFSChangeDelta>> array = new ArrayList<>(records.count());
                 for (ConsumerRecord<String, byte[]> record : records) {
                     DFSChangeDelta cd = DFSChangeDelta.parseFrom(record.value());
-                    array.add(new AbstractMap.SimpleEntry<>(record.key(), cd));
+                    KafkaMessage<String, DFSChangeDelta> response = new KafkaMessage<>(record, cd);
+
+                    array.add(response);
                     offsetMap.put(record.key(), new OffsetData(record.key(), record));
                 }
                 return array;
@@ -171,6 +182,9 @@ public class HCDCKafkaReceiver extends MessageReceiver<String, DFSChangeDelta> {
         }
         if (cache == null) {
             cache = new ArrayBlockingQueue<>(consumer.batchSize());
+        }
+        if (topic == null) {
+            topic = consumer.topic();
         }
     }
 }

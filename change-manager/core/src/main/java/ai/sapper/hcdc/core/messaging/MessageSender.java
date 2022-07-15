@@ -25,7 +25,7 @@ public abstract class MessageSender<K, M> implements Closeable {
         return this;
     }
 
-    public abstract void send(@NonNull K key, @NonNull M message) throws MessagingError;
+    public abstract MessageObject<K, M> send(@NonNull MessageObject<K, M> message) throws MessagingError;
 
-    public abstract void sent(@NonNull List<AbstractMap.SimpleEntry<String, DFSChangeDelta>> messages) throws MessagingError;
+    public abstract List<MessageObject<K, M>> sent(@NonNull List<MessageObject<K, M>> messages) throws MessagingError;
 }

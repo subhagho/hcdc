@@ -17,7 +17,9 @@ class HadoopDataLoaderTest {
                 "--data",
                 "src/test/resources/data",
                 "--tmp",
-                "/Work/temp/output/test"};
+                "/Work/temp/output/test",
+                "--batchSize",
+                "-1"};
         HadoopDataLoader.main(args);
     }
 }

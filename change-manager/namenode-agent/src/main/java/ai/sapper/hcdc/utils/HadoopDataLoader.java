@@ -57,6 +57,7 @@ public class HadoopDataLoader {
             connection.connect();
 
             fs = connection.fileSystem();
+
             basePath = new Path(loaderConfig.baseDir);
             if (!fs.exists(basePath)) {
                 fs.mkdirs(basePath);
@@ -152,7 +153,7 @@ public class HadoopDataLoader {
             long rsize = 0;
             List<String> record = records.get(ii);
             for (String r : record) {
-                rsize += (r.length() * 8L);
+                rsize += r.length();
             }
             if (size + rsize > loaderConfig.batchSize) break;
             batch.add(record);

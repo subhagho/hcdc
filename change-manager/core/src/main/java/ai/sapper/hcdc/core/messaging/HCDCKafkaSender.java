@@ -1,31 +1,70 @@
 package ai.sapper.hcdc.core.messaging;
 
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
-import ai.sapper.hcdc.core.connections.impl.BasicKafkaConsumer;
 import ai.sapper.hcdc.core.connections.impl.BasicKafkaProducer;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import lombok.NonNull;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.internals.RecordHeader;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.Future;
 
 public class HCDCKafkaSender extends MessageSender<String, DFSChangeDelta> {
+    private BasicKafkaProducer producer = null;
+    private String topic = null;
+    private KafkaPartitioner<String> partitioner;
+
+    public HCDCKafkaSender withTopic(@NonNull String topic) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(topic));
+        this.topic = topic;
+
+        return this;
+    }
+
+    public HCDCKafkaSender withPartitioner(@NonNull KafkaPartitioner<String> partitioner) {
+        this.partitioner = partitioner;
+        return this;
+    }
+
     /**
-     * @param key
      * @param message
+     * @return
      * @throws MessagingError
      */
     @Override
-    public void send(@NonNull String key, @NonNull DFSChangeDelta message) throws MessagingError {
+    public MessageObject<String, DFSChangeDelta> send(@NonNull MessageObject<String, DFSChangeDelta> message) throws MessagingError {
         checkState();
         try {
-            byte[] data = message.toByteArray();
-            Future<RecordMetadata> result = ((BasicKafkaProducer) connection()).producer().send(new ProducerRecord<>(key, data));
+            message.queue(topic);
+            if (Strings.isNullOrEmpty(message.id())) {
+                message.id(UUID.randomUUID().toString());
+            }
+            List<Header> headers = new ArrayList<>();
+            Header h = new RecordHeader(MessageObject.HEADER_MESSAGE_ID, message.id().getBytes(StandardCharsets.UTF_8));
+            headers.add(h);
+            if (!Strings.isNullOrEmpty(message.correlationId())) {
+                h = new RecordHeader(MessageObject.HEADER_CORRELATION_ID, message.correlationId().getBytes(StandardCharsets.UTF_8));
+                headers.add(h);
+            }
+            byte[] data = message.value().toByteArray();
+            Future<RecordMetadata> result = null;
+            Integer partition = null;
+            if (partitioner != null) {
+                partition = partitioner.partition(message.key());
+            }
+            result = producer.producer().send(new ProducerRecord<>(topic, partition, message.key(), data, headers));
             RecordMetadata rm = result.get();
+
+            return message;
         } catch (Exception ex) {
             throw new MessagingError(ex);
         }
@@ -33,14 +72,18 @@ public class HCDCKafkaSender extends MessageSender<String, DFSChangeDelta> {
 
     /**
      * @param messages
+     * @return
      * @throws MessagingError
      */
     @Override
-    public void sent(@NonNull List<AbstractMap.SimpleEntry<String, DFSChangeDelta>> messages) throws MessagingError {
+    public List<MessageObject<String, DFSChangeDelta>> sent(@NonNull List<MessageObject<String, DFSChangeDelta>> messages) throws MessagingError {
         checkState();
-        for (AbstractMap.SimpleEntry<String, DFSChangeDelta> message : messages) {
-            send(message.getKey(), message.getValue());
+        List<MessageObject<String, DFSChangeDelta>> responses = new ArrayList<>(messages.size());
+        for (MessageObject<String, DFSChangeDelta> message : messages) {
+            MessageObject<String, DFSChangeDelta> response = send(message);
+            responses.add(response);
         }
+        return responses;
     }
 
     /**
@@ -65,5 +108,12 @@ public class HCDCKafkaSender extends MessageSender<String, DFSChangeDelta> {
         Preconditions.checkState(connection() != null);
         Preconditions.checkState(connection() instanceof BasicKafkaProducer);
         Preconditions.checkState(connection().isConnected());
+
+        if (producer == null) {
+            producer = ((BasicKafkaProducer) connection());
+        }
+        if (topic == null) {
+            topic = producer.topic();
+        }
     }
 }

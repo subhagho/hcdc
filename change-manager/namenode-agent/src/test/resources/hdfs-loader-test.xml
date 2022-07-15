@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <configuration>
     <loader>
-        <batchSize>8388608</batchSize>
         <baseDir>/test/hcdc/loader/parquet</baseDir>
         <connections>
             <path>config</path>
@@ -26,6 +25,12 @@
                         <enabled>false</enabled>
                     </security>
                     <enableAdmin>true</enableAdmin>
+                    <parameters>
+                        <parameter>
+                            <name>dfs.blocksize</name>
+                            <value>8388608</value>
+                        </parameter>
+                    </parameters>
                 </hdfs>
             </connection>
             <connection>
@@ -40,6 +45,12 @@
                         <enabled>false</enabled>
                     </security>
                     <enableAdmin>true</enableAdmin>
+                    <parameters>
+                        <parameter>
+                            <name>dfs.blocksize</name>
+                            <value>8388608</value>
+                        </parameter>
+                    </parameters>
                 </hdfs_ha>
             </connection>
             <connection>
