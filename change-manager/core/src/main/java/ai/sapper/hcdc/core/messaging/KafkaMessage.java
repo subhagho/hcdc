@@ -28,5 +28,10 @@ public class KafkaMessage<K, V> extends MessageObject<K, V> {
             String cid = new String(ch.value(), StandardCharsets.UTF_8);
             correlationId(cid);
         }
+        Header mh = record.headers().lastHeader(HEADER_MESSAGE_MODE);
+        if (mh != null && mh.value() != null) {
+            String m = new String(mh.value(), StandardCharsets.UTF_8);
+            mode(MessageMode.valueOf(m));
+        }
     }
 }

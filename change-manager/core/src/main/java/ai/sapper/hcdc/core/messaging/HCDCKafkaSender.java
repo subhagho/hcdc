@@ -52,6 +52,12 @@ public class HCDCKafkaSender extends MessageSender<String, DFSChangeDelta> {
                 h = new RecordHeader(MessageObject.HEADER_CORRELATION_ID, message.correlationId().getBytes(StandardCharsets.UTF_8));
                 headers.add(h);
             }
+            if (message.mode() == null) {
+                throw new MessagingError(String.format("Invalid Message Object: mode not set. [id=%s]", message.id()));
+            }
+            h = new RecordHeader(MessageObject.HEADER_MESSAGE_MODE, message.mode().name().getBytes(StandardCharsets.UTF_8));
+            headers.add(h);
+
             byte[] data = message.value().toByteArray();
             Future<RecordMetadata> result = null;
             Integer partition = null;

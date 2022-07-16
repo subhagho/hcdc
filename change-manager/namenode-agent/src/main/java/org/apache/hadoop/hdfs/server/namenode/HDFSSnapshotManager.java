@@ -8,10 +8,7 @@ import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.state.DFSBlockState;
 import ai.sapper.hcdc.core.connections.state.DFSFileState;
-import ai.sapper.hcdc.core.messaging.ChangeDeltaSerDe;
-import ai.sapper.hcdc.core.messaging.HCDCMessagingBuilders;
-import ai.sapper.hcdc.core.messaging.MessageObject;
-import ai.sapper.hcdc.core.messaging.MessageSender;
+import ai.sapper.hcdc.core.messaging.*;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -42,10 +39,10 @@ public class HDFSSnapshotManager {
             sender = new HCDCMessagingBuilders.SenderBuilder()
                     .config(managerConfig.config())
                     .manager(manger)
-                    .connection(managerConfig().connection)
-                    .type(managerConfig().type)
-                    .partitioner(managerConfig().partitioner)
-                    .topic(managerConfig().topic)
+                    .connection(managerConfig().mConfig.connection())
+                    .type(managerConfig().mConfig.type())
+                    .partitioner(managerConfig().mConfig.partitionerClass())
+                    .topic(managerConfig().mConfig.topic())
                     .build();
             return this;
         } catch (Exception ex) {
@@ -67,7 +64,8 @@ public class HDFSSnapshotManager {
             }
 
             DFSAddFile addFile = generateSnapshot(fileState);
-            MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().namespace(), addFile, DFSAddFile.class);
+            MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().namespace(),
+                    addFile, DFSAddFile.class, MessageObject.MessageMode.Snapshot);
             sender.send(message);
 
             rState.setSnapshotTxId(fileState.getLastTnxId());
@@ -129,13 +127,14 @@ public class HDFSSnapshotManager {
 
         private static final String __CONFIG_PATH = "snapshot.manager";
 
-        private String type;
-        private String connection;
-        private String topic;
-        private String partitioner;
+        private MessagingConfig mConfig;
 
         public HDFSSnapshotManagerConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);
+        }
+
+        public HDFSSnapshotManagerConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config, @NonNull String path) {
+            super(config, path);
         }
 
         public void read() throws ConfigurationException {
@@ -143,18 +142,8 @@ public class HDFSSnapshotManager {
                 throw new ConfigurationException("Kafka Configuration not drt or is NULL");
             }
             try {
-                type = get().getString(Constants.CONFIG_CONNECTION_TYPE);
-                if (Strings.isNullOrEmpty(type)) {
-                    throw new ConfigurationException(String.format("Snapshot Manager Manager Configuration Error: missing [%s]", Constants.CONFIG_CONNECTION_TYPE));
-                }
-                connection = get().getString(Constants.CONFIG_CONNECTION);
-                if (Strings.isNullOrEmpty(connection)) {
-                    throw new ConfigurationException(String.format("Snapshot Manager Manager Configuration Error: missing [%s]", Constants.CONFIG_CONNECTION));
-                }
-                if (get().containsKey(Constants.CONFIG_TOPIC))
-                    topic = get().getString(Constants.CONFIG_TOPIC);
-                if (get().containsKey(Constants.CONFIG_PARTITIONER_CLASS))
-                    partitioner = get().getString(Constants.CONFIG_PARTITIONER_CLASS);
+                mConfig = new MessagingConfig();
+                mConfig.read(get());
             } catch (Exception ex) {
                 throw new ConfigurationException(ex);
             }

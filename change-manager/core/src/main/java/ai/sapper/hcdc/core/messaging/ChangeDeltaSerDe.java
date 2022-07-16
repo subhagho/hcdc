@@ -7,7 +7,8 @@ import lombok.NonNull;
 public class ChangeDeltaSerDe {
     public static <T> MessageObject<String, DFSChangeDelta> create(@NonNull String namespace,
                                                                    @NonNull Object data,
-                                                                   @NonNull Class<? extends T> type) throws Exception {
+                                                                   @NonNull Class<? extends T> type,
+                                                                   @NonNull MessageObject.MessageMode mode) throws Exception {
         DFSChangeDelta delta = null;
         String key = null;
         if (type.equals(DFSAddFile.class)) {
@@ -43,6 +44,7 @@ public class ChangeDeltaSerDe {
         MessageObject<String, DFSChangeDelta> message = new KafkaMessage<>();
         message.id(String.format("%s:%s", namespace, delta.getTxId()));
         message.correlationId(String.valueOf(delta.getTxId()));
+        message.mode(mode);
         message.key(key);
         message.value(delta);
 
