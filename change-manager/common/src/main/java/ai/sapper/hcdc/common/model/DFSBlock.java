@@ -66,6 +66,11 @@ public  final class DFSBlock extends
           }
           case 24: {
             bitField0_ |= 0x00000004;
+            blockSize_ = input.readInt64();
+            break;
+          }
+          case 32: {
+            bitField0_ |= 0x00000008;
             generationStamp_ = input.readInt64();
             break;
           }
@@ -141,17 +146,33 @@ public  final class DFSBlock extends
     return size_;
   }
 
-  // required int64 generationStamp = 3;
-  public static final int GENERATIONSTAMP_FIELD_NUMBER = 3;
-  private long generationStamp_;
+  // required int64 blockSize = 3;
+  public static final int BLOCKSIZE_FIELD_NUMBER = 3;
+  private long blockSize_;
   /**
-   * <code>required int64 generationStamp = 3;</code>
+   * <code>required int64 blockSize = 3;</code>
    */
-  public boolean hasGenerationStamp() {
+  public boolean hasBlockSize() {
     return ((bitField0_ & 0x00000004) == 0x00000004);
   }
   /**
-   * <code>required int64 generationStamp = 3;</code>
+   * <code>required int64 blockSize = 3;</code>
+   */
+  public long getBlockSize() {
+    return blockSize_;
+  }
+
+  // required int64 generationStamp = 4;
+  public static final int GENERATIONSTAMP_FIELD_NUMBER = 4;
+  private long generationStamp_;
+  /**
+   * <code>required int64 generationStamp = 4;</code>
+   */
+  public boolean hasGenerationStamp() {
+    return ((bitField0_ & 0x00000008) == 0x00000008);
+  }
+  /**
+   * <code>required int64 generationStamp = 4;</code>
    */
   public long getGenerationStamp() {
     return generationStamp_;
@@ -160,6 +181,7 @@ public  final class DFSBlock extends
   private void initFields() {
     blockId_ = 0L;
     size_ = 0L;
+    blockSize_ = 0L;
     generationStamp_ = 0L;
   }
   private byte memoizedIsInitialized = -1;
@@ -172,6 +194,10 @@ public  final class DFSBlock extends
       return false;
     }
     if (!hasSize()) {
+      memoizedIsInitialized = 0;
+      return false;
+    }
+    if (!hasBlockSize()) {
       memoizedIsInitialized = 0;
       return false;
     }
@@ -193,7 +219,10 @@ public  final class DFSBlock extends
       output.writeInt64(2, size_);
     }
     if (((bitField0_ & 0x00000004) == 0x00000004)) {
-      output.writeInt64(3, generationStamp_);
+      output.writeInt64(3, blockSize_);
+    }
+    if (((bitField0_ & 0x00000008) == 0x00000008)) {
+      output.writeInt64(4, generationStamp_);
     }
     getUnknownFields().writeTo(output);
   }
@@ -214,7 +243,11 @@ public  final class DFSBlock extends
     }
     if (((bitField0_ & 0x00000004) == 0x00000004)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeInt64Size(3, generationStamp_);
+        .computeInt64Size(3, blockSize_);
+    }
+    if (((bitField0_ & 0x00000008) == 0x00000008)) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt64Size(4, generationStamp_);
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSerializedSize = size;
@@ -336,8 +369,10 @@ public  final class DFSBlock extends
       bitField0_ = (bitField0_ & ~0x00000001);
       size_ = 0L;
       bitField0_ = (bitField0_ & ~0x00000002);
-      generationStamp_ = 0L;
+      blockSize_ = 0L;
       bitField0_ = (bitField0_ & ~0x00000004);
+      generationStamp_ = 0L;
+      bitField0_ = (bitField0_ & ~0x00000008);
       return this;
     }
 
@@ -377,6 +412,10 @@ public  final class DFSBlock extends
       if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
         to_bitField0_ |= 0x00000004;
       }
+      result.blockSize_ = blockSize_;
+      if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+        to_bitField0_ |= 0x00000008;
+      }
       result.generationStamp_ = generationStamp_;
       result.bitField0_ = to_bitField0_;
       onBuilt();
@@ -400,6 +439,9 @@ public  final class DFSBlock extends
       if (other.hasSize()) {
         setSize(other.getSize());
       }
+      if (other.hasBlockSize()) {
+        setBlockSize(other.getBlockSize());
+      }
       if (other.hasGenerationStamp()) {
         setGenerationStamp(other.getGenerationStamp());
       }
@@ -413,6 +455,10 @@ public  final class DFSBlock extends
         return false;
       }
       if (!hasSize()) {
+        
+        return false;
+      }
+      if (!hasBlockSize()) {
         
         return false;
       }
@@ -508,34 +554,67 @@ public  final class DFSBlock extends
       return this;
     }
 
-    // required int64 generationStamp = 3;
-    private long generationStamp_ ;
+    // required int64 blockSize = 3;
+    private long blockSize_ ;
     /**
-     * <code>required int64 generationStamp = 3;</code>
+     * <code>required int64 blockSize = 3;</code>
      */
-    public boolean hasGenerationStamp() {
+    public boolean hasBlockSize() {
       return ((bitField0_ & 0x00000004) == 0x00000004);
     }
     /**
-     * <code>required int64 generationStamp = 3;</code>
+     * <code>required int64 blockSize = 3;</code>
+     */
+    public long getBlockSize() {
+      return blockSize_;
+    }
+    /**
+     * <code>required int64 blockSize = 3;</code>
+     */
+    public Builder setBlockSize(long value) {
+      bitField0_ |= 0x00000004;
+      blockSize_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>required int64 blockSize = 3;</code>
+     */
+    public Builder clearBlockSize() {
+      bitField0_ = (bitField0_ & ~0x00000004);
+      blockSize_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    // required int64 generationStamp = 4;
+    private long generationStamp_ ;
+    /**
+     * <code>required int64 generationStamp = 4;</code>
+     */
+    public boolean hasGenerationStamp() {
+      return ((bitField0_ & 0x00000008) == 0x00000008);
+    }
+    /**
+     * <code>required int64 generationStamp = 4;</code>
      */
     public long getGenerationStamp() {
       return generationStamp_;
     }
     /**
-     * <code>required int64 generationStamp = 3;</code>
+     * <code>required int64 generationStamp = 4;</code>
      */
     public Builder setGenerationStamp(long value) {
-      bitField0_ |= 0x00000004;
+      bitField0_ |= 0x00000008;
       generationStamp_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>required int64 generationStamp = 3;</code>
+     * <code>required int64 generationStamp = 4;</code>
      */
     public Builder clearGenerationStamp() {
-      bitField0_ = (bitField0_ & ~0x00000004);
+      bitField0_ = (bitField0_ & ~0x00000008);
       generationStamp_ = 0L;
       onChanged();
       return this;

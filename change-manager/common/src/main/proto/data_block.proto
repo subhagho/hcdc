@@ -32,7 +32,8 @@ message DFSFile {
 message DFSBlock {
   required int64 blockId = 1;
   required int64 size = 2;
-  required int64 generationStamp = 3;
+  required int64 blockSize = 3;
+  required int64 generationStamp = 4;
 }
 
 message DFSAddFile {

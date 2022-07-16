@@ -26,13 +26,23 @@ public interface DFSBlockOrBuilder
    */
   long getSize();
 
-  // required int64 generationStamp = 3;
+  // required int64 blockSize = 3;
   /**
-   * <code>required int64 generationStamp = 3;</code>
+   * <code>required int64 blockSize = 3;</code>
+   */
+  boolean hasBlockSize();
+  /**
+   * <code>required int64 blockSize = 3;</code>
+   */
+  long getBlockSize();
+
+  // required int64 generationStamp = 4;
+  /**
+   * <code>required int64 generationStamp = 4;</code>
    */
   boolean hasGenerationStamp();
   /**
-   * <code>required int64 generationStamp = 3;</code>
+   * <code>required int64 generationStamp = 4;</code>
    */
   long getGenerationStamp();
 }

@@ -283,6 +283,7 @@ public class ZkStateManager {
                                          long blockId,
                                          long updatedTime,
                                          long dataSize,
+                                         long generationStamp,
                                          long txId) throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
@@ -310,7 +311,7 @@ public class ZkStateManager {
                 bs.setUpdatedTime(updatedTime);
                 bs.setLastTnxId(txId);
                 bs.setDataSize(dataSize);
-
+                bs.setGenerationStamp(generationStamp);
                 BlockTnxDelta bd = new BlockTnxDelta();
                 bd.setTnxId(txId);
                 long soff = (prevDataSize > 0 ? prevDataSize - 1 : 0);
@@ -472,6 +473,9 @@ public class ZkStateManager {
                 state.setHdfsPath(hdfsPath);
                 state.setZkPath(path);
                 state.setEnabled(enable);
+                if (enable) {
+                    state.setSnapshotTxId(0);
+                }
                 state.setUpdateTime(System.currentTimeMillis());
 
                 String json = JSONUtils.asString(state, DFSReplicationState.class);

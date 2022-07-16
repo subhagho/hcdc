@@ -115,7 +115,12 @@ public class NameNodeReplicator {
             DFSFileState fileState = stateManager.create(inode.path(), inode.id, inode.mTime, inode.preferredBlockSize, txnId);
             if (inode.blocks != null && !inode.blocks.isEmpty()) {
                 for (DFSInodeBlock block : inode.blocks) {
-                    fileState = stateManager.addOrUpdateBlock(fileState.getHdfsFilePath(), block.id, inode.mTime, block.numBytes, txnId);
+                    fileState = stateManager.addOrUpdateBlock(fileState.getHdfsFilePath(),
+                            block.id,
+                            inode.mTime,
+                            block.numBytes,
+                            block.genStamp,
+                            txnId);
                 }
             }
             if (DefaultLogger.LOG.isDebugEnabled()) {

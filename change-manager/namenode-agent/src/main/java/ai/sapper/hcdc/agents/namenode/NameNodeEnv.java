@@ -212,7 +212,7 @@ public class NameNodeEnv {
         return null;
     }
 
-    public static final NameNodeEnv __instance = new NameNodeEnv();
+    private static final NameNodeEnv __instance = new NameNodeEnv();
 
     public static NameNodeEnv setup(@NonNull HierarchicalConfiguration<ImmutableNode> config) throws NameNodeError {
         synchronized (__instance) {

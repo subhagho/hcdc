@@ -16,6 +16,8 @@ public class DFSBlockState {
     private long dataSize = 0;
     private long blockSize;
     private long lastTnxId;
+    private long generationStamp;
+
     private List<BlockTnxDelta> transactions;
 
     public DFSBlockState add(@NonNull BlockTnxDelta transaction) {
