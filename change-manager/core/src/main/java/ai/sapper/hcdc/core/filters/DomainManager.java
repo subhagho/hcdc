@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.core.filters;
 
 import ai.sapper.hcdc.common.ConfigReader;
+import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
@@ -29,7 +30,6 @@ public class DomainManager {
     private ZookeeperConnection zkConnection;
     private DomainManagerConfig config;
     private Map<String, DomainFilterMatcher> matchers;
-    private final ObjectMapper mapper = new ObjectMapper();
     private final List<FilterAddCallback> callbacks = new ArrayList<>();
 
     public DomainManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
@@ -79,7 +79,7 @@ public class DomainManager {
                     byte[] data = client.getData().forPath(dp);
                     if (data != null && data.length > 0) {
                         String json = new String(data, StandardCharsets.UTF_8);
-                        DomainFilters df = mapper.readValue(json, DomainFilters.class);
+                        DomainFilters df = JSONUtils.read(json, DomainFilters.class);
                         DomainFilterMatcher m = new DomainFilterMatcher(df);
                         matchers.put(df.getName(), m);
                         if (!callbacks.isEmpty()) {
@@ -136,7 +136,7 @@ public class DomainManager {
         }
 
         CuratorFramework client = zkConnection.client();
-        String json = mapper.writeValueAsString(matcher.filters());
+        String json = JSONUtils.asString(matcher.filters(), DomainFilters.class);
         Stat stat = client.setData().forPath(getZkPath(domain), json.getBytes(StandardCharsets.UTF_8));
 
         if (!callbacks.isEmpty()) {

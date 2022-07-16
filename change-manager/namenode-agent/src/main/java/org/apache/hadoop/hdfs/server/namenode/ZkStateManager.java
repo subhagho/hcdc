@@ -1,9 +1,13 @@
 package org.apache.hadoop.hdfs.server.namenode;
 
+import ai.sapper.hcdc.agents.namenode.NameNodeEnv;
+import ai.sapper.hcdc.agents.namenode.StaleDataException;
+import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeAgentState;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
 import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.common.utils.PathUtils;
+import ai.sapper.hcdc.core.DistributedLock;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
 import ai.sapper.hcdc.core.connections.state.BlockTnxDelta;
@@ -34,13 +38,18 @@ public class ZkStateManager {
         public static final String ZK_PATH_SUFFIX = "/agent/namenode";
         public static final String ZK_PATH_HEARTBEAT = "/heartbeat";
         public static final String ZK_PATH_FILES = "/files";
+        public static final String ZK_PATH_REPLICATION = "/replication";
+
+        public static final String LOCK_REPLICATION = "replication";
     }
 
     private ZookeeperConnection connection;
     private ZkStateManagerConfig config;
     private String zkPath;
+    private String zkPathReplication;
     private NameNodeTxState agentTxState;
-    private final ObjectMapper mapper = new ObjectMapper();
+    private DomainManager domainManager;
+    private DistributedLock replicationLock;
 
     public ZkStateManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                                @NonNull ConnectionManager manger, @NonNull String namespace) throws StateManagerError {
@@ -63,7 +72,7 @@ public class ZkStateManager {
                 agentTxState.setLastTxId(0);
                 agentTxState.setUpdatedTime(0);
 
-                String json = mapper.writeValueAsString(agentTxState);
+                String json = JSONUtils.asString(agentTxState, NameNodeTxState.class);
                 client.setData().forPath(zkPath, json.getBytes(StandardCharsets.UTF_8));
             } else {
                 byte[] data = client.getData().forPath(zkPath);
@@ -71,11 +80,21 @@ public class ZkStateManager {
                     throw new StateManagerError(String.format("ZooKeeper state data corrupted. [path=%s]", zkPath));
                 }
                 String json = new String(data);
-                agentTxState = mapper.readValue(json, NameNodeTxState.class);
+                agentTxState = JSONUtils.read(json, NameNodeTxState.class);
                 if (agentTxState.getNamespace().compareTo(namespace) != 0) {
                     throw new StateManagerError(String.format("Invalid state data: namespace mismatch. [expected=%s][actual=%s]", namespace, agentTxState.getNamespace()));
                 }
             }
+            zkPathReplication = PathUtils.formatZkPath(String.format("%s%s/%s/%s", basePath(), Constants.ZK_PATH_SUFFIX, namespace, Constants.ZK_PATH_REPLICATION));
+            if (client.checkExists().forPath(zkPathReplication) == null) {
+                String path = client.create().creatingParentContainersIfNeeded().forPath(zkPathReplication);
+                if (Strings.isNullOrEmpty(path)) {
+                    throw new StateManagerError(String.format("Error creating ZK replication path. [path=%s]", basePath()));
+                }
+            }
+            domainManager = new DomainManager();
+            domainManager.init(xmlConfig, manger);
+
             return this;
         } catch (Exception ex) {
             throw new StateManagerError(ex);
@@ -95,7 +114,7 @@ public class ZkStateManager {
                 agentTxState.setUpdatedTime(System.currentTimeMillis());
                 agentTxState.setCurrentEditsLogFile("");
 
-                String json = mapper.writeValueAsString(agentTxState);
+                String json = JSONUtils.asString(agentTxState, NameNodeTxState.class);
                 client.setData().forPath(zkPath, json.getBytes(StandardCharsets.UTF_8));
 
                 return agentTxState;
@@ -118,7 +137,7 @@ public class ZkStateManager {
                 agentTxState.setUpdatedTime(System.currentTimeMillis());
                 agentTxState.setCurrentEditsLogFile(currentEditsLog);
 
-                String json = mapper.writeValueAsString(agentTxState);
+                String json = JSONUtils.asString(agentTxState, NameNodeTxState.class);
                 client.setData().forPath(zkPath, json.getBytes(StandardCharsets.UTF_8));
 
                 return agentTxState;
@@ -138,7 +157,7 @@ public class ZkStateManager {
 
                 agentTxState.setUpdatedTime(System.currentTimeMillis());
                 agentTxState.setCurrentFSImageFile(currentFSImageFile);
-                String json = mapper.writeValueAsString(agentTxState);
+                String json = JSONUtils.asString(agentTxState, NameNodeTxState.class);
                 client.setData().forPath(zkPath, json.getBytes(StandardCharsets.UTF_8));
 
                 return agentTxState;
@@ -157,7 +176,7 @@ public class ZkStateManager {
                 byte[] data = client.getData().forPath(zkPath);
                 if (data != null && data.length > 0) {
                     String json = new String(data, StandardCharsets.UTF_8);
-                    return mapper.readValue(json, NameNodeTxState.class);
+                    return JSONUtils.read(json, NameNodeTxState.class);
                 }
                 throw new StateManagerError(String.format("NameNode State not found. [path=%s]", zkPath));
             } catch (Exception ex) {
@@ -188,7 +207,7 @@ public class ZkStateManager {
                 }
                 heartbeat.setTimestamp(System.currentTimeMillis());
 
-                String json = mapper.writeValueAsString(heartbeat);
+                String json = JSONUtils.asString(heartbeat, Heartbeat.class);
                 client.setData().forPath(path, json.getBytes(StandardCharsets.UTF_8));
 
                 return heartbeat;
@@ -209,7 +228,7 @@ public class ZkStateManager {
                 byte[] data = client.getData().forPath(path);
                 if (data != null && data.length > 0) {
                     String json = new String(data, StandardCharsets.UTF_8);
-                    return mapper.readValue(json, Heartbeat.class);
+                    return JSONUtils.read(json, Heartbeat.class);
                 }
             }
             return null;
@@ -324,7 +343,7 @@ public class ZkStateManager {
                     throw new StateManagerError(String.format("File record not found. [path=%s]", fileState.getHdfsFilePath()));
                 }
                 fileState.setTimestamp(System.currentTimeMillis());
-                String json = mapper.writeValueAsString(fileState);
+                String json = JSONUtils.asString(fileState, DFSFileState.class);
                 client.setData().forPath(path, json.getBytes(StandardCharsets.UTF_8));
 
                 return fileState;
@@ -412,7 +431,7 @@ public class ZkStateManager {
             byte[] data = client.getData().forPath(path);
             if (data != null && data.length > 0) {
                 String json = new String(data, StandardCharsets.UTF_8);
-                return mapper.readValue(json, DFSFileState.class);
+                return JSONUtils.read(json, DFSFileState.class);
             }
             return null;
         } catch (Exception ex) {
@@ -420,19 +439,141 @@ public class ZkStateManager {
         }
     }
 
-    public void deleteAll() throws StateManagerError {
+    public DFSReplicationState get(long inodeId) throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
+        try {
+            CuratorFramework client = connection().client();
+            String path = PathUtils.formatZkPath(String.format("%s/%d", zkPathReplication, inodeId));
+            if (client.checkExists().forPath(path) != null) {
+                byte[] data = client.getData().forPath(path);
+                if (data != null && data.length > 0) {
+                    String json = new String(data, StandardCharsets.UTF_8);
+                    return JSONUtils.read(json, DFSReplicationState.class);
+                }
+            }
+            return null;
+        } catch (Exception ex) {
+            throw new StateManagerError(ex);
+        }
+    }
+
+    public DFSReplicationState create(long inodeId, @NonNull String hdfsPath, boolean enable) throws StateManagerError {
+        checkState();
+        try {
+            replicationLock.lock();
+            CuratorFramework client = connection().client();
+            DFSReplicationState state = get(inodeId);
+            if (state == null) {
+                String path = PathUtils.formatZkPath(String.format("%s/%d", zkPathReplication, inodeId));
+
+                state = new DFSReplicationState();
+                state.setInode(inodeId);
+                state.setHdfsPath(hdfsPath);
+                state.setZkPath(path);
+                state.setEnabled(enable);
+                state.setUpdateTime(System.currentTimeMillis());
+
+                String json = JSONUtils.asString(state, DFSReplicationState.class);
+                client.setData().forPath(path, json.getBytes(StandardCharsets.UTF_8));
+            }
+            return state;
+        } catch (Exception ex) {
+            throw new StateManagerError(ex);
+        } finally {
+            replicationLock.unlock();
+        }
+    }
+
+    public DFSReplicationState update(@NonNull DFSReplicationState state) throws StateManagerError, StaleDataException {
+        checkState();
+        try {
+            replicationLock.lock();
+            CuratorFramework client = connection().client();
+            DFSReplicationState nstate = get(state.getInode());
+            if (nstate.getUpdateTime() > 0 && nstate.getUpdateTime() != state.getUpdateTime()) {
+                throw new StaleDataException(String.format("Replication state changed. [path=%s]", state.getHdfsPath()));
+            }
+            String path = PathUtils.formatZkPath(String.format("%s/%d", zkPathReplication, state.getInode()));
+
+            state.setUpdateTime(System.currentTimeMillis());
+            String json = JSONUtils.asString(state, DFSReplicationState.class);
+            client.setData().forPath(path, json.getBytes(StandardCharsets.UTF_8));
+
+            return state;
+        } catch (StaleDataException se) {
+            throw se;
+        } catch (Exception ex) {
+            throw new StateManagerError(ex);
+        } finally {
+            replicationLock.unlock();
+        }
+    }
+
+    public boolean delete(long inodeId) throws StateManagerError {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
+        try {
+            replicationLock.lock();
+            CuratorFramework client = connection().client();
+            DFSReplicationState state = get(inodeId);
+            if (state != null) {
+                client.delete().deletingChildrenIfNeeded().forPath(state.getZkPath());
+                return true;
+            }
+            return false;
+        } catch (Exception ex) {
+            throw new StateManagerError(ex);
+        } finally {
+            replicationLock.unlock();
+        }
+    }
+
+    public void deleteAll() throws StateManagerError {
+        checkState();
         synchronized (this) {
             try {
+                replicationLock.lock();
                 CuratorFramework client = connection().client();
                 String path = getFilePath(null);
                 if (client.checkExists().forPath(path) != null) {
                     client.delete().deletingChildrenIfNeeded().forPath(path);
                 }
+                if (client.checkExists().forPath(zkPathReplication) != null) {
+                    client.delete().deletingChildrenIfNeeded().forPath(zkPathReplication);
+                }
             } catch (Exception ex) {
                 throw new StateManagerError(ex);
+            } finally {
+                replicationLock.unlock();
             }
+        }
+    }
+
+    public List<String> findFiles(@NonNull String hdfsPath) throws StateManagerError {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
+        try {
+            CuratorFramework client = connection().client();
+            String zpath = getFilePath(hdfsPath);
+            List<String> paths = new ArrayList<>();
+            search(zpath, paths, client);
+            if (!paths.isEmpty()) return paths;
+            return null;
+        } catch (Exception ex) {
+            throw new StateManagerError(ex);
+        }
+    }
+
+    private void search(String zpath, List<String> paths, CuratorFramework client) throws Exception {
+        List<String> children = client.getChildren().forPath(zpath);
+        if (children != null && !children.isEmpty()) {
+            for (String child : children) {
+                String cp = PathUtils.formatZkPath(String.format("%s/%s", zpath, child));
+                search(cp, paths, client);
+            }
+        } else {
+            paths.add(zpath);
         }
     }
 
@@ -441,6 +582,18 @@ public class ZkStateManager {
             return PathUtils.formatZkPath(String.format("%s/%s", zkPath, Constants.ZK_PATH_FILES));
         } else {
             return PathUtils.formatZkPath(String.format("%s/%s/%s", zkPath, Constants.ZK_PATH_FILES, hdfsPath));
+        }
+    }
+
+    private synchronized void checkState() {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
+
+        if (replicationLock == null) {
+            replicationLock = NameNodeEnv.get().lock(Constants.LOCK_REPLICATION);
+            if (replicationLock == null) {
+                throw new RuntimeException(String.format("Replication Lock not found. [name=%s]", Constants.LOCK_REPLICATION));
+            }
         }
     }
 

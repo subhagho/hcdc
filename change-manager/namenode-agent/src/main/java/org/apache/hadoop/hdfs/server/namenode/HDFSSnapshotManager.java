@@ -2,9 +2,12 @@ package org.apache.hadoop.hdfs.server.namenode;
 
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
+import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
+import ai.sapper.hcdc.core.connections.state.DFSFileState;
 import ai.sapper.hcdc.core.messaging.HCDCMessagingBuilders;
 import ai.sapper.hcdc.core.messaging.MessageSender;
+import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -42,6 +45,23 @@ public class HDFSSnapshotManager {
             return this;
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
+        }
+    }
+
+    public void snapshot(@NonNull String hdfsPath) throws SnapshotError {
+        Preconditions.checkState(sender != null);
+        try {
+            DFSFileState fileState = stateManager.get(hdfsPath);
+            if (fileState == null) {
+                throw new SnapshotError(String.format("HDFS File State not found. [path=%s]", hdfsPath));
+            }
+            if (fileState.getSnapshotTxId() > 0) {
+                DefaultLogger.LOG.warn(String.format("Snapshot already scheduled or processed. [path=%s]", hdfsPath));
+            }
+        } catch (SnapshotError se) {
+            throw se;
+        } catch (Exception ex) {
+            throw new SnapshotError(ex);
         }
     }
 

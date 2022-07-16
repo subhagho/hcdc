@@ -24,6 +24,11 @@
                 <connection>test-zk</connection>
                 <lock-node>NN-GLOBAL-LOCK</lock-node>
             </lock>
+            <lock>
+                <name>replication</name>
+                <connection>test-zk</connection>
+                <lock-node>NN-REPLICATION-LOCK</lock-node>
+            </lock>
         </locks>
     </agent>
     <replicator>

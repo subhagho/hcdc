@@ -21,7 +21,6 @@ public class DFSFileState {
     private long lastTnxId;
     private long timestamp;
     private boolean deleted = false;
-    private long snapshotTxId = -1;
 
     private List<DFSBlockState> blocks;
 
