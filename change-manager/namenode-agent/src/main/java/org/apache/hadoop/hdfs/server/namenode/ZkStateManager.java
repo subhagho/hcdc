@@ -147,6 +147,28 @@ public class ZkStateManager {
         }
     }
 
+    public NameNodeTxState update(long processedTxId) throws StateManagerError {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
+        Preconditions.checkArgument(processedTxId > agentTxState.getProcessedTxId());
+
+        synchronized (this) {
+            try {
+                CuratorFramework client = connection().client();
+
+                agentTxState.setProcessedTxId(processedTxId);
+                agentTxState.setUpdatedTime(System.currentTimeMillis());
+
+                String json = JSONUtils.asString(agentTxState, NameNodeTxState.class);
+                client.setData().forPath(zkPath, json.getBytes(StandardCharsets.UTF_8));
+
+                return agentTxState;
+            } catch (Exception ex) {
+                throw new StateManagerError(ex);
+            }
+        }
+    }
+
     public NameNodeTxState update(@NonNull String currentFSImageFile) throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());

@@ -13,6 +13,7 @@ public class DFSReplicationState {
     private long snapshotTxId = -1;
     private long lastReplicatedTx = -1;
     private long snapshotTime;
+    private boolean snapshotReady = false;
     private long lastReplicationTime;
     private long updateTime = 0;
 }

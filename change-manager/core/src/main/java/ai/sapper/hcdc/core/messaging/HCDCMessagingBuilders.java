@@ -87,6 +87,7 @@ public class HCDCMessagingBuilders {
         private String type;
         private String connection;
         private String topic;
+        private HierarchicalConfiguration<ImmutableNode> config;
         private ConnectionManager manager;
 
         public MessageReceiver<String, DFSChangeDelta> build() throws MessagingError {

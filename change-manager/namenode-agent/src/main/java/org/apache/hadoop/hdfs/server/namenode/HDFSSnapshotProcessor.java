@@ -17,32 +17,41 @@ import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
-import org.apache.parquet.Strings;
 
 @Getter
 @Accessors(fluent = true)
-public class HDFSSnapshotManager {
+public class HDFSSnapshotProcessor {
     private final ZkStateManager stateManager;
     private MessageSender<String, DFSChangeDelta> sender;
-    private HDFSSnapshotManagerConfig managerConfig;
+    private MessageSender<String, DFSChangeDelta> tnxSender;
+    private HDFSSnapshotProcessorConfig processorConfig;
 
-    public HDFSSnapshotManager(@NonNull ZkStateManager stateManager) {
+    public HDFSSnapshotProcessor(@NonNull ZkStateManager stateManager) {
         this.stateManager = stateManager;
     }
 
-    public HDFSSnapshotManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                                    @NonNull ConnectionManager manger) throws ConfigurationException {
+    public HDFSSnapshotProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                                      @NonNull ConnectionManager manger) throws ConfigurationException {
         try {
-            managerConfig = new HDFSSnapshotManagerConfig(xmlConfig);
-            managerConfig.read();
+            processorConfig = new HDFSSnapshotProcessorConfig(xmlConfig);
+            processorConfig.read();
 
             sender = new HCDCMessagingBuilders.SenderBuilder()
-                    .config(managerConfig.config())
+                    .config(processorConfig.senderConfig.config())
                     .manager(manger)
-                    .connection(managerConfig().mConfig.connection())
-                    .type(managerConfig().mConfig.type())
-                    .partitioner(managerConfig().mConfig.partitionerClass())
-                    .topic(managerConfig().mConfig.topic())
+                    .connection(processorConfig().senderConfig.connection())
+                    .type(processorConfig().senderConfig.type())
+                    .partitioner(processorConfig().senderConfig.partitionerClass())
+                    .topic(processorConfig().senderConfig.topic())
+                    .build();
+
+            tnxSender = new HCDCMessagingBuilders.SenderBuilder()
+                    .config(processorConfig.tnxSenderConfig.config())
+                    .manager(manger)
+                    .connection(processorConfig().tnxSenderConfig.connection())
+                    .type(processorConfig().tnxSenderConfig.type())
+                    .partitioner(processorConfig().tnxSenderConfig.partitionerClass())
+                    .topic(processorConfig().tnxSenderConfig.topic())
                     .build();
             return this;
         } catch (Exception ex) {
@@ -63,7 +72,7 @@ public class HDFSSnapshotManager {
                 rState = stateManager.create(fileState.getId(), fileState.getHdfsFilePath(), true);
             }
 
-            DFSAddFile addFile = generateSnapshot(fileState);
+            DFSAddFile addFile = generateSnapshot(fileState, true);
             MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().namespace(),
                     addFile, DFSAddFile.class, MessageObject.MessageMode.Snapshot);
             sender.send(message);
@@ -80,7 +89,32 @@ public class HDFSSnapshotManager {
         }
     }
 
-    private DFSAddFile generateSnapshot(DFSFileState state) throws Exception {
+    public void snapshotReady(@NonNull String hdfsPath, long tnxId) throws SnapshotError {
+        Preconditions.checkState(tnxSender != null);
+        try {
+            DFSFileState fileState = stateManager.get(hdfsPath);
+            if (fileState == null) {
+                throw new SnapshotError(String.format("HDFS File State not found. [path=%s]", hdfsPath));
+            }
+            DFSReplicationState rState = stateManager.get(fileState.getId());
+            if (rState == null) {
+                throw new SnapshotError(String.format("HDFS File replication record not found. [path=%s]", hdfsPath));
+            }
+            if (tnxId != rState.getSnapshotTxId()) {
+                throw new SnapshotError(String.format("Snapshot transaction mismatch. [expected=%d][actual=%d]", rState.getSnapshotTxId(), tnxId));
+            }
+            DFSAddFile addFile = generateSnapshot(fileState, true);
+            MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().namespace(),
+                    addFile, DFSAddFile.class, MessageObject.MessageMode.Backlog);
+            tnxSender.send(message);
+        } catch (SnapshotError se) {
+            throw se;
+        } catch (Exception ex) {
+            throw new SnapshotError(ex);
+        }
+    }
+
+    private DFSAddFile generateSnapshot(DFSFileState state, boolean addBlocks) throws Exception {
         DFSTransaction tx = DFSTransaction.newBuilder()
                 .setOp(DFSTransaction.Operation.ADD_FILE)
                 .setTransactionId(state.getLastTnxId())
@@ -98,9 +132,11 @@ public class HDFSSnapshotManager {
                 .setTransaction(tx)
                 .setLength(state.getDataSize())
                 .setAccessedTime(state.getUpdatedTime());
-        for (DFSBlockState block : state.sortedBlocks()) {
-            DFSBlock b = generateBlockSnapshot(block);
-            builder.addBlocks(b);
+        if (addBlocks) {
+            for (DFSBlockState block : state.sortedBlocks()) {
+                DFSBlock b = generateBlockSnapshot(block);
+                builder.addBlocks(b);
+            }
         }
         return builder.build();
     }
@@ -117,23 +153,19 @@ public class HDFSSnapshotManager {
     @Getter
     @Setter
     @Accessors(fluent = true)
-    public static class HDFSSnapshotManagerConfig extends ConfigReader {
-        private static class Constants {
-            private static final String CONFIG_CONNECTION_TYPE = "connectionType";
-            private static final String CONFIG_CONNECTION = "connection";
-            private static final String CONFIG_TOPIC = "topic";
-            private static final String CONFIG_PARTITIONER_CLASS = "partitioner";
-        }
-
+    public static class HDFSSnapshotProcessorConfig extends ConfigReader {
         private static final String __CONFIG_PATH = "snapshot.manager";
+        private static final String __CONFIG_PATH_SENDER = "sender";
+        private static final String __CONFIG_PATH_TNX_SENDER = "tnxSender";
 
-        private MessagingConfig mConfig;
+        private MessagingConfig senderConfig;
+        private MessagingConfig tnxSenderConfig;
 
-        public HDFSSnapshotManagerConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
+        public HDFSSnapshotProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);
         }
 
-        public HDFSSnapshotManagerConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config, @NonNull String path) {
+        public HDFSSnapshotProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config, @NonNull String path) {
             super(config, path);
         }
 
@@ -142,8 +174,19 @@ public class HDFSSnapshotManager {
                 throw new ConfigurationException("Kafka Configuration not drt or is NULL");
             }
             try {
-                mConfig = new MessagingConfig();
-                mConfig.read(get());
+                HierarchicalConfiguration<ImmutableNode> config = get().configurationAt(__CONFIG_PATH_SENDER);
+                if (config == null) {
+                    throw new ConfigurationException(String.format("Sender configuration node not found. [path=%s]", __CONFIG_PATH_SENDER));
+                }
+                senderConfig = new MessagingConfig();
+                senderConfig.read(config);
+
+                config = get().configurationAt(__CONFIG_PATH_TNX_SENDER);
+                if (config == null) {
+                    throw new ConfigurationException(String.format("Sender configuration node not found. [path=%s]", __CONFIG_PATH_TNX_SENDER));
+                }
+                tnxSenderConfig = new MessagingConfig();
+                tnxSenderConfig.read(config);
             } catch (Exception ex) {
                 throw new ConfigurationException(ex);
             }

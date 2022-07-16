@@ -42,8 +42,8 @@ public class ChangeDeltaSerDe {
             throw new MessagingError(String.format("Invalid Message DataType. [type=%s]", type.getCanonicalName()));
         }
         MessageObject<String, DFSChangeDelta> message = new KafkaMessage<>();
-        message.id(String.format("%s:%s", namespace, delta.getTxId()));
-        message.correlationId(String.valueOf(delta.getTxId()));
+        message.id(String.format("%s:%s:%s", namespace, mode.name(), delta.getTxId()));
+        message.correlationId(key);
         message.mode(mode);
         message.key(key);
         message.value(delta);

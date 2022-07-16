@@ -8,7 +8,8 @@ import lombok.Setter;
 public class NameNodeTxState {
     private String namespace;
     private long updatedTime;
-    private long lastTxId;
+    private long lastTxId = 0;
+    private long processedTxId = 0;
     private String currentEditsLogFile;
     private String currentFSImageFile;
 }

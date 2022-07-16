@@ -19,6 +19,8 @@ public class MessagingConfig {
         public static final String CONFIG_TOPIC = "topic";
         public static final String CONFIG_PARTITIONER_CLASS = "partitioner";
     }
+    private HierarchicalConfiguration<ImmutableNode> config;
+
     private String type;
     private String connection;
     private String topic;
@@ -38,5 +40,7 @@ public class MessagingConfig {
         }
         if (config.containsKey(Constants.CONFIG_PARTITIONER_CLASS))
             partitionerClass = config.getString(Constants.CONFIG_PARTITIONER_CLASS);
+
+        this.config = config;
     }
 }
