@@ -303,6 +303,7 @@ public class ZkStateManager {
 
     public DFSFileState addOrUpdateBlock(@NonNull String path,
                                          long blockId,
+                                         long prevBlockId,
                                          long updatedTime,
                                          long dataSize,
                                          long generationStamp,
@@ -323,9 +324,24 @@ public class ZkStateManager {
                 DFSBlockState bs = fs.get(blockId);
                 if (bs == null) {
                     bs = new DFSBlockState();
+                    bs.setPrevBlockId(prevBlockId);
                     bs.setBlockId(blockId);
                     bs.setCreatedTime(updatedTime);
                     bs.setBlockSize(fs.getBlockSize());
+                    if (prevBlockId < 0) {
+                        if (fs.hasBlocks()) {
+                            throw new StateManagerError(
+                                    String.format("Invalid Block Data: Previous Block ID not specified. [path=%s][blockID=%d]",
+                                            fs.getHdfsFilePath(), bs.getBlockId()));
+                        }
+                    } else {
+                        DFSBlockState pb = fs.get(prevBlockId);
+                        if (pb == null) {
+                            throw new StateManagerError(
+                                    String.format("Invalid Block Data: Previous Block not found. [path=%s][blockID=%d]",
+                                            fs.getHdfsFilePath(), bs.getBlockId()));
+                        }
+                    }
                     fs.add(bs);
                 } else {
                     prevDataSize = bs.getDataSize();

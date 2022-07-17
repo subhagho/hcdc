@@ -4,10 +4,10 @@ import ai.sapper.hcdc.agents.namenode.NameNodeEnv;
 import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
 import ai.sapper.hcdc.common.ConfigReader;
-import ai.sapper.hcdc.common.model.DFSAddFile;
-import ai.sapper.hcdc.common.model.DFSChangeDelta;
+import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
+import ai.sapper.hcdc.core.connections.state.DFSBlockState;
 import ai.sapper.hcdc.core.connections.state.DFSFileState;
 import ai.sapper.hcdc.core.messaging.*;
 import com.google.common.base.Preconditions;
@@ -146,6 +146,162 @@ public class HDFSDeltaChangeProcessor implements Runnable {
 
     private void processTxMessage(MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
         Object data = ChangeDeltaSerDe.parse(message.value());
+        if (data instanceof DFSAddFile) {
+            processAddFileTxMessage((DFSAddFile) data, message, txId);
+        } else if (data instanceof DFSAppendFile) {
+            processAppendFileTxMessage((DFSAppendFile) data, message, txId);
+        } else if (data instanceof DFSDeleteFile) {
+            processDeleteFileTxMessage((DFSDeleteFile) data, message, txId);
+        } else if (data instanceof DFSAddBlock) {
+            processAddBlockTxMessage((DFSAddBlock) data, message, txId);
+        } else if (data instanceof DFSUpdateBlocks) {
+            processUpdateBlocksTxMessage((DFSUpdateBlocks) data, message, txId);
+        } else if (data instanceof DFSTruncateBlock) {
+            processTruncateBlockTxMessage((DFSTruncateBlock) data, message, txId);
+        } else if (data instanceof DFSCloseFile) {
+            processCloseFileTxMessage((DFSCloseFile) data, message, txId);
+        } else if (data instanceof DFSRenameFile) {
+            processRenameFileTxMessage((DFSRenameFile) data, message, txId);
+        } else if (data instanceof DFSIgnoreTx) {
+            processIgnoreTxMessage((DFSIgnoreTx) data, message, txId);
+        } else {
+            throw new InvalidMessageError(message.id(),
+                    String.format("Message Body type not supported. [type=%s]", data.getClass().getCanonicalName()));
+        }
+    }
+
+    private void processAddFileTxMessage(DFSAddFile data,
+                                         MessageObject<String, DFSChangeDelta> message,
+                                         long txId) throws Exception {
+        DFSFileState fileState = stateManager.create(data.getFile().getPath(),
+                data.getFile().getInodeId(),
+                data.getModifiedTime(),
+                data.getBlockSize(),
+                data.getTransaction().getTransactionId());
+        /*
+        List<DFSBlock> blocks = data.getBlocksList();
+        if (!blocks.isEmpty()) {
+            for (DFSBlock block : blocks) {
+                fileState = stateManager.addOrUpdateBlock(fileState.getHdfsFilePath(),
+                        block.getBlockId(),
+                        data.getModifiedTime(),
+                        block.getSize(),
+                        block.getGenerationStamp(),
+                        data.getTransaction().getTransactionId());
+            }
+        }
+         */
+        String domain = stateManager.domainManager().matches(fileState.getHdfsFilePath());
+        if (!Strings.isNullOrEmpty(domain)) {
+            DFSReplicationState rState = stateManager.create(fileState.getId(), fileState.getHdfsFilePath(), true);
+            rState.setSnapshotTxId(fileState.getLastTnxId());
+            rState.setSnapshotTime(System.currentTimeMillis());
+            rState.setSnapshotReady(true);
+
+            stateManager.update(rState);
+            sender.send(message);
+        }
+    }
+
+    private void processAppendFileTxMessage(DFSAppendFile data,
+                                            MessageObject<String, DFSChangeDelta> message,
+                                            long txId) throws Exception {
+        DFSFileState fileState = stateManager.get(data.getFile().getPath());
+        if (fileState == null || fileState.isDeleted()) {
+            throw new Exception(String.format("NameNode Replica out of sync, missing file state. [path=%s]", data.getFile().getPath()));
+        }
+        DFSReplicationState rState = stateManager.get(fileState.getId());
+        if (rState != null && rState.isEnabled()) {
+            DFSFile df = data.getFile();
+            df = df.toBuilder().setInodeId(fileState.getId()).build();
+            data = data.toBuilder().setFile(df).build();
+
+            message = ChangeDeltaSerDe.create(message.value().getNamespace(), data, DFSAppendFile.class, message.mode());
+            sender.send(message);
+        }
+    }
+
+    private void processDeleteFileTxMessage(DFSDeleteFile data,
+                                            MessageObject<String, DFSChangeDelta> message,
+                                            long txId) throws Exception {
+        DFSFileState fileState = stateManager.get(data.getFile().getPath());
+        if (fileState == null || fileState.isDeleted()) {
+            throw new Exception(String.format("NameNode Replica out of sync, missing file state. [path=%s]", data.getFile().getPath()));
+        }
+        fileState = stateManager.markDeleted(fileState.getHdfsFilePath());
+        DFSReplicationState rState = stateManager.get(fileState.getId());
+        if (rState != null) {
+            if (rState.isEnabled()) {
+                DFSFile df = data.getFile();
+                df = df.toBuilder().setInodeId(fileState.getId()).build();
+                data = data.toBuilder().setFile(df).build();
+
+                message = ChangeDeltaSerDe.create(message.value().getNamespace(), data, DFSAppendFile.class, message.mode());
+                sender.send(message);
+            }
+        }
+        stateManager.delete(fileState.getId());
+    }
+
+    private void processAddBlockTxMessage(DFSAddBlock data,
+                                          MessageObject<String, DFSChangeDelta> message,
+                                          long txId) throws Exception {
+        DFSFileState fileState = stateManager.get(data.getFile().getPath());
+        if (fileState == null || fileState.isDeleted()) {
+            throw new Exception(String.format("NameNode Replica out of sync, missing file state. [path=%s]", data.getFile().getPath()));
+        }
+        long lastBlockId = -1;
+        if (data.hasPenultimateBlock()) {
+            lastBlockId = data.getPenultimateBlock().getBlockId();
+        }
+        fileState = stateManager.addOrUpdateBlock(fileState.getHdfsFilePath(),
+                data.getLastBlock().getBlockId(),
+                lastBlockId,
+                data.getTransaction().getTimestamp(),
+                data.getLastBlock().getSize(),
+                data.getLastBlock().getGenerationStamp(),
+                data.getTransaction().getTransactionId());
+
+        DFSReplicationState rState = stateManager.get(fileState.getId());
+        if (rState != null) {
+            if (rState.isEnabled()) {
+                DFSFile df = data.getFile();
+                df = df.toBuilder().setInodeId(fileState.getId()).build();
+                data = data.toBuilder().setFile(df).build();
+
+                message = ChangeDeltaSerDe.create(message.value().getNamespace(), data, DFSAppendFile.class, message.mode());
+                sender.send(message);
+            }
+        }
+    }
+
+    private void processUpdateBlocksTxMessage(DFSUpdateBlocks data,
+                                              MessageObject<String, DFSChangeDelta> message,
+                                              long txId) throws Exception {
+
+    }
+
+    private void processTruncateBlockTxMessage(DFSTruncateBlock data,
+                                               MessageObject<String, DFSChangeDelta> message,
+                                               long txId) throws Exception {
+
+    }
+
+    private void processCloseFileTxMessage(DFSCloseFile data,
+                                           MessageObject<String, DFSChangeDelta> message,
+                                           long txId) throws Exception {
+
+    }
+
+    private void processRenameFileTxMessage(DFSRenameFile data,
+                                            MessageObject<String, DFSChangeDelta> message,
+                                            long txId) throws Exception {
+
+    }
+
+    private void processIgnoreTxMessage(DFSIgnoreTx data,
+                                        MessageObject<String, DFSChangeDelta> message,
+                                        long txId) throws Exception {
 
     }
 

@@ -11,6 +11,7 @@ import java.util.List;
 @Setter
 public class DFSBlockState {
     private long blockId;
+    private long prevBlockId = -1;
     private long createdTime;
     private long updatedTime;
     private long dataSize = 0;
