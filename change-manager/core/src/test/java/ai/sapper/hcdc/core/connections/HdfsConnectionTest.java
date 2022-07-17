@@ -68,15 +68,18 @@ class HdfsConnectionTest {
             path = new Path(String.format("/test/hcdc/core/%s/upload.xml", __PATH));
             try (FSDataOutputStream fsDataOutputStream = fs.create(path, true)) {
                 try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fsDataOutputStream, StandardCharsets.UTF_8))) {
-                    File file = new File(__CONFIG_FILE);    //creates a new file instance
-                    FileReader fr = new FileReader(file);   //reads the file
-                    try (BufferedReader reader = new BufferedReader(fr)) {  //creates a buffering character input stream
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            writer.write(line);
-                            writer.newLine();
+                    for(int ii=0; ii < 50000; ii++) {
+                        File file = new File(__CONFIG_FILE);    //creates a new file instance
+                        FileReader fr = new FileReader(file);   //reads the file
+                        try (BufferedReader reader = new BufferedReader(fr)) {  //creates a buffering character input stream
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                writer.write(line);
+                                writer.newLine();
+                            }
                         }
                     }
+                    writer.flush();
                 }
             }
             try (InputStream is = fs.open(path)) {
@@ -86,7 +89,7 @@ class HdfsConnectionTest {
 
             try (FSDataOutputStream fsDataOutputStream = fs.append(path)) {
                 try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fsDataOutputStream, StandardCharsets.UTF_8))) {
-                    for(int ii=0; ii < 5000; ii++) {
+                    for(int ii=0; ii < 70000; ii++) {
                         File file = new File(__CONFIG_FILE);    //creates a new file instance
                         FileReader fr = new FileReader(file);   //reads the file
                         try (BufferedReader reader = new BufferedReader(fr)) {  //creates a buffering character input stream

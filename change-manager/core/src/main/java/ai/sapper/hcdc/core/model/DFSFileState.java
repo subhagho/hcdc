@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.core.connections.state;
+package ai.sapper.hcdc.core.model;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -21,6 +21,7 @@ public class DFSFileState {
     private long lastTnxId;
     private long timestamp;
     private boolean deleted = false;
+    private boolean error = false;
 
     private List<DFSBlockState> blocks;
 

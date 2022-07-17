@@ -1,9 +1,9 @@
-package org.apache.hadoop.hdfs.server.namenode;
+package ai.sapper.hcdc.agents.namenode;
 
 import java.security.PrivilegedActionException;
 
-public class SnapshotError extends Exception {
-    private static final String __PREFIX = "Snapshot Error: %s";
+public class StateManagerError extends Exception {
+    private static final String __PREFIX = "State Manager Error : %s";
 
     /**
      * Constructs a new exception with the specified detail message.  The
@@ -13,7 +13,7 @@ public class SnapshotError extends Exception {
      * @param message the detail message. The detail message is saved for
      *                later retrieval by the {@link #getMessage()} method.
      */
-    public SnapshotError(String message) {
+    public StateManagerError(String message) {
         super(String.format(__PREFIX, message));
     }
 
@@ -31,7 +31,7 @@ public class SnapshotError extends Exception {
      *                unknown.)
      * @since 1.4
      */
-    public SnapshotError(String message, Throwable cause) {
+    public StateManagerError(String message, Throwable cause) {
         super(String.format(__PREFIX, message), cause);
     }
 
@@ -49,7 +49,7 @@ public class SnapshotError extends Exception {
      *              unknown.)
      * @since 1.4
      */
-    public SnapshotError(Throwable cause) {
+    public StateManagerError(Throwable cause) {
         super(String.format(__PREFIX, cause.getLocalizedMessage()), cause);
     }
 }

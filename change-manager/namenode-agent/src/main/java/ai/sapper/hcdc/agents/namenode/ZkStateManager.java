@@ -1,7 +1,5 @@
-package org.apache.hadoop.hdfs.server.namenode;
+package ai.sapper.hcdc.agents.namenode;
 
-import ai.sapper.hcdc.agents.namenode.NameNodeEnv;
-import ai.sapper.hcdc.agents.namenode.StaleDataException;
 import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeAgentState;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
@@ -10,13 +8,11 @@ import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.DistributedLock;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
-import ai.sapper.hcdc.core.connections.state.BlockTnxDelta;
-import ai.sapper.hcdc.core.connections.state.DFSBlockState;
-import ai.sapper.hcdc.core.connections.state.DFSFileState;
-import ai.sapper.hcdc.core.connections.state.StateManagerError;
+import ai.sapper.hcdc.core.model.BlockTnxDelta;
+import ai.sapper.hcdc.core.model.DFSBlockState;
+import ai.sapper.hcdc.core.model.DFSFileState;
 import ai.sapper.hcdc.core.filters.DomainManager;
 import ai.sapper.hcdc.core.model.Heartbeat;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -307,7 +303,7 @@ public class ZkStateManager {
                                          long updatedTime,
                                          long dataSize,
                                          long generationStamp,
-                                         long txId) throws StateManagerError {
+                                         long txId) throws StateManagerError, InvalidTransactionError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
         synchronized (this) {
@@ -330,14 +326,14 @@ public class ZkStateManager {
                     bs.setBlockSize(fs.getBlockSize());
                     if (prevBlockId < 0) {
                         if (fs.hasBlocks()) {
-                            throw new StateManagerError(
+                            throw new InvalidTransactionError(fs.getHdfsFilePath(),
                                     String.format("Invalid Block Data: Previous Block ID not specified. [path=%s][blockID=%d]",
                                             fs.getHdfsFilePath(), bs.getBlockId()));
                         }
                     } else {
                         DFSBlockState pb = fs.get(prevBlockId);
                         if (pb == null) {
-                            throw new StateManagerError(
+                            throw new InvalidTransactionError(fs.getHdfsFilePath(),
                                     String.format("Invalid Block Data: Previous Block not found. [path=%s][blockID=%d]",
                                             fs.getHdfsFilePath(), bs.getBlockId()));
                         }
@@ -363,6 +359,8 @@ public class ZkStateManager {
                 fs.setDataSize(ds);
 
                 return update(fs);
+            } catch (InvalidTransactionError te) {
+                throw te;
             } catch (Exception ex) {
                 throw new StateManagerError(String.format("Error reading file entry. [path=%s]", path));
             }

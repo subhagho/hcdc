@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.core.connections.state;
+package ai.sapper.hcdc.core.model;
 
 import lombok.Getter;
 import lombok.NonNull;

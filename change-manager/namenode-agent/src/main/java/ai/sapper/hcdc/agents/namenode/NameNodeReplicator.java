@@ -1,13 +1,11 @@
-package org.apache.hadoop.hdfs.server.namenode;
+package ai.sapper.hcdc.agents.namenode;
 
-import ai.sapper.hcdc.agents.namenode.NameNodeEnv;
-import ai.sapper.hcdc.agents.namenode.NameNodeError;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
-import ai.sapper.hcdc.core.connections.state.DFSFileState;
+import ai.sapper.hcdc.core.model.DFSFileState;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.base.Preconditions;

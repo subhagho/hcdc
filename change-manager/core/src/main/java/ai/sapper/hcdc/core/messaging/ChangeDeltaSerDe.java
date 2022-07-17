@@ -5,6 +5,16 @@ import com.google.common.base.Preconditions;
 import lombok.NonNull;
 
 public class ChangeDeltaSerDe {
+    public static <T> MessageObject<String, DFSChangeDelta> createIgnoreTx(@NonNull String namespace,
+                                                                           @NonNull DFSTransaction tnx,
+                                                                           @NonNull MessageObject.MessageMode mode) throws Exception {
+        DFSIgnoreTx.Builder builder = DFSIgnoreTx.newBuilder();
+        DFSIgnoreTx ignoreTx = DFSIgnoreTx.newBuilder()
+                .setOpCode(tnx.getOp().name())
+                .setTransaction(tnx).build();
+        return create(namespace, ignoreTx, DFSIgnoreTx.class, mode);
+    }
+
     public static <T> MessageObject<String, DFSChangeDelta> create(@NonNull String namespace,
                                                                    @NonNull Object data,
                                                                    @NonNull Class<? extends T> type,

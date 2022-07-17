@@ -20,7 +20,6 @@ import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
-import org.apache.hadoop.hdfs.server.namenode.ZkStateManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

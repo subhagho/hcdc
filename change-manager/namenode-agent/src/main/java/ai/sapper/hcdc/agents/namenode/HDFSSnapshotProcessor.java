@@ -1,13 +1,12 @@
-package org.apache.hadoop.hdfs.server.namenode;
+package ai.sapper.hcdc.agents.namenode;
 
-import ai.sapper.hcdc.agents.namenode.NameNodeEnv;
 import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
-import ai.sapper.hcdc.core.connections.state.DFSBlockState;
-import ai.sapper.hcdc.core.connections.state.DFSFileState;
+import ai.sapper.hcdc.core.model.DFSBlockState;
+import ai.sapper.hcdc.core.model.DFSFileState;
 import ai.sapper.hcdc.core.messaging.*;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
