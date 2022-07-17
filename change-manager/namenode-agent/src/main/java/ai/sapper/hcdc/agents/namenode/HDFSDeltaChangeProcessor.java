@@ -9,6 +9,7 @@ import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.model.DFSBlockState;
 import ai.sapper.hcdc.core.model.DFSFileState;
 import ai.sapper.hcdc.core.messaging.*;
+import ai.sapper.hcdc.core.model.EFileState;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -177,7 +178,7 @@ public class HDFSDeltaChangeProcessor implements Runnable {
             if (!Strings.isNullOrEmpty(te.getHdfsPath())) {
                 DFSFileState fileState = stateManager.get(te.getHdfsPath());
                 if (fileState != null) {
-                    fileState.setError(true);
+                    fileState.setState(EFileState.Error);
                     stateManager.update(fileState);
                 }
             }
@@ -228,13 +229,13 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                                             MessageObject<String, DFSChangeDelta> message,
                                             long txId) throws Exception {
         DFSFileState fileState = stateManager.get(data.getFile().getPath());
-        if (fileState == null || fileState.isDeleted()) {
+        if (fileState == null || fileState.checkDeleted()) {
             throw new InvalidTransactionError(data.getFile().getPath(),
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()));
         }
         DFSReplicationState rState = stateManager.get(fileState.getId());
-        if (rState != null && rState.isEnabled()) {
+        if (!fileState.hasError() && rState != null && rState.isEnabled()) {
             DFSFile df = data.getFile();
             df = df.toBuilder().setInodeId(fileState.getId()).build();
             data = data.toBuilder().setFile(df).build();
@@ -252,14 +253,14 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                                             MessageObject<String, DFSChangeDelta> message,
                                             long txId) throws Exception {
         DFSFileState fileState = stateManager.get(data.getFile().getPath());
-        if (fileState == null || fileState.isDeleted()) {
+        if (fileState == null || fileState.checkDeleted()) {
             throw new InvalidTransactionError(data.getFile().getPath(),
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()));
         }
         fileState = stateManager.markDeleted(fileState.getHdfsFilePath());
         DFSReplicationState rState = stateManager.get(fileState.getId());
-        if (rState != null && rState.isEnabled()) {
+        if (!fileState.hasError() && rState != null && rState.isEnabled()) {
             stateManager.delete(fileState.getId());
 
             DFSFile df = data.getFile();
@@ -280,7 +281,7 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                                           MessageObject<String, DFSChangeDelta> message,
                                           long txId) throws Exception {
         DFSFileState fileState = stateManager.get(data.getFile().getPath());
-        if (fileState == null || fileState.isDeleted()) {
+        if (fileState == null || fileState.checkDeleted()) {
             throw new InvalidTransactionError(data.getFile().getPath(),
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()));
@@ -298,7 +299,7 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                 data.getTransaction().getTransactionId());
 
         DFSReplicationState rState = stateManager.get(fileState.getId());
-        if (rState != null && rState.isEnabled()) {
+        if (!fileState.hasError() && rState != null && rState.isEnabled()) {
             DFSFile df = data.getFile();
             df = df.toBuilder().setInodeId(fileState.getId()).build();
             data = data.toBuilder().setFile(df).build();
@@ -317,7 +318,7 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                                               MessageObject<String, DFSChangeDelta> message,
                                               long txId) throws Exception {
         DFSFileState fileState = stateManager.get(data.getFile().getPath());
-        if (fileState == null || fileState.isDeleted()) {
+        if (fileState == null || fileState.checkDeleted()) {
             throw new InvalidTransactionError(data.getFile().getPath(),
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()));
@@ -335,10 +336,14 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                 throw new InvalidTransactionError(fileState.getHdfsFilePath(),
                         String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
                                 fileState.getHdfsFilePath(), block.getBlockId()));
+            } else if (bs.getDataSize() != block.getSize()) {
+                throw new InvalidTransactionError(fileState.getHdfsFilePath(),
+                        String.format("File State out of sync, block size mismatch. [path=%s][blockID=%d]",
+                                fileState.getHdfsFilePath(), block.getBlockId()));
             }
         }
         DFSReplicationState rState = stateManager.get(fileState.getId());
-        if (rState != null && rState.isEnabled()) {
+        if (!fileState.hasError() && rState != null && rState.isEnabled()) {
             DFSFile df = data.getFile();
             df = df.toBuilder().setInodeId(fileState.getId()).build();
             data = data.toBuilder().setFile(df).build();
@@ -363,7 +368,7 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                                            MessageObject<String, DFSChangeDelta> message,
                                            long txId) throws Exception {
         DFSFileState fileState = stateManager.get(data.getFile().getPath());
-        if (fileState == null || fileState.isDeleted()) {
+        if (fileState == null || fileState.checkDeleted()) {
             throw new InvalidTransactionError(data.getFile().getPath(),
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()));

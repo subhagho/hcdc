@@ -8,11 +8,8 @@ import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.DistributedLock;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
-import ai.sapper.hcdc.core.model.BlockTnxDelta;
-import ai.sapper.hcdc.core.model.DFSBlockState;
-import ai.sapper.hcdc.core.model.DFSFileState;
+import ai.sapper.hcdc.core.model.*;
 import ai.sapper.hcdc.core.filters.DomainManager;
-import ai.sapper.hcdc.core.model.Heartbeat;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -270,8 +267,9 @@ public class ZkStateManager {
                 DFSFileState fs = null;
                 if (client.checkExists().forPath(zp) != null) {
                     fs = get(path);
-                    if (!fs.isDeleted()) {
-                        throw new IOException("Path already exists.");
+                    if (!fs.checkDeleted()) {
+                        throw new InvalidTransactionError(path,
+                                String.format("Valid File already exists. [path=%s]", path));
                     } else {
                         client.delete().forPath(zp);
                     }
@@ -284,7 +282,6 @@ public class ZkStateManager {
                 fs.setCreatedTime(createdTime);
                 fs.setUpdatedTime(createdTime);
                 fs.setBlockSize(blockSize);
-                fs.setDeleted(false);
                 fs.setTimestamp(System.currentTimeMillis());
                 fs.setLastTnxId(txId);
 
@@ -445,7 +442,7 @@ public class ZkStateManager {
                 if (fstate == null) {
                     throw new StateManagerError(String.format("File record data is NULL. [path=%s]", hdfsPath));
                 }
-                fstate.setDeleted(true);
+                fstate.setState(EFileState.Deleted);
 
                 return update(fstate);
             } catch (Exception ex) {

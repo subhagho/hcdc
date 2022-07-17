@@ -20,8 +20,7 @@ public class DFSFileState {
     private long dataSize;
     private long lastTnxId;
     private long timestamp;
-    private boolean deleted = false;
-    private boolean error = false;
+    private EFileState state = EFileState.Unknown;
 
     private List<DFSBlockState> blocks;
 
@@ -50,6 +49,18 @@ public class DFSFileState {
             blocks.sort(new DFSBlockComparator());
         }
         return blocks;
+    }
+
+    public boolean checkDeleted() {
+        return (state == EFileState.Deleted);
+    }
+
+    public boolean hasError() {
+        return (state == EFileState.Error);
+    }
+
+    public boolean canProcess() {
+        return (!hasError() && !checkDeleted());
     }
 
     public boolean hasBlocks() {
