@@ -53,7 +53,7 @@ class HdfsConnectionTest {
     }
 
     @Test
-    void close() {
+    void fileLifeCycle() {
         DefaultLogger.LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "close"));
         try {
             HdfsConnection connection = manager.getConnection(__CONNECTION_NAME, HdfsConnection.class);
@@ -66,15 +66,16 @@ class HdfsConnectionTest {
                 fs.mkdirs(path);
             }
             path = new Path(String.format("/test/hcdc/core/%s/upload.xml", __PATH));
-            FSDataOutputStream fsDataOutputStream = fs.create(path, true);
-            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fsDataOutputStream, StandardCharsets.UTF_8))) {
-                File file = new File(__CONFIG_FILE);    //creates a new file instance
-                FileReader fr = new FileReader(file);   //reads the file
-                try (BufferedReader reader = new BufferedReader(fr)) {  //creates a buffering character input stream
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        writer.write(line);
-                        writer.newLine();
+            try (FSDataOutputStream fsDataOutputStream = fs.create(path, true)) {
+                try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fsDataOutputStream, StandardCharsets.UTF_8))) {
+                    File file = new File(__CONFIG_FILE);    //creates a new file instance
+                    FileReader fr = new FileReader(file);   //reads the file
+                    try (BufferedReader reader = new BufferedReader(fr)) {  //creates a buffering character input stream
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            writer.write(line);
+                            writer.newLine();
+                        }
                     }
                 }
             }
@@ -82,6 +83,24 @@ class HdfsConnectionTest {
                 byte[] buffer = new byte[4096];
                 int l = is.read(buffer, 0, 4096);
             }
+
+            try (FSDataOutputStream fsDataOutputStream = fs.append(path)) {
+                try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fsDataOutputStream, StandardCharsets.UTF_8))) {
+                    for(int ii=0; ii < 5000; ii++) {
+                        File file = new File(__CONFIG_FILE);    //creates a new file instance
+                        FileReader fr = new FileReader(file);   //reads the file
+                        try (BufferedReader reader = new BufferedReader(fr)) {  //creates a buffering character input stream
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                writer.write(line);
+                                writer.newLine();
+                            }
+                        }
+                    }
+                    writer.flush();
+                }
+            }
+            // fs.delete(path, false);
             connection.close();
         } catch (Throwable t) {
             DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));

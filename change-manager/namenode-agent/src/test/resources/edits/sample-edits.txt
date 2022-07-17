@@ -1,0 +1,9 @@
+DFSTransactionType.DFSAddFileType(file=DFSTransactionType.DFSFileType(path=/test/hcdc/core/e76faf1d-379b-4ac3-8854-29b531957317/upload.xml, inodeId=16880), length=0, blockSize=134217728, modifiedTime=1658069608699, accessedTime=1658069608699, overwrite=true, blocks=[])
+DFSTransactionType.DFSAddBlockType(file=DFSTransactionType.DFSFileType(path=/test/hcdc/core/e76faf1d-379b-4ac3-8854-29b531957317/upload.xml, inodeId=-9223372036854775808), penultimateBlock=null, lastBlock=DFSTransactionType.DFSBlockType(blockId=1073742171, size=0, generationStamp=1349))
+DFSTransactionType.DFSCloseFileType(file=DFSTransactionType.DFSFileType(path=/test/hcdc/core/e76faf1d-379b-4ac3-8854-29b531957317/upload.xml, inodeId=0), length=0, blockSize=134217728, modifiedTime=1658069608892, accessedTime=1658069608699, overwrite=false, blocks=[DFSTransactionType.DFSBlockType(blockId=1073742171, size=2785, generationStamp=1349)])
+
+DFSTransactionType.DFSAppendFileType(file=DFSTransactionType.DFSFileType(path=/test/hcdc/core/e76faf1d-379b-4ac3-8854-29b531957317/upload.xml, inodeId=-9223372036854775808), newBlock=false)
+DFSTransactionType.DFSUpdateBlocksType(file=DFSTransactionType.DFSFileType(path=/test/hcdc/core/e76faf1d-379b-4ac3-8854-29b531957317/upload.xml, inodeId=-9223372036854775808), blocks=[DFSTransactionType.DFSBlockType(blockId=1073742171, size=2785, generationStamp=1350)])
+DFSTransactionType.DFSCloseFileType(file=DFSTransactionType.DFSFileType(path=/test/hcdc/core/e76faf1d-379b-4ac3-8854-29b531957317/upload.xml, inodeId=0), length=0, blockSize=134217728, modifiedTime=1658069609227, accessedTime=1658069608699, overwrite=false, blocks=[DFSTransactionType.DFSBlockType(blockId=1073742171, size=281285, generationStamp=1350)])
+
+DFSTransactionType.DFSDeleteFileType(file=DFSTransactionType.DFSFileType(path=/test/hcdc/core/e76faf1d-379b-4ac3-8854-29b531957317/upload.xml, inodeId=-9223372036854775808))

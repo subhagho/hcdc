@@ -290,7 +290,10 @@ public class HDFSDeltaChangeProcessor implements Runnable {
     private void processCloseFileTxMessage(DFSCloseFile data,
                                            MessageObject<String, DFSChangeDelta> message,
                                            long txId) throws Exception {
-
+        DFSFileState fileState = stateManager.get(data.getFile().getPath());
+        if (fileState == null || fileState.isDeleted()) {
+            throw new Exception(String.format("NameNode Replica out of sync, missing file state. [path=%s]", data.getFile().getPath()));
+        }
     }
 
     private void processRenameFileTxMessage(DFSRenameFile data,
