@@ -58,13 +58,13 @@ public interface DFSRenameFileOrBuilder
    */
   long getLength();
 
-  // required .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;
+  // optional .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;
   /**
-   * <code>required .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
+   * <code>optional .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
    */
   boolean hasOpts();
   /**
-   * <code>required .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
+   * <code>optional .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
    */
   ai.sapper.hcdc.common.model.DFSRenameFile.RenameOpts getOpts();
 }

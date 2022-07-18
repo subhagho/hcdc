@@ -82,7 +82,7 @@ public class NameNodeEnv {
                     throw new NameNodeError(String.format("Error fetching NameNode status. [url=%s]", adminClient.url()));
                 }
             }
-            
+
             stateManager = new ZkStateManager();
             stateManager.init(configNode, connectionManager, config.namespace);
 

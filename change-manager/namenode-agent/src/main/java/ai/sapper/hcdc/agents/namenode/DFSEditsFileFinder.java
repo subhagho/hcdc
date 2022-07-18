@@ -5,7 +5,9 @@ import com.google.common.base.Strings;
 import lombok.NonNull;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -14,6 +16,7 @@ import java.util.regex.Pattern;
 public class DFSEditsFileFinder {
     public static final String REGEX_CURRENT_FILE = "edits_inprogress_(\\d+$)";
     public static final String REGEX_EDIT_LOG_FILE = "edits_(\\d+)-(\\d+$)";
+    public static final String FILE_SEEN_TXID = "seen_txid";
 
     public static String getCurrentEditsFile(@NonNull String rootPath) throws IOException {
         File dir = new File(rootPath);
@@ -72,5 +75,24 @@ public class DFSEditsFileFinder {
         }
         if (!paths.isEmpty()) return paths;
         return null;
+    }
+
+    public static long findSeenTxID(@NonNull String rootPath) throws IOException {
+        File file = new File(String.format("%s/%s", rootPath, FILE_SEEN_TXID));
+        if (!file.exists()) {
+            throw new IOException(String.format("SEEN TX file not found. [path=%s]", file.getAbsolutePath()));
+        }
+        try (FileInputStream fis = new FileInputStream(file)) {
+            byte[] data = new byte[256];
+            int r = fis.read(data);
+            if (r < 0) {
+                throw new IOException(String.format("SEEN TX file is empty. [path=%s]", file.getAbsolutePath()));
+            }
+            String s = new String(data, 0, r, StandardCharsets.UTF_8);
+            if (Strings.isNullOrEmpty(s)) {
+                throw new IOException(String.format("Empty Seen TX data. [path=%s]", file.getAbsolutePath()));
+            }
+            return Long.parseLong(s);
+        }
     }
 }

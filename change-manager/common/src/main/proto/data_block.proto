@@ -104,7 +104,7 @@ message DFSRenameFile {
   required DFSFile srcFile = 2;
   required DFSFile destFile = 3;
   required uint64 length = 4;
-  required RenameOpts opts = 5;
+  optional RenameOpts opts = 5;
 }
 
 message DFSIgnoreTx {

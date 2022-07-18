@@ -32,7 +32,7 @@ public class ChangeDeltaSerDe {
     }
 
     public static <T> MessageObject<String, DFSChangeDelta> create(@NonNull String namespace,
-                                                                   @NonNull Object data,
+                                                                   @NonNull T data,
                                                                    @NonNull Class<? extends T> type,
                                                                    @NonNull MessageObject.MessageMode mode) throws Exception {
         DFSChangeDelta delta = null;

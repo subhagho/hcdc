@@ -322,17 +322,17 @@ public  final class DFSRenameFile extends
     return length_;
   }
 
-  // required .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;
+  // optional .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;
   public static final int OPTS_FIELD_NUMBER = 5;
   private ai.sapper.hcdc.common.model.DFSRenameFile.RenameOpts opts_;
   /**
-   * <code>required .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
+   * <code>optional .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
    */
   public boolean hasOpts() {
     return ((bitField0_ & 0x00000010) == 0x00000010);
   }
   /**
-   * <code>required .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
+   * <code>optional .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
    */
   public ai.sapper.hcdc.common.model.DFSRenameFile.RenameOpts getOpts() {
     return opts_;
@@ -363,10 +363,6 @@ public  final class DFSRenameFile extends
       return false;
     }
     if (!hasLength()) {
-      memoizedIsInitialized = 0;
-      return false;
-    }
-    if (!hasOpts()) {
       memoizedIsInitialized = 0;
       return false;
     }
@@ -683,10 +679,6 @@ public  final class DFSRenameFile extends
         return false;
       }
       if (!hasLength()) {
-        
-        return false;
-      }
-      if (!hasOpts()) {
         
         return false;
       }
@@ -1108,22 +1100,22 @@ public  final class DFSRenameFile extends
       return this;
     }
 
-    // required .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;
+    // optional .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;
     private ai.sapper.hcdc.common.model.DFSRenameFile.RenameOpts opts_ = ai.sapper.hcdc.common.model.DFSRenameFile.RenameOpts.NONE;
     /**
-     * <code>required .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
+     * <code>optional .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
      */
     public boolean hasOpts() {
       return ((bitField0_ & 0x00000010) == 0x00000010);
     }
     /**
-     * <code>required .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
+     * <code>optional .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
      */
     public ai.sapper.hcdc.common.model.DFSRenameFile.RenameOpts getOpts() {
       return opts_;
     }
     /**
-     * <code>required .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
+     * <code>optional .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
      */
     public Builder setOpts(ai.sapper.hcdc.common.model.DFSRenameFile.RenameOpts value) {
       if (value == null) {
@@ -1135,7 +1127,7 @@ public  final class DFSRenameFile extends
       return this;
     }
     /**
-     * <code>required .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
+     * <code>optional .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
      */
     public Builder clearOpts() {
       bitField0_ = (bitField0_ & ~0x00000010);

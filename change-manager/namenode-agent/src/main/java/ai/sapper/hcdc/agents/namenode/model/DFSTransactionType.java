@@ -193,15 +193,28 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         private long blockId;
         private long size;
         private long generationStamp;
+        private long startOffset = 0;
+        private long endOffset  = 0;
+        private long deltaSize = 0;
 
         public DFSBlock getProto() {
-            return DFSBlock.newBuilder().setBlockId(blockId).setSize(size).setGenerationStamp(generationStamp).build();
+            return DFSBlock.newBuilder()
+                    .setBlockId(blockId)
+                    .setSize(size)
+                    .setGenerationStamp(generationStamp)
+                    .setStartOffset(startOffset)
+                    .setEndOffset(endOffset)
+                    .setDeltaSize(deltaSize)
+                    .build();
         }
 
         public void parse(@NonNull DFSBlock block) {
             this.blockId = block.getBlockId();
             this.size = block.getSize();
             this.generationStamp = block.getGenerationStamp();
+            this.startOffset = block.getStartOffset();
+            this.endOffset = block.getEndOffset();
+            this.deltaSize = block.getDeltaSize();
         }
     }
 

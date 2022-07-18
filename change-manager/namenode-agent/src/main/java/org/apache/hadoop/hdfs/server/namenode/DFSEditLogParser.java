@@ -406,7 +406,6 @@ public class DFSEditLogParser {
                     bt.blockId(aop.blocks[ii].getBlockId());
                     bt.size(aop.blocks[ii].getNumBytes());
                     bt.generationStamp(aop.blocks[ii].getGenerationStamp());
-
                     aft.blocks().add(bt);
                 }
             }

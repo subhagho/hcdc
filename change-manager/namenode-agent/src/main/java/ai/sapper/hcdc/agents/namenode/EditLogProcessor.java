@@ -1,12 +1,13 @@
 package ai.sapper.hcdc.agents.namenode;
 
+import ai.sapper.hcdc.agents.namenode.model.DFSEditLogBatch;
+import ai.sapper.hcdc.agents.namenode.model.DFSTransactionType;
+import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
-import ai.sapper.hcdc.core.messaging.HCDCMessagingBuilders;
-import ai.sapper.hcdc.core.messaging.MessageSender;
-import ai.sapper.hcdc.core.messaging.MessagingConfig;
+import ai.sapper.hcdc.core.messaging.*;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -14,11 +15,13 @@ import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
+import org.apache.hadoop.hdfs.tools.offlineEditsViewer.EditsLogReader;
 import org.apache.parquet.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.List;
 
 @Getter
 @Accessors(fluent = true)
@@ -77,13 +80,50 @@ public class EditLogProcessor implements Runnable {
     public void run() {
         Preconditions.checkState(sender != null);
         try {
+            EditsLogReader reader = new EditsLogReader();
             while (NameNodeEnv.get().state().isAvailable()) {
-                stateManager.agentTxState();
+                NameNodeTxState state = stateManager.agentTxState();
+                long txId = -1;
+                List<String> files = DFSEditsFileFinder.findEditsFiles(editsDir.getAbsolutePath(), state.getProcessedTxId(), -1);
+                if (files != null && !files.isEmpty()) {
+                    for (String file : files) {
+                        LOG.debug(String.format("Reading edits file [path=%s][startTx=%d]", file, state.getProcessedTxId()));
+                        reader.run(file, state.getProcessedTxId(), -1);
+                        txId = processBatch(reader.batch());
+                        if (txId >= 0) {
+                            stateManager.update(txId);
+                        }
+                    }
+                }
+                String cf = DFSEditsFileFinder.getCurrentEditsFile(editsDir.getAbsolutePath());
+                if (cf == null) {
+                    throw new Exception(String.format("Current Edits file not found. [dir=%s]",
+                            editsDir.getAbsolutePath()));
+                }
+                long ltx = DFSEditsFileFinder.findSeenTxID(editsDir.getAbsolutePath());
+                stateManager.update(ltx, cf);
+                LOG.debug(String.format("Current Edits File: %s, Last Seen TXID=%d", cf, ltx));
+                Thread.sleep(processorConfig.pollingInterval);
             }
         } catch (Throwable t) {
-            LOG.error("Delta Change Processor terminated with error", t);
+            LOG.error("Edits Log Processor terminated with error", t);
             DefaultLogger.stacktrace(LOG, t);
         }
+    }
+
+    private long processBatch(DFSEditLogBatch batch) throws Exception {
+        if (batch != null && batch.transactions() != null && !batch.transactions().isEmpty()) {
+            long txid = -1;
+            for (DFSTransactionType<?> tnx : batch.transactions()) {
+                Object proto = tnx.convertToProto();
+                MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().namespace(),
+                        proto, proto.getClass(), MessageObject.MessageMode.New);
+                sender.send(message);
+                txid = tnx.id();
+            }
+            return txid;
+        }
+        return -1;
     }
 
     @Getter
@@ -96,7 +136,7 @@ public class EditLogProcessor implements Runnable {
         }
 
         private MessagingConfig senderConfig;
-        private long pollingInterval = -1;
+        private long pollingInterval = 60000; // By default, run every minute
 
         public EditLogProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, Constants.__CONFIG_PATH);

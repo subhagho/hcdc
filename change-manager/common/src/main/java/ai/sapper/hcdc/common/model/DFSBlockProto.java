@@ -144,7 +144,7 @@ public final class DFSBlockProto {
       "\n\007srcFile\030\002 \002(\0132$.ai_sapper_hcdc_common_" +
       "model.DFSFile\0226\n\010destFile\030\003 \002(\0132$.ai_sap" +
       "per_hcdc_common_model.DFSFile\022\016\n\006length\030" +
-      "\004 \002(\004\022C\n\004opts\030\005 \002(\01625.ai_sapper_hcdc_com" +
+      "\004 \002(\004\022C\n\004opts\030\005 \001(\01625.ai_sapper_hcdc_com" +
       "mon_model.DFSRenameFile.RenameOpts\"3\n\nRe" +
       "nameOpts\022\010\n\004NONE\020\000\022\r\n\tOVERWRITE\020\001\022\014\n\010TO_",
       "TRASH\020\002\"\223\001\n\013DFSIgnoreTx\022@\n\013transaction\030\001" +
