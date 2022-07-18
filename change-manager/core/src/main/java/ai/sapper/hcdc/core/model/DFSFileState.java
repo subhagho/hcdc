@@ -63,6 +63,13 @@ public class DFSFileState {
         return (!hasError() && !checkDeleted());
     }
 
+    public boolean canUpdate() {
+        if (canProcess()) {
+            return (state == EFileState.New || state == EFileState.Updating);
+        }
+        return false;
+    }
+
     public boolean hasBlocks() {
         return (blocks != null && !blocks.isEmpty());
     }

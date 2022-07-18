@@ -3,7 +3,7 @@
 
 package ai.sapper.hcdc.common.model;
 
-public interface DFSIgnoreTxOrBuilder
+public interface DFSErrorOrBuilder
     extends com.google.protobuf.MessageOrBuilder {
 
   // required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;
@@ -20,32 +20,28 @@ public interface DFSIgnoreTxOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSTransactionOrBuilder getTransactionOrBuilder();
 
-  // required string opCode = 2;
+  // required .ai_sapper_hcdc_common_model.DFSError.ErrorCode code = 2;
   /**
-   * <code>required string opCode = 2;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSError.ErrorCode code = 2;</code>
    */
-  boolean hasOpCode();
+  boolean hasCode();
   /**
-   * <code>required string opCode = 2;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSError.ErrorCode code = 2;</code>
    */
-  java.lang.String getOpCode();
+  ai.sapper.hcdc.common.model.DFSError.ErrorCode getCode();
+
+  // required string message = 3;
   /**
-   * <code>required string opCode = 2;</code>
+   * <code>required string message = 3;</code>
+   */
+  boolean hasMessage();
+  /**
+   * <code>required string message = 3;</code>
+   */
+  java.lang.String getMessage();
+  /**
+   * <code>required string message = 3;</code>
    */
   com.google.protobuf.ByteString
-      getOpCodeBytes();
-
-  // optional .ai_sapper_hcdc_common_model.DFSFile file = 3;
-  /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 3;</code>
-   */
-  boolean hasFile();
-  /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 3;</code>
-   */
-  ai.sapper.hcdc.common.model.DFSFile getFile();
-  /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 3;</code>
-   */
-  ai.sapper.hcdc.common.model.DFSFileOrBuilder getFileOrBuilder();
+      getMessageBytes();
 }

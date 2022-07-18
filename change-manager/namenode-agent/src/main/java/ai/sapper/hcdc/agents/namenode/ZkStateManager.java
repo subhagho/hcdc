@@ -3,6 +3,7 @@ package ai.sapper.hcdc.agents.namenode;
 import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeAgentState;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
+import ai.sapper.hcdc.common.model.DFSError;
 import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.DistributedLock;
@@ -256,6 +257,7 @@ public class ZkStateManager {
                                long inodeId,
                                long createdTime,
                                long blockSize,
+                               @NonNull EFileState state,
                                long txId) throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
@@ -268,7 +270,8 @@ public class ZkStateManager {
                 if (client.checkExists().forPath(zp) != null) {
                     fs = get(path);
                     if (!fs.checkDeleted()) {
-                        throw new InvalidTransactionError(path,
+                        throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                                path,
                                 String.format("Valid File already exists. [path=%s]", path));
                     } else {
                         client.delete().forPath(zp);
@@ -284,6 +287,7 @@ public class ZkStateManager {
                 fs.setBlockSize(blockSize);
                 fs.setTimestamp(System.currentTimeMillis());
                 fs.setLastTnxId(txId);
+                fs.setState(state);
 
                 byte[] data = JSONUtils.asBytes(fs, DFSFileState.class);
                 client.create().creatingParentContainersIfNeeded().forPath(zp, data);
@@ -294,12 +298,52 @@ public class ZkStateManager {
         }
     }
 
+    public DFSFileState updateState(@NonNull String path, @NonNull EFileState state)
+            throws StateManagerError {
+        synchronized (this) {
+            try {
+                CuratorFramework client = connection().client();
+                DFSFileState fs = get(path);
+                if (fs == null) {
+                    throw new StateManagerError(String.format("File state not found. [path=%s]", path));
+                }
+                fs.setState(state);
+                return update(fs);
+            } catch (Exception ex) {
+                throw new StateManagerError(String.format("Error reading file entry. [path=%s]", path));
+            }
+        }
+    }
+
+    public DFSFileState updateState(@NonNull String path, long blockId, @NonNull EBlockState state)
+            throws StateManagerError {
+        synchronized (this) {
+            try {
+                CuratorFramework client = connection().client();
+                DFSFileState fs = get(path);
+                if (fs == null) {
+                    throw new StateManagerError(String.format("File state not found. [path=%s]", path));
+                }
+                DFSBlockState bs = fs.get(blockId);
+                if (bs == null) {
+                    throw new StateManagerError(String.format("Block state not found. [path=%s][blockId=%d]", path, blockId));
+                }
+                bs.setState(state);
+
+                return update(fs);
+            } catch (Exception ex) {
+                throw new StateManagerError(String.format("Error reading file entry. [path=%s]", path));
+            }
+        }
+    }
+
     public DFSFileState addOrUpdateBlock(@NonNull String path,
                                          long blockId,
                                          long prevBlockId,
                                          long updatedTime,
                                          long dataSize,
                                          long generationStamp,
+                                         @NonNull EBlockState state,
                                          long txId) throws StateManagerError, InvalidTransactionError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
@@ -323,14 +367,16 @@ public class ZkStateManager {
                     bs.setBlockSize(fs.getBlockSize());
                     if (prevBlockId < 0) {
                         if (fs.hasBlocks()) {
-                            throw new InvalidTransactionError(fs.getHdfsFilePath(),
+                            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                                    fs.getHdfsFilePath(),
                                     String.format("Invalid Block Data: Previous Block ID not specified. [path=%s][blockID=%d]",
                                             fs.getHdfsFilePath(), bs.getBlockId()));
                         }
                     } else {
                         DFSBlockState pb = fs.get(prevBlockId);
                         if (pb == null) {
-                            throw new InvalidTransactionError(fs.getHdfsFilePath(),
+                            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                                    fs.getHdfsFilePath(),
                                     String.format("Invalid Block Data: Previous Block not found. [path=%s][blockID=%d]",
                                             fs.getHdfsFilePath(), bs.getBlockId()));
                         }
@@ -343,6 +389,7 @@ public class ZkStateManager {
                 bs.setLastTnxId(txId);
                 bs.setDataSize(dataSize);
                 bs.setGenerationStamp(generationStamp);
+                bs.setState(state);
                 BlockTnxDelta bd = new BlockTnxDelta();
                 bd.setTnxId(txId);
                 long soff = (prevDataSize > 0 ? prevDataSize - 1 : 0);

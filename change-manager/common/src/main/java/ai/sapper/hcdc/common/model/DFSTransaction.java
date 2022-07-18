@@ -159,6 +159,10 @@ public  final class DFSTransaction extends
      * <code>IGNORE = 9;</code>
      */
     IGNORE(9, 9),
+    /**
+     * <code>ERROR = 10;</code>
+     */
+    ERROR(10, 10),
     ;
 
     /**
@@ -201,6 +205,10 @@ public  final class DFSTransaction extends
      * <code>IGNORE = 9;</code>
      */
     public static final int IGNORE_VALUE = 9;
+    /**
+     * <code>ERROR = 10;</code>
+     */
+    public static final int ERROR_VALUE = 10;
 
 
     public final int getNumber() { return value; }
@@ -217,6 +225,7 @@ public  final class DFSTransaction extends
         case 7: return APPEND;
         case 8: return TRUNCATE;
         case 9: return IGNORE;
+        case 10: return ERROR;
         default: return null;
       }
     }

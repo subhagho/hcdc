@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.agents.namenode;
 
+import ai.sapper.hcdc.common.model.DFSError;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -9,6 +10,7 @@ import java.security.PrivilegedActionException;
 public class InvalidTransactionError extends Exception {
     private static final String __PREFIX = "Invalid DFS Transaction: %s";
     private final String hdfsPath;
+    private final DFSError.ErrorCode errorCode;
 
     /**
      * Constructs a new exception with the specified detail message.  The
@@ -18,9 +20,10 @@ public class InvalidTransactionError extends Exception {
      * @param message the detail message. The detail message is saved for
      *                later retrieval by the {@link #getMessage()} method.
      */
-    public InvalidTransactionError(String hdfsPath, String message) {
+    public InvalidTransactionError(DFSError.ErrorCode errorCode, String hdfsPath, String message) {
         super( String.format(__PREFIX, message));
         this.hdfsPath = hdfsPath;
+        this.errorCode = errorCode;
     }
 
     /**
@@ -37,9 +40,10 @@ public class InvalidTransactionError extends Exception {
      *                unknown.)
      * @since 1.4
      */
-    public InvalidTransactionError(String hdfsPath, String message, Throwable cause) {
+    public InvalidTransactionError(DFSError.ErrorCode errorCode, String hdfsPath, String message, Throwable cause) {
         super(String.format(__PREFIX, message), cause);
         this.hdfsPath = hdfsPath;
+        this.errorCode = errorCode;
     }
 
     /**
@@ -56,8 +60,9 @@ public class InvalidTransactionError extends Exception {
      *              unknown.)
      * @since 1.4
      */
-    public InvalidTransactionError(String hdfsPath, Throwable cause) {
+    public InvalidTransactionError(DFSError.ErrorCode errorCode, String hdfsPath, Throwable cause) {
         super(String.format(__PREFIX, cause.getLocalizedMessage()), cause);
         this.hdfsPath = hdfsPath;
+        this.errorCode = errorCode;
     }
 }

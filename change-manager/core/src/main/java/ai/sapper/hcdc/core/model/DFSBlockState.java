@@ -18,6 +18,7 @@ public class DFSBlockState {
     private long blockSize;
     private long lastTnxId;
     private long generationStamp;
+    private EBlockState state = EBlockState.Unknown;
 
     private List<BlockTnxDelta> transactions;
 
@@ -34,5 +35,9 @@ public class DFSBlockState {
 
     public boolean blockIsFull() {
         return (dataSize == blockSize);
+    }
+
+    public boolean canUpdate() {
+        return (state == EBlockState.New || state == EBlockState.Updating);
     }
 }

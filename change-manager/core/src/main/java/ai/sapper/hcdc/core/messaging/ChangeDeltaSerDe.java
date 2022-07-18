@@ -5,13 +5,29 @@ import com.google.common.base.Preconditions;
 import lombok.NonNull;
 
 public class ChangeDeltaSerDe {
+    public static <T> MessageObject<String, DFSChangeDelta> createErrorTx(@NonNull String namespace,
+                                                                          @NonNull String messageId,
+                                                                          @NonNull DFSTransaction tnx,
+                                                                          @NonNull DFSError.ErrorCode code,
+                                                                          @NonNull String message) throws Exception {
+        DFSError error = DFSError.newBuilder()
+                .setCode(code)
+                .setMessage(message)
+                .setTransaction(tnx)
+                .build();
+        MessageObject<String, DFSChangeDelta> m = create(namespace, error, DFSError.class, MessageObject.MessageMode.Error);
+        m.correlationId(messageId);
+
+        return m;
+    }
+
     public static <T> MessageObject<String, DFSChangeDelta> createIgnoreTx(@NonNull String namespace,
                                                                            @NonNull DFSTransaction tnx,
                                                                            @NonNull MessageObject.MessageMode mode) throws Exception {
-        DFSIgnoreTx.Builder builder = DFSIgnoreTx.newBuilder();
         DFSIgnoreTx ignoreTx = DFSIgnoreTx.newBuilder()
                 .setOpCode(tnx.getOp().name())
-                .setTransaction(tnx).build();
+                .setTransaction(tnx)
+                .build();
         return create(namespace, ignoreTx, DFSIgnoreTx.class, mode);
     }
 
@@ -159,6 +175,18 @@ public class ChangeDeltaSerDe {
 
     public static DFSChangeDelta create(@NonNull String namespace,
                                         @NonNull DFSIgnoreTx data) throws Exception {
+        return DFSChangeDelta.newBuilder()
+                .setNamespace(namespace)
+                .setTimestamp(System.currentTimeMillis())
+                .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
+                .setEntity("")
+                .setType(data.getClass().getCanonicalName())
+                .setBody(data.toByteString())
+                .build();
+    }
+
+    public static DFSChangeDelta create(@NonNull String namespace,
+                                        @NonNull DFSError data) throws Exception {
         return DFSChangeDelta.newBuilder()
                 .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())

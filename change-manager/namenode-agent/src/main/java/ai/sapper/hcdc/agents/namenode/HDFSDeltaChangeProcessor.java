@@ -9,6 +9,7 @@ import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.model.DFSBlockState;
 import ai.sapper.hcdc.core.model.DFSFileState;
 import ai.sapper.hcdc.core.messaging.*;
+import ai.sapper.hcdc.core.model.EBlockState;
 import ai.sapper.hcdc.core.model.EFileState;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -127,9 +128,6 @@ public class HDFSDeltaChangeProcessor implements Runnable {
         }
     }
 
-    private void processErrorMessage(MessageObject<String, DFSChangeDelta> message, String hdfsPath) throws Exception {
-
-    }
 
     private long process(MessageObject<String, DFSChangeDelta> message) throws Exception {
         long txId = -1;
@@ -150,7 +148,6 @@ public class HDFSDeltaChangeProcessor implements Runnable {
 
     private void processTxMessage(MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
         Object data = ChangeDeltaSerDe.parse(message.value());
-        String hdfsPath = null;
         try {
             if (data instanceof DFSAddFile) {
                 processAddFileTxMessage((DFSAddFile) data, message, txId);
@@ -175,14 +172,61 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                         String.format("Message Body type not supported. [type=%s]", data.getClass().getCanonicalName()));
             }
         } catch (InvalidTransactionError te) {
-            if (!Strings.isNullOrEmpty(te.getHdfsPath())) {
-                DFSFileState fileState = stateManager.get(te.getHdfsPath());
-                if (fileState != null) {
-                    fileState.setState(EFileState.Error);
-                    stateManager.update(fileState);
-                }
-            }
+            processErrorMessage(message, data, te);
             throw new InvalidMessageError(message.id(), te);
+        }
+    }
+
+    private void processErrorMessage(MessageObject<String, DFSChangeDelta> message, Object data, InvalidTransactionError te) throws Exception {
+        if (!Strings.isNullOrEmpty(te.getHdfsPath())) {
+            DFSFileState fileState = stateManager.get(te.getHdfsPath());
+            if (fileState != null) {
+                stateManager.updateState(fileState.getHdfsFilePath(), EFileState.Error);
+            }
+        }
+        DFSTransaction tnx = extractTransaction(data);
+        if (tnx != null) {
+            MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.createErrorTx(message.value().getNamespace(),
+                    message.id(),
+                    tnx,
+                    te.getErrorCode(),
+                    te.getMessage());
+            sender.send(m);
+        }
+    }
+
+    private DFSTransaction extractTransaction(Object data) {
+        if (data instanceof DFSAddFile) {
+            return ((DFSAddFile) data).getTransaction();
+        } else if (data instanceof DFSAppendFile) {
+            return ((DFSAppendFile) data).getTransaction();
+        } else if (data instanceof DFSDeleteFile) {
+            return ((DFSDeleteFile) data).getTransaction();
+        } else if (data instanceof DFSAddBlock) {
+            return ((DFSAddBlock) data).getTransaction();
+        } else if (data instanceof DFSUpdateBlocks) {
+            return ((DFSUpdateBlocks) data).getTransaction();
+        } else if (data instanceof DFSTruncateBlock) {
+            return ((DFSTruncateBlock) data).getTransaction();
+        } else if (data instanceof DFSCloseFile) {
+            return ((DFSCloseFile) data).getTransaction();
+        } else if (data instanceof DFSRenameFile) {
+            return ((DFSRenameFile) data).getTransaction();
+        } else if (data instanceof DFSIgnoreTx) {
+            return ((DFSIgnoreTx) data).getTransaction();
+        }
+        return null;
+    }
+
+    private void sendIgnoreTx(MessageObject<String, DFSChangeDelta> message, Object data) throws Exception {
+        DFSTransaction tnx = extractTransaction(data);
+        if (tnx != null) {
+            MessageObject<String, DFSChangeDelta> im = ChangeDeltaSerDe.createIgnoreTx(message.value().getNamespace(),
+                    tnx,
+                    message.mode());
+            sender.send(im);
+        } else {
+            throw new InvalidMessageError(message.id(), "Transaction data not found in message.");
         }
     }
 
@@ -193,6 +237,7 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                 data.getFile().getInodeId(),
                 data.getModifiedTime(),
                 data.getBlockSize(),
+                EFileState.New,
                 data.getTransaction().getTransactionId());
         List<DFSBlock> blocks = data.getBlocksList();
         if (!blocks.isEmpty()) {
@@ -204,6 +249,7 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                         data.getModifiedTime(),
                         block.getSize(),
                         block.getGenerationStamp(),
+                        EBlockState.New,
                         data.getTransaction().getTransactionId());
                 prevBlockId = block.getBlockId();
             }
@@ -218,10 +264,7 @@ public class HDFSDeltaChangeProcessor implements Runnable {
             stateManager.update(rState);
             sender.send(message);
         } else {
-            MessageObject<String, DFSChangeDelta> im = ChangeDeltaSerDe.createIgnoreTx(message.value().getNamespace(),
-                    data.getTransaction(),
-                    message.mode());
-            sender.send(im);
+            sendIgnoreTx(message, data);
         }
     }
 
@@ -230,10 +273,13 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                                             long txId) throws Exception {
         DFSFileState fileState = stateManager.get(data.getFile().getPath());
         if (fileState == null || fileState.checkDeleted()) {
-            throw new InvalidTransactionError(data.getFile().getPath(),
+            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    data.getFile().getPath(),
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()));
         }
+        fileState = stateManager.updateState(fileState.getHdfsFilePath(), EFileState.Updating);
+
         DFSReplicationState rState = stateManager.get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
             DFSFile df = data.getFile();
@@ -242,10 +288,7 @@ public class HDFSDeltaChangeProcessor implements Runnable {
             message = ChangeDeltaSerDe.create(message.value().getNamespace(), data, DFSAppendFile.class, message.mode());
             sender.send(message);
         } else {
-            MessageObject<String, DFSChangeDelta> im = ChangeDeltaSerDe.createIgnoreTx(message.value().getNamespace(),
-                    data.getTransaction(),
-                    message.mode());
-            sender.send(im);
+            sendIgnoreTx(message, data);
         }
     }
 
@@ -254,11 +297,13 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                                             long txId) throws Exception {
         DFSFileState fileState = stateManager.get(data.getFile().getPath());
         if (fileState == null || fileState.checkDeleted()) {
-            throw new InvalidTransactionError(data.getFile().getPath(),
+            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    data.getFile().getPath(),
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()));
         }
         fileState = stateManager.markDeleted(fileState.getHdfsFilePath());
+
         DFSReplicationState rState = stateManager.get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
             stateManager.delete(fileState.getId());
@@ -267,13 +312,10 @@ public class HDFSDeltaChangeProcessor implements Runnable {
             df = df.toBuilder().setInodeId(fileState.getId()).build();
             data = data.toBuilder().setFile(df).build();
 
-            message = ChangeDeltaSerDe.create(message.value().getNamespace(), data, DFSAppendFile.class, message.mode());
+            message = ChangeDeltaSerDe.create(message.value().getNamespace(), data, DFSDeleteFile.class, message.mode());
             sender.send(message);
         } else {
-            MessageObject<String, DFSChangeDelta> im = ChangeDeltaSerDe.createIgnoreTx(message.value().getNamespace(),
-                    data.getTransaction(),
-                    message.mode());
-            sender.send(im);
+            sendIgnoreTx(message, data);
         }
     }
 
@@ -282,8 +324,14 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                                           long txId) throws Exception {
         DFSFileState fileState = stateManager.get(data.getFile().getPath());
         if (fileState == null || fileState.checkDeleted()) {
-            throw new InvalidTransactionError(data.getFile().getPath(),
+            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    data.getFile().getPath(),
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
+                            data.getFile().getPath()));
+        } else if (!fileState.canUpdate()) {
+            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    data.getFile().getPath(),
+                    String.format("NameNode Replica out of sync, file not marked for update. [path=%s]",
                             data.getFile().getPath()));
         }
         long lastBlockId = -1;
@@ -296,6 +344,7 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                 data.getTransaction().getTimestamp(),
                 data.getLastBlock().getSize(),
                 data.getLastBlock().getGenerationStamp(),
+                EBlockState.New,
                 data.getTransaction().getTransactionId());
 
         DFSReplicationState rState = stateManager.get(fileState.getId());
@@ -304,13 +353,10 @@ public class HDFSDeltaChangeProcessor implements Runnable {
             df = df.toBuilder().setInodeId(fileState.getId()).build();
             data = data.toBuilder().setFile(df).build();
 
-            message = ChangeDeltaSerDe.create(message.value().getNamespace(), data, DFSAppendFile.class, message.mode());
+            message = ChangeDeltaSerDe.create(message.value().getNamespace(), data, DFSAddBlock.class, message.mode());
             sender.send(message);
         } else {
-            MessageObject<String, DFSChangeDelta> im = ChangeDeltaSerDe.createIgnoreTx(message.value().getNamespace(),
-                    data.getTransaction(),
-                    message.mode());
-            sender.send(im);
+            sendIgnoreTx(message, data);
         }
     }
 
@@ -319,28 +365,40 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                                               long txId) throws Exception {
         DFSFileState fileState = stateManager.get(data.getFile().getPath());
         if (fileState == null || fileState.checkDeleted()) {
-            throw new InvalidTransactionError(data.getFile().getPath(),
+            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    data.getFile().getPath(),
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
+                            data.getFile().getPath()));
+        } else if (!fileState.canUpdate()) {
+            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    data.getFile().getPath(),
+                    String.format("NameNode Replica out of sync, file not marked for update. [path=%s]",
                             data.getFile().getPath()));
         }
 
         List<DFSBlock> blocks = data.getBlocksList();
         if (blocks.isEmpty()) {
-            throw new InvalidTransactionError(fileState.getHdfsFilePath(),
+            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    fileState.getHdfsFilePath(),
                     String.format("File State out of sync, no block to update. [path=%s]",
                             fileState.getHdfsFilePath()));
         }
         for (DFSBlock block : blocks) {
             DFSBlockState bs = fileState.get(block.getBlockId());
             if (bs == null) {
-                throw new InvalidTransactionError(fileState.getHdfsFilePath(),
+                throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                        fileState.getHdfsFilePath(),
                         String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
                                 fileState.getHdfsFilePath(), block.getBlockId()));
             } else if (bs.getDataSize() != block.getSize()) {
-                throw new InvalidTransactionError(fileState.getHdfsFilePath(),
+                throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                        fileState.getHdfsFilePath(),
                         String.format("File State out of sync, block size mismatch. [path=%s][blockID=%d]",
                                 fileState.getHdfsFilePath(), block.getBlockId()));
             }
+            if (bs.blockIsFull()) continue;
+
+            stateManager.updateState(fileState.getHdfsFilePath(), bs.getBlockId(), EBlockState.Updating);
         }
         DFSReplicationState rState = stateManager.get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
@@ -348,20 +406,17 @@ public class HDFSDeltaChangeProcessor implements Runnable {
             df = df.toBuilder().setInodeId(fileState.getId()).build();
             data = data.toBuilder().setFile(df).build();
 
-            message = ChangeDeltaSerDe.create(message.value().getNamespace(), data, DFSAppendFile.class, message.mode());
+            message = ChangeDeltaSerDe.create(message.value().getNamespace(), data, DFSUpdateBlocks.class, message.mode());
             sender.send(message);
         } else {
-            MessageObject<String, DFSChangeDelta> im = ChangeDeltaSerDe.createIgnoreTx(message.value().getNamespace(),
-                    data.getTransaction(),
-                    message.mode());
-            sender.send(im);
+            sendIgnoreTx(message, data);
         }
     }
 
     private void processTruncateBlockTxMessage(DFSTruncateBlock data,
                                                MessageObject<String, DFSChangeDelta> message,
                                                long txId) throws Exception {
-
+        // TODO: Figure out truncate
     }
 
     private void processCloseFileTxMessage(DFSCloseFile data,
@@ -369,9 +424,59 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                                            long txId) throws Exception {
         DFSFileState fileState = stateManager.get(data.getFile().getPath());
         if (fileState == null || fileState.checkDeleted()) {
-            throw new InvalidTransactionError(data.getFile().getPath(),
+            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    data.getFile().getPath(),
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()));
+        } else if (!fileState.canUpdate()) {
+            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    data.getFile().getPath(),
+                    String.format("NameNode Replica out of sync, file not marked for update. [path=%s]",
+                            data.getFile().getPath()));
+        }
+        List<DFSBlock> blocks = data.getBlocksList();
+        if (!blocks.isEmpty()) {
+            for (DFSBlock block : blocks) {
+                DFSBlockState bs = fileState.get(block.getBlockId());
+                if (bs == null) {
+                    throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                            fileState.getHdfsFilePath(),
+                            String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
+                                    fileState.getHdfsFilePath(), block.getBlockId()));
+                } else if (bs.canUpdate()) {
+                    fileState = stateManager.addOrUpdateBlock(fileState.getHdfsFilePath(),
+                            bs.getBlockId(),
+                            bs.getPrevBlockId(),
+                            data.getModifiedTime(),
+                            block.getSize(),
+                            block.getGenerationStamp(),
+                            EBlockState.Finalized,
+                            txId);
+                } else if (bs.getDataSize() != block.getSize()) {
+                    throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                            fileState.getHdfsFilePath(),
+                            String.format("File State out of sync, block size mismatch. [path=%s][blockID=%d]",
+                                    fileState.getHdfsFilePath(), block.getBlockId()));
+                } else {
+                    throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                            fileState.getHdfsFilePath(),
+                            String.format("File State out of sync, block state mismatch. [path=%s][blockID=%d]",
+                                    fileState.getHdfsFilePath(), block.getBlockId()));
+                }
+            }
+        }
+        fileState = stateManager.updateState(fileState.getHdfsFilePath(), EFileState.Finalized);
+
+        DFSReplicationState rState = stateManager.get(fileState.getId());
+        if (!fileState.hasError() && rState != null && rState.isEnabled()) {
+            DFSFile df = data.getFile();
+            df = df.toBuilder().setInodeId(fileState.getId()).build();
+            data = data.toBuilder().setFile(df).build();
+
+            message = ChangeDeltaSerDe.create(message.value().getNamespace(), data, DFSCloseFile.class, message.mode());
+            sender.send(message);
+        } else {
+            sendIgnoreTx(message, data);
         }
     }
 
@@ -384,7 +489,7 @@ public class HDFSDeltaChangeProcessor implements Runnable {
     private void processIgnoreTxMessage(DFSIgnoreTx data,
                                         MessageObject<String, DFSChangeDelta> message,
                                         long txId) throws Exception {
-
+        sender.send(message);
     }
 
     private void processBacklogMessage(MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
