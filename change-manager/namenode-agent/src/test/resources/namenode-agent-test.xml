@@ -7,6 +7,7 @@
             <home>/opt/hadoop</home>
             <config>src/test/resources/hdfs-site.xml</config>
         </hadoop>
+        <editsReader>false</editsReader>
         <connections>
             <path>config</path>
             <hdfs-admin>test-hdfs</hdfs-admin>
@@ -17,6 +18,12 @@
                 <connection>test-zk</connection>
             </manager>
         </state>
+        <domain>
+            <manager>
+                <basePath>/local/test/state</basePath>
+                <connection>test-zk</connection>
+            </manager>
+        </domain>
         <useSSL>false</useSSL>
         <locks>
             <lock>

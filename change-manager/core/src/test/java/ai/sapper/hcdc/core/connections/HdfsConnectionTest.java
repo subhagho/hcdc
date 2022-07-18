@@ -19,6 +19,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 class HdfsConnectionTest {
     private static final String __CONFIG_FILE = "src/test/resources/connection-test.xml";
     private static final String __CONNECTION_NAME = "test-hdfs";
+    private static final String __DEST_FOLDER = "renamed";
+
     private static final String __PATH = UUID.randomUUID().toString();
 
     private static XMLConfiguration xmlConfiguration = null;
@@ -103,7 +105,19 @@ class HdfsConnectionTest {
                     writer.flush();
                 }
             }
-            // fs.delete(path, false);
+
+            String dd = String.format("%s/%s", path.getParent(), __DEST_FOLDER);
+            Path dest = new Path(dd);
+            fs.mkdirs(dest);
+            Path df = new Path(String.format("%s/%s", dd, path.getName()));
+
+            fs.rename(path, df);
+
+            //fs.truncate(df, 50000);
+            fs.truncate(df, 0);
+
+            fs.delete(df, false);
+
             connection.close();
         } catch (Throwable t) {
             DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));

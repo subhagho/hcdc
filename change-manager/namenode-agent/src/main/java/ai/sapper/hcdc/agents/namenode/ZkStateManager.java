@@ -9,8 +9,8 @@ import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.DistributedLock;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
-import ai.sapper.hcdc.core.model.*;
 import ai.sapper.hcdc.core.filters.DomainManager;
+import ai.sapper.hcdc.core.model.*;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -20,7 +20,6 @@ import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.curator.framework.CuratorFramework;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +50,7 @@ public class ZkStateManager {
             config = new ZkStateManagerConfig(xmlConfig);
             config.read();
 
-            connection = manger.getConnection(config.zkConnection, ZookeeperConnection.class);
+            connection = manger.getConnection(config.zkConnection(), ZookeeperConnection.class);
             if (!connection.isConnected()) connection.connect();
             CuratorFramework client = connection().client();
 
@@ -690,9 +689,6 @@ public class ZkStateManager {
     public static class ZkStateManagerConfig extends DomainManager.DomainManagerConfig {
 
         private static final String __CONFIG_PATH = "state.manager";
-
-        private String basePath;
-        private String zkConnection;
 
         public ZkStateManagerConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);

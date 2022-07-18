@@ -74,6 +74,21 @@ public  final class DFSBlock extends
             generationStamp_ = input.readInt64();
             break;
           }
+          case 40: {
+            bitField0_ |= 0x00000010;
+            startOffset_ = input.readInt64();
+            break;
+          }
+          case 48: {
+            bitField0_ |= 0x00000020;
+            endOffset_ = input.readInt64();
+            break;
+          }
+          case 56: {
+            bitField0_ |= 0x00000040;
+            deltaSize_ = input.readInt64();
+            break;
+          }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -178,11 +193,62 @@ public  final class DFSBlock extends
     return generationStamp_;
   }
 
+  // required int64 startOffset = 5;
+  public static final int STARTOFFSET_FIELD_NUMBER = 5;
+  private long startOffset_;
+  /**
+   * <code>required int64 startOffset = 5;</code>
+   */
+  public boolean hasStartOffset() {
+    return ((bitField0_ & 0x00000010) == 0x00000010);
+  }
+  /**
+   * <code>required int64 startOffset = 5;</code>
+   */
+  public long getStartOffset() {
+    return startOffset_;
+  }
+
+  // required int64 endOffset = 6;
+  public static final int ENDOFFSET_FIELD_NUMBER = 6;
+  private long endOffset_;
+  /**
+   * <code>required int64 endOffset = 6;</code>
+   */
+  public boolean hasEndOffset() {
+    return ((bitField0_ & 0x00000020) == 0x00000020);
+  }
+  /**
+   * <code>required int64 endOffset = 6;</code>
+   */
+  public long getEndOffset() {
+    return endOffset_;
+  }
+
+  // required int64 deltaSize = 7;
+  public static final int DELTASIZE_FIELD_NUMBER = 7;
+  private long deltaSize_;
+  /**
+   * <code>required int64 deltaSize = 7;</code>
+   */
+  public boolean hasDeltaSize() {
+    return ((bitField0_ & 0x00000040) == 0x00000040);
+  }
+  /**
+   * <code>required int64 deltaSize = 7;</code>
+   */
+  public long getDeltaSize() {
+    return deltaSize_;
+  }
+
   private void initFields() {
     blockId_ = 0L;
     size_ = 0L;
     blockSize_ = 0L;
     generationStamp_ = 0L;
+    startOffset_ = 0L;
+    endOffset_ = 0L;
+    deltaSize_ = 0L;
   }
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
@@ -205,6 +271,18 @@ public  final class DFSBlock extends
       memoizedIsInitialized = 0;
       return false;
     }
+    if (!hasStartOffset()) {
+      memoizedIsInitialized = 0;
+      return false;
+    }
+    if (!hasEndOffset()) {
+      memoizedIsInitialized = 0;
+      return false;
+    }
+    if (!hasDeltaSize()) {
+      memoizedIsInitialized = 0;
+      return false;
+    }
     memoizedIsInitialized = 1;
     return true;
   }
@@ -223,6 +301,15 @@ public  final class DFSBlock extends
     }
     if (((bitField0_ & 0x00000008) == 0x00000008)) {
       output.writeInt64(4, generationStamp_);
+    }
+    if (((bitField0_ & 0x00000010) == 0x00000010)) {
+      output.writeInt64(5, startOffset_);
+    }
+    if (((bitField0_ & 0x00000020) == 0x00000020)) {
+      output.writeInt64(6, endOffset_);
+    }
+    if (((bitField0_ & 0x00000040) == 0x00000040)) {
+      output.writeInt64(7, deltaSize_);
     }
     getUnknownFields().writeTo(output);
   }
@@ -248,6 +335,18 @@ public  final class DFSBlock extends
     if (((bitField0_ & 0x00000008) == 0x00000008)) {
       size += com.google.protobuf.CodedOutputStream
         .computeInt64Size(4, generationStamp_);
+    }
+    if (((bitField0_ & 0x00000010) == 0x00000010)) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt64Size(5, startOffset_);
+    }
+    if (((bitField0_ & 0x00000020) == 0x00000020)) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt64Size(6, endOffset_);
+    }
+    if (((bitField0_ & 0x00000040) == 0x00000040)) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeInt64Size(7, deltaSize_);
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSerializedSize = size;
@@ -373,6 +472,12 @@ public  final class DFSBlock extends
       bitField0_ = (bitField0_ & ~0x00000004);
       generationStamp_ = 0L;
       bitField0_ = (bitField0_ & ~0x00000008);
+      startOffset_ = 0L;
+      bitField0_ = (bitField0_ & ~0x00000010);
+      endOffset_ = 0L;
+      bitField0_ = (bitField0_ & ~0x00000020);
+      deltaSize_ = 0L;
+      bitField0_ = (bitField0_ & ~0x00000040);
       return this;
     }
 
@@ -417,6 +522,18 @@ public  final class DFSBlock extends
         to_bitField0_ |= 0x00000008;
       }
       result.generationStamp_ = generationStamp_;
+      if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
+        to_bitField0_ |= 0x00000010;
+      }
+      result.startOffset_ = startOffset_;
+      if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
+        to_bitField0_ |= 0x00000020;
+      }
+      result.endOffset_ = endOffset_;
+      if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
+        to_bitField0_ |= 0x00000040;
+      }
+      result.deltaSize_ = deltaSize_;
       result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
@@ -445,6 +562,15 @@ public  final class DFSBlock extends
       if (other.hasGenerationStamp()) {
         setGenerationStamp(other.getGenerationStamp());
       }
+      if (other.hasStartOffset()) {
+        setStartOffset(other.getStartOffset());
+      }
+      if (other.hasEndOffset()) {
+        setEndOffset(other.getEndOffset());
+      }
+      if (other.hasDeltaSize()) {
+        setDeltaSize(other.getDeltaSize());
+      }
       this.mergeUnknownFields(other.getUnknownFields());
       return this;
     }
@@ -463,6 +589,18 @@ public  final class DFSBlock extends
         return false;
       }
       if (!hasGenerationStamp()) {
+        
+        return false;
+      }
+      if (!hasStartOffset()) {
+        
+        return false;
+      }
+      if (!hasEndOffset()) {
+        
+        return false;
+      }
+      if (!hasDeltaSize()) {
         
         return false;
       }
@@ -616,6 +754,105 @@ public  final class DFSBlock extends
     public Builder clearGenerationStamp() {
       bitField0_ = (bitField0_ & ~0x00000008);
       generationStamp_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    // required int64 startOffset = 5;
+    private long startOffset_ ;
+    /**
+     * <code>required int64 startOffset = 5;</code>
+     */
+    public boolean hasStartOffset() {
+      return ((bitField0_ & 0x00000010) == 0x00000010);
+    }
+    /**
+     * <code>required int64 startOffset = 5;</code>
+     */
+    public long getStartOffset() {
+      return startOffset_;
+    }
+    /**
+     * <code>required int64 startOffset = 5;</code>
+     */
+    public Builder setStartOffset(long value) {
+      bitField0_ |= 0x00000010;
+      startOffset_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>required int64 startOffset = 5;</code>
+     */
+    public Builder clearStartOffset() {
+      bitField0_ = (bitField0_ & ~0x00000010);
+      startOffset_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    // required int64 endOffset = 6;
+    private long endOffset_ ;
+    /**
+     * <code>required int64 endOffset = 6;</code>
+     */
+    public boolean hasEndOffset() {
+      return ((bitField0_ & 0x00000020) == 0x00000020);
+    }
+    /**
+     * <code>required int64 endOffset = 6;</code>
+     */
+    public long getEndOffset() {
+      return endOffset_;
+    }
+    /**
+     * <code>required int64 endOffset = 6;</code>
+     */
+    public Builder setEndOffset(long value) {
+      bitField0_ |= 0x00000020;
+      endOffset_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>required int64 endOffset = 6;</code>
+     */
+    public Builder clearEndOffset() {
+      bitField0_ = (bitField0_ & ~0x00000020);
+      endOffset_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    // required int64 deltaSize = 7;
+    private long deltaSize_ ;
+    /**
+     * <code>required int64 deltaSize = 7;</code>
+     */
+    public boolean hasDeltaSize() {
+      return ((bitField0_ & 0x00000040) == 0x00000040);
+    }
+    /**
+     * <code>required int64 deltaSize = 7;</code>
+     */
+    public long getDeltaSize() {
+      return deltaSize_;
+    }
+    /**
+     * <code>required int64 deltaSize = 7;</code>
+     */
+    public Builder setDeltaSize(long value) {
+      bitField0_ |= 0x00000040;
+      deltaSize_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>required int64 deltaSize = 7;</code>
+     */
+    public Builder clearDeltaSize() {
+      bitField0_ = (bitField0_ & ~0x00000040);
+      deltaSize_ = 0L;
       onChanged();
       return this;
     }

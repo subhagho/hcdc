@@ -45,4 +45,34 @@ public interface DFSBlockOrBuilder
    * <code>required int64 generationStamp = 4;</code>
    */
   long getGenerationStamp();
+
+  // required int64 startOffset = 5;
+  /**
+   * <code>required int64 startOffset = 5;</code>
+   */
+  boolean hasStartOffset();
+  /**
+   * <code>required int64 startOffset = 5;</code>
+   */
+  long getStartOffset();
+
+  // required int64 endOffset = 6;
+  /**
+   * <code>required int64 endOffset = 6;</code>
+   */
+  boolean hasEndOffset();
+  /**
+   * <code>required int64 endOffset = 6;</code>
+   */
+  long getEndOffset();
+
+  // required int64 deltaSize = 7;
+  /**
+   * <code>required int64 deltaSize = 7;</code>
+   */
+  boolean hasDeltaSize();
+  /**
+   * <code>required int64 deltaSize = 7;</code>
+   */
+  long getDeltaSize();
 }

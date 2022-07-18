@@ -5,7 +5,6 @@ import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -26,7 +25,6 @@ import java.util.Map;
 public class DomainManager {
     private static final String CONFIG_PATH = "domain";
 
-    private HierarchicalConfiguration<ImmutableNode> xmlConfig;
     private ZookeeperConnection zkConnection;
     private DomainManagerConfig config;
     private Map<String, DomainFilterMatcher> matchers;
@@ -35,11 +33,7 @@ public class DomainManager {
     public DomainManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                               @NonNull ConnectionManager manger) throws ConfigurationException {
         try {
-            this.xmlConfig = xmlConfig.configurationAt(CONFIG_PATH);
-            if (this.xmlConfig == null) {
-                throw new ConfigurationException("Domain Manager configuration node not found.");
-            }
-            config = new DomainManagerConfig(this.xmlConfig);
+            config = new DomainManagerConfig(xmlConfig);
             config.read();
 
             zkConnection = manger.getConnection(config.zkConnection, ZookeeperConnection.class);
@@ -155,7 +149,7 @@ public class DomainManager {
             public static final String CONFIG_ZK_CONNECTION = "connection";
         }
 
-        private static final String __CONFIG_PATH = "state.manager";
+        private static final String __CONFIG_PATH = "domain.manager";
 
         private String basePath;
         private String zkConnection;

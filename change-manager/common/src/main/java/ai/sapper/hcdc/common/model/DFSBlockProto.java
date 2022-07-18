@@ -96,69 +96,70 @@ public final class DFSBlockProto {
       "\003\022\021\n\rCONCAT_DELETE\020\004\022\021\n\rUPDATE_BLOCKS\020\005\022" +
       "\n\n\006DELETE\020\006\022\n\n\006APPEND\020\007\022\014\n\010TRUNCATE\020\010\022\n\n" +
       "\006IGNORE\020\t\022\t\n\005ERROR\020\n\"(\n\007DFSFile\022\014\n\004path\030" +
-      "\002 \002(\t\022\017\n\007inodeId\030\003 \002(\003\"U\n\010DFSBlock\022\017\n\007bl",
-      "ockId\030\001 \002(\003\022\014\n\004size\030\002 \002(\003\022\021\n\tblockSize\030\003" +
-      " \002(\003\022\027\n\017generationStamp\030\004 \002(\003\"\233\002\n\nDFSAdd" +
-      "File\022@\n\013transaction\030\001 \002(\0132+.ai_sapper_hc" +
-      "dc_common_model.DFSTransaction\0222\n\004file\030\002" +
-      " \002(\0132$.ai_sapper_hcdc_common_model.DFSFi" +
-      "le\022\016\n\006length\030\003 \002(\004\022\021\n\tblockSize\030\004 \002(\004\022\024\n" +
-      "\014modifiedTime\030\005 \002(\004\022\024\n\014accessedTime\030\006 \002(" +
-      "\004\0225\n\006blocks\030\007 \003(\0132%.ai_sapper_hcdc_commo" +
-      "n_model.DFSBlock\022\021\n\toverwrite\030\010 \001(\010\"\227\001\n\r" +
-      "DFSAppendFile\022@\n\013transaction\030\001 \002(\0132+.ai_",
-      "sapper_hcdc_common_model.DFSTransaction\022" +
-      "2\n\004file\030\002 \002(\0132$.ai_sapper_hcdc_common_mo" +
-      "del.DFSFile\022\020\n\010newBlock\030\003 \001(\010\"\230\001\n\rDFSDel" +
-      "eteFile\022@\n\013transaction\030\001 \002(\0132+.ai_sapper" +
-      "_hcdc_common_model.DFSTransaction\0222\n\004fil" +
-      "e\030\002 \002(\0132$.ai_sapper_hcdc_common_model.DF" +
-      "SFile\022\021\n\ttimestamp\030\003 \002(\004\"\376\001\n\013DFSAddBlock" +
-      "\022@\n\013transaction\030\001 \002(\0132+.ai_sapper_hcdc_c" +
-      "ommon_model.DFSTransaction\0222\n\004file\030\002 \002(\013" +
-      "2$.ai_sapper_hcdc_common_model.DFSFile\022?",
-      "\n\020penultimateBlock\030\003 \001(\0132%.ai_sapper_hcd" +
-      "c_common_model.DFSBlock\0228\n\tlastBlock\030\004 \002" +
-      "(\0132%.ai_sapper_hcdc_common_model.DFSBloc" +
-      "k\"\276\001\n\017DFSUpdateBlocks\022@\n\013transaction\030\001 \002" +
-      "(\0132+.ai_sapper_hcdc_common_model.DFSTran" +
-      "saction\0222\n\004file\030\002 \002(\0132$.ai_sapper_hcdc_c" +
-      "ommon_model.DFSFile\0225\n\006blocks\030\003 \003(\0132%.ai" +
-      "_sapper_hcdc_common_model.DFSBlock\"\321\001\n\020D" +
-      "FSTruncateBlock\022@\n\013transaction\030\001 \002(\0132+.a" +
-      "i_sapper_hcdc_common_model.DFSTransactio",
-      "n\0222\n\004file\030\002 \002(\0132$.ai_sapper_hcdc_common_" +
-      "model.DFSFile\0224\n\005block\030\003 \002(\0132%.ai_sapper" +
-      "_hcdc_common_model.DFSBlock\022\021\n\tnewLength" +
-      "\030\004 \002(\004\"\235\002\n\014DFSCloseFile\022@\n\013transaction\030\001" +
+      "\002 \002(\t\022\017\n\007inodeId\030\003 \002(\003\"\220\001\n\010DFSBlock\022\017\n\007b",
+      "lockId\030\001 \002(\003\022\014\n\004size\030\002 \002(\003\022\021\n\tblockSize\030" +
+      "\003 \002(\003\022\027\n\017generationStamp\030\004 \002(\003\022\023\n\013startO" +
+      "ffset\030\005 \002(\003\022\021\n\tendOffset\030\006 \002(\003\022\021\n\tdeltaS" +
+      "ize\030\007 \002(\003\"\233\002\n\nDFSAddFile\022@\n\013transaction\030" +
+      "\001 \002(\0132+.ai_sapper_hcdc_common_model.DFST" +
+      "ransaction\0222\n\004file\030\002 \002(\0132$.ai_sapper_hcd" +
+      "c_common_model.DFSFile\022\016\n\006length\030\003 \002(\004\022\021" +
+      "\n\tblockSize\030\004 \002(\004\022\024\n\014modifiedTime\030\005 \002(\004\022" +
+      "\024\n\014accessedTime\030\006 \002(\004\0225\n\006blocks\030\007 \003(\0132%." +
+      "ai_sapper_hcdc_common_model.DFSBlock\022\021\n\t",
+      "overwrite\030\010 \001(\010\"\227\001\n\rDFSAppendFile\022@\n\013tra" +
+      "nsaction\030\001 \002(\0132+.ai_sapper_hcdc_common_m" +
+      "odel.DFSTransaction\0222\n\004file\030\002 \002(\0132$.ai_s" +
+      "apper_hcdc_common_model.DFSFile\022\020\n\010newBl" +
+      "ock\030\003 \001(\010\"\230\001\n\rDFSDeleteFile\022@\n\013transacti" +
+      "on\030\001 \002(\0132+.ai_sapper_hcdc_common_model.D" +
+      "FSTransaction\0222\n\004file\030\002 \002(\0132$.ai_sapper_" +
+      "hcdc_common_model.DFSFile\022\021\n\ttimestamp\030\003" +
+      " \002(\004\"\376\001\n\013DFSAddBlock\022@\n\013transaction\030\001 \002(" +
+      "\0132+.ai_sapper_hcdc_common_model.DFSTrans",
+      "action\0222\n\004file\030\002 \002(\0132$.ai_sapper_hcdc_co" +
+      "mmon_model.DFSFile\022?\n\020penultimateBlock\030\003" +
+      " \001(\0132%.ai_sapper_hcdc_common_model.DFSBl" +
+      "ock\0228\n\tlastBlock\030\004 \002(\0132%.ai_sapper_hcdc_" +
+      "common_model.DFSBlock\"\276\001\n\017DFSUpdateBlock" +
+      "s\022@\n\013transaction\030\001 \002(\0132+.ai_sapper_hcdc_" +
+      "common_model.DFSTransaction\0222\n\004file\030\002 \002(" +
+      "\0132$.ai_sapper_hcdc_common_model.DFSFile\022" +
+      "5\n\006blocks\030\003 \003(\0132%.ai_sapper_hcdc_common_" +
+      "model.DFSBlock\"\321\001\n\020DFSTruncateBlock\022@\n\013t",
+      "ransaction\030\001 \002(\0132+.ai_sapper_hcdc_common" +
+      "_model.DFSTransaction\0222\n\004file\030\002 \002(\0132$.ai" +
+      "_sapper_hcdc_common_model.DFSFile\0224\n\005blo" +
+      "ck\030\003 \002(\0132%.ai_sapper_hcdc_common_model.D" +
+      "FSBlock\022\021\n\tnewLength\030\004 \002(\004\"\235\002\n\014DFSCloseF" +
+      "ile\022@\n\013transaction\030\001 \002(\0132+.ai_sapper_hcd" +
+      "c_common_model.DFSTransaction\0222\n\004file\030\002 " +
+      "\002(\0132$.ai_sapper_hcdc_common_model.DFSFil" +
+      "e\022\016\n\006length\030\003 \002(\004\022\021\n\tblockSize\030\004 \002(\004\022\024\n\014" +
+      "modifiedTime\030\005 \002(\004\022\024\n\014accessedTime\030\006 \002(\004",
+      "\0225\n\006blocks\030\007 \003(\0132%.ai_sapper_hcdc_common" +
+      "_model.DFSBlock\022\021\n\toverwrite\030\010 \001(\010\"\312\002\n\rD" +
+      "FSRenameFile\022@\n\013transaction\030\001 \002(\0132+.ai_s" +
+      "apper_hcdc_common_model.DFSTransaction\0225" +
+      "\n\007srcFile\030\002 \002(\0132$.ai_sapper_hcdc_common_" +
+      "model.DFSFile\0226\n\010destFile\030\003 \002(\0132$.ai_sap" +
+      "per_hcdc_common_model.DFSFile\022\016\n\006length\030" +
+      "\004 \002(\004\022C\n\004opts\030\005 \002(\01625.ai_sapper_hcdc_com" +
+      "mon_model.DFSRenameFile.RenameOpts\"3\n\nRe" +
+      "nameOpts\022\010\n\004NONE\020\000\022\r\n\tOVERWRITE\020\001\022\014\n\010TO_",
+      "TRASH\020\002\"\223\001\n\013DFSIgnoreTx\022@\n\013transaction\030\001" +
       " \002(\0132+.ai_sapper_hcdc_common_model.DFSTr" +
-      "ansaction\0222\n\004file\030\002 \002(\0132$.ai_sapper_hcdc" +
-      "_common_model.DFSFile\022\016\n\006length\030\003 \002(\004\022\021\n" +
-      "\tblockSize\030\004 \002(\004\022\024\n\014modifiedTime\030\005 \002(\004\022\024" +
-      "\n\014accessedTime\030\006 \002(\004\0225\n\006blocks\030\007 \003(\0132%.a" +
-      "i_sapper_hcdc_common_model.DFSBlock\022\021\n\to",
-      "verwrite\030\010 \001(\010\"\312\002\n\rDFSRenameFile\022@\n\013tran" +
-      "saction\030\001 \002(\0132+.ai_sapper_hcdc_common_mo" +
-      "del.DFSTransaction\0225\n\007srcFile\030\002 \002(\0132$.ai" +
-      "_sapper_hcdc_common_model.DFSFile\0226\n\010des" +
-      "tFile\030\003 \002(\0132$.ai_sapper_hcdc_common_mode" +
-      "l.DFSFile\022\016\n\006length\030\004 \002(\004\022C\n\004opts\030\005 \002(\0162" +
-      "5.ai_sapper_hcdc_common_model.DFSRenameF" +
-      "ile.RenameOpts\"3\n\nRenameOpts\022\010\n\004NONE\020\000\022\r" +
-      "\n\tOVERWRITE\020\001\022\014\n\010TO_TRASH\020\002\"\223\001\n\013DFSIgnor" +
-      "eTx\022@\n\013transaction\030\001 \002(\0132+.ai_sapper_hcd",
-      "c_common_model.DFSTransaction\022\016\n\006opCode\030" +
-      "\002 \002(\t\0222\n\004file\030\003 \001(\0132$.ai_sapper_hcdc_com" +
-      "mon_model.DFSFile\"\306\001\n\010DFSError\022@\n\013transa" +
-      "ction\030\001 \002(\0132+.ai_sapper_hcdc_common_mode" +
-      "l.DFSTransaction\022=\n\004code\030\002 \002(\0162/.ai_sapp" +
-      "er_hcdc_common_model.DFSError.ErrorCode\022" +
-      "\017\n\007message\030\003 \002(\t\"(\n\tErrorCode\022\020\n\014SYNC_ST" +
-      "OPPED\020\000\022\t\n\005FATAL\020\001\"p\n\016DFSChangeDelta\022\021\n\t" +
-      "namespace\030\001 \002(\t\022\014\n\004txId\030\002 \002(\t\022\016\n\006entity\030" +
-      "\003 \002(\t\022\014\n\004type\030\004 \002(\t\022\021\n\ttimestamp\030\005 \002(\004\022\014",
-      "\n\004body\030\006 \002(\014B.\n\033ai.sapper.hcdc.common.mo" +
-      "delB\rDFSBlockProtoP\001"
+      "ansaction\022\016\n\006opCode\030\002 \002(\t\0222\n\004file\030\003 \001(\0132" +
+      "$.ai_sapper_hcdc_common_model.DFSFile\"\306\001" +
+      "\n\010DFSError\022@\n\013transaction\030\001 \002(\0132+.ai_sap" +
+      "per_hcdc_common_model.DFSTransaction\022=\n\004" +
+      "code\030\002 \002(\0162/.ai_sapper_hcdc_common_model" +
+      ".DFSError.ErrorCode\022\017\n\007message\030\003 \002(\t\"(\n\t" +
+      "ErrorCode\022\020\n\014SYNC_STOPPED\020\000\022\t\n\005FATAL\020\001\"p" +
+      "\n\016DFSChangeDelta\022\021\n\tnamespace\030\001 \002(\t\022\014\n\004t",
+      "xId\030\002 \002(\t\022\016\n\006entity\030\003 \002(\t\022\014\n\004type\030\004 \002(\t\022" +
+      "\021\n\ttimestamp\030\005 \002(\004\022\014\n\004body\030\006 \002(\014B.\n\033ai.s" +
+      "apper.hcdc.common.modelB\rDFSBlockProtoP\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -182,7 +183,7 @@ public final class DFSBlockProto {
           internal_static_ai_sapper_hcdc_common_model_DFSBlock_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_ai_sapper_hcdc_common_model_DFSBlock_descriptor,
-              new java.lang.String[] { "BlockId", "Size", "BlockSize", "GenerationStamp", });
+              new java.lang.String[] { "BlockId", "Size", "BlockSize", "GenerationStamp", "StartOffset", "EndOffset", "DeltaSize", });
           internal_static_ai_sapper_hcdc_common_model_DFSAddFile_descriptor =
             getDescriptor().getMessageTypes().get(3);
           internal_static_ai_sapper_hcdc_common_model_DFSAddFile_fieldAccessorTable = new

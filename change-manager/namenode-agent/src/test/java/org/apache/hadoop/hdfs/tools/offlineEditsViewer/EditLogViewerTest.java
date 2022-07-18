@@ -10,14 +10,14 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class EditLogViewerTest {
-    private static final String EDITS_FILE_01 = "src/test/resources/edits/edits_0000000000000013079-0000000000000013112";
+    private static final String EDITS_FILE_01 = "src/test/resources/edits/edits_0000000000000013861-0000000000000013903";
     private static final String EDITS_FILE_CURRENT = "src/test/resources/edits/edits_inprogress_0000000000000001594";
     private static final String SOURCE_DIR = "src/test/resources/edits";
 
     @Test
     void run() {
         try {
-            EditsLogViewer viewer = new EditsLogViewer();
+            EditsLogReader viewer = new EditsLogReader();
             viewer.run(EDITS_FILE_01);
 
             DFSEditLogBatch batch = viewer.batch();
@@ -37,7 +37,7 @@ class EditLogViewerTest {
     @Test
     void runFor() {
         try {
-            List<DFSEditLogBatch> batches = EditsLogViewer.readEditsInRange(SOURCE_DIR, 7, 24);
+            List<DFSEditLogBatch> batches = EditsLogReader.readEditsInRange(SOURCE_DIR, 7, 24);
             assertNotNull(batches);
             for (DFSEditLogBatch batch : batches) {
                 List<DFSTransactionType<?>> transactions = batch.transactions();

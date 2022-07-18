@@ -16,7 +16,7 @@ import java.util.List;
 
 @Getter
 @Accessors(fluent = true)
-public class EditsLogViewer {
+public class EditsLogReader {
     private DFSEditLogBatch batch;
     private CustomEditsVisitor visitor;
 
@@ -49,7 +49,7 @@ public class EditsLogViewer {
             if (files != null && !files.isEmpty()) {
                 for (String file : files) {
                     DefaultLogger.LOG.info(String.format("Reading transactions from edits file. [%s][startTx=%d, endTx=%d]", file, startTxId, endTxId));
-                    EditsLogViewer viewer = new EditsLogViewer();
+                    EditsLogReader viewer = new EditsLogReader();
                     viewer.run(file, startTxId, endTxId);
 
                     if (viewer.batch != null) {

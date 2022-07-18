@@ -71,19 +71,20 @@ public class NameNodeEnv {
             }
             if (!hdfsConnection.isConnected()) hdfsConnection.connect();
 
-            readHdfsConfig();
+            if (config().isEditsReader) {
+                readHdfsConfig();
 
-            adminClient = new NameNodeAdminClient(config.nameNodeAdminUrl, config.useSSL);
-
+                adminClient = new NameNodeAdminClient(config.nameNodeAdminUrl, config.useSSL);
+                NameNodeStatus status = adminClient().status();
+                if (status != null) {
+                    agentState.parseState(status.getState());
+                } else {
+                    throw new NameNodeError(String.format("Error fetching NameNode status. [url=%s]", adminClient.url()));
+                }
+            }
+            
             stateManager = new ZkStateManager();
             stateManager.init(configNode, connectionManager, config.namespace);
-
-            NameNodeStatus status = adminClient().status();
-            if (status != null) {
-                agentState.parseState(status.getState());
-            } else {
-                throw new NameNodeError(String.format("Error fetching NameNode status. [url=%s]", adminClient.url()));
-            }
 
             readLocks();
 
@@ -136,6 +137,11 @@ public class NameNodeEnv {
         if (Strings.isNullOrEmpty(config.nameNodeDataDir)) {
             throw new Exception(String.format("HDFS Configuration not found. [name=%s][file=%s]",
                     NameNEnvConfig.Constants.HDFS_NN_DATA_DIR, cf.getAbsolutePath()));
+        }
+        config.nameNodeEditsDir = config.nameNodeDataDir;
+        String ed = props.getProperty(NameNEnvConfig.Constants.HDFS_NN_EDITS_DIR);
+        if (!Strings.isNullOrEmpty(ed)) {
+            config.nameNodeEditsDir = ed;
         }
         String ns = props.getProperty(NameNEnvConfig.Constants.HDFS_NN_NAMESPACE);
         if (Strings.isNullOrEmpty(ns)) {
@@ -281,6 +287,7 @@ public class NameNodeEnv {
             private static final String HDFS_CONFIG_PROPERTY_VALUE = "value";
 
             private static final String HDFS_NN_DATA_DIR = "dfs.namenode.name.dir";
+            private static final String HDFS_NN_EDITS_DIR = "fs.namenode.edits.dir";
             private static final String HDFS_NN_NAMESPACE = "dfs.nameservices";
             private static final String HDFS_NN_NODES = "dfs.ha.namenodes.%s";
             private static final String HDFS_NN_URL = "dfs.namenode.http-address.%s.%s";
@@ -292,6 +299,7 @@ public class NameNodeEnv {
             private static final String CONFIG_LOCK_CONN = "connection";
             private static final String CONFIG_LOCK_NODE = "lock-node";
             private static final String LOCK_GLOBAL = "global";
+            private static final String CONFIG_IS_AGENT = "editsReader";
         }
 
         private String namespace;
@@ -301,8 +309,10 @@ public class NameNodeEnv {
         private String hadoopHome;
         private String hadoopConfFile;
         private String nameNodeDataDir;
+        private String nameNodeEditsDir;
         private String nameNodeAdminUrl;
         private boolean useSSL = true;
+        private boolean isEditsReader = true;
 
         public NameNEnvConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, Constants.__CONFIG_PATH);
@@ -328,6 +338,10 @@ public class NameNodeEnv {
                 hdfsAdminConnection = get().getString(Constants.CONFIG_CONNECTION_HDFS);
                 if (Strings.isNullOrEmpty(hdfsAdminConnection)) {
                     throw new ConfigurationException(String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_CONNECTION_HDFS));
+                }
+                String ss = get().getString(Constants.CONFIG_IS_AGENT);
+                if (!Strings.isNullOrEmpty(ss)) {
+                    isEditsReader = Boolean.parseBoolean(ss);
                 }
                 hadoopHome = get().getString(Constants.CONFIG_HADOOP_HOME);
                 if (Strings.isNullOrEmpty(hadoopHome)) {

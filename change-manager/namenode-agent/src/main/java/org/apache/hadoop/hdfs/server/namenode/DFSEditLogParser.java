@@ -122,6 +122,8 @@ public class DFSEditLogParser {
                     return handleOpClose(op, batch);
                 case OP_RENAME:
                     return handleOpRename(op, batch);
+                case OP_RENAME_OLD:
+                    return handleOpRenameOld(op, batch);
                 default:
                     return handleDefault(op, batch);
             }
@@ -169,6 +171,27 @@ public class DFSEditLogParser {
                     }
                 }
             }
+
+            batch.transactions().add(rft);
+
+            return rft;
+        } else {
+            throw new DFSAgentError(String.format("Invalid Edit Operation. [expected=%s][actual=%s]", FSEditLogOp.RenameOp.class, op.getClass()));
+        }
+    }
+
+    private DFSTransactionType<?> handleOpRenameOld(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {
+        if (!shouldLogTx(op.txid)) return null;
+
+        if (op instanceof FSEditLogOp.RenameOldOp) {
+            FSEditLogOp.RenameOldOp rop = (FSEditLogOp.RenameOldOp) op;
+            DFSTransactionType.DFSRenameFileType rft = new DFSTransactionType.DFSRenameFileType();
+
+            rft.id(rop.txid)
+                    .op(DFSTransaction.Operation.RENAME);
+            rft.source(new DFSTransactionType.DFSFileType().path(rop.src))
+                    .dest(new DFSTransactionType.DFSFileType().path(rop.dst));
+            rft.length(rop.length);
 
             batch.transactions().add(rft);
 
@@ -226,10 +249,18 @@ public class DFSEditLogParser {
                     .op(DFSTransaction.Operation.TRUNCATE)
                     .timestamp(top.timestamp);
             tr.file(new DFSTransactionType.DFSFileType().path(top.src));
+            long trBlockId = -1;
+            long trSize = 0;
+            long trGStamp = -1;
+            if (top.truncateBlock != null) {
+                trBlockId = top.truncateBlock.getBlockId();
+                trSize = top.truncateBlock.getNumBytes();
+                trGStamp = top.truncateBlock.getGenerationStamp();
+            }
             tr.block(new DFSTransactionType.DFSBlockType()
-                    .blockId(top.truncateBlock.getBlockId())
-                    .size(top.truncateBlock.getNumBytes())
-                    .generationStamp(top.truncateBlock.getGenerationStamp()));
+                    .blockId(trBlockId)
+                    .size(trSize)
+                    .generationStamp(trGStamp));
             tr.newLength(top.newLength);
 
             batch.transactions().add(tr);
