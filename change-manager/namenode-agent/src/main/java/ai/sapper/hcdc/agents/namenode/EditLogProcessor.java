@@ -80,35 +80,47 @@ public class EditLogProcessor implements Runnable {
     public void run() {
         Preconditions.checkState(sender != null);
         try {
-            EditsLogReader reader = new EditsLogReader();
             while (NameNodeEnv.get().state().isAvailable()) {
-                NameNodeTxState state = stateManager.agentTxState();
-                long txId = -1;
-                List<String> files = DFSEditsFileFinder.findEditsFiles(editsDir.getAbsolutePath(), state.getProcessedTxId(), -1);
-                if (files != null && !files.isEmpty()) {
-                    for (String file : files) {
-                        LOG.debug(String.format("Reading edits file [path=%s][startTx=%d]", file, state.getProcessedTxId()));
-                        reader.run(file, state.getProcessedTxId(), -1);
-                        txId = processBatch(reader.batch());
-                        if (txId >= 0) {
-                            stateManager.update(txId);
-                        }
-                    }
-                }
-                String cf = DFSEditsFileFinder.getCurrentEditsFile(editsDir.getAbsolutePath());
-                if (cf == null) {
-                    throw new Exception(String.format("Current Edits file not found. [dir=%s]",
-                            editsDir.getAbsolutePath()));
-                }
-                long ltx = DFSEditsFileFinder.findSeenTxID(editsDir.getAbsolutePath());
-                stateManager.update(ltx, cf);
-                LOG.debug(String.format("Current Edits File: %s, Last Seen TXID=%d", cf, ltx));
+                long txid = doRun();
+                LOG.info(String.format("Last Processed TXID = %d", txid));
                 Thread.sleep(processorConfig.pollingInterval);
             }
         } catch (Throwable t) {
             LOG.error("Edits Log Processor terminated with error", t);
             DefaultLogger.stacktrace(LOG, t);
         }
+    }
+
+    public long doRun() throws Exception {
+        NameNodeTxState state = stateManager.agentTxState();
+        EditsLogReader reader = new EditsLogReader();
+        long txId = -1;
+        List<DFSEditsFileFinder.EditsLogFile> files = DFSEditsFileFinder.findEditsFiles(editsDir.getAbsolutePath(), state.getProcessedTxId(), -1);
+        if (files != null && !files.isEmpty()) {
+            for (DFSEditsFileFinder.EditsLogFile file : files) {
+                if (file.startTxId() != (txId + 1)) {
+                    throw new Exception(String.format("Missing edits log file. [expected TXID=%d][TXID=%d]",
+                            (txId + 1), file.startTxId()));
+                }
+                LOG.debug(String.format("Reading edits file [path=%s][startTx=%d]", file, state.getProcessedTxId()));
+                reader.run(file.path(), state.getProcessedTxId(), file.endTxId());
+                DFSEditLogBatch batch = reader.batch();
+                txId = processBatch(batch);
+                if (txId >= 0) {
+                    stateManager.update(txId);
+                }
+            }
+        }
+        String cf = DFSEditsFileFinder.getCurrentEditsFile(editsDir.getAbsolutePath());
+        if (cf == null) {
+            throw new Exception(String.format("Current Edits file not found. [dir=%s]",
+                    editsDir.getAbsolutePath()));
+        }
+        long ltx = DFSEditsFileFinder.findSeenTxID(editsDir.getAbsolutePath());
+        stateManager.update(ltx, cf);
+        LOG.debug(String.format("Current Edits File: %s, Last Seen TXID=%d", cf, ltx));
+
+        return txId;
     }
 
     private long processBatch(DFSEditLogBatch batch) throws Exception {

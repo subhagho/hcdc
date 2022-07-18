@@ -2,18 +2,33 @@ package ai.sapper.hcdc.agents.namenode;
 
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import com.google.common.base.Strings;
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DFSEditsFileFinder {
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    @ToString
+    public static class EditsLogFile {
+        private String path;
+        private long startTxId = -1;
+        private long endTxId = -1;
+    }
+
     public static final String REGEX_CURRENT_FILE = "edits_inprogress_(\\d+$)";
     public static final String REGEX_EDIT_LOG_FILE = "edits_(\\d+)-(\\d+$)";
     public static final String FILE_SEEN_TXID = "seen_txid";
@@ -45,7 +60,7 @@ public class DFSEditsFileFinder {
         return null;
     }
 
-    public static List<String> findEditsFiles(@NonNull String rootPath, long startTx, long endTx) throws IOException {
+    public static List<EditsLogFile> findEditsFiles(@NonNull String rootPath, long startTx, long endTx) throws IOException {
         File dir = new File(rootPath);
         if (!dir.exists()) {
             throw new IOException(String.format("Specified root directory not found. [path=%s]", dir.getAbsolutePath()));
@@ -55,7 +70,7 @@ public class DFSEditsFileFinder {
         }
         Pattern pattern = Pattern.compile(REGEX_EDIT_LOG_FILE);
         File[] files = dir.listFiles();
-        List<String> paths = new ArrayList<>();
+        List<EditsLogFile> paths = new ArrayList<>();
         if (files != null && files.length > 0) {
             for (File file : files) {
                 String name = file.getName();
@@ -67,13 +82,26 @@ public class DFSEditsFileFinder {
                         long stx = Long.parseLong(s);
                         long etx = Long.parseLong(e);
                         if ((stx >= startTx || startTx < 0) && (etx <= endTx || endTx < 0)) {
-                            paths.add(file.getAbsolutePath());
+                            EditsLogFile ef = new EditsLogFile();
+                            ef.path = file.getAbsolutePath();
+                            ef.startTxId = stx;
+                            ef.endTxId = etx;
+
+                            paths.add(ef);
                         }
                     }
                 }
             }
         }
-        if (!paths.isEmpty()) return paths;
+        if (!paths.isEmpty()) {
+            paths.sort(new Comparator<EditsLogFile>() {
+                @Override
+                public int compare(EditsLogFile o1, EditsLogFile o2) {
+                    return (int) (o1.startTxId - o2.startTxId);
+                }
+            });
+            return paths;
+        }
         return null;
     }
 
@@ -92,7 +120,7 @@ public class DFSEditsFileFinder {
             if (Strings.isNullOrEmpty(s)) {
                 throw new IOException(String.format("Empty Seen TX data. [path=%s]", file.getAbsolutePath()));
             }
-            return Long.parseLong(s);
+            return Long.parseLong(s.trim());
         }
     }
 }

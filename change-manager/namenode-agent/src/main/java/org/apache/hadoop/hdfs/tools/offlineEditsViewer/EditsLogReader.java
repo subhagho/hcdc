@@ -45,12 +45,12 @@ public class EditsLogReader {
 
         try {
             List<DFSEditLogBatch> batches = new ArrayList<>();
-            List<String> files = DFSEditsFileFinder.findEditsFiles(dir, startTxId, endTxId);
+            List<DFSEditsFileFinder.EditsLogFile> files = DFSEditsFileFinder.findEditsFiles(dir, startTxId, endTxId);
             if (files != null && !files.isEmpty()) {
-                for (String file : files) {
-                    DefaultLogger.LOG.info(String.format("Reading transactions from edits file. [%s][startTx=%d, endTx=%d]", file, startTxId, endTxId));
+                for (DFSEditsFileFinder.EditsLogFile file : files) {
+                    DefaultLogger.LOG.info(String.format("Reading transactions from edits file. [%s][startTx=%d, endTx=%d]", file.path(), startTxId, endTxId));
                     EditsLogReader viewer = new EditsLogReader();
-                    viewer.run(file, startTxId, endTxId);
+                    viewer.run(file.path(), startTxId, endTxId);
 
                     if (viewer.batch != null) {
                         batches.add(viewer.batch);
