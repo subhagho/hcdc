@@ -89,6 +89,11 @@ public  final class DFSBlock extends
             deltaSize_ = input.readInt64();
             break;
           }
+          case 64: {
+            bitField0_ |= 0x00000080;
+            deleted_ = input.readBool();
+            break;
+          }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -241,6 +246,22 @@ public  final class DFSBlock extends
     return deltaSize_;
   }
 
+  // optional bool deleted = 8;
+  public static final int DELETED_FIELD_NUMBER = 8;
+  private boolean deleted_;
+  /**
+   * <code>optional bool deleted = 8;</code>
+   */
+  public boolean hasDeleted() {
+    return ((bitField0_ & 0x00000080) == 0x00000080);
+  }
+  /**
+   * <code>optional bool deleted = 8;</code>
+   */
+  public boolean getDeleted() {
+    return deleted_;
+  }
+
   private void initFields() {
     blockId_ = 0L;
     size_ = 0L;
@@ -249,6 +270,7 @@ public  final class DFSBlock extends
     startOffset_ = 0L;
     endOffset_ = 0L;
     deltaSize_ = 0L;
+    deleted_ = false;
   }
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
@@ -311,6 +333,9 @@ public  final class DFSBlock extends
     if (((bitField0_ & 0x00000040) == 0x00000040)) {
       output.writeInt64(7, deltaSize_);
     }
+    if (((bitField0_ & 0x00000080) == 0x00000080)) {
+      output.writeBool(8, deleted_);
+    }
     getUnknownFields().writeTo(output);
   }
 
@@ -347,6 +372,10 @@ public  final class DFSBlock extends
     if (((bitField0_ & 0x00000040) == 0x00000040)) {
       size += com.google.protobuf.CodedOutputStream
         .computeInt64Size(7, deltaSize_);
+    }
+    if (((bitField0_ & 0x00000080) == 0x00000080)) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBoolSize(8, deleted_);
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSerializedSize = size;
@@ -478,6 +507,8 @@ public  final class DFSBlock extends
       bitField0_ = (bitField0_ & ~0x00000020);
       deltaSize_ = 0L;
       bitField0_ = (bitField0_ & ~0x00000040);
+      deleted_ = false;
+      bitField0_ = (bitField0_ & ~0x00000080);
       return this;
     }
 
@@ -534,6 +565,10 @@ public  final class DFSBlock extends
         to_bitField0_ |= 0x00000040;
       }
       result.deltaSize_ = deltaSize_;
+      if (((from_bitField0_ & 0x00000080) == 0x00000080)) {
+        to_bitField0_ |= 0x00000080;
+      }
+      result.deleted_ = deleted_;
       result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
@@ -570,6 +605,9 @@ public  final class DFSBlock extends
       }
       if (other.hasDeltaSize()) {
         setDeltaSize(other.getDeltaSize());
+      }
+      if (other.hasDeleted()) {
+        setDeleted(other.getDeleted());
       }
       this.mergeUnknownFields(other.getUnknownFields());
       return this;
@@ -853,6 +891,39 @@ public  final class DFSBlock extends
     public Builder clearDeltaSize() {
       bitField0_ = (bitField0_ & ~0x00000040);
       deltaSize_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    // optional bool deleted = 8;
+    private boolean deleted_ ;
+    /**
+     * <code>optional bool deleted = 8;</code>
+     */
+    public boolean hasDeleted() {
+      return ((bitField0_ & 0x00000080) == 0x00000080);
+    }
+    /**
+     * <code>optional bool deleted = 8;</code>
+     */
+    public boolean getDeleted() {
+      return deleted_;
+    }
+    /**
+     * <code>optional bool deleted = 8;</code>
+     */
+    public Builder setDeleted(boolean value) {
+      bitField0_ |= 0x00000080;
+      deleted_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional bool deleted = 8;</code>
+     */
+    public Builder clearDeleted() {
+      bitField0_ = (bitField0_ & ~0x00000080);
+      deleted_ = false;
       onChanged();
       return this;
     }

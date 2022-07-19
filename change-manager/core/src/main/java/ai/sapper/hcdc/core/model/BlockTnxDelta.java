@@ -10,4 +10,5 @@ public class BlockTnxDelta {
     private long endOffset;
     private long tnxId;
     private long timestamp;
+    private boolean deleted = false;
 }

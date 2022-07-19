@@ -17,6 +17,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
+import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.curator.framework.CuratorFramework;
 
@@ -28,7 +29,6 @@ import java.util.List;
 @Accessors(fluent = true)
 public class ZkStateManager {
     public static class Constants {
-        public static final String ZK_PATH_SUFFIX = "/agent/namenode";
         public static final String ZK_PATH_HEARTBEAT = "/heartbeat";
         public static final String ZK_PATH_FILES = "/files";
         public static final String ZK_PATH_REPLICATION = "/replication";
@@ -54,7 +54,7 @@ public class ZkStateManager {
             if (!connection.isConnected()) connection.connect();
             CuratorFramework client = connection().client();
 
-            zkPath = PathUtils.formatZkPath(String.format("%s%s/%s", basePath(), Constants.ZK_PATH_SUFFIX, namespace));
+            zkPath = PathUtils.formatZkPath(String.format("%s%s/%s", basePath(), config.module, namespace));
             if (client.checkExists().forPath(zkPath) == null) {
                 String path = client.create().creatingParentContainersIfNeeded().forPath(zkPath);
                 if (Strings.isNullOrEmpty(path)) {
@@ -78,7 +78,7 @@ public class ZkStateManager {
                     throw new StateManagerError(String.format("Invalid state data: namespace mismatch. [expected=%s][actual=%s]", namespace, agentTxState.getNamespace()));
                 }
             }
-            zkPathReplication = PathUtils.formatZkPath(String.format("%s%s/%s/%s", basePath(), Constants.ZK_PATH_SUFFIX, namespace, Constants.ZK_PATH_REPLICATION));
+            zkPathReplication = PathUtils.formatZkPath(String.format("%s/%s", zkPath, Constants.ZK_PATH_REPLICATION));
             if (client.checkExists().forPath(zkPathReplication) == null) {
                 String path = client.create().creatingParentContainersIfNeeded().forPath(zkPathReplication);
                 if (Strings.isNullOrEmpty(path)) {
@@ -689,9 +689,30 @@ public class ZkStateManager {
     public static class ZkStateManagerConfig extends DomainManager.DomainManagerConfig {
 
         private static final String __CONFIG_PATH = "state.manager";
+        private static final String CONFIG_MODULE_NAME = "name";
 
         public ZkStateManagerConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);
+        }
+
+        private String module;
+
+        /**
+         * @throws ConfigurationException
+         */
+        @Override
+        public void read() throws ConfigurationException {
+            super.read();
+            try {
+                module = get().getString(CONFIG_MODULE_NAME);
+                if (Strings.isNullOrEmpty(module)) {
+                    throw new ConfigurationException(
+                            String.format("State Manager Configuration: Module name not found. [path=%s]",
+                                    CONFIG_MODULE_NAME));
+                }
+            } catch (Exception ex) {
+                throw new ConfigurationException(ex);
+            }
         }
     }
 }

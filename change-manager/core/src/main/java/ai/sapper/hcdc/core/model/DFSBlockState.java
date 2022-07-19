@@ -29,6 +29,28 @@ public class DFSBlockState {
         return this;
     }
 
+    public BlockTnxDelta delta(long tnxId) {
+        if (tnxId <= lastTnxId && transactions != null) {
+            for (BlockTnxDelta delta : transactions) {
+                if (delta.getTnxId() == tnxId) return delta;
+            }
+        }
+        return null;
+    }
+
+    public List<BlockTnxDelta> changeSet(long tnxId) {
+        if (tnxId <= lastTnxId && transactions != null) {
+            List<BlockTnxDelta> set = new ArrayList<>();
+            for(BlockTnxDelta delta : transactions) {
+                if (delta.getTnxId() >= tnxId) {
+                    set.add(delta);
+                }
+            }
+            if (!set.isEmpty()) return set;
+        }
+        return null;
+    }
+
     public boolean hasTransactions() {
         return (transactions != null && !transactions.isEmpty());
     }

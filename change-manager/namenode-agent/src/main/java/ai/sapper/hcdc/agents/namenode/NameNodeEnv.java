@@ -45,7 +45,7 @@ public class NameNodeEnv {
     private HdfsConnection hdfsConnection;
     private ZkStateManager stateManager;
     private List<InetAddress> hostIPs;
-    private HierarchicalConfiguration<ImmutableNode> hdfsConfig;
+    private HadoopEnvConfig hadoopConfig;
     private NameNodeAdminClient adminClient;
     private final Map<String, DistributedLock> locks = new HashMap<>();
 
@@ -72,9 +72,9 @@ public class NameNodeEnv {
             if (!hdfsConnection.isConnected()) hdfsConnection.connect();
 
             if (config().isEditsReader) {
-                readHdfsConfig();
-
-                adminClient = new NameNodeAdminClient(config.nameNodeAdminUrl, config.useSSL);
+                hadoopConfig = new HadoopEnvConfig(config.hadoopHome, config.hadoopConfFile, config.nameNodeInstanceName);
+                hadoopConfig.read();
+                adminClient = new NameNodeAdminClient(hadoopConfig.nameNodeAdminUrl(), config.useSSL);
                 NameNodeStatus status = adminClient().status();
                 if (status != null) {
                     agentState.parseState(status.getState());
@@ -111,71 +111,6 @@ public class NameNodeEnv {
             DistributedLock lock = new DistributedLock(config.namespace, path, stateManager.basePath()).withConnection(connection);
             locks.put(name, lock);
         }
-    }
-
-    private void readHdfsConfig() throws Exception {
-        File cf = new File(config.hadoopConfFile);
-        if (!cf.exists()) {
-            throw new Exception(String.format("Configuration file not found. ]path=%s]", cf.getAbsolutePath()));
-        }
-        Configurations configs = new Configurations();
-        hdfsConfig = configs.xml(cf);
-
-        List<HierarchicalConfiguration<ImmutableNode>> nodes = hdfsConfig.configurationsAt(NameNEnvConfig.Constants.HDFS_CONFIG_PROPERTY);
-        if (nodes == null || nodes.isEmpty()) {
-            throw new ConfigurationException(String.format("Failed to read HDFS configuration. [file=%s]", cf.getAbsolutePath()));
-        }
-        Properties props = new Properties();
-        for (HierarchicalConfiguration<ImmutableNode> node : nodes) {
-            String sn = node.getString(NameNEnvConfig.Constants.HDFS_CONFIG_PROPERTY_NAME);
-            String vn = node.getString(NameNEnvConfig.Constants.HDFS_CONFIG_PROPERTY_VALUE);
-            if (!Strings.isNullOrEmpty(sn)) {
-                props.put(sn, vn);
-            }
-        }
-        config.nameNodeDataDir = props.getProperty(NameNEnvConfig.Constants.HDFS_NN_DATA_DIR);
-        if (Strings.isNullOrEmpty(config.nameNodeDataDir)) {
-            throw new Exception(String.format("HDFS Configuration not found. [name=%s][file=%s]",
-                    NameNEnvConfig.Constants.HDFS_NN_DATA_DIR, cf.getAbsolutePath()));
-        }
-        config.nameNodeEditsDir = config.nameNodeDataDir;
-        String ed = props.getProperty(NameNEnvConfig.Constants.HDFS_NN_EDITS_DIR);
-        if (!Strings.isNullOrEmpty(ed)) {
-            config.nameNodeEditsDir = ed;
-        }
-        String ns = props.getProperty(NameNEnvConfig.Constants.HDFS_NN_NAMESPACE);
-        if (Strings.isNullOrEmpty(ns)) {
-            throw new Exception(String.format("HDFS Configuration not found. [name=%s][file=%s]",
-                    NameNEnvConfig.Constants.HDFS_NN_NAMESPACE, cf.getAbsolutePath()));
-        }
-        if (ns.compareToIgnoreCase(config.namespace) != 0) {
-            throw new Exception(String.format("HDFS Namespace mismatch. [expected=%s][actual=%s]", ns, config.namespace));
-        }
-        String nnKey = String.format(NameNEnvConfig.Constants.HDFS_NN_NODES, ns);
-        String nns = props.getProperty(nnKey);
-        if (Strings.isNullOrEmpty(nns)) {
-            throw new Exception(String.format("HDFS Configuration not found. [name=%s][file=%s]", nnKey, cf.getAbsolutePath()));
-        }
-        String[] parts = nns.split(",");
-        String nn = null;
-        for (String part : parts) {
-            if (part.trim().compareToIgnoreCase(config.nameNodeInstanceName) == 0) {
-                nn = part.trim();
-                break;
-            }
-        }
-        if (Strings.isNullOrEmpty(nn)) {
-            throw new Exception(
-                    String.format("NameNode instance not found in HDFS configuration. [instance=%s][namenodes=%s][file=%s]",
-                            config.nameNodeInstanceName, nns, cf.getAbsolutePath()));
-        }
-        LOG.info(String.format("Using NameNode instance [%s.%s]", ns, nn));
-        String urlKey = String.format(NameNEnvConfig.Constants.HDFS_NN_URL, ns, nn);
-        config.nameNodeAdminUrl = props.getProperty(urlKey);
-        if (Strings.isNullOrEmpty(config.nameNodeAdminUrl)) {
-            throw new Exception(String.format("NameNode Admin URL not found. [name=%s][file=%s]", urlKey, cf.getAbsolutePath()));
-        }
-        LOG.info(String.format("Using NameNode Admin UR [%s]", config.nameNodeAdminUrl));
     }
 
     public ENameNEnvState stop() {
@@ -282,16 +217,6 @@ public class NameNodeEnv {
 
             private static final String CONFIG_HADOOP_CONFIG = "hadoop.config";
 
-            private static final String HDFS_CONFIG_PROPERTY = "property";
-            private static final String HDFS_CONFIG_PROPERTY_NAME = "name";
-            private static final String HDFS_CONFIG_PROPERTY_VALUE = "value";
-
-            private static final String HDFS_NN_DATA_DIR = "dfs.namenode.name.dir";
-            private static final String HDFS_NN_EDITS_DIR = "fs.namenode.edits.dir";
-            private static final String HDFS_NN_NAMESPACE = "dfs.nameservices";
-            private static final String HDFS_NN_NODES = "dfs.ha.namenodes.%s";
-            private static final String HDFS_NN_URL = "dfs.namenode.http-address.%s.%s";
-
             private static final String HDFS_NN_USE_HTTPS = "useSSL";
             private static final String CONFIG_LOCKS = "locks";
             private static final String CONFIG_LOCK = String.format("%s.lock", CONFIG_LOCKS);
@@ -308,9 +233,6 @@ public class NameNodeEnv {
         private String hdfsAdminConnection;
         private String hadoopHome;
         private String hadoopConfFile;
-        private String nameNodeDataDir;
-        private String nameNodeEditsDir;
-        private String nameNodeAdminUrl;
         private boolean useSSL = true;
         private boolean isEditsReader = true;
 

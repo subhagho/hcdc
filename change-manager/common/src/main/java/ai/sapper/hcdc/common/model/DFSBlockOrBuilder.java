@@ -75,4 +75,14 @@ public interface DFSBlockOrBuilder
    * <code>required int64 deltaSize = 7;</code>
    */
   long getDeltaSize();
+
+  // optional bool deleted = 8;
+  /**
+   * <code>optional bool deleted = 8;</code>
+   */
+  boolean hasDeleted();
+  /**
+   * <code>optional bool deleted = 8;</code>
+   */
+  boolean getDeleted();
 }

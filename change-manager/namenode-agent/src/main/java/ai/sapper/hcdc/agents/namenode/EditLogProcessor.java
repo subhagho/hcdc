@@ -51,7 +51,10 @@ public class EditLogProcessor implements Runnable {
                     .partitioner(processorConfig().senderConfig.partitionerClass())
                     .topic(processorConfig().senderConfig.topic())
                     .build();
-            String edir = NameNodeEnv.get().config().nameNodeEditsDir();
+            if (NameNodeEnv.get().hadoopConfig() == null) {
+                throw new ConfigurationException("Hadoop Configuration not initialized...");
+            }
+            String edir = NameNodeEnv.get().hadoopConfig().nameNodeEditsDir();
             editsDir = new File(edir);
             if (!editsDir.exists()) {
                 throw new ConfigurationException(

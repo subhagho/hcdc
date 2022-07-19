@@ -7,7 +7,7 @@
             <home>/opt/hadoop</home>
             <config>src/test/resources/hdfs-site.xml</config>
         </hadoop>
-        <editsReader>false</editsReader>
+        <editsReader>true</editsReader>
         <connections>
             <path>config</path>
             <hdfs-admin>test-hdfs</hdfs-admin>

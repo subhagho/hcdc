@@ -113,7 +113,7 @@ public class HDFSSnapshotProcessor {
         }
     }
 
-    private DFSAddFile generateSnapshot(DFSFileState state, boolean addBlocks) throws Exception {
+    public static DFSAddFile generateSnapshot(DFSFileState state, boolean addBlocks) throws Exception {
         DFSTransaction tx = DFSTransaction.newBuilder()
                 .setOp(DFSTransaction.Operation.ADD_FILE)
                 .setTransactionId(state.getLastTnxId())
@@ -140,7 +140,7 @@ public class HDFSSnapshotProcessor {
         return builder.build();
     }
 
-    private DFSBlock generateBlockSnapshot(DFSBlockState block) throws Exception {
+    public static DFSBlock generateBlockSnapshot(DFSBlockState block) throws Exception {
         DFSBlock.Builder builder = DFSBlock.newBuilder();
         builder.setBlockId(block.getBlockId())
                 .setGenerationStamp(block.getGenerationStamp())
