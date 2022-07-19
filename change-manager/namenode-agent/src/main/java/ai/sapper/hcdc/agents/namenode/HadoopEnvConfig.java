@@ -34,19 +34,21 @@ public class HadoopEnvConfig {
     private final String hadoopHome;
     private final String hdfsConfigFile;
     private final String nameNodeInstanceName;
+    private final String namespace;
     private HierarchicalConfiguration<ImmutableNode> hdfsConfig;
     private Properties config;
     private String nameNodeDataDir;
     private String nameNodeEditsDir;
-    private String namespace;
     private String nameNodeAdminUrl;
 
     public HadoopEnvConfig(@NonNull String hadoopHome,
                            @NonNull String hdfsConfigFile,
+                           @NonNull String namespace,
                            @NonNull String nameNodeInstanceName) {
         this.hadoopHome = hadoopHome;
         this.hdfsConfigFile = hdfsConfigFile;
         this.nameNodeInstanceName = nameNodeInstanceName;
+        this.namespace = namespace;
     }
 
     public void read() throws Exception {

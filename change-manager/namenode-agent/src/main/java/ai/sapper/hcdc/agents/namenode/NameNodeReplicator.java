@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.agents.namenode;
 
+import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.common.utils.JSONUtils;
@@ -92,7 +93,8 @@ public class NameNodeReplicator {
                 DefaultLogger.LOG.warn(String.format("WARNING: Will delete existing file structure, if present. [path=%s]", stateManager.getFilePath(null)));
                 stateManager.deleteAll();
                 copy();
-                stateManager.setup(txnId);
+                NameNodeTxState txState = stateManager.initState(txnId);
+                DefaultLogger.LOG.info(String.format("NameNode replication done. [state=%s]", txState));
             } finally {
                 NameNodeEnv.globalLock().unlock();
             }

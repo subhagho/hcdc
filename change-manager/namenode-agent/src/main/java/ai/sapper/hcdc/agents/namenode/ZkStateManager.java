@@ -54,7 +54,7 @@ public class ZkStateManager {
             if (!connection.isConnected()) connection.connect();
             CuratorFramework client = connection().client();
 
-            zkPath = PathUtils.formatZkPath(String.format("%s%s/%s", basePath(), config.module, namespace));
+            zkPath = PathUtils.formatZkPath(String.format("%s/%s/%s", basePath(), config.module, namespace));
             if (client.checkExists().forPath(zkPath) == null) {
                 String path = client.create().creatingParentContainersIfNeeded().forPath(zkPath);
                 if (Strings.isNullOrEmpty(path)) {
@@ -94,7 +94,7 @@ public class ZkStateManager {
         }
     }
 
-    public NameNodeTxState setup(long txId) throws StateManagerError {
+    public NameNodeTxState initState(long txId) throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
         Preconditions.checkArgument(txId > agentTxState.getLastTxId());
@@ -104,6 +104,7 @@ public class ZkStateManager {
                 CuratorFramework client = connection().client();
 
                 agentTxState.setLastTxId(txId);
+                agentTxState.setProcessedTxId(txId);
                 agentTxState.setUpdatedTime(System.currentTimeMillis());
                 agentTxState.setCurrentEditsLogFile("");
 
@@ -689,7 +690,7 @@ public class ZkStateManager {
     public static class ZkStateManagerConfig extends DomainManager.DomainManagerConfig {
 
         private static final String __CONFIG_PATH = "state.manager";
-        private static final String CONFIG_MODULE_NAME = "name";
+        private static final String CONFIG_MODULE_NAME = "module";
 
         public ZkStateManagerConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);

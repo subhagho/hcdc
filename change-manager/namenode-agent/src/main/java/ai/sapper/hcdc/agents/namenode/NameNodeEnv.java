@@ -72,7 +72,10 @@ public class NameNodeEnv {
             if (!hdfsConnection.isConnected()) hdfsConnection.connect();
 
             if (config().isEditsReader) {
-                hadoopConfig = new HadoopEnvConfig(config.hadoopHome, config.hadoopConfFile, config.nameNodeInstanceName);
+                hadoopConfig = new HadoopEnvConfig(config.hadoopHome,
+                        config.hadoopConfFile,
+                        config.namespace,
+                        config.nameNodeInstanceName);
                 hadoopConfig.read();
                 adminClient = new NameNodeAdminClient(hadoopConfig.nameNodeAdminUrl(), config.useSSL);
                 NameNodeStatus status = adminClient().status();

@@ -97,7 +97,7 @@ public class EditLogProcessor implements Runnable {
     public long doRun() throws Exception {
         NameNodeTxState state = stateManager.agentTxState();
         EditsLogReader reader = new EditsLogReader();
-        long txId = -1;
+        long txId = state.getProcessedTxId();
         List<DFSEditsFileFinder.EditsLogFile> files = DFSEditsFileFinder.findEditsFiles(editsDir.getAbsolutePath(), state.getProcessedTxId(), -1);
         if (files != null && !files.isEmpty()) {
             for (DFSEditsFileFinder.EditsLogFile file : files) {

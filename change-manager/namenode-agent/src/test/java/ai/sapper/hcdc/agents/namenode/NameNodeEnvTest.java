@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class NameNodeEnvTest {
-    private static final String __CONFIG_FILE = "src/test/resources/namenode-agent-test.xml";
+    private static final String __CONFIG_FILE = "src/test/resources/namenode-agent.xml";
 
     private static XMLConfiguration xmlConfiguration = null;
 
