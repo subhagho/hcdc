@@ -30,6 +30,14 @@ public class DFSEditLogBatch {
         this.filename = filename;
     }
 
+    public DFSEditLogBatch(@NonNull DFSEditLogBatch batch) {
+        this.filename = batch.filename;
+        this.version = batch.version;
+        this.startTnxId = batch.startTnxId();
+        this.endTnxId = batch.endTnxId();
+        this.isCurrent = batch.isCurrent;
+    }
+
     public void setup() throws IOException {
         File inf = new File((filename));
         if (!inf.exists()) {

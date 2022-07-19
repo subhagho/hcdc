@@ -58,7 +58,9 @@ public class HCDCMessagingBuilders {
                 if (kc == null) {
                     throw new MessagingError(String.format("Kafka Connection not found. [name=%s]", connection));
                 }
-
+                if (!kc.isConnected()) {
+                    kc.connect();
+                }
                 KafkaPartitioner<String> part = null;
                 if (!Strings.isNullOrEmpty(partitioner)) {
                     Class<? extends KafkaPartitioner<String>> cp = (Class<? extends KafkaPartitioner<String>>) Class.forName(partitioner);
@@ -94,20 +96,29 @@ public class HCDCMessagingBuilders {
             Preconditions.checkArgument(!Strings.isNullOrEmpty(type));
             Preconditions.checkArgument(!Strings.isNullOrEmpty(connection));
 
-            EConnectionType ct = EConnectionType.parse(type);
-            if (ct == null || ct == EConnectionType.Unknown) {
-                throw new MessagingError(String.format("Connection type not supported. [type=%s]", type));
+            try {
+                EConnectionType ct = EConnectionType.parse(type);
+                if (ct == null || ct == EConnectionType.Unknown) {
+                    throw new MessagingError(String.format("Connection type not supported. [type=%s]", type));
+                }
+                if (ct == EConnectionType.Kafka) {
+                    return buildKafka();
+                }
+                throw new MessagingError(String.format("Connection type not implemented. [type=%s]", ct.name()));
+            } catch (MessagingError me) {
+                throw me;
+            } catch (Exception ex) {
+                throw new MessagingError(ex);
             }
-            if (ct == EConnectionType.Kafka) {
-                return buildKafka();
-            }
-            throw new MessagingError(String.format("Connection type not implemented. [type=%s]", ct.name()));
         }
 
-        private MessageReceiver<String, DFSChangeDelta> buildKafka() throws MessagingError {
+        private MessageReceiver<String, DFSChangeDelta> buildKafka() throws Exception {
             BasicKafkaConsumer kc = manager.getConnection(connection, BasicKafkaConsumer.class);
             if (kc == null) {
                 throw new MessagingError(String.format("Kafka Connection not found. [name=%s]", connection));
+            }
+            if (!kc.isConnected()) {
+                kc.connect();
             }
             return new HCDCKafkaReceiver().withTopic(topic).withConnection(kc);
         }

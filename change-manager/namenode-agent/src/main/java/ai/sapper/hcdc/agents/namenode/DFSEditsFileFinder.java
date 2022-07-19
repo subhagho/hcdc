@@ -123,4 +123,26 @@ public class DFSEditsFileFinder {
             return Long.parseLong(s.trim());
         }
     }
+
+    public static EditsLogFile parseFileName(@NonNull String filename) throws IOException {
+        File file = new File(filename);
+        String name = file.getName();
+        Pattern pattern = Pattern.compile(REGEX_EDIT_LOG_FILE);
+        Matcher m = pattern.matcher(name);
+        if (m.matches()) {
+            String s = m.group(1);
+            String e = m.group(2);
+            if (!Strings.isNullOrEmpty(s) && !Strings.isNullOrEmpty(e)) {
+                long stx = Long.parseLong(s);
+                long etx = Long.parseLong(e);
+                EditsLogFile ef = new EditsLogFile();
+                ef.path = file.getAbsolutePath();
+                ef.startTxId = stx;
+                ef.endTxId = etx;
+
+                return ef;
+            }
+        }
+        return null;
+    }
 }

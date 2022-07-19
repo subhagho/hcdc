@@ -1,5 +1,6 @@
 package org.apache.hadoop.hdfs.tools.offlineEditsViewer;
 
+import ai.sapper.hcdc.agents.namenode.DFSEditsFileFinder;
 import ai.sapper.hcdc.agents.namenode.model.DFSEditLogBatch;
 import ai.sapper.hcdc.agents.namenode.model.DFSTransactionType;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
@@ -17,16 +18,23 @@ class EditLogViewerTest {
     @Test
     void run() {
         try {
+            DFSEditsFileFinder.EditsLogFile file = DFSEditsFileFinder.parseFileName(EDITS_FILE_01);
+            assertNotNull(file);
             EditsLogReader viewer = new EditsLogReader();
-            viewer.run(EDITS_FILE_01);
+            viewer.run(file);
 
             DFSEditLogBatch batch = viewer.batch();
             assertNotNull(batch);
             List<DFSTransactionType<?>> transactions = batch.transactions();
             assertNotNull(transactions);
             assertTrue(transactions.size() > 0);
+            long lastTxId = -1;
             for (DFSTransactionType<?> tnx : transactions) {
+                if (lastTxId > 0) {
+                    assertEquals((lastTxId + 1), tnx.id());
+                }
                 DefaultLogger.LOG.info(tnx.toString());
+                lastTxId = tnx.id();
             }
         } catch (Throwable t) {
             t.printStackTrace();

@@ -102,15 +102,18 @@ public class EditLogProcessor implements Runnable {
         if (files != null && !files.isEmpty()) {
             for (DFSEditsFileFinder.EditsLogFile file : files) {
                 if (file.startTxId() != (txId + 1)) {
-                    throw new Exception(String.format("Missing edits log file. [expected TXID=%d][TXID=%d]",
+                    throw new Exception(String.format("Missing edits log file. [expected TXID=%d][file start TXID=%d]",
                             (txId + 1), file.startTxId()));
                 }
                 LOG.debug(String.format("Reading edits file [path=%s][startTx=%d]", file, state.getProcessedTxId()));
-                reader.run(file.path(), state.getProcessedTxId(), file.endTxId());
+                reader.run(file, state.getProcessedTxId(), file.endTxId());
                 DFSEditLogBatch batch = reader.batch();
-                txId = processBatch(batch);
-                if (txId >= 0) {
-                    stateManager.update(txId);
+                if (batch.transactions() != null && !batch.transactions().isEmpty()) {
+                    long tid = processBatch(batch);
+                    if (tid > 0) {
+                        txId = tid;
+                        stateManager.update(txId);
+                    }
                 }
             }
         }
