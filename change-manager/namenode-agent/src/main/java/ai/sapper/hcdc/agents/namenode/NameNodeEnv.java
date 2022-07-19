@@ -86,7 +86,7 @@ public class NameNodeEnv {
                 }
             }
 
-            stateManager = new ZkStateManager();
+            stateManager = config.stateManagerClass.newInstance();
             stateManager.init(configNode, connectionManager, config.namespace);
 
             readLocks();
@@ -213,6 +213,7 @@ public class NameNodeEnv {
             private static final String __CONFIG_PATH = "agent";
             private static final String CONFIG_NAMESPACE = "namespace";
             private static final String CONFIG_INSTANCE = "instance";
+            private static final String CONFIG_STATE_MANAGER_TYPE = "stateManagerClass";
             private static final String CONFIG_CONNECTIONS = "connections.path";
             private static final String CONFIG_CONNECTION_HDFS = "connections.hdfs-admin";
 
@@ -238,6 +239,7 @@ public class NameNodeEnv {
         private String hadoopConfFile;
         private boolean useSSL = true;
         private boolean isEditsReader = true;
+        private Class<? extends ZkStateManager> stateManagerClass = ZkStateManager.class;
 
         public NameNEnvConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, Constants.__CONFIG_PATH);
@@ -281,6 +283,10 @@ public class NameNodeEnv {
                 String s = get().getString(Constants.HDFS_NN_USE_HTTPS);
                 if (!Strings.isNullOrEmpty(s)) {
                     useSSL = Boolean.parseBoolean(s);
+                }
+                s = get().getString(Constants.CONFIG_STATE_MANAGER_TYPE);
+                if (!Strings.isNullOrEmpty(s)) {
+                    stateManagerClass = (Class<? extends ZkStateManager>) Class.forName(s);
                 }
             } catch (Throwable t) {
                 throw new ConfigurationException("Error processing HDFS configuration.", t);
