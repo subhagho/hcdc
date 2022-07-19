@@ -10,38 +10,43 @@
         <editsReader>true</editsReader>
         <connections>
             <path>config</path>
-            <hdfs-admin>test-hdfs</hdfs-admin>
+            <hdfs-admin>source-hdfs</hdfs-admin>
         </connections>
         <state>
             <manager>
                 <module>NameNodeAgent</module>
                 <basePath>/hcdc/state</basePath>
-                <connection>test-zk</connection>
+                <connection>zk-state-connection</connection>
             </manager>
         </state>
-        <domain>
-            <manager>
-                <basePath>/hcdc/registry/files</basePath>
-                <connection>test-zk</connection>
-            </manager>
-        </domain>
         <useSSL>false</useSSL>
+        <processor>
+            <edits>
+                <sender>
+                    <connectionType>kafka</connectionType>
+                    <connection>edits-kafka-queue</connection>
+                    <topic>ha-cluster-edits</topic>
+                    <!--partitioner></partitioner-->
+                </sender>
+                <pollingInterval>120000</pollingInterval>
+            </edits>
+        </processor>
         <locks>
             <lock>
                 <name>global</name>
-                <connection>test-zk</connection>
+                <connection>zk-state-connection</connection>
                 <lock-node>NN-GLOBAL-LOCK</lock-node>
             </lock>
             <lock>
                 <name>replication</name>
-                <connection>test-zk</connection>
+                <connection>zk-state-connection</connection>
                 <lock-node>NN-REPLICATION-LOCK</lock-node>
             </lock>
         </locks>
     </agent>
     <replicator>
         <connections>
-            <hdfs>test-hdfs</hdfs>
+            <hdfs>source-hdfs</hdfs>
         </connections>
     </replicator>
     <config>
@@ -49,7 +54,7 @@
             <connection>
                 <type>ai.sapper.hcdc.core.connections.HdfsConnection</type>
                 <hdfs>
-                    <name>test-hdfs</name>
+                    <name>source-hdfs</name>
                     <namenode>
                         <primary>
                             <URI>hdfs://192.168.0.2:9000</URI>
@@ -67,7 +72,7 @@
             <connection>
                 <type>ai.sapper.hcdc.core.connections.HdfsHAConnection</type>
                 <hdfs_ha>
-                    <name>test-hdfs-ha</name>
+                    <name>source-hdfs-ha</name>
                     <nameservice>ha-cluster</nameservice>
                     <failoverProvider>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider
                     </failoverProvider>
@@ -81,7 +86,7 @@
             <connection>
                 <type>ai.sapper.hcdc.core.connections.ZookeeperConnection</type>
                 <zookeeper>
-                    <name>test-zk</name>
+                    <name>zk-state-connection</name>
                     <connectionString>192.168.0.5:2181,192.168.0.4:2181</connectionString>
                     <retry>
                         <interval>1500</interval>
@@ -93,7 +98,7 @@
             <connection>
                 <type>ai.sapper.hcdc.core.connections.impl.BasicKafkaProducer</type>
                 <kafka>
-                    <name>test-kafka-producer</name>
+                    <name>edits-kafka-queue</name>
                     <mode>Producer</mode>
                     <config>
                         <producer>src/test/resources/producer.properties</producer>
@@ -101,7 +106,7 @@
                     </config>
                 </kafka>
             </connection>
-            <connection>
+            <!--connection>
                 <type>ai.sapper.hcdc.core.connections.impl.BasicKafkaConsumer</type>
                 <kafka>
                     <name>test-kafka-consumer</name>
@@ -111,7 +116,7 @@
                         <topic>hcdc-test</topic>
                     </config>
                 </kafka>
-            </connection>
+            </connection-->
         </connections>
     </config>
 </configuration>

@@ -41,7 +41,6 @@ public class ZkStateManager {
     private String zkPath;
     private String zkPathReplication;
     private NameNodeTxState agentTxState;
-    private DomainManager domainManager;
     private DistributedLock replicationLock;
 
     public ZkStateManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
@@ -85,8 +84,6 @@ public class ZkStateManager {
                     throw new StateManagerError(String.format("Error creating ZK replication path. [path=%s]", basePath()));
                 }
             }
-            domainManager = new DomainManager();
-            domainManager.init(xmlConfig, manger);
 
             return this;
         } catch (Exception ex) {
@@ -97,7 +94,7 @@ public class ZkStateManager {
     public NameNodeTxState initState(long txId) throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
-        Preconditions.checkArgument(txId > agentTxState.getLastTxId());
+        Preconditions.checkArgument(txId > agentTxState.getProcessedTxId());
 
         synchronized (this) {
             try {

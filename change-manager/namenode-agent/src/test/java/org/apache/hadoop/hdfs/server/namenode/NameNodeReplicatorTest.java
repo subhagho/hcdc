@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class NameNodeReplicatorTest {
-    private static final String __CONFIG_FILE = "src/test/resources/namenode-agent.xml";
+    private static final String __CONFIG_FILE = "src/test/resources/configs/namenode-agent.xml";
 
     @Test
     void run() {
@@ -18,7 +18,7 @@ class NameNodeReplicatorTest {
             System.setProperty("hadoop.home.dir", "C:/tools/hadoop");
 
             String[] args = {"--image",
-                    "src/test/resources/fsimage_0000000000000014695",
+                    "src/test/resources/edits/fsimage_0000000000000014695",
                     "--config",
                     __CONFIG_FILE,
                     "--tmp",

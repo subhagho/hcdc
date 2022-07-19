@@ -6,6 +6,7 @@ import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
+import ai.sapper.hcdc.core.filters.DomainManager;
 import ai.sapper.hcdc.core.messaging.*;
 import ai.sapper.hcdc.core.model.*;
 import com.google.common.base.Preconditions;
@@ -263,7 +264,7 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                 prevBlockId = block.getBlockId();
             }
         }
-        String domain = stateManager.domainManager().matches(fileState.getHdfsFilePath());
+        String domain = isRegistered(fileState.getHdfsFilePath());
         if (!Strings.isNullOrEmpty(domain)) {
             DFSReplicationState rState = stateManager.create(fileState.getId(), fileState.getHdfsFilePath(), true);
             rState.setSnapshotTxId(fileState.getLastTnxId());
@@ -275,6 +276,13 @@ public class HDFSDeltaChangeProcessor implements Runnable {
         } else {
             sendIgnoreTx(message, data);
         }
+    }
+
+    private String isRegistered(String hdfsPath) throws Exception {
+        Preconditions.checkState(stateManager instanceof ProcessorStateManager);
+        DomainManager dm = ((ProcessorStateManager) stateManager).domainManager();
+
+        return dm.matches(hdfsPath);
     }
 
     private void processAppendFileTxMessage(DFSAppendFile data,
@@ -607,7 +615,7 @@ public class HDFSDeltaChangeProcessor implements Runnable {
         if (rState != null) {
             stateManager.delete(rState.getInode());
         }
-        String domain = stateManager.domainManager().matches(fileState.getHdfsFilePath());
+        String domain = isRegistered(nfs.getHdfsFilePath());
         if (!Strings.isNullOrEmpty(domain)) {
             rState = stateManager.create(nfs.getId(), nfs.getHdfsFilePath(), true);
             rState.setSnapshotTxId(nfs.getLastTnxId());
@@ -690,11 +698,11 @@ public class HDFSDeltaChangeProcessor implements Runnable {
     @Accessors(fluent = true)
     public static class HDFSDeltaChangeProcessorConfig extends ConfigReader {
         public static class Constants {
-            public static final String __CONFIG_PATH = "delta.manager";
+            public static final String __CONFIG_PATH = "processor.cdc";
             public static final String __CONFIG_PATH_SENDER = "sender";
             public static final String __CONFIG_PATH_RECEIVER = "receiver";
             public static final String __CONFIG_PATH_ERROR = "errorQueue";
-            public static final String CONFIG_RECEIVE_TIMEOUT = "timeout";
+            public static final String CONFIG_RECEIVE_TIMEOUT = "readBatchTimeout";
         }
 
         private MessagingConfig senderConfig;
