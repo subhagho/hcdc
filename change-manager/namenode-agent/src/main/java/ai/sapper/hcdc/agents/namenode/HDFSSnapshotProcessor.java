@@ -41,7 +41,6 @@ public class HDFSSnapshotProcessor {
                     .connection(processorConfig().senderConfig.connection())
                     .type(processorConfig().senderConfig.type())
                     .partitioner(processorConfig().senderConfig.partitionerClass())
-                    .topic(processorConfig().senderConfig.topic())
                     .build();
 
             tnxSender = new HCDCMessagingBuilders.SenderBuilder()
@@ -50,7 +49,6 @@ public class HDFSSnapshotProcessor {
                     .connection(processorConfig().tnxSenderConfig.connection())
                     .type(processorConfig().tnxSenderConfig.type())
                     .partitioner(processorConfig().tnxSenderConfig.partitionerClass())
-                    .topic(processorConfig().tnxSenderConfig.topic())
                     .build();
             return this;
         } catch (Exception ex) {

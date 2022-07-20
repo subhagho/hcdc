@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.core.messaging;
 
 import ai.sapper.hcdc.core.connections.MessageConnection;
+import ai.sapper.hcdc.core.connections.ZookeeperConnection;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -13,7 +14,10 @@ import java.util.List;
 @Accessors(fluent = true)
 public abstract class MessageReceiver<I, M> implements Closeable {
     private MessageConnection connection;
-    private int batchSize = 1;
+    private int batchSize = 32;
+    private ZookeeperConnection zkConnection;
+    private String zkStatePath;
+    private boolean saveState = false;
 
     public MessageReceiver<I, M> withConnection(@NonNull MessageConnection connection) {
         Preconditions.checkArgument(connection.isConnected());
@@ -29,6 +33,23 @@ public abstract class MessageReceiver<I, M> implements Closeable {
 
         return this;
     }
+
+    public MessageReceiver<I, M> withZookeeperConnection(ZookeeperConnection connection) {
+        zkConnection = connection;
+        return this;
+    }
+
+    public MessageReceiver<I, M> withZkPath(String zkPath) {
+        zkStatePath = zkPath;
+        return this;
+    }
+
+    public MessageReceiver<I, M> withSaveState(boolean save) {
+        saveState = save;
+        return this;
+    }
+
+    public abstract MessageReceiver<I, M> init() throws MessagingError;
 
     public abstract MessageObject<I, M> receive() throws MessagingError;
 

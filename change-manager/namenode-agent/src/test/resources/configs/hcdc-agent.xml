@@ -30,19 +30,16 @@
                 <sender>
                     <connectionType>kafka</connectionType>
                     <connection>cdc-kafka-queue</connection>
-                    <topic>ha-cluster-cdc</topic>
                     <!--partitioner></partitioner-->
                 </sender>
                 <receiver>
                     <connectionType>kafka</connectionType>
                     <connection>edits-kafka-queue</connection>
-                    <topic>ha-cluster-edits</topic>
                     <!--partitioner></partitioner-->
                 </receiver>
                 <errorQueue>
                     <connectionType>kafka</connectionType>
-                    <connection>cdc-kafka-queue</connection>
-                    <topic>ha-cluster-error</topic>
+                    <connection>errors-kafka-queue</connection>
                     <!--partitioner></partitioner-->
                 </errorQueue>
                 <readBatchTimeout>5000</readBatchTimeout>
@@ -113,10 +110,21 @@
                 <kafka>
                     <name>cdc-kafka-queue</name>
                     <mode>Producer</mode>
-                    <config>
-                        <producer>src/test/resources/producer.properties</producer>
-                        <topic>hcdc-test</topic>
-                    </config>
+                    <producer>
+                        <config>src/test/resources/producer.properties</config>
+                    </producer>
+                    <topic>ha-cluster-cdc</topic>
+                </kafka>
+            </connection>
+            <connection>
+                <type>ai.sapper.hcdc.core.connections.impl.BasicKafkaProducer</type>
+                <kafka>
+                    <name>errors-kafka-queue</name>
+                    <mode>Producer</mode>
+                    <producer>
+                        <config>src/test/resources/producer.properties</config>
+                    </producer>
+                    <topic>ha-cluster-errors</topic>
                 </kafka>
             </connection>
             <connection>
@@ -124,10 +132,11 @@
                 <kafka>
                     <name>edits-kafka-queue</name>
                     <mode>Consumer</mode>
-                    <config>
-                        <consumer>src/test/resources/consumer.properties</consumer>
-                        <topic>hcdc-test</topic>
-                    </config>
+                    <consumer>
+                        <config>src/test/resources/consumer.properties</config>
+                        <partitions>0</partitions>
+                    </consumer>
+                    <topic>ha-cluster-edits</topic>
                 </kafka>
             </connection>
         </connections>

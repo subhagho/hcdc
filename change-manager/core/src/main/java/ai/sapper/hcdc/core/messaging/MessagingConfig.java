@@ -16,14 +16,12 @@ public class MessagingConfig {
     public static class Constants {
         public static final String CONFIG_CONNECTION_TYPE = "connectionType";
         public static final String CONFIG_CONNECTION = "connection";
-        public static final String CONFIG_TOPIC = "topic";
         public static final String CONFIG_PARTITIONER_CLASS = "partitioner";
     }
     private HierarchicalConfiguration<ImmutableNode> config;
 
     private String type;
     private String connection;
-    private String topic;
     private String partitionerClass;
 
     public void read(@NonNull HierarchicalConfiguration<ImmutableNode> config) throws ConfigurationException {
@@ -34,9 +32,6 @@ public class MessagingConfig {
         connection = config.getString(Constants.CONFIG_CONNECTION);
         if (Strings.isNullOrEmpty(connection)) {
             throw new ConfigurationException(String.format("Snapshot Manager Manager Configuration Error: missing [%s]", Constants.CONFIG_CONNECTION));
-        }
-        if (config.containsKey(Constants.CONFIG_TOPIC)) {
-            topic = config.getString(Constants.CONFIG_TOPIC);
         }
         if (config.containsKey(Constants.CONFIG_PARTITIONER_CLASS))
             partitionerClass = config.getString(Constants.CONFIG_PARTITIONER_CLASS);

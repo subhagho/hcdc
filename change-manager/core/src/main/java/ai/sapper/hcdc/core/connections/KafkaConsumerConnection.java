@@ -7,10 +7,13 @@ import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.TopicPartition;
 
 import javax.naming.ConfigurationException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 
 @Getter
@@ -18,7 +21,7 @@ import java.util.Properties;
 public class KafkaConsumerConnection<K, V> extends KafkaConnection {
     private static final String CONFIG_MAX_POLL_RECORDS = "max.poll.records";
     private KafkaConsumer<K, V> consumer;
-    private int batchSize = 8; // Default BatchSize is 8
+    private int batchSize = 32; // Default BatchSize is 32
 
     /**
      * @param xmlConfig
@@ -60,7 +63,12 @@ public class KafkaConsumerConnection<K, V> extends KafkaConnection {
             Preconditions.checkState(connectionState() == EConnectionState.Initialized);
             try {
                 consumer = new KafkaConsumer<K, V>(kafkaConfig().properties());
-                consumer.subscribe(Collections.singletonList(kafkaConfig().topic()));
+                List<TopicPartition> parts = new ArrayList<>(kafkaConfig().partitions().size());
+                for (int part : kafkaConfig().partitions()) {
+                    TopicPartition tp = new TopicPartition(kafkaConfig().topic(), part);
+                    parts.add(tp);
+                }
+                consumer.assign(parts);
                 state.state(EConnectionState.Connected);
             } catch (Throwable t) {
                 state.error(t);

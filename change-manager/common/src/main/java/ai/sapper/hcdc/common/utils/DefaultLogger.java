@@ -14,11 +14,16 @@ public final class DefaultLogger {
 
     public static String stacktrace(@NonNull Throwable error) {
         StringBuilder buff = new StringBuilder(String.format("ERROR: %s", error.getLocalizedMessage()));
-        buff.append("********************************BEGIN TRACE********************************\n");
-        for (StackTraceElement se : error.getStackTrace()) {
-            buff.append(String.format("%s[%d] : %s.%s()\n", se.getFileName(), se.getLineNumber(), se.getClassName(), se.getMethodName()));
+        Throwable e = error;
+        while(e != null) {
+            buff.append("\n********************************BEGIN TRACE********************************\n");
+            buff.append(String.format("ERROR: %s\n", e.getLocalizedMessage()));
+            for (StackTraceElement se : e.getStackTrace()) {
+                buff.append(String.format("%s[%d] : %s.%s()\n", se.getFileName(), se.getLineNumber(), se.getClassName(), se.getMethodName()));
+            }
+            buff.append("********************************END   TRACE********************************\n");
+            e = e.getCause();
         }
-        buff.append("********************************END   TRACE********************************\n");
         return buff.toString();
     }
 

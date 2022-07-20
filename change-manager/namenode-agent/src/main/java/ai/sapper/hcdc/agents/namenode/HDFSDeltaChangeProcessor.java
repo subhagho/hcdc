@@ -51,7 +51,6 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                     .connection(processorConfig().senderConfig.connection())
                     .type(processorConfig().senderConfig.type())
                     .partitioner(processorConfig().senderConfig.partitionerClass())
-                    .topic(processorConfig().senderConfig.topic())
                     .build();
 
             receiver = new HCDCMessagingBuilders.ReceiverBuilder()
@@ -59,7 +58,6 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                     .manager(manger)
                     .connection(processorConfig.receiverConfig.connection())
                     .type(processorConfig.receiverConfig.type())
-                    .topic(processorConfig.receiverConfig.topic())
                     .build();
 
             if (!Strings.isNullOrEmpty(processorConfig.batchTimeout)) {
@@ -71,7 +69,6 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                     .connection(processorConfig().errorConfig.connection())
                     .type(processorConfig().errorConfig.type())
                     .partitioner(processorConfig().errorConfig.partitionerClass())
-                    .topic(processorConfig().errorConfig.topic())
                     .build();
 
             return this;
@@ -146,6 +143,9 @@ public class HDFSDeltaChangeProcessor implements Runnable {
 
     private void processTxMessage(MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
         Object data = ChangeDeltaSerDe.parse(message.value());
+        DFSTransaction tnx = extractTransaction(data);
+        if (tnx != null)
+            LOG.debug(String.format("PROCESSING: [TXID=%d][OP=%s]", tnx.getTransactionId(), tnx.getOp().name()));
         try {
             if (data instanceof DFSAddFile) {
                 processAddFileTxMessage((DFSAddFile) data, message, txId);

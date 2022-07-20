@@ -8,8 +8,10 @@ import lombok.NonNull;
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -112,11 +114,16 @@ class KafkaConnectionTest {
                     for (ConsumerRecord<String, byte[]> record : records) {
                         String mid = record.key();
                         String mesg = new String(record.value());
-                        DefaultLogger.LOG.debug(String.format("[KEY=%s]: %s", record.key(), mesg));
+                        DefaultLogger.LOG.debug(String.format("[TOPIC=%s, PARTITION=%d][KEY=%s, OFFSET=%d]: %s", record.topic(),
+                                record.partition(),
+                                record.key(),
+                                record.offset(),
+                                mesg));
                         System.out.printf("[KEY=%s]: %s%n", record.key(), mesg);
+
                     }
                     DefaultLogger.LOG.info(String.format("Fetched [%d] messages...", records.count()));
-                    if (records.count() > 0) break;
+                    if (records.count() <= 0) break;
                 }
             } catch (Throwable t) {
                 DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));

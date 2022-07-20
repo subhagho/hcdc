@@ -49,10 +49,10 @@
             <kafka>
                 <name>test-kafka-producer</name>
                 <mode>Producer</mode>
-                <config>
-                    <producer>src/test/resources/producer.properties</producer>
-                    <topic>hcdc-test</topic>
-                </config>
+                <producer>
+                    <config>src/test/resources/producer.properties</config>
+                </producer>
+                <topic>hcdc-test</topic>
             </kafka>
         </connection>
         <connection>
@@ -60,10 +60,11 @@
             <kafka>
                 <name>test-kafka-consumer</name>
                 <mode>Consumer</mode>
-                <config>
-                    <consumer>src/test/resources/consumer.properties</consumer>
-                    <topic>hcdc-test</topic>
-                </config>
+                <consumer>
+                    <config>src/test/resources/consumer.properties</config>
+                    <partitions>0</partitions>
+                </consumer>
+                <topic>hcdc-test</topic>
             </kafka>
         </connection>
     </connections>

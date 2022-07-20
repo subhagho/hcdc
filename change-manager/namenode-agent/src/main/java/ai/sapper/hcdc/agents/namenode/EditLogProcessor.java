@@ -49,7 +49,6 @@ public class EditLogProcessor implements Runnable {
                     .connection(processorConfig().senderConfig.connection())
                     .type(processorConfig().senderConfig.type())
                     .partitioner(processorConfig().senderConfig.partitionerClass())
-                    .topic(processorConfig().senderConfig.topic())
                     .build();
             if (NameNodeEnv.get().hadoopConfig() == null) {
                 throw new ConfigurationException("Hadoop Configuration not initialized...");

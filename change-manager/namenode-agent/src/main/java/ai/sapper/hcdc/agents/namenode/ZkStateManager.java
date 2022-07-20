@@ -39,13 +39,19 @@ public class ZkStateManager {
     private ZookeeperConnection connection;
     private ZkStateManagerConfig config;
     private String zkPath;
+    private String zkStatePath;
     private String zkPathReplication;
     private NameNodeTxState agentTxState;
     private DistributedLock replicationLock;
+    private String instanceName;
 
     public ZkStateManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                               @NonNull ConnectionManager manger, @NonNull String namespace) throws StateManagerError {
+                               @NonNull ConnectionManager manger,
+                               @NonNull String namespace,
+                               @NonNull String instanceName) throws StateManagerError {
         try {
+            this.instanceName = instanceName;
+
             config = new ZkStateManagerConfig(xmlConfig);
             config.read();
 
@@ -59,24 +65,8 @@ public class ZkStateManager {
                 if (Strings.isNullOrEmpty(path)) {
                     throw new StateManagerError(String.format("Error creating ZK base path. [path=%s]", basePath()));
                 }
-                agentTxState = new NameNodeTxState();
-                agentTxState.setNamespace(namespace);
-                agentTxState.setLastTxId(0);
-                agentTxState.setUpdatedTime(0);
-
-                String json = JSONUtils.asString(agentTxState, NameNodeTxState.class);
-                client.setData().forPath(zkPath, json.getBytes(StandardCharsets.UTF_8));
-            } else {
-                byte[] data = client.getData().forPath(zkPath);
-                if (data == null || data.length <= 0) {
-                    throw new StateManagerError(String.format("ZooKeeper state data corrupted. [path=%s]", zkPath));
-                }
-                String json = new String(data);
-                agentTxState = JSONUtils.read(json, NameNodeTxState.class);
-                if (agentTxState.getNamespace().compareTo(namespace) != 0) {
-                    throw new StateManagerError(String.format("Invalid state data: namespace mismatch. [expected=%s][actual=%s]", namespace, agentTxState.getNamespace()));
-                }
             }
+            checkAgentState(namespace);
             zkPathReplication = PathUtils.formatZkPath(String.format("%s/%s", zkPath, Constants.ZK_PATH_REPLICATION));
             if (client.checkExists().forPath(zkPathReplication) == null) {
                 String path = client.create().creatingParentContainersIfNeeded().forPath(zkPathReplication);
@@ -91,6 +81,26 @@ public class ZkStateManager {
         }
     }
 
+    private void checkAgentState(String namespace) throws Exception {
+        CuratorFramework client = connection().client();
+        zkStatePath = PathUtils.formatZkPath(String.format("%s/%s/%s/%s", basePath(), config.module, namespace, instanceName));
+        if (client.checkExists().forPath(zkStatePath) == null) {
+            String path = client.create().creatingParentContainersIfNeeded().forPath(zkStatePath);
+            if (Strings.isNullOrEmpty(path)) {
+                throw new StateManagerError(String.format("Error creating ZK base path. [path=%s]", basePath()));
+            }
+            agentTxState = new NameNodeTxState();
+            agentTxState.setNamespace(namespace);
+            agentTxState.setLastTxId(0);
+            agentTxState.setUpdatedTime(0);
+
+            String json = JSONUtils.asString(agentTxState, NameNodeTxState.class);
+            client.setData().forPath(zkStatePath, json.getBytes(StandardCharsets.UTF_8));
+        } else {
+            readState();
+        }
+    }
+
     public NameNodeTxState initState(long txId) throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
@@ -98,21 +108,26 @@ public class ZkStateManager {
 
         synchronized (this) {
             try {
-                CuratorFramework client = connection().client();
-
                 agentTxState.setLastTxId(txId);
                 agentTxState.setProcessedTxId(txId);
                 agentTxState.setUpdatedTime(System.currentTimeMillis());
                 agentTxState.setCurrentEditsLogFile("");
 
-                String json = JSONUtils.asString(agentTxState, NameNodeTxState.class);
-                client.setData().forPath(zkPath, json.getBytes(StandardCharsets.UTF_8));
-
-                return agentTxState;
+                return update(agentTxState);
             } catch (Exception ex) {
                 throw new StateManagerError(ex);
             }
         }
+    }
+
+    private NameNodeTxState update(NameNodeTxState agentTxState) throws Exception {
+        agentTxState.setUpdatedTime(System.currentTimeMillis());
+
+        CuratorFramework client = connection().client();
+        String json = JSONUtils.asString(agentTxState, NameNodeTxState.class);
+        client.setData().forPath(zkStatePath, json.getBytes(StandardCharsets.UTF_8));
+
+        return agentTxState;
     }
 
     public NameNodeTxState update(long txId, @NonNull String currentEditsLog) throws StateManagerError {
@@ -122,16 +137,9 @@ public class ZkStateManager {
 
         synchronized (this) {
             try {
-                CuratorFramework client = connection().client();
-
                 agentTxState.setLastTxId(txId);
-                agentTxState.setUpdatedTime(System.currentTimeMillis());
                 agentTxState.setCurrentEditsLogFile(currentEditsLog);
-
-                String json = JSONUtils.asString(agentTxState, NameNodeTxState.class);
-                client.setData().forPath(zkPath, json.getBytes(StandardCharsets.UTF_8));
-
-                return agentTxState;
+                return update(agentTxState);
             } catch (Exception ex) {
                 throw new StateManagerError(ex);
             }
@@ -145,15 +153,8 @@ public class ZkStateManager {
 
         synchronized (this) {
             try {
-                CuratorFramework client = connection().client();
-
                 agentTxState.setProcessedTxId(processedTxId);
-                agentTxState.setUpdatedTime(System.currentTimeMillis());
-
-                String json = JSONUtils.asString(agentTxState, NameNodeTxState.class);
-                client.setData().forPath(zkPath, json.getBytes(StandardCharsets.UTF_8));
-
-                return agentTxState;
+                return update(agentTxState);
             } catch (Exception ex) {
                 throw new StateManagerError(ex);
             }
@@ -166,21 +167,15 @@ public class ZkStateManager {
 
         synchronized (this) {
             try {
-                CuratorFramework client = connection().client();
-
-                agentTxState.setUpdatedTime(System.currentTimeMillis());
                 agentTxState.setCurrentFSImageFile(currentFSImageFile);
-                String json = JSONUtils.asString(agentTxState, NameNodeTxState.class);
-                client.setData().forPath(zkPath, json.getBytes(StandardCharsets.UTF_8));
-
-                return agentTxState;
+                return update(agentTxState);
             } catch (Exception ex) {
                 throw new StateManagerError(ex);
             }
         }
     }
 
-    public NameNodeTxState readState() throws StateManagerError {
+    private NameNodeTxState readState() throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
         synchronized (this) {
@@ -204,7 +199,7 @@ public class ZkStateManager {
         synchronized (this) {
             try {
                 CuratorFramework client = connection().client();
-                String path = PathUtils.formatZkPath(String.format("%s/%s", zkPath, Constants.ZK_PATH_HEARTBEAT));
+                String path = PathUtils.formatZkPath(String.format("%s/%s/%s/%s", zkPath, config.module, name, Constants.ZK_PATH_HEARTBEAT));
                 if (client.checkExists().forPath(path) == null) {
                     path = client.create().creatingParentContainersIfNeeded().forPath(path);
                     if (Strings.isNullOrEmpty(path)) {
@@ -236,7 +231,7 @@ public class ZkStateManager {
 
         try {
             CuratorFramework client = connection().client();
-            String path = PathUtils.formatZkPath(String.format("%s/%s", zkPath, Constants.ZK_PATH_HEARTBEAT));
+            String path = PathUtils.formatZkPath(String.format("%s/%s/%s/%s", zkPath, config.module, name, Constants.ZK_PATH_HEARTBEAT));
             if (client.checkExists().forPath(path) != null) {
                 byte[] data = client.getData().forPath(path);
                 if (data != null && data.length > 0) {

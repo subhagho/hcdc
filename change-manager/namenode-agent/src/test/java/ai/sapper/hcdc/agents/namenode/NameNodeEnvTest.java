@@ -29,7 +29,7 @@ class NameNodeEnvTest {
             assertNotNull(NameNodeEnv.get().hdfsConnection());
             assertNotNull(NameNodeEnv.stateManager().connection());
 
-            Heartbeat hb = NameNodeEnv.stateManager().heartbeat(NameNodeEnv.get().config().nameNodeInstanceName());
+            Heartbeat hb = NameNodeEnv.stateManager().heartbeat(NameNodeEnv.get().config().instanceName());
             assertNotNull(hb);
 
             NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose();

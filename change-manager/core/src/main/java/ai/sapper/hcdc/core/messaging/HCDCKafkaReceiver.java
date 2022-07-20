@@ -1,16 +1,21 @@
 package ai.sapper.hcdc.core.messaging;
 
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
+import ai.sapper.hcdc.common.utils.JSONUtils;
+import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.connections.impl.BasicKafkaConsumer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.NonNull;
+import org.apache.curator.framework.CuratorFramework;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
+import org.mortbay.util.SingletonList;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -23,7 +28,7 @@ public class HCDCKafkaReceiver extends MessageReceiver<String, DFSChangeDelta> {
         public OffsetData(String key, ConsumerRecord<String, byte[]> record) {
             this.key = key;
             this.partition = new TopicPartition(record.topic(), record.partition());
-            this.offset = new OffsetAndMetadata(record.offset() + 1, String.format("[Key=%s]", key));
+            this.offset = new OffsetAndMetadata(record.offset(), String.format("[Key=%s]", key));
         }
     }
 
@@ -34,11 +39,84 @@ public class HCDCKafkaReceiver extends MessageReceiver<String, DFSChangeDelta> {
     private BasicKafkaConsumer consumer = null;
     private String topic;
 
-    public HCDCKafkaReceiver withTopic(String topic) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(topic));
-        this.topic = topic;
+    public void seek(TopicPartition partition, long offset) {
+        if (offset > 0) {
+            consumer.consumer().seek(partition, offset);
+        } else {
+            consumer.consumer().seekToBeginning(Collections.singletonList(partition));
+        }
+    }
 
-        return this;
+    /**
+     * @return
+     * @throws MessagingError
+     */
+    @Override
+    public MessageReceiver<String, DFSChangeDelta> init() throws MessagingError {
+        Preconditions.checkState(connection() instanceof BasicKafkaConsumer);
+        consumer = (BasicKafkaConsumer) connection();
+        cache = new ArrayBlockingQueue<>(consumer.batchSize());
+        topic = consumer.topic();
+
+        try {
+            if (!consumer.isConnected()) {
+                consumer.connect();
+            }
+
+            if (saveState()) {
+                Preconditions.checkState(zkConnection() != null);
+                Preconditions.checkState(!Strings.isNullOrEmpty(zkStatePath()));
+                if (!zkConnection().isConnected()) zkConnection().connect();
+            }
+            return this;
+        } catch (Exception ex) {
+            throw new MessagingError(ex);
+        }
+    }
+
+    private KafkaMessageState getState(long partition) throws Exception {
+        String path = getZkPath(partition);
+        CuratorFramework client = zkConnection().client();
+
+        KafkaMessageState state = null;
+        if (client.checkExists().forPath(path) == null) {
+            client.create().creatingParentContainersIfNeeded().forPath(path);
+
+            state = new KafkaMessageState();
+            state.setName(connection().name());
+            state.setPath(path);
+            state.setTopic(consumer.topic());
+            state.setPartition(partition);
+            state.setUpdateTimestamp(System.currentTimeMillis());
+
+            byte[] data = JSONUtils.asBytes(state, KafkaMessageState.class);
+            client.setData().forPath(path, data);
+        } else {
+            byte[] data = client.getData().forPath(path);
+            if (data == null || data.length == 0) {
+                throw new MessagingError(String.format("Invalid Kafka Message state. [path=%s]", path));
+            }
+            state = JSONUtils.read(data, KafkaMessageState.class);
+        }
+
+        return state;
+    }
+
+    private KafkaMessageState updateState(long partition, long offset) throws Exception {
+        KafkaMessageState state = getState(partition);
+        state.setOffset(offset);
+        state.setUpdateTimestamp(System.currentTimeMillis());
+
+        CuratorFramework client = zkConnection().client();
+        String path = getZkPath(partition);
+        byte[] data = JSONUtils.asBytes(state, KafkaMessageState.class);
+        client.setData().forPath(path, data);
+
+        return state;
+    }
+
+    private String getZkPath(long partition) {
+        return PathUtils.formatZkPath(String.format("%s/%s/%s/%d", zkStatePath(), consumer.name(), consumer.topic(), partition));
     }
 
     /**
@@ -88,7 +166,7 @@ public class HCDCKafkaReceiver extends MessageReceiver<String, DFSChangeDelta> {
     public List<MessageObject<String, DFSChangeDelta>> nextBatch(long timeout) throws MessagingError {
         checkState();
         try {
-            ConsumerRecords<String, byte[]> records = consumer.consumer().poll(timeout);
+            ConsumerRecords<String, byte[]> records = consumer.consumer().poll(Duration.ofMillis(timeout));
             if (records != null && records.count() > 0) {
                 List<MessageObject<String, DFSChangeDelta>> array = new ArrayList<>(records.count());
                 for (ConsumerRecord<String, byte[]> record : records) {
@@ -174,17 +252,9 @@ public class HCDCKafkaReceiver extends MessageReceiver<String, DFSChangeDelta> {
 
     private synchronized void checkState() {
         Preconditions.checkState(connection() != null);
-        Preconditions.checkState(connection() instanceof BasicKafkaConsumer);
         Preconditions.checkState(connection().isConnected());
-
-        if (consumer == null) {
-            consumer = (BasicKafkaConsumer) connection();
-        }
-        if (cache == null) {
-            cache = new ArrayBlockingQueue<>(consumer.batchSize());
-        }
-        if (topic == null) {
-            topic = consumer.topic();
-        }
+        Preconditions.checkState(consumer != null);
+        Preconditions.checkState(cache != null);
+        Preconditions.checkState(!Strings.isNullOrEmpty(topic));
     }
 }

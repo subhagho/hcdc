@@ -13,6 +13,8 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -104,9 +106,11 @@ public abstract class KafkaConnection implements MessageConnection {
         private static class Constants {
             private static final String CONFIG_NAME = "name";
             private static final String CONFIG_MODE = "mode";
-            public static final String CONFIG_PRODUCER_CONFIG = "config.producer";
-            public static final String CONFIG_CONSUMER_CONFIG = "config.consumer";
-            public static final String CONFIG_TOPIC = "config.topic";
+            public static final String CONFIG_FILE_CONFIG = "config";
+            public static final String CONFIG_PRODUCER_CONFIG = String.format("producer.%s", CONFIG_FILE_CONFIG);
+            public static final String CONFIG_CONSUMER = "consumer";
+            public static final String CONFIG_PARTITIONS = "partitions";
+            public static final String CONFIG_TOPIC = "topic";
         }
 
 
@@ -116,6 +120,7 @@ public abstract class KafkaConnection implements MessageConnection {
         private EKafkaClientMode mode = EKafkaClientMode.Producer;
         private String topic;
 
+        private List<Integer> partitions;
         private Map<String, String> parameters;
 
         public KafkaConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
@@ -129,7 +134,8 @@ public abstract class KafkaConnection implements MessageConnection {
             try {
                 name = get().getString(Constants.CONFIG_NAME);
                 if (Strings.isNullOrEmpty(name)) {
-                    throw new ConfigurationException(String.format("Kafka Configuration Error: missing [%s]", Constants.CONFIG_NAME));
+                    throw new ConfigurationException(String.format("Kafka Configuration Error: missing [%s]",
+                            Constants.CONFIG_NAME));
                 }
                 String s = get().getString(Constants.CONFIG_MODE);
                 if (!Strings.isNullOrEmpty(name)) {
@@ -139,7 +145,8 @@ public abstract class KafkaConnection implements MessageConnection {
                 if (mode == EKafkaClientMode.Producer) {
                     configPath = get().getString(Constants.CONFIG_PRODUCER_CONFIG);
                     if (Strings.isNullOrEmpty(configPath)) {
-                        throw new ConfigurationException(String.format("Kafka Configuration Error: missing [%s]", Constants.CONFIG_PRODUCER_CONFIG));
+                        throw new ConfigurationException(String.format("Kafka Configuration Error: missing [%s]",
+                                Constants.CONFIG_PRODUCER_CONFIG));
                     }
                     File cf = new File(configPath);
                     if (!cf.exists()) {
@@ -148,9 +155,16 @@ public abstract class KafkaConnection implements MessageConnection {
                     properties = new Properties();
                     properties.load(new FileInputStream(cf));
                 } else if (mode == EKafkaClientMode.Consumer) {
-                    configPath = get().getString(Constants.CONFIG_CONSUMER_CONFIG);
+                    HierarchicalConfiguration<ImmutableNode> cnode = get().configurationAt(Constants.CONFIG_CONSUMER);
+                    if (cnode == null) {
+                        throw new ConfigurationException(
+                                String.format("Invalid Consumer configuration: missing path. [path=%s]",
+                                        Constants.CONFIG_CONSUMER));
+                    }
+                    configPath = cnode.getString(Constants.CONFIG_FILE_CONFIG);
                     if (Strings.isNullOrEmpty(configPath)) {
-                        throw new ConfigurationException(String.format("Kafka Configuration Error: missing [%s]", Constants.CONFIG_CONSUMER_CONFIG));
+                        throw new ConfigurationException(String.format("Kafka Configuration Error: missing [%s]",
+                                Constants.CONFIG_FILE_CONFIG));
                     }
                     File cf = new File(configPath);
                     if (!cf.exists()) {
@@ -158,6 +172,21 @@ public abstract class KafkaConnection implements MessageConnection {
                     }
                     properties = new Properties();
                     properties.load(new FileInputStream(cf));
+
+                    String ps = null;
+                    partitions = new ArrayList<>();
+                    if (cnode.containsKey(Constants.CONFIG_PARTITIONS)) {
+                        ps = cnode.getString(Constants.CONFIG_PARTITIONS);
+                    }
+                    if (!Strings.isNullOrEmpty(ps)) {
+                        String[] parts = ps.split(";");
+                        for (String part : parts) {
+                            Integer p = Integer.parseInt(part);
+                            partitions.add(p);
+                        }
+                    } else {
+                        partitions.add(0);
+                    }
                 }
 
                 topic = get().getString(Constants.CONFIG_TOPIC);

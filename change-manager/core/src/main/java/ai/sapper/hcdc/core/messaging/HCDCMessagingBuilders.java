@@ -2,6 +2,7 @@ package ai.sapper.hcdc.core.messaging;
 
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
+import ai.sapper.hcdc.core.connections.ZookeeperConnection;
 import ai.sapper.hcdc.core.connections.impl.BasicKafkaConsumer;
 import ai.sapper.hcdc.core.connections.impl.BasicKafkaProducer;
 import com.google.common.base.Preconditions;
@@ -33,7 +34,6 @@ public class HCDCMessagingBuilders {
     public static class SenderBuilder {
         private String type;
         private String connection;
-        private String topic;
         private String partitioner;
         private HierarchicalConfiguration<ImmutableNode> config;
         private ConnectionManager manager;
@@ -71,7 +71,6 @@ public class HCDCMessagingBuilders {
                 }
 
                 return new HCDCKafkaSender()
-                        .withTopic(topic)
                         .withPartitioner(part)
                         .withConnection(kc);
             } catch (MessagingError me) {
@@ -88,7 +87,10 @@ public class HCDCMessagingBuilders {
     public static class ReceiverBuilder {
         private String type;
         private String connection;
-        private String topic;
+        private ZookeeperConnection zkConnection;
+        private String zkStatePath;
+        private boolean saveState = false;
+
         private HierarchicalConfiguration<ImmutableNode> config;
         private ConnectionManager manager;
 
@@ -102,7 +104,7 @@ public class HCDCMessagingBuilders {
                     throw new MessagingError(String.format("Connection type not supported. [type=%s]", type));
                 }
                 if (ct == EConnectionType.Kafka) {
-                    return buildKafka();
+                    return buildKafka().init();
                 }
                 throw new MessagingError(String.format("Connection type not implemented. [type=%s]", ct.name()));
             } catch (MessagingError me) {
@@ -120,7 +122,11 @@ public class HCDCMessagingBuilders {
             if (!kc.isConnected()) {
                 kc.connect();
             }
-            return new HCDCKafkaReceiver().withTopic(topic).withConnection(kc);
+            return new HCDCKafkaReceiver()
+                    .withConnection(kc)
+                    .withSaveState(saveState)
+                    .withZkPath(zkStatePath)
+                    .withZookeeperConnection(zkConnection);
         }
     }
 }

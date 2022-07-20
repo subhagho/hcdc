@@ -17,18 +17,15 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
-import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 @Getter
 @Accessors(fluent = true)
@@ -75,7 +72,7 @@ public class NameNodeEnv {
                 hadoopConfig = new HadoopEnvConfig(config.hadoopHome,
                         config.hadoopConfFile,
                         config.namespace,
-                        config.nameNodeInstanceName);
+                        config.instanceName);
                 hadoopConfig.read();
                 adminClient = new NameNodeAdminClient(hadoopConfig.nameNodeAdminUrl(), config.useSSL);
                 NameNodeStatus status = adminClient().status();
@@ -87,11 +84,11 @@ public class NameNodeEnv {
             }
 
             stateManager = config.stateManagerClass.newInstance();
-            stateManager.init(configNode, connectionManager, config.namespace);
+            stateManager.init(configNode, connectionManager, config.namespace, config.instanceName);
 
             readLocks();
 
-            stateManager.heartbeat(config.nameNodeInstanceName, agentState);
+            stateManager.heartbeat(config.instanceName, agentState);
 
             state.state(ENameNEnvState.Initialized);
             return this;
@@ -123,7 +120,7 @@ public class NameNodeEnv {
         }
         if (state.isAvailable()) {
             try {
-                stateManager.heartbeat(config.nameNodeInstanceName, agentState);
+                stateManager.heartbeat(config.instanceName, agentState);
             } catch (Exception ex) {
                 DefaultLogger.LOG.error(ex.getLocalizedMessage());
                 DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
@@ -232,7 +229,7 @@ public class NameNodeEnv {
         }
 
         private String namespace;
-        private String nameNodeInstanceName;
+        private String instanceName;
         private String connectionConfigPath;
         private String hdfsAdminConnection;
         private String hadoopHome;
@@ -254,8 +251,8 @@ public class NameNodeEnv {
                 if (Strings.isNullOrEmpty(namespace)) {
                     throw new ConfigurationException(String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_NAMESPACE));
                 }
-                nameNodeInstanceName = get().getString(Constants.CONFIG_INSTANCE);
-                if (Strings.isNullOrEmpty(nameNodeInstanceName)) {
+                instanceName = get().getString(Constants.CONFIG_INSTANCE);
+                if (Strings.isNullOrEmpty(instanceName)) {
                     throw new ConfigurationException(String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_INSTANCE));
                 }
                 connectionConfigPath = get().getString(Constants.CONFIG_CONNECTIONS);

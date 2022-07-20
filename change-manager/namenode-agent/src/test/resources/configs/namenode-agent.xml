@@ -2,7 +2,7 @@
 <configuration>
     <agent>
         <namespace>ha-cluster</namespace>
-        <instance>nn1</instance>
+        <instance>edits-reader</instance>
         <hadoop>
             <home>/opt/hadoop</home>
             <config>src/test/resources/hdfs-site.xml</config>
@@ -100,10 +100,10 @@
                 <kafka>
                     <name>edits-kafka-queue</name>
                     <mode>Producer</mode>
-                    <config>
-                        <producer>src/test/resources/producer.properties</producer>
-                        <topic>hcdc-test</topic>
-                    </config>
+                    <producer>
+                        <config>src/test/resources/producer.properties</config>
+                    </producer>
+                    <topic>ha-cluster-edits</topic>
                 </kafka>
             </connection>
             <!--connection>
