@@ -4,6 +4,7 @@
         <namespace>ha-cluster</namespace>
         <instance>edits-reader</instance>
         <hadoop>
+            <name>nn1</name>
             <home>/opt/hadoop</home>
             <config>src/test/resources/hdfs-site.xml</config>
         </hadoop>

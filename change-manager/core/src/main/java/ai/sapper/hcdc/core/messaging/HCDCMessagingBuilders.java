@@ -93,6 +93,7 @@ public class HCDCMessagingBuilders {
 
         private HierarchicalConfiguration<ImmutableNode> config;
         private ConnectionManager manager;
+        private int batchSize = -1;
 
         public MessageReceiver<String, DFSChangeDelta> build() throws MessagingError {
             Preconditions.checkArgument(!Strings.isNullOrEmpty(type));

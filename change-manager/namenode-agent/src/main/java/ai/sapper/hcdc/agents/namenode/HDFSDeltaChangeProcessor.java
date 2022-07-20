@@ -58,6 +58,10 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                     .manager(manger)
                     .connection(processorConfig.receiverConfig.connection())
                     .type(processorConfig.receiverConfig.type())
+                    .saveState(true)
+                    .zkConnection(stateManager().connection())
+                    .zkStatePath(stateManager.zkPath())
+                    .batchSize(processorConfig.receiverConfig.batchSize())
                     .build();
 
             if (!Strings.isNullOrEmpty(processorConfig.batchTimeout)) {

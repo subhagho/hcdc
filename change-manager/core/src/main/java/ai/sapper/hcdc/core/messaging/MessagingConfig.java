@@ -17,12 +17,14 @@ public class MessagingConfig {
         public static final String CONFIG_CONNECTION_TYPE = "connectionType";
         public static final String CONFIG_CONNECTION = "connection";
         public static final String CONFIG_PARTITIONER_CLASS = "partitioner";
+        public static final String CONFIG_BATCH_SIZE = "batchSize";
     }
     private HierarchicalConfiguration<ImmutableNode> config;
 
     private String type;
     private String connection;
     private String partitionerClass;
+    private int batchSize = -1;
 
     public void read(@NonNull HierarchicalConfiguration<ImmutableNode> config) throws ConfigurationException {
         type = config.getString(Constants.CONFIG_CONNECTION_TYPE);
@@ -35,7 +37,10 @@ public class MessagingConfig {
         }
         if (config.containsKey(Constants.CONFIG_PARTITIONER_CLASS))
             partitionerClass = config.getString(Constants.CONFIG_PARTITIONER_CLASS);
-
+        if (config.containsKey(Constants.CONFIG_BATCH_SIZE)) {
+            String s = config.getString(Constants.CONFIG_BATCH_SIZE);
+            batchSize = Integer.parseInt(s);
+        }
         this.config = config;
     }
 }

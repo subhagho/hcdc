@@ -3,6 +3,7 @@ package ai.sapper.hcdc.core.messaging;
 import ai.sapper.hcdc.core.connections.MessageConnection;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -28,9 +29,9 @@ public abstract class MessageReceiver<I, M> implements Closeable {
     }
 
     public MessageReceiver<I, M> withBatchSize(int batchSize) {
-        Preconditions.checkArgument(batchSize > 0);
-        this.batchSize = batchSize;
-
+        if (batchSize > 0) {
+            this.batchSize = batchSize;
+        }
         return this;
     }
 

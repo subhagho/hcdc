@@ -215,6 +215,7 @@ public class NameNodeEnv {
             private static final String CONFIG_CONNECTION_HDFS = "connections.hdfs-admin";
 
             private static final String CONFIG_HADOOP_HOME = "hadoop.home";
+            private static final String CONFIG_HADOOP_INSTANCE = "hadoop.instance";
 
             private static final String CONFIG_HADOOP_CONFIG = "hadoop.config";
 

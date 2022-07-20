@@ -34,10 +34,12 @@ public class HCDCKafkaReceiver extends MessageReceiver<String, DFSChangeDelta> {
 
     private static final long DEFAULT_RECEIVE_TIMEOUT = 30000; // 30 secs default timeout.
     private Queue<MessageObject<String, DFSChangeDelta>> cache = null;
-    private Map<String, OffsetData> offsetMap = new HashMap<>();
+    private final Map<String, OffsetData> offsetMap = new HashMap<>();
 
     private BasicKafkaConsumer consumer = null;
     private String topic;
+    private KafkaStateManager stateManager = null;
+    private Map<Integer, KafkaMessageState> states = null;
 
     public void seek(TopicPartition partition, long offset) {
         if (offset > 0) {
@@ -66,7 +68,21 @@ public class HCDCKafkaReceiver extends MessageReceiver<String, DFSChangeDelta> {
             if (saveState()) {
                 Preconditions.checkState(zkConnection() != null);
                 Preconditions.checkState(!Strings.isNullOrEmpty(zkStatePath()));
-                if (!zkConnection().isConnected()) zkConnection().connect();
+                if (!zkConnection().isConnected())
+                    zkConnection().connect();
+                stateManager = new KafkaStateManager(consumer.name(), topic, zkConnection(), zkStatePath());
+                states = new HashMap<>();
+                Set<TopicPartition> partitions = consumer.consumer().assignment();
+                if (partitions == null || partitions.isEmpty()) {
+                    throw new MessagingError(String.format("No assigned partitions found. [name=%s][topic=%s]",
+                            consumer.name(), topic));
+                }
+                for (TopicPartition partition : partitions) {
+                    KafkaMessageState state = stateManager.getState(partition.partition());
+                    Preconditions.checkNotNull(state);
+                    seek(partition, state.getOffset());
+                    states.put(partition.partition(), state);
+                }
             }
             return this;
         } catch (Exception ex) {
@@ -74,49 +90,20 @@ public class HCDCKafkaReceiver extends MessageReceiver<String, DFSChangeDelta> {
         }
     }
 
-    private KafkaMessageState getState(long partition) throws Exception {
-        String path = getZkPath(partition);
-        CuratorFramework client = zkConnection().client();
-
-        KafkaMessageState state = null;
-        if (client.checkExists().forPath(path) == null) {
-            client.create().creatingParentContainersIfNeeded().forPath(path);
-
-            state = new KafkaMessageState();
-            state.setName(connection().name());
-            state.setPath(path);
-            state.setTopic(consumer.topic());
-            state.setPartition(partition);
-            state.setUpdateTimestamp(System.currentTimeMillis());
-
-            byte[] data = JSONUtils.asBytes(state, KafkaMessageState.class);
-            client.setData().forPath(path, data);
-        } else {
-            byte[] data = client.getData().forPath(path);
-            if (data == null || data.length == 0) {
-                throw new MessagingError(String.format("Invalid Kafka Message state. [path=%s]", path));
+    private KafkaMessageState updateState(int partition, long offset) throws Exception {
+        if (saveState()) {
+            KafkaMessageState state = states.get(partition);
+            if (state == null) {
+                throw new MessagingError(
+                        String.format("Kafka State not registered for partition. [partition=%d][topic=%s]",
+                                partition, topic));
             }
-            state = JSONUtils.read(data, KafkaMessageState.class);
+            state = stateManager.updateState(partition, offset);
+            states.put(partition, state);
+
+            return state;
         }
-
-        return state;
-    }
-
-    private KafkaMessageState updateState(long partition, long offset) throws Exception {
-        KafkaMessageState state = getState(partition);
-        state.setOffset(offset);
-        state.setUpdateTimestamp(System.currentTimeMillis());
-
-        CuratorFramework client = zkConnection().client();
-        String path = getZkPath(partition);
-        byte[] data = JSONUtils.asBytes(state, KafkaMessageState.class);
-        client.setData().forPath(path, data);
-
-        return state;
-    }
-
-    private String getZkPath(long partition) {
-        return PathUtils.formatZkPath(String.format("%s/%s/%s/%d", zkStatePath(), consumer.name(), consumer.topic(), partition));
+        return null;
     }
 
     /**
@@ -199,6 +186,7 @@ public class HCDCKafkaReceiver extends MessageReceiver<String, DFSChangeDelta> {
                 if (offsetMap.containsKey(messageId)) {
                     OffsetData od = offsetMap.get(messageId);
                     currentOffsets.put(od.partition, od.offset);
+                    updateState(od.partition.partition(), od.offset.offset());
                 } else {
                     throw new MessagingError(String.format("No record offset found for key. [key=%s]", messageId));
                 }
@@ -223,6 +211,8 @@ public class HCDCKafkaReceiver extends MessageReceiver<String, DFSChangeDelta> {
                         new HashMap<>();
                 currentOffsets.put(od.partition, od.offset);
                 consumer.consumer().commitSync(currentOffsets);
+
+                updateState(od.partition.partition(), od.offset.offset());
             } else {
                 throw new MessagingError(String.format("No record offset found for key. [key=%s]", messageId));
             }
