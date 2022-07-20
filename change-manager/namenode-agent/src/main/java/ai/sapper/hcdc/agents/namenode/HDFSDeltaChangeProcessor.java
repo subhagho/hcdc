@@ -684,8 +684,14 @@ public class HDFSDeltaChangeProcessor implements Runnable {
         if (message.mode() == MessageObject.MessageMode.New) {
             NameNodeTxState txState = stateManager.agentTxState();
             if (txState.getProcessedTxId() + 1 != txId) {
-                throw new Exception(String.format("Detected missing transaction. [expected TX ID=%d][actual TX ID=%d]",
-                        (txState.getProcessedTxId() + 1), txId));
+                if (txId <= txState.getProcessedTxId()) {
+                    throw new InvalidMessageError(message.id(),
+                            String.format("Duplicate message: Transaction already processed. [TXID=%d][CURRENT=%d]",
+                                    txId, txState.getProcessedTxId()));
+                } else {
+                    throw new Exception(String.format("Detected missing transaction. [expected TX ID=%d][actual TX ID=%d]",
+                            (txState.getProcessedTxId() + 1), txId));
+                }
             }
         }
         return txId;

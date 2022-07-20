@@ -161,7 +161,7 @@ public class HCDCKafkaReceiver extends MessageReceiver<String, DFSChangeDelta> {
                     KafkaMessage<String, DFSChangeDelta> response = new KafkaMessage<>(record, cd);
 
                     array.add(response);
-                    offsetMap.put(record.key(), new OffsetData(record.key(), record));
+                    offsetMap.put(response.id(), new OffsetData(record.key(), record));
                 }
                 return array;
             }
