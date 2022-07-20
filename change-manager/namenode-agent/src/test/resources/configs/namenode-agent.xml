@@ -16,7 +16,6 @@
         </connections>
         <state>
             <manager>
-                <module>NameNodeAgent</module>
                 <basePath>/hcdc/state</basePath>
                 <connection>zk-state-connection</connection>
             </manager>
@@ -40,7 +39,7 @@
                 <lock-node>NN-GLOBAL-LOCK</lock-node>
             </lock>
             <lock>
-                <name>replication</name>
+                <name>LOCK_REPLICATION</name>
                 <connection>zk-state-connection</connection>
                 <lock-node>NN-REPLICATION-LOCK</lock-node>
             </lock>

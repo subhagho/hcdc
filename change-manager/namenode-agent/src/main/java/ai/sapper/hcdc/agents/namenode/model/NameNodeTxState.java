@@ -10,8 +10,5 @@ import lombok.ToString;
 public class NameNodeTxState {
     private String namespace;
     private long updatedTime;
-    private long lastTxId = 0;
     private long processedTxId = 0;
-    private String currentEditsLogFile;
-    private String currentFSImageFile;
 }

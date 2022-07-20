@@ -97,7 +97,9 @@ public class NameNodeReplicator {
                 stateManager.deleteAll();
                 copy();
                 NameNodeTxState txState = stateManager.initState(txnId);
-                DefaultLogger.LOG.info(String.format("NameNode replication done. [state=%s]", txState));
+                String tp = stateManager.updateSnapshotTxId(txnId);
+
+                DefaultLogger.LOG.info(String.format("NameNode replication done. [state=%s][TXID PATH=%s]", txState, tp));
             } finally {
                 NameNodeEnv.globalLock().unlock();
             }

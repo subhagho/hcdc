@@ -31,9 +31,11 @@ public class ZkStateManager {
     public static class Constants {
         public static final String ZK_PATH_HEARTBEAT = "/heartbeat";
         public static final String ZK_PATH_FILES = "/files";
+        public static final String ZK_PATH_PROCESS_STATE = "state";
         public static final String ZK_PATH_REPLICATION = "/replication";
 
-        public static final String LOCK_REPLICATION = "replication";
+        public static final String LOCK_REPLICATION = "LOCK_REPLICATION";
+        public static final String ZK_PATH_SNAPSHOT_ID = "snapshotId";
     }
 
     private ZookeeperConnection connection;
@@ -41,6 +43,7 @@ public class ZkStateManager {
     private String zkPath;
     private String zkStatePath;
     private String zkPathReplication;
+    private String zkFSPath;
     private NameNodeTxState agentTxState;
     private DistributedLock replicationLock;
     private String module;
@@ -68,8 +71,16 @@ public class ZkStateManager {
                     throw new StateManagerError(String.format("Error creating ZK base path. [path=%s]", basePath()));
                 }
             }
-            checkAgentState(module);
-            zkPathReplication = PathUtils.formatZkPath(String.format("%s/%s", zkPath, Constants.ZK_PATH_REPLICATION));
+            zkFSPath = PathUtils.formatZkPath(String.format("%s/%s/%s", basePath(), module, Constants.ZK_PATH_FILES));
+            if (client.checkExists().forPath(zkFSPath) == null) {
+                String path = client.create().creatingParentContainersIfNeeded().forPath(zkFSPath);
+                if (Strings.isNullOrEmpty(path)) {
+                    throw new StateManagerError(String.format("Error creating ZK base path. [path=%s]", basePath()));
+                }
+            }
+            checkAgentState();
+            zkPathReplication = PathUtils.formatZkPath(
+                    String.format("%s/%s/%s", basePath(), module, Constants.ZK_PATH_REPLICATION));
             if (client.checkExists().forPath(zkPathReplication) == null) {
                 String path = client.create().creatingParentContainersIfNeeded().forPath(zkPathReplication);
                 if (Strings.isNullOrEmpty(path)) {
@@ -83,9 +94,10 @@ public class ZkStateManager {
         }
     }
 
-    private void checkAgentState(String module) throws Exception {
+    private void checkAgentState() throws Exception {
         CuratorFramework client = connection().client();
-        zkStatePath = PathUtils.formatZkPath(String.format("%s/%s/%s", basePath(), module, instance));
+        zkStatePath = PathUtils.formatZkPath(
+                String.format("%s/%s", zkPath, Constants.ZK_PATH_PROCESS_STATE));
         if (client.checkExists().forPath(zkStatePath) == null) {
             String path = client.create().creatingParentContainersIfNeeded().forPath(zkStatePath);
             if (Strings.isNullOrEmpty(path)) {
@@ -93,13 +105,12 @@ public class ZkStateManager {
             }
             agentTxState = new NameNodeTxState();
             agentTxState.setNamespace(module);
-            agentTxState.setLastTxId(0);
             agentTxState.setUpdatedTime(0);
 
             String json = JSONUtils.asString(agentTxState, NameNodeTxState.class);
             client.setData().forPath(zkStatePath, json.getBytes(StandardCharsets.UTF_8));
         } else {
-            readState();
+            agentTxState = readState();
         }
     }
 
@@ -110,10 +121,8 @@ public class ZkStateManager {
 
         synchronized (this) {
             try {
-                agentTxState.setLastTxId(txId);
                 agentTxState.setProcessedTxId(txId);
                 agentTxState.setUpdatedTime(System.currentTimeMillis());
-                agentTxState.setCurrentEditsLogFile("");
 
                 return update(agentTxState);
             } catch (Exception ex) {
@@ -132,22 +141,6 @@ public class ZkStateManager {
         return agentTxState;
     }
 
-    public NameNodeTxState update(long txId, @NonNull String currentEditsLog) throws StateManagerError {
-        Preconditions.checkNotNull(connection);
-        Preconditions.checkState(connection.isConnected());
-        Preconditions.checkArgument(txId > agentTxState.getLastTxId());
-
-        synchronized (this) {
-            try {
-                agentTxState.setLastTxId(txId);
-                agentTxState.setCurrentEditsLogFile(currentEditsLog);
-                return update(agentTxState);
-            } catch (Exception ex) {
-                throw new StateManagerError(ex);
-            }
-        }
-    }
-
     public NameNodeTxState update(long processedTxId) throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
@@ -163,27 +156,13 @@ public class ZkStateManager {
         }
     }
 
-    public NameNodeTxState update(@NonNull String currentFSImageFile) throws StateManagerError {
-        Preconditions.checkNotNull(connection);
-        Preconditions.checkState(connection.isConnected());
-
-        synchronized (this) {
-            try {
-                agentTxState.setCurrentFSImageFile(currentFSImageFile);
-                return update(agentTxState);
-            } catch (Exception ex) {
-                throw new StateManagerError(ex);
-            }
-        }
-    }
-
     private NameNodeTxState readState() throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
         synchronized (this) {
             try {
                 CuratorFramework client = connection().client();
-                byte[] data = client.getData().forPath(zkPath);
+                byte[] data = client.getData().forPath(zkStatePath);
                 if (data != null && data.length > 0) {
                     String json = new String(data, StandardCharsets.UTF_8);
                     return JSONUtils.read(json, NameNodeTxState.class);
@@ -230,7 +209,6 @@ public class ZkStateManager {
     public Heartbeat heartbeat(@NonNull String name) throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
-
         try {
             CuratorFramework client = connection().client();
             String path = getHeartbeatPath(name);
@@ -248,7 +226,47 @@ public class ZkStateManager {
     }
 
     private String getHeartbeatPath(String name) {
-        return PathUtils.formatZkPath(String.format("%s/%s/%s/%s", zkPath, module, name, Constants.ZK_PATH_HEARTBEAT));
+        return PathUtils.formatZkPath(String.format("%s/%s/%s", zkPath, Constants.ZK_PATH_HEARTBEAT, name));
+    }
+
+    public String updateSnapshotTxId(long txid) throws StateManagerError {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
+        try {
+            CuratorFramework client = connection().client();
+            String path = getSnapshotIDPath();
+            if (client.checkExists().forPath(path) == null) {
+                client.create().creatingParentContainersIfNeeded().forPath(path);
+            }
+            byte[] data = String.valueOf(txid).getBytes(StandardCharsets.UTF_8);
+            client.setData().forPath(path, data);
+            return path;
+        } catch (Exception ex) {
+            throw new StateManagerError(ex);
+        }
+    }
+
+    public long getSnapshotTxId() throws StateManagerError {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
+        try {
+            CuratorFramework client = connection().client();
+            String path = getSnapshotIDPath();
+            if (client.checkExists().forPath(path) != null) {
+                byte[] data = client.getData().forPath(path);
+                if (data != null && data.length > 0) {
+                    String v = new String(data, StandardCharsets.UTF_8);
+                    return Long.parseLong(v);
+                }
+            }
+            return -1;
+        } catch (Exception ex) {
+            throw new StateManagerError(ex);
+        }
+    }
+
+    private String getSnapshotIDPath() {
+        return PathUtils.formatZkPath(String.format("%s/%s/%s", basePath(), module, Constants.ZK_PATH_SNAPSHOT_ID));
     }
 
     public DFSFileState create(@NonNull String path,
@@ -298,6 +316,8 @@ public class ZkStateManager {
 
     public DFSFileState updateState(@NonNull String path, @NonNull EFileState state)
             throws StateManagerError {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
         synchronized (this) {
             try {
                 CuratorFramework client = connection().client();
@@ -315,6 +335,8 @@ public class ZkStateManager {
 
     public DFSFileState updateState(@NonNull String path, long blockId, @NonNull EBlockState state)
             throws StateManagerError {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
         synchronized (this) {
             try {
                 CuratorFramework client = connection().client();
@@ -433,6 +455,8 @@ public class ZkStateManager {
     }
 
     public DFSFileState compact(@NonNull String hdfsPath, long age) throws StateManagerError {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
         synchronized (this) {
             DFSFileState fileState = get(hdfsPath);
             if (fileState == null) {
@@ -505,7 +529,7 @@ public class ZkStateManager {
             CuratorFramework client = connection().client();
             String path = getFilePath(hdfsPath);
             if (client.checkExists().forPath(path) == null) {
-                throw new StateManagerError(String.format("File record already exists. [path=%s]", hdfsPath));
+                throw new StateManagerError(String.format("File record not found. [path=%s]", hdfsPath));
             }
             byte[] data = client.getData().forPath(path);
             if (data != null && data.length > 0) {
@@ -519,8 +543,7 @@ public class ZkStateManager {
     }
 
     public DFSReplicationState get(long inodeId) throws StateManagerError {
-        Preconditions.checkNotNull(connection);
-        Preconditions.checkState(connection.isConnected());
+        checkState();
         try {
             CuratorFramework client = connection().client();
             String path = PathUtils.formatZkPath(String.format("%s/%d", zkPathReplication, inodeId));
@@ -593,8 +616,7 @@ public class ZkStateManager {
     }
 
     public boolean delete(long inodeId) throws StateManagerError {
-        Preconditions.checkNotNull(connection);
-        Preconditions.checkState(connection.isConnected());
+        checkState();
         try {
             replicationLock.lock();
             CuratorFramework client = connection().client();
@@ -633,8 +655,7 @@ public class ZkStateManager {
     }
 
     public List<String> findFiles(@NonNull String hdfsPath) throws StateManagerError {
-        Preconditions.checkNotNull(connection);
-        Preconditions.checkState(connection.isConnected());
+        checkState();
         try {
             CuratorFramework client = connection().client();
             String zpath = getFilePath(hdfsPath);
@@ -661,9 +682,9 @@ public class ZkStateManager {
 
     public String getFilePath(String hdfsPath) {
         if (Strings.isNullOrEmpty(hdfsPath)) {
-            return PathUtils.formatZkPath(String.format("%s/%s", zkPath, Constants.ZK_PATH_FILES));
+            return zkFSPath;
         } else {
-            return PathUtils.formatZkPath(String.format("%s/%s/%s", zkPath, Constants.ZK_PATH_FILES, hdfsPath));
+            return PathUtils.formatZkPath(String.format("%s/%s", zkFSPath, hdfsPath));
         }
     }
 
@@ -674,7 +695,8 @@ public class ZkStateManager {
         if (replicationLock == null) {
             replicationLock = NameNodeEnv.get().lock(Constants.LOCK_REPLICATION);
             if (replicationLock == null) {
-                throw new RuntimeException(String.format("Replication Lock not found. [name=%s]", Constants.LOCK_REPLICATION));
+                throw new RuntimeException(
+                        String.format("Distributed Lock instance not found. [name=%s]", Constants.LOCK_REPLICATION));
             }
         }
     }

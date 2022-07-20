@@ -62,13 +62,13 @@ public class NameNodeEnv {
             connectionManager = new ConnectionManager();
             connectionManager.init(xmlConfig, config.connectionConfigPath);
 
-            hdfsConnection = connectionManager.getConnection(config.hdfsAdminConnection, HdfsConnection.class);
-            if (hdfsConnection == null) {
-                throw new ConfigurationException("HDFS Admin connection not found.");
-            }
-            if (!hdfsConnection.isConnected()) hdfsConnection.connect();
+            if (config().readHadoopConfig) {
+                hdfsConnection = connectionManager.getConnection(config.hdfsAdminConnection, HdfsConnection.class);
+                if (hdfsConnection == null) {
+                    throw new ConfigurationException("HDFS Admin connection not found.");
+                }
+                if (!hdfsConnection.isConnected()) hdfsConnection.connect();
 
-            if (config().needHadoop) {
                 hadoopConfig = new HadoopEnvConfig(config.hadoopHome,
                         config.hadoopConfFile,
                         config.hadoopNamespace,
@@ -84,13 +84,13 @@ public class NameNodeEnv {
             }
 
             stateManager = config.stateManagerClass.newInstance();
-            stateManager.init(configNode, connectionManager, config.hadoopNamespace, config.hadoopInstanceName);
+            stateManager.init(configNode, connectionManager, config.module, config.instance);
 
             readLocks();
-
-            stateManager.heartbeat(config.hadoopInstanceName, agentState);
-
             state.state(ENameNEnvState.Initialized);
+
+            stateManager.heartbeat(config.instance, agentState);
+
             return this;
         } catch (Throwable t) {
             state.error(t);
@@ -108,7 +108,7 @@ public class NameNodeEnv {
                 path = node.getString(NameNEnvConfig.Constants.CONFIG_LOCK_NODE);
             }
             ZookeeperConnection connection = connectionManager.getConnection(conn, ZookeeperConnection.class);
-            DistributedLock lock = new DistributedLock(config.hadoopNamespace, path, stateManager.basePath()).withConnection(connection);
+            DistributedLock lock = new DistributedLock(config.module, path, stateManager.basePath()).withConnection(connection);
             locks.put(name, lock);
         }
     }
@@ -120,7 +120,7 @@ public class NameNodeEnv {
         }
         if (state.isAvailable()) {
             try {
-                stateManager.heartbeat(config.hadoopInstanceName, agentState);
+                stateManager.heartbeat(config.instance, agentState);
             } catch (Exception ex) {
                 DefaultLogger.LOG.error(ex.getLocalizedMessage());
                 DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
@@ -227,7 +227,7 @@ public class NameNodeEnv {
             private static final String CONFIG_LOCK_CONN = "connection";
             private static final String CONFIG_LOCK_NODE = "lock-node";
             private static final String LOCK_GLOBAL = "global";
-            private static final String CONFIG_IS_AGENT = "editsReader";
+            private static final String CONFIG_LOAD_HADOOP = "needHadoop";
         }
 
         private String module;
@@ -239,7 +239,7 @@ public class NameNodeEnv {
         private String hadoopHome;
         private String hadoopConfFile;
         private boolean hadoopUseSSL = true;
-        private boolean needHadoop = true;
+        private boolean readHadoopConfig = true;
         private Class<? extends ZkStateManager> stateManagerClass = ZkStateManager.class;
 
         public NameNEnvConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
@@ -261,15 +261,20 @@ public class NameNodeEnv {
                     throw new ConfigurationException(
                             String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_INSTANCE));
                 }
-                String ss = get().getString(Constants.CONFIG_IS_AGENT);
+                String ss = get().getString(Constants.CONFIG_LOAD_HADOOP);
                 if (!Strings.isNullOrEmpty(ss)) {
-                    needHadoop = Boolean.parseBoolean(ss);
+                    readHadoopConfig = Boolean.parseBoolean(ss);
                 }
                 String s = get().getString(Constants.CONFIG_STATE_MANAGER_TYPE);
                 if (!Strings.isNullOrEmpty(s)) {
                     stateManagerClass = (Class<? extends ZkStateManager>) Class.forName(s);
                 }
-                if (needHadoop)
+                connectionConfigPath = get().getString(Constants.CONFIG_CONNECTIONS);
+                if (Strings.isNullOrEmpty(connectionConfigPath)) {
+                    throw new ConfigurationException(
+                            String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_CONNECTIONS));
+                }
+                if (readHadoopConfig)
                     readHadoopConfigs();
             } catch (Throwable t) {
                 throw new ConfigurationException("Error processing HDFS configuration.", t);
@@ -287,17 +292,12 @@ public class NameNodeEnv {
                 throw new ConfigurationException(
                         String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_INSTANCE));
             }
-            connectionConfigPath = get().getString(Constants.CONFIG_CONNECTIONS);
-            if (Strings.isNullOrEmpty(connectionConfigPath)) {
-                throw new ConfigurationException(
-                        String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_CONNECTIONS));
-            }
+
             hdfsAdminConnection = get().getString(Constants.CONFIG_CONNECTION_HDFS);
             if (Strings.isNullOrEmpty(hdfsAdminConnection)) {
                 throw new ConfigurationException(
                         String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_CONNECTION_HDFS));
             }
-
             hadoopHome = get().getString(Constants.CONFIG_HADOOP_HOME);
             if (Strings.isNullOrEmpty(hadoopHome)) {
                 hadoopHome = System.getProperty("HADOOP_HOME");

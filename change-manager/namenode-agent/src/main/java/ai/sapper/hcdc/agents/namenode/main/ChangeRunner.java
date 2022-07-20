@@ -52,6 +52,8 @@ public class ChangeRunner {
             runner.runner.join();
         } catch (Throwable t) {
             t.printStackTrace();
+            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOG.error(t.getLocalizedMessage());
         }
     }
 }

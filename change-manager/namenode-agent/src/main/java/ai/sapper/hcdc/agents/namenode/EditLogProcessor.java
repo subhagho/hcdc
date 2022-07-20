@@ -122,8 +122,7 @@ public class EditLogProcessor implements Runnable {
                     editsDir.getAbsolutePath()));
         }
         long ltx = DFSEditsFileFinder.findSeenTxID(editsDir.getAbsolutePath());
-        stateManager.update(ltx, cf);
-        LOG.debug(String.format("Current Edits File: %s, Last Seen TXID=%d", cf, ltx));
+        LOG.info(String.format("Current Edits File: %s, Last Seen TXID=%d", cf, ltx));
 
         return txId;
     }

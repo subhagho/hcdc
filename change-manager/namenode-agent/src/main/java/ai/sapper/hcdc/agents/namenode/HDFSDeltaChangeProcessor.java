@@ -75,6 +75,11 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                     .partitioner(processorConfig().errorConfig.partitionerClass())
                     .build();
 
+            long txId = stateManager().getSnapshotTxId();
+            NameNodeTxState state = stateManager.agentTxState();
+            if (txId > state.getProcessedTxId()) {
+                state = stateManager.update(txId);
+            }
             return this;
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
