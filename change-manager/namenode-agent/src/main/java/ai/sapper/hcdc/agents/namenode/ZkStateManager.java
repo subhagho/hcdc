@@ -43,14 +43,16 @@ public class ZkStateManager {
     private String zkPathReplication;
     private NameNodeTxState agentTxState;
     private DistributedLock replicationLock;
-    private String instanceName;
+    private String module;
+    private String instance;
 
     public ZkStateManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                                @NonNull ConnectionManager manger,
-                               @NonNull String namespace,
-                               @NonNull String instanceName) throws StateManagerError {
+                               @NonNull String module,
+                               @NonNull String instance) throws StateManagerError {
         try {
-            this.instanceName = instanceName;
+            this.instance = instance;
+            this.module = module;
 
             config = new ZkStateManagerConfig(xmlConfig);
             config.read();
@@ -59,14 +61,14 @@ public class ZkStateManager {
             if (!connection.isConnected()) connection.connect();
             CuratorFramework client = connection().client();
 
-            zkPath = PathUtils.formatZkPath(String.format("%s/%s/%s", basePath(), config.module, namespace));
+            zkPath = PathUtils.formatZkPath(String.format("%s/%s/%s", basePath(), module, instance));
             if (client.checkExists().forPath(zkPath) == null) {
                 String path = client.create().creatingParentContainersIfNeeded().forPath(zkPath);
                 if (Strings.isNullOrEmpty(path)) {
                     throw new StateManagerError(String.format("Error creating ZK base path. [path=%s]", basePath()));
                 }
             }
-            checkAgentState(namespace);
+            checkAgentState(module);
             zkPathReplication = PathUtils.formatZkPath(String.format("%s/%s", zkPath, Constants.ZK_PATH_REPLICATION));
             if (client.checkExists().forPath(zkPathReplication) == null) {
                 String path = client.create().creatingParentContainersIfNeeded().forPath(zkPathReplication);
@@ -81,16 +83,16 @@ public class ZkStateManager {
         }
     }
 
-    private void checkAgentState(String namespace) throws Exception {
+    private void checkAgentState(String module) throws Exception {
         CuratorFramework client = connection().client();
-        zkStatePath = PathUtils.formatZkPath(String.format("%s/%s/%s/%s", basePath(), config.module, namespace, instanceName));
+        zkStatePath = PathUtils.formatZkPath(String.format("%s/%s/%s", basePath(), module, instance));
         if (client.checkExists().forPath(zkStatePath) == null) {
             String path = client.create().creatingParentContainersIfNeeded().forPath(zkStatePath);
             if (Strings.isNullOrEmpty(path)) {
                 throw new StateManagerError(String.format("Error creating ZK base path. [path=%s]", basePath()));
             }
             agentTxState = new NameNodeTxState();
-            agentTxState.setNamespace(namespace);
+            agentTxState.setNamespace(module);
             agentTxState.setLastTxId(0);
             agentTxState.setUpdatedTime(0);
 
@@ -199,7 +201,7 @@ public class ZkStateManager {
         synchronized (this) {
             try {
                 CuratorFramework client = connection().client();
-                String path = PathUtils.formatZkPath(String.format("%s/%s/%s/%s", zkPath, config.module, name, Constants.ZK_PATH_HEARTBEAT));
+                String path = getHeartbeatPath(name);
                 if (client.checkExists().forPath(path) == null) {
                     path = client.create().creatingParentContainersIfNeeded().forPath(path);
                     if (Strings.isNullOrEmpty(path)) {
@@ -231,7 +233,7 @@ public class ZkStateManager {
 
         try {
             CuratorFramework client = connection().client();
-            String path = PathUtils.formatZkPath(String.format("%s/%s/%s/%s", zkPath, config.module, name, Constants.ZK_PATH_HEARTBEAT));
+            String path = getHeartbeatPath(name);
             if (client.checkExists().forPath(path) != null) {
                 byte[] data = client.getData().forPath(path);
                 if (data != null && data.length > 0) {
@@ -243,6 +245,10 @@ public class ZkStateManager {
         } catch (Exception ex) {
             throw new StateManagerError(ex);
         }
+    }
+
+    private String getHeartbeatPath(String name) {
+        return PathUtils.formatZkPath(String.format("%s/%s/%s/%s", zkPath, module, name, Constants.ZK_PATH_HEARTBEAT));
     }
 
     public DFSFileState create(@NonNull String path,
@@ -686,26 +692,6 @@ public class ZkStateManager {
 
         public ZkStateManagerConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);
-        }
-
-        private String module;
-
-        /**
-         * @throws ConfigurationException
-         */
-        @Override
-        public void read() throws ConfigurationException {
-            super.read();
-            try {
-                module = get().getString(CONFIG_MODULE_NAME);
-                if (Strings.isNullOrEmpty(module)) {
-                    throw new ConfigurationException(
-                            String.format("State Manager Configuration: Module name not found. [path=%s]",
-                                    CONFIG_MODULE_NAME));
-                }
-            } catch (Exception ex) {
-                throw new ConfigurationException(ex);
-            }
         }
     }
 }

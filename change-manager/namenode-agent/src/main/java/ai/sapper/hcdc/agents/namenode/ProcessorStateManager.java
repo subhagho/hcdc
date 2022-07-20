@@ -17,16 +17,16 @@ public class ProcessorStateManager extends ZkStateManager {
     /**
      * @param xmlConfig
      * @param manger
-     * @param namespace
+     * @param module
      * @return
      * @throws StateManagerError
      */
     @Override
     public ZkStateManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                                @NonNull ConnectionManager manger,
-                               @NonNull String namespace,
-                               @NonNull String instanceName) throws StateManagerError {
-        super.init(xmlConfig, manger, namespace, instanceName);
+                               @NonNull String module,
+                               @NonNull String instance) throws StateManagerError {
+        super.init(xmlConfig, manger, module, instance);
         try {
             domainManager = new DomainManager();
             domainManager.init(xmlConfig, manger);

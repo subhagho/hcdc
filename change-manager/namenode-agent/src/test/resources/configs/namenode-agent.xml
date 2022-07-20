@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <configuration>
     <agent>
-        <namespace>ha-cluster</namespace>
+        <module>NameNodeAgent</module>
         <instance>edits-reader</instance>
         <hadoop>
-            <name>nn1</name>
+            <namespace>ha-cluster</namespace>
+            <instance>nn1</instance>
             <home>/opt/hadoop</home>
             <config>src/test/resources/hdfs-site.xml</config>
         </hadoop>
-        <editsReader>true</editsReader>
+        <needHadoop>true</needHadoop>
         <connections>
             <path>config</path>
             <hdfs-admin>source-hdfs</hdfs-admin>
