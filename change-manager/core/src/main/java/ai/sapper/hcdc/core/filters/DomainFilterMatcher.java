@@ -2,6 +2,7 @@ package ai.sapper.hcdc.core.filters;
 
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.util.ArrayList;
@@ -12,9 +13,18 @@ import java.util.regex.Pattern;
 @Getter
 @Accessors(fluent = true)
 public class DomainFilterMatcher {
-    private static class PathFilter {
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    public static class PathFilter {
         private String path;
         private Pattern pattern;
+        private DomainFilter filter;
+
+        public boolean matches(@NonNull String value) {
+            Matcher m = pattern.matcher(value);
+            return m.matches();
+        }
     }
 
     private final DomainFilters filters;
@@ -26,10 +36,20 @@ public class DomainFilterMatcher {
         for (String path : filters.keySet()) {
             PathFilter pf = new PathFilter();
             pf.path = path;
-            pf.pattern = Pattern.compile(filters.get(path).getRegex());
+            pf.filter = filters.get(path);
+            pf.pattern = Pattern.compile(pf.filter.getRegex());
 
             patterns.add(pf);
         }
+    }
+
+    public PathFilter find(@NonNull DomainFilter filter) {
+        for (PathFilter pf : patterns) {
+            if (pf.filter.equals(filter)) {
+                return pf;
+            }
+        }
+        return null;
     }
 
     public boolean matches(@NonNull String source) {
@@ -40,21 +60,21 @@ public class DomainFilterMatcher {
                 if (part.startsWith("/")) {
                     part = part.substring(1);
                 }
-                Matcher m = pf.pattern.matcher(part);
-                if (m.matches()) return true;
+                if (pf.matches(part)) return true;
             }
         }
         return false;
     }
 
-    public DomainFilters add(@NonNull String path, @NonNull String regex) {
-        filters.add(path, regex);
+    public PathFilter add(@NonNull String path, @NonNull String regex) {
+        DomainFilter df = filters.add(path, regex);
 
         PathFilter pf = new PathFilter();
         pf.path = path;
-        pf.pattern = Pattern.compile(filters.get(path).getRegex());
+        pf.filter = df;
+        pf.pattern = Pattern.compile(pf.filter.getRegex());
         patterns.add(pf);
 
-        return filters;
+        return pf;
     }
 }

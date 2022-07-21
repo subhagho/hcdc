@@ -5,9 +5,13 @@ import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
+import ai.sapper.hcdc.core.filters.DomainFilterMatcher;
+import ai.sapper.hcdc.core.filters.DomainManager;
+import ai.sapper.hcdc.core.filters.FilterAddCallback;
 import ai.sapper.hcdc.core.messaging.*;
 import ai.sapper.hcdc.core.model.DFSBlockState;
 import ai.sapper.hcdc.core.model.DFSFileState;
+import ai.sapper.hcdc.core.utils.FileSystemUtils;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -16,6 +20,11 @@ import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+
+import java.net.URI;
+import java.util.List;
 
 @Getter
 @Accessors(fluent = true)
@@ -53,6 +62,38 @@ public class HDFSSnapshotProcessor {
             return this;
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
+        }
+    }
+
+    public void run() throws Exception {
+        Preconditions.checkState(stateManager instanceof ProcessorStateManager);
+        DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
+        Preconditions.checkNotNull(domainManager.hdfsConnection());
+        for (String domain : domainManager.matchers().keySet()) {
+            DomainFilterMatcher matcher = domainManager.matchers().get(domain);
+            if (matcher != null) {
+                List<DomainFilterMatcher.PathFilter> filters = matcher.patterns();
+                if (filters != null && !filters.isEmpty()) {
+                    for (DomainFilterMatcher.PathFilter filter : filters) {
+                        processFilter(filter);
+                    }
+                }
+            }
+        }
+    }
+
+    public void processFilter(@NonNull DomainFilterMatcher.PathFilter filter) throws Exception {
+        DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
+        FileSystem fs = domainManager.hdfsConnection().fileSystem();
+        List<Path> paths = FileSystemUtils.list(filter.path(), fs);
+        if (paths != null) {
+            for (Path path : paths) {
+                URI uri = path.toUri();
+                String hdfsPath = uri.getPath();
+                if (filter.matches(hdfsPath)) {
+                    snapshot(hdfsPath);
+                }
+            }
         }
     }
 
@@ -187,6 +228,38 @@ public class HDFSSnapshotProcessor {
             } catch (Exception ex) {
                 throw new ConfigurationException(ex);
             }
+        }
+    }
+
+    public static class SnapshotCallBack implements FilterAddCallback {
+        private final HDFSSnapshotProcessor processor;
+
+        public SnapshotCallBack(@NonNull HDFSSnapshotProcessor processor) {
+            this.processor = processor;
+        }
+
+
+        /**
+         * @param matcher
+         * @param filter
+         * @param path
+         */
+        @Override
+        public void process(@NonNull DomainFilterMatcher matcher, DomainFilterMatcher.PathFilter filter, @NonNull String path) {
+            try {
+                processor.processFilter(filter);
+            } catch (Exception ex) {
+                DefaultLogger.LOG.error(String.format("Error processing filter: %s", filter.filter().toString()), ex);
+                DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
+            }
+        }
+
+        /**
+         * @param matcher
+         */
+        @Override
+        public void onStart(@NonNull DomainFilterMatcher matcher) {
+
         }
     }
 }

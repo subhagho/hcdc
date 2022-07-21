@@ -18,6 +18,8 @@ public class DFSBlockState {
     private long blockSize;
     private long lastTnxId;
     private long generationStamp;
+    private String blockChecksum;
+
     private EBlockState state = EBlockState.Unknown;
 
     private List<BlockTnxDelta> transactions;

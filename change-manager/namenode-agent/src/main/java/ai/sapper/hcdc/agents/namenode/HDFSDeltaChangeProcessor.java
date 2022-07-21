@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.agents.namenode;
 
 import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
+import ai.sapper.hcdc.agents.namenode.model.DFSTransactionType;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.*;
@@ -111,18 +112,23 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                 }
                 LOG.debug(String.format("Received messages. [count=%d]", batch.size()));
                 for (MessageObject<String, DFSChangeDelta> message : batch) {
+                    stateManager.replicationLock().lock();
                     try {
-                        long txId = process(message);
-                        if (txId > 0) {
-                            stateManager.update(txId);
-                            LOG.debug(String.format("Processed transaction delta. [TXID=%d]", txId));
+                        try {
+                            long txId = process(message);
+                            if (txId > 0) {
+                                stateManager.update(txId);
+                                LOG.debug(String.format("Processed transaction delta. [TXID=%d]", txId));
+                            }
+                        } catch (InvalidMessageError ie) {
+                            LOG.error("Error processing message.", ie);
+                            DefaultLogger.stacktrace(LOG, ie);
+                            errorSender.send(message);
                         }
-                    } catch (InvalidMessageError ie) {
-                        LOG.error("Error processing message.", ie);
-                        DefaultLogger.stacktrace(LOG, ie);
-                        errorSender.send(message);
+                        receiver.ack(message.id());
+                    } finally {
+                        stateManager.replicationLock().unlock();
                     }
-                    receiver.ack(message.id());
                 }
             }
             LOG.warn(String.format("Delta Change Processor thread stopped. [env state=%s]", NameNodeEnv.get().state().state().name()));
@@ -676,7 +682,21 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                     String.format("Snapshot transaction mismatch. [path=%s][inode=%d] [expected=%d][actual=%d]",
                             addFile.getFile().getPath(), fileState.getId(), rState.getSnapshotTxId(), txId));
         }
+        if (fileState.getLastTnxId() > txId)
+            sendBackLogMessage(message, fileState, rState, txId);
+    }
 
+    private void sendBackLogMessage(MessageObject<String, DFSChangeDelta> message,
+                                    DFSFileState fileState,
+                                    DFSReplicationState rState,
+                                    long txId) throws Exception {
+        DFSTransactionType.DFSCloseFileType tnx = getBacklogTransactions(fileState, rState, txId);
+    }
+
+    private DFSTransactionType.DFSCloseFileType getBacklogTransactions(DFSFileState fileState,
+                                                                       DFSReplicationState rState,
+                                                                       long txId) throws Exception {
+        return null;
     }
 
     private long checkMessageSequence(MessageObject<String, DFSChangeDelta> message) throws Exception {

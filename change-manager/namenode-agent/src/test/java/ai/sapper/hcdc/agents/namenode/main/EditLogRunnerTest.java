@@ -3,7 +3,7 @@ package ai.sapper.hcdc.agents.namenode.main;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class EditLogRunnerTest {
     private static final String __CONFIG_FILE = "src/test/resources/configs/namenode-agent.xml";

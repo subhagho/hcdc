@@ -1,18 +1,14 @@
 package ai.sapper.hcdc.core.messaging;
 
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
-import ai.sapper.hcdc.common.utils.JSONUtils;
-import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.connections.impl.BasicKafkaConsumer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.NonNull;
-import org.apache.curator.framework.CuratorFramework;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
-import org.mortbay.util.SingletonList;
 
 import java.io.IOException;
 import java.time.Duration;

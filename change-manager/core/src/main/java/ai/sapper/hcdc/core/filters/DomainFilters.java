@@ -14,7 +14,7 @@ public class DomainFilters {
     private String name;
     private Map<String, DomainFilter> filters = new HashMap<>();
 
-    public void add(@NonNull String path, @NonNull String regex) {
+    public DomainFilter add(@NonNull String path, @NonNull String regex) {
         DomainFilter filter = get(path);
         if (filter == null) {
             filter = filters.put(path, new DomainFilter(path, regex));
@@ -22,6 +22,7 @@ public class DomainFilters {
             filter.setRegex(regex);
             filter.setUpdatedTime(System.currentTimeMillis());
         }
+        return filter;
     }
 
     public DomainFilter get(@NonNull String path) {
@@ -34,4 +35,5 @@ public class DomainFilters {
     public Set<String> keySet() {
         return filters.keySet();
     }
+
 }

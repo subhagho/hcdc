@@ -4,6 +4,7 @@ import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
+import ai.sapper.hcdc.core.connections.HdfsConnection;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -22,10 +23,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Getter
+@Accessors(fluent = true)
 public class DomainManager {
     private static final String CONFIG_PATH = "domain";
 
     private ZookeeperConnection zkConnection;
+    private HdfsConnection hdfsConnection;
+
     private DomainManagerConfig config;
     private Map<String, DomainFilterMatcher> matchers;
     private final List<FilterAddCallback> callbacks = new ArrayList<>();
@@ -38,10 +43,18 @@ public class DomainManager {
 
             zkConnection = manger.getConnection(config.zkConnection, ZookeeperConnection.class);
             if (zkConnection == null) {
-                throw new ConfigurationException(String.format("ZooKeeper connection not found. [name=%s]", config.zkConnection));
+                throw new ConfigurationException(
+                        String.format("ZooKeeper connection not found. [name=%s]", config.zkConnection));
             }
             if (!zkConnection.isConnected()) zkConnection.connect();
 
+            if (!Strings.isNullOrEmpty(config.hdfsConnection)) {
+                hdfsConnection = manger.getConnection(config.hdfsConnection, HdfsConnection.class);
+                if (hdfsConnection == null) {
+                    throw new ConfigurationException(
+                            String.format("HDFS Connection not found. [name=%s]", config.hdfsConnection));
+                }
+            }
             String path = getZkPath();
             CuratorFramework client = zkConnection.client();
             if (client.checkExists().forPath(path) == null) {
@@ -117,16 +130,18 @@ public class DomainManager {
         Preconditions.checkState(zkConnection.isConnected());
 
         DomainFilterMatcher matcher = null;
+        DomainFilterMatcher.PathFilter filter = null;
         if (!matchers.containsKey(domain)) {
             DomainFilters df = new DomainFilters();
             df.setName(domain);
-            df.add(path, regex);
+            DomainFilter d = df.add(path, regex);
 
             matcher = new DomainFilterMatcher(df);
             matchers.put(domain, matcher);
+            filter = matcher.find(d);
         } else {
             matcher = matchers.get(domain);
-            matcher.add(path, regex);
+            filter = matcher.add(path, regex);
         }
 
         CuratorFramework client = zkConnection.client();
@@ -135,7 +150,7 @@ public class DomainManager {
 
         if (!callbacks.isEmpty()) {
             for (FilterAddCallback callback : callbacks) {
-                callback.process(matcher, path);
+                callback.process(matcher, filter, path);
             }
         }
         return matcher.filters();
@@ -147,12 +162,14 @@ public class DomainManager {
         public static final class Constants {
             public static final String CONFIG_ZK_BASE = "basePath";
             public static final String CONFIG_ZK_CONNECTION = "connection";
+            public static final String CONFIG_HDFS_CONNECTION = "hdfs";
         }
 
         private static final String __CONFIG_PATH = "domain.manager";
 
         private String basePath;
         private String zkConnection;
+        private String hdfsConnection;
 
         public DomainManagerConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);
@@ -178,6 +195,9 @@ public class DomainManager {
                 zkConnection = get().getString(Constants.CONFIG_ZK_CONNECTION);
                 if (Strings.isNullOrEmpty(zkConnection)) {
                     throw new ConfigurationException(String.format("State Manager Configuration Error: missing [%s]", Constants.CONFIG_ZK_CONNECTION));
+                }
+                if (get().containsKey(Constants.CONFIG_HDFS_CONNECTION)) {
+                    hdfsConnection = get().getString(Constants.CONFIG_HDFS_CONNECTION);
                 }
             } catch (Throwable t) {
                 throw new ConfigurationException("Error processing State Manager configuration.", t);
