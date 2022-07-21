@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.core.connections;
 
 import ai.sapper.hcdc.common.utils.DefaultLogger;
+import ai.sapper.hcdc.core.utils.FileSystemUtils;
 import com.google.common.base.Preconditions;
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -10,7 +11,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -47,7 +50,13 @@ class HdfsConnectionTest {
             if (!fs.exists(path)) {
                 fs.mkdirs(path);
             }
-
+            List<Path> paths = FileSystemUtils.list("/", fs);
+            assertNotNull(paths);
+            for (Path p : paths) {
+                URI uri = p.toUri();
+                String hdfsPath = uri.getPath();
+                DefaultLogger.LOG.info(String.format("HDFS Path=[%s]", hdfsPath));
+            }
         } catch (Throwable t) {
             DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
             fail(t);
@@ -70,7 +79,7 @@ class HdfsConnectionTest {
             path = new Path(String.format("/test/hcdc/core/%s/upload.xml", __PATH));
             try (FSDataOutputStream fsDataOutputStream = fs.create(path, true)) {
                 try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fsDataOutputStream, StandardCharsets.UTF_8))) {
-                    for(int ii=0; ii < 50000; ii++) {
+                    for (int ii = 0; ii < 50000; ii++) {
                         File file = new File(__CONFIG_FILE);    //creates a new file instance
                         FileReader fr = new FileReader(file);   //reads the file
                         try (BufferedReader reader = new BufferedReader(fr)) {  //creates a buffering character input stream
@@ -91,7 +100,7 @@ class HdfsConnectionTest {
 
             try (FSDataOutputStream fsDataOutputStream = fs.append(path)) {
                 try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fsDataOutputStream, StandardCharsets.UTF_8))) {
-                    for(int ii=0; ii < 70000; ii++) {
+                    for (int ii = 0; ii < 70000; ii++) {
                         File file = new File(__CONFIG_FILE);    //creates a new file instance
                         FileReader fr = new FileReader(file);   //reads the file
                         try (BufferedReader reader = new BufferedReader(fr)) {  //creates a buffering character input stream

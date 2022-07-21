@@ -1,17 +1,31 @@
 package ai.sapper.hcdc.utils;
 
+import ai.sapper.hcdc.agents.namenode.NameNodeEnv;
+import ai.sapper.hcdc.agents.namenode.ProcessorStateManager;
+import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.filters.DomainManager;
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
+import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.parquet.Strings;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.List;
 
+@Getter
+@Setter
 public class DomainFilterLoader {
+    @Parameter(names = {"--config", "-c"}, required = true, description = "Path to the configuration file.")
+    private String configfile;
+    @Parameter(names = {"--filters", "-f"}, required = true, description = "Path to the file containing the filter definitions.")
+    private String filters;
+
     public void read(@NonNull String path, @NonNull DomainManager domainManager) throws Exception {
         File file = new File(path);
         if (!file.exists()) {
@@ -40,6 +54,31 @@ public class DomainFilterLoader {
                     }
                 }
             }
+        }
+    }
+
+    public static void main(String[] args) {
+        try {
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                public void run() {
+                    NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose();
+                    DefaultLogger.LOG.warn(String.format("Edit Log Processor Shutdown...[state=%s]", state.name()));
+                }
+            });
+            DomainFilterLoader loader = new DomainFilterLoader();
+            JCommander.newBuilder().addObject(loader).build().parse(args);
+            XMLConfiguration config = ConfigReader.read(loader.configfile);
+            NameNodeEnv.setup(config);
+            if (!(NameNodeEnv.stateManager() instanceof ProcessorStateManager)) {
+                throw new Exception(
+                        String.format("Invalid StateManager instance. [expected=%s]",
+                                ProcessorStateManager.class.getCanonicalName()));
+            }
+            loader.read(loader.filters, ((ProcessorStateManager) NameNodeEnv.stateManager()).domainManager());
+        } catch (Throwable t) {
+            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOG.error(t.getLocalizedMessage());
+            t.printStackTrace();
         }
     }
 }
