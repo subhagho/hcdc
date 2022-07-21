@@ -17,7 +17,8 @@ public class DomainFilters {
     public DomainFilter add(@NonNull String path, @NonNull String regex) {
         DomainFilter filter = get(path);
         if (filter == null) {
-            filter = filters.put(path, new DomainFilter(path, regex));
+            filter = new DomainFilter(path, regex);
+            filters.put(path, filter);
         } else {
             filter.setRegex(regex);
             filter.setUpdatedTime(System.currentTimeMillis());

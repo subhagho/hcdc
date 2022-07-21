@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.core.filters;
 
 import ai.sapper.hcdc.common.ConfigReader;
+import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
@@ -32,7 +33,7 @@ public class DomainManager {
     private HdfsConnection hdfsConnection;
 
     private DomainManagerConfig config;
-    private Map<String, DomainFilterMatcher> matchers;
+    private Map<String, DomainFilterMatcher> matchers = new HashMap<>();
     private final List<FilterAddCallback> callbacks = new ArrayList<>();
 
     public DomainManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
@@ -80,7 +81,6 @@ public class DomainManager {
         if (client.checkExists().forPath(path) != null) {
             List<String> paths = client.getChildren().forPath(path);
             if (paths != null && !paths.isEmpty()) {
-                Map<String, DomainFilterMatcher> matchers = new HashMap<>(paths.size());
                 for (String p : paths) {
                     String dp = getZkPath(p);
                     byte[] data = client.getData().forPath(dp);
@@ -146,8 +146,12 @@ public class DomainManager {
 
         CuratorFramework client = zkConnection.client();
         String json = JSONUtils.asString(matcher.filters(), DomainFilters.class);
-        Stat stat = client.setData().forPath(getZkPath(domain), json.getBytes(StandardCharsets.UTF_8));
-
+        String zp = getZkPath(domain);
+        if (client.checkExists().forPath(zp) == null) {
+            client.create().creatingParentContainersIfNeeded().forPath(zp);
+        }
+        Stat stat = client.setData().forPath(zp, json.getBytes(StandardCharsets.UTF_8));
+        DefaultLogger.LOG.debug(String.format("Added Domain Filter: [path=%s][filter=%s]", zp, json));
         if (!callbacks.isEmpty()) {
             for (FilterAddCallback callback : callbacks) {
                 callback.process(matcher, filter, path);
