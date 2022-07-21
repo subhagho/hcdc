@@ -25,7 +25,7 @@ class NameNodeEnvTest {
     void init() {
         try {
             NameNodeEnv.setup(xmlConfiguration);
-            DefaultLogger.LOG.info(String.format("Name Node Agent environment initialized. [namespace=%s]", NameNodeEnv.get().namespace()));
+            DefaultLogger.LOG.info(String.format("Name Node Agent environment initialized. [source=%s]", NameNodeEnv.get().source()));
             assertNotNull(NameNodeEnv.get().hdfsConnection());
             assertNotNull(NameNodeEnv.stateManager().connection());
 

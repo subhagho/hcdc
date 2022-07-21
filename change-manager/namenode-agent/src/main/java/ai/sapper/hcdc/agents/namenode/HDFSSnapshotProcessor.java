@@ -103,15 +103,18 @@ public class HDFSSnapshotProcessor {
             DefaultLogger.LOG.info(String.format("Generating snapshot for file. [path=%s]", hdfsPath));
             DFSFileState fileState = stateManager.get(hdfsPath);
             if (fileState == null) {
-                throw new SnapshotError(String.format("HDFS File State not found. [path=%s]", hdfsPath));
+                DefaultLogger.LOG.warn(String.format("HDFS File State not found. [path=%s]", hdfsPath));
+                return;
             }
             DFSReplicationState rState = stateManager.get(fileState.getId());
             if (rState == null) {
                 rState = stateManager.create(fileState.getId(), fileState.getHdfsFilePath(), true);
             }
-
+            if (rState.getSnapshotTxId() > 0) {
+                return;
+            }
             DFSAddFile addFile = generateSnapshot(fileState, true);
-            MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().namespace(),
+            MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
                     addFile, DFSAddFile.class, MessageObject.MessageMode.Snapshot);
             sender.send(message);
 
@@ -142,7 +145,7 @@ public class HDFSSnapshotProcessor {
                 throw new SnapshotError(String.format("Snapshot transaction mismatch. [expected=%d][actual=%d]", rState.getSnapshotTxId(), tnxId));
             }
             DFSAddFile addFile = generateSnapshot(fileState, true);
-            MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().namespace(),
+            MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
                     addFile, DFSAddFile.class, MessageObject.MessageMode.Backlog);
             tnxSender.send(message);
         } catch (SnapshotError se) {
@@ -181,10 +184,14 @@ public class HDFSSnapshotProcessor {
 
     public static DFSBlock generateBlockSnapshot(DFSBlockState block) throws Exception {
         DFSBlock.Builder builder = DFSBlock.newBuilder();
+        long eoff = (block.getDataSize() > 0? block.getDataSize() -1 :  0);
         builder.setBlockId(block.getBlockId())
                 .setGenerationStamp(block.getGenerationStamp())
                 .setSize(block.getDataSize())
-                .setBlockSize(block.getBlockSize());
+                .setBlockSize(block.getBlockSize())
+                .setStartOffset(0)
+                .setEndOffset(eoff)
+                .setDeltaSize(block.getDataSize());
         return builder.build();
     }
 
@@ -192,7 +199,7 @@ public class HDFSSnapshotProcessor {
     @Setter
     @Accessors(fluent = true)
     public static class HDFSSnapshotProcessorConfig extends ConfigReader {
-        private static final String __CONFIG_PATH = "snapshot.manager";
+        private static final String __CONFIG_PATH = "processor.snapshot";
         private static final String __CONFIG_PATH_SENDER = "sender";
         private static final String __CONFIG_PATH_TNX_SENDER = "tnxSender";
 

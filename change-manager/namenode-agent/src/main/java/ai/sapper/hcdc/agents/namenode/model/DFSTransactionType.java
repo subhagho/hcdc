@@ -294,7 +294,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
 
             message.setKey(proto.getFile().getPath());
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(NameNodeEnv.get().namespace());
+            builder.setNamespace(NameNodeEnv.get().source());
             builder.setType(proto.getClass().getCanonicalName());
             builder.setEntity(proto.getFile().getPath());
             builder.setTimestamp(System.currentTimeMillis());
@@ -393,7 +393,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
 
             message.setKey(proto.getFile().getPath());
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(NameNodeEnv.get().namespace());
+            builder.setNamespace(NameNodeEnv.get().source());
             builder.setType(proto.getClass().getCanonicalName());
             builder.setEntity(proto.getFile().getPath());
             builder.setTimestamp(System.currentTimeMillis());
@@ -469,7 +469,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
 
             message.setKey(proto.getFile().getPath());
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(NameNodeEnv.get().namespace());
+            builder.setNamespace(NameNodeEnv.get().source());
             builder.setType(proto.getClass().getCanonicalName());
             builder.setEntity(proto.getFile().getPath());
             builder.setTimestamp(System.currentTimeMillis());
@@ -574,7 +574,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
 
             message.setKey(proto.getFile().getPath());
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(NameNodeEnv.get().namespace());
+            builder.setNamespace(NameNodeEnv.get().source());
             builder.setType(proto.getClass().getCanonicalName());
             builder.setEntity(proto.getFile().getPath());
             builder.setTimestamp(System.currentTimeMillis());
@@ -650,7 +650,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
 
             message.setKey(proto.getFile().getPath());
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(NameNodeEnv.get().namespace());
+            builder.setNamespace(NameNodeEnv.get().source());
             builder.setType(proto.getClass().getCanonicalName());
             builder.setEntity(proto.getFile().getPath());
             builder.setTimestamp(System.currentTimeMillis());
@@ -734,7 +734,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
 
             message.setKey(proto.getFile().getPath());
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(NameNodeEnv.get().namespace());
+            builder.setNamespace(NameNodeEnv.get().source());
             builder.setType(proto.getClass().getCanonicalName());
             builder.setEntity(proto.getFile().getPath());
             builder.setTimestamp(System.currentTimeMillis());
@@ -819,7 +819,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
 
             message.setKey(proto.getFile().getPath());
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(NameNodeEnv.get().namespace());
+            builder.setNamespace(NameNodeEnv.get().source());
             builder.setType(proto.getClass().getCanonicalName());
             builder.setEntity(proto.getFile().getPath());
             builder.setTimestamp(System.currentTimeMillis());
@@ -906,7 +906,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
 
             message.setKey(proto.getDestFile().getPath());
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(NameNodeEnv.get().namespace());
+            builder.setNamespace(NameNodeEnv.get().source());
             builder.setType(proto.getClass().getCanonicalName());
             builder.setEntity(proto.getDestFile().getPath());
             builder.setTimestamp(System.currentTimeMillis());
@@ -972,7 +972,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
 
             message.setKey(NameNodeEnv.get().ignoreTnxKey());
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(NameNodeEnv.get().namespace());
+            builder.setNamespace(NameNodeEnv.get().source());
             builder.setType(proto.getClass().getCanonicalName());
             builder.setEntity("");
             builder.setTimestamp(System.currentTimeMillis());

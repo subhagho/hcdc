@@ -28,7 +28,7 @@ class DomainFilterLoaderTest {
     void read() {
         try {
             NameNodeEnv.setup(xmlConfiguration);
-            DefaultLogger.LOG.info(String.format("Name Node Agent environment initialized. [namespace=%s]", NameNodeEnv.get().namespace()));
+            DefaultLogger.LOG.info(String.format("Name Node Agent environment initialized. [namespace=%s]", NameNodeEnv.get().hadoopNamespace()));
             assertNotNull(NameNodeEnv.stateManager());
             assertTrue(NameNodeEnv.stateManager() instanceof ProcessorStateManager);
             DomainManager domainManager = ((ProcessorStateManager) NameNodeEnv.stateManager()).domainManager();

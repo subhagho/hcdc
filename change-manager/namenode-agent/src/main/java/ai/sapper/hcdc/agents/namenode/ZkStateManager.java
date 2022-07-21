@@ -567,7 +567,9 @@ public class ZkStateManager {
             DFSReplicationState state = get(inodeId);
             if (state == null) {
                 String path = PathUtils.formatZkPath(String.format("%s/%d", zkPathReplication, inodeId));
-
+                if (client.checkExists().forPath(path) == null) {
+                    client.create().creatingParentContainersIfNeeded().forPath(path);
+                }
                 state = new DFSReplicationState();
                 state.setInode(inodeId);
                 state.setHdfsPath(hdfsPath);

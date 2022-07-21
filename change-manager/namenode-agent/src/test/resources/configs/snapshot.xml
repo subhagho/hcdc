@@ -2,37 +2,27 @@
 <configuration>
     <agent>
         <module>NameNodeAgent</module>
-        <instance>edits-reader</instance>
+        <instance>edits-processor</instance>
         <source>ha-cluster</source>
-        <hadoop>
-            <namespace>ha-cluster</namespace>
-            <instance>nn1</instance>
-            <home>/opt/hadoop</home>
-            <config>src/test/resources/hdfs-site.xml</config>
-        </hadoop>
-        <needHadoop>true</needHadoop>
+        <needHadoop>false</needHadoop>
         <connections>
             <path>config</path>
-            <hdfs-admin>source-hdfs</hdfs-admin>
         </connections>
+        <stateManagerClass>ai.sapper.hcdc.agents.namenode.ProcessorStateManager</stateManagerClass>
         <state>
             <manager>
                 <basePath>/hcdc/state</basePath>
                 <connection>zk-state-connection</connection>
             </manager>
         </state>
+        <domain>
+            <manager>
+                <basePath>/hcdc/registry/files</basePath>
+                <connection>zk-state-connection</connection>
+                <hdfs>source-hdfs</hdfs>
+            </manager>
+        </domain>
         <useSSL>false</useSSL>
-        <processor>
-            <edits>
-                <sender>
-                    <connectionType>kafka</connectionType>
-                    <connection>edits-kafka-queue</connection>
-                    <topic>ha-cluster-edits</topic>
-                    <!--partitioner></partitioner-->
-                </sender>
-                <pollingInterval>120000</pollingInterval>
-            </edits>
-        </processor>
         <locks>
             <lock>
                 <name>global</name>
@@ -45,12 +35,22 @@
                 <lock-node>NN-REPLICATION-LOCK</lock-node>
             </lock>
         </locks>
+        <processor>
+            <snapshot>
+                <sender>
+                    <connectionType>kafka</connectionType>
+                    <connection>cdc-kafka-queue</connection>
+                    <!--partitioner></partitioner-->
+                </sender>
+                <tnxSender>
+                    <connectionType>kafka</connectionType>
+                    <connection>edits-kafka-queue</connection>
+                    <!--partitioner></partitioner-->
+                </tnxSender>
+                <readBatchTimeout>5000</readBatchTimeout>
+            </snapshot>
+        </processor>
     </agent>
-    <replicator>
-        <connections>
-            <hdfs>source-hdfs</hdfs>
-        </connections>
-    </replicator>
     <config>
         <connections>
             <connection>
@@ -100,6 +100,17 @@
             <connection>
                 <type>ai.sapper.hcdc.core.connections.impl.BasicKafkaProducer</type>
                 <kafka>
+                    <name>cdc-kafka-queue</name>
+                    <mode>Producer</mode>
+                    <producer>
+                        <config>src/test/resources/producer.properties</config>
+                    </producer>
+                    <topic>ha-cluster-cdc</topic>
+                </kafka>
+            </connection>
+            <connection>
+                <type>ai.sapper.hcdc.core.connections.impl.BasicKafkaProducer</type>
+                <kafka>
                     <name>edits-kafka-queue</name>
                     <mode>Producer</mode>
                     <producer>
@@ -108,17 +119,6 @@
                     <topic>ha-cluster-edits</topic>
                 </kafka>
             </connection>
-            <!--connection>
-                <type>ai.sapper.hcdc.core.connections.impl.BasicKafkaConsumer</type>
-                <kafka>
-                    <name>test-kafka-consumer</name>
-                    <mode>Consumer</mode>
-                    <config>
-                        <consumer>src/test/resources/consumer.properties</consumer>
-                        <topic>hcdc-test</topic>
-                    </config>
-                </kafka>
-            </connection-->
         </connections>
     </config>
 </configuration>

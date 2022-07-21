@@ -132,7 +132,7 @@ public class EditLogProcessor implements Runnable {
             long txid = -1;
             for (DFSTransactionType<?> tnx : batch.transactions()) {
                 Object proto = tnx.convertToProto();
-                MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().namespace(),
+                MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
                         proto, proto.getClass(), MessageObject.MessageMode.New);
                 sender.send(message);
                 txid = tnx.id();

@@ -3,6 +3,7 @@
     <agent>
         <module>NameNodeAgent</module>
         <instance>edits-processor</instance>
+        <source>ha-cluster</source>
         <needHadoop>false</needHadoop>
         <connections>
             <path>config</path>

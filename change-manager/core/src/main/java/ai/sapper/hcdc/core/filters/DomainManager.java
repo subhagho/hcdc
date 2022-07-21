@@ -55,6 +55,9 @@ public class DomainManager {
                     throw new ConfigurationException(
                             String.format("HDFS Connection not found. [name=%s]", config.hdfsConnection));
                 }
+                if (!hdfsConnection.isConnected()) {
+                    hdfsConnection.connect();
+                }
             }
             String path = getZkPath();
             CuratorFramework client = zkConnection.client();

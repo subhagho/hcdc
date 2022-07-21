@@ -135,8 +135,16 @@ public class NameNodeEnv {
         return String.format(NN_IGNORE_TNX, config.hadoopNamespace);
     }
 
-    public String namespace() {
-        return config.hadoopNamespace();
+    public String module() {
+        return config.module();
+    }
+
+    public String instance() {
+        return config.instance;
+    }
+
+    public String source() {
+        return config.source;
     }
 
     public String hadoopHome() {
@@ -210,6 +218,7 @@ public class NameNodeEnv {
             private static final String __CONFIG_PATH = "agent";
             private static final String CONFIG_MODULE = "module";
             private static final String CONFIG_INSTANCE = "instance";
+            private static final String CONFIG_SOURCE_NAME = "source";
             private static final String CONFIG_STATE_MANAGER_TYPE = "stateManagerClass";
             private static final String CONFIG_CONNECTIONS = "connections.path";
             private static final String CONFIG_CONNECTION_HDFS = "connections.hdfs-admin";
@@ -232,6 +241,7 @@ public class NameNodeEnv {
 
         private String module;
         private String instance;
+        private String source;
         private String connectionConfigPath;
         private String hdfsAdminConnection;
         private String hadoopNamespace;
@@ -260,6 +270,11 @@ public class NameNodeEnv {
                 if (Strings.isNullOrEmpty(instance)) {
                     throw new ConfigurationException(
                             String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_INSTANCE));
+                }
+                source = get().getString(Constants.CONFIG_SOURCE_NAME);
+                if (Strings.isNullOrEmpty(source)) {
+                    throw new ConfigurationException(
+                            String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_SOURCE_NAME));
                 }
                 String ss = get().getString(Constants.CONFIG_LOAD_HADOOP);
                 if (!Strings.isNullOrEmpty(ss)) {
