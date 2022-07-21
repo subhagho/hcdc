@@ -6,8 +6,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class BlockTnxDelta {
-    private long startOffset;
-    private long endOffset;
+    private long startOffset = 0;
+    private long endOffset = 0;
     private long tnxId;
     private long timestamp;
     private boolean deleted = false;

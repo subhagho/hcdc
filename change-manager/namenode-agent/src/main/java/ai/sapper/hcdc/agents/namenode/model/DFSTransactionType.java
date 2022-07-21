@@ -194,7 +194,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         private long size;
         private long generationStamp;
         private long startOffset = 0;
-        private long endOffset  = 0;
+        private long endOffset = 0;
         private long deltaSize = 0;
 
         public DFSBlock getProto() {
@@ -493,6 +493,11 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         private long accessedTime;
         private boolean overwrite;
         private final List<DFSBlockType> blocks = new ArrayList<>();
+
+        public DFSCloseFileType addBlock(@NonNull DFSBlockType block) {
+            blocks.add(block);
+            return this;
+        }
 
         /**
          * @return

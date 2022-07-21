@@ -577,7 +577,7 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                 }
                 bb.setStartOffset(bd.getStartOffset())
                         .setEndOffset(bd.getEndOffset())
-                        .setDeltaSize(bd.getEndOffset() - bd.getStartOffset());
+                        .setDeltaSize(bd.getEndOffset() - bd.getStartOffset() + 1);
                 builder.addBlocks(bb.build());
             }
             data = builder.build();
@@ -690,13 +690,51 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                                     DFSFileState fileState,
                                     DFSReplicationState rState,
                                     long txId) throws Exception {
-        DFSTransactionType.DFSCloseFileType tnx = getBacklogTransactions(fileState, rState, txId);
+        DFSTransactionType.DFSCloseFileType tnx = buildBacklogTransactions(fileState, rState, txId);
+        if (tnx != null) {
+            DFSCloseFile closeFile = tnx.convertToProto();
+            MessageObject<String, DFSChangeDelta> mesg = ChangeDeltaSerDe.create(message.value().getNamespace(),
+                    closeFile,
+                    DFSCloseFile.class,
+                    MessageObject.MessageMode.Backlog);
+            sender.send(mesg);
+            rState = stateManager.update(rState);
+        }
     }
 
-    private DFSTransactionType.DFSCloseFileType getBacklogTransactions(DFSFileState fileState,
-                                                                       DFSReplicationState rState,
-                                                                       long txId) throws Exception {
-        return null;
+    private DFSTransactionType.DFSCloseFileType buildBacklogTransactions(DFSFileState fileState,
+                                                                         DFSReplicationState rState,
+                                                                         long txId) throws Exception {
+        DFSTransactionType.DFSFileType file = new DFSTransactionType.DFSFileType();
+        file.path(fileState.getHdfsFilePath());
+        file.inodeId(fileState.getId());
+
+        DFSTransactionType.DFSCloseFileType closeFile = new DFSTransactionType.DFSCloseFileType();
+        closeFile.file(file);
+        closeFile.overwrite(false);
+        closeFile.blockSize(fileState.getBlockSize());
+        closeFile.modifiedTime(fileState.getUpdatedTime());
+        closeFile.accessedTime(fileState.getCreatedTime());
+        closeFile.length(fileState.getDataSize());
+
+        if (fileState.hasBlocks()) {
+            for (DFSBlockState bs : fileState.getBlocks()) {
+                BlockTnxDelta delta = bs.compressedChangeSet(txId);
+                if (delta != null) {
+                    DFSTransactionType.DFSBlockType bd = new DFSTransactionType.DFSBlockType();
+                    bd.blockId(bs.getBlockId());
+                    bd.generationStamp(bs.getGenerationStamp());
+                    bd.startOffset(delta.getStartOffset());
+                    bd.endOffset(delta.getEndOffset());
+                    bd.deltaSize(bd.endOffset() - bd.startOffset() + 1);
+                    closeFile.addBlock(bd);
+                }
+            }
+        }
+        rState.setLastReplicatedTx(fileState.getLastTnxId());
+        rState.setLastReplicationTime(System.currentTimeMillis());
+
+        return closeFile;
     }
 
     private long checkMessageSequence(MessageObject<String, DFSChangeDelta> message) throws Exception {
