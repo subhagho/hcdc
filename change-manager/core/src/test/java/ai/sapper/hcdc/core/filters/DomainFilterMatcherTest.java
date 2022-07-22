@@ -15,13 +15,13 @@ class DomainFilterMatcherTest {
             DomainFilters filters = new DomainFilters();
             filters.setName("TEST-FILTERS");
             for (int ii = 0; ii < 5; ii++) {
-                filters.add("/a/b/c", "(.*)/d/(.*)\\.log");
+                filters.add( String.format("ENTITY:%d", ii), "/a/b/c", "(.*)/d/(.*)\\.log");
             }
-            DomainFilterMatcher matcher = new DomainFilterMatcher(filters);
+            DomainFilterMatcher matcher = new DomainFilterMatcher(filters.getName(), filters);
             String mf = "/a/b/c/e/d/test.log";
-            assertTrue(matcher.matches(mf));
+            assertNotNull(matcher.matches(mf));
             mf = "/a/b/c/e/x/test.log";
-            assertFalse(matcher.matches(mf));
+            assertNull(matcher.matches(mf));
         } catch (Throwable t) {
             DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
             fail(t);

@@ -1,2 +1,2 @@
-test-domain;/test/hcdc/loader;(.*/)(.*\.parquet)
-test-domain;/test/hcdc/core;(.*/)(.*\.xml)
+test-domain;test-01;/test/hcdc/loader;(.*/)(.*\.parquet)
+test-domain;test-02;/test/hcdc/core;(.*/)(.*\.xml)

@@ -10,6 +10,7 @@ import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
+import ai.sapper.hcdc.core.model.Domain;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -93,7 +94,7 @@ public class DomainManager {
                     if (data != null && data.length > 0) {
                         String json = new String(data, StandardCharsets.UTF_8);
                         DomainFilters df = JSONUtils.read(json, DomainFilters.class);
-                        DomainFilterMatcher m = new DomainFilterMatcher(df);
+                        DomainFilterMatcher m = new DomainFilterMatcher(df.getName(), df);
                         matchers.put(df.getName(), m);
                         if (!callbacks.isEmpty()) {
                             for (FilterAddCallback callback : callbacks) {
@@ -117,7 +118,7 @@ public class DomainManager {
         return PathUtils.formatZkPath(String.format("%s/%s", getZkPath(), domain));
     }
 
-    public String matches(@NonNull String path) {
+    public Domain matches(@NonNull String path) {
         Preconditions.checkNotNull(zkConnection);
         Preconditions.checkState(zkConnection.isConnected());
 
@@ -125,13 +126,19 @@ public class DomainManager {
             Map<String, DomainFilterMatcher> ms = matchers;
             for (String d : matchers.keySet()) {
                 DomainFilterMatcher m = ms.get(d);
-                if (m.matches(path)) return m.filters().getName();
+                DomainFilterMatcher.PathFilter pf = m.matches(path);
+                if (pf != null) {
+                    Domain dd = new Domain();
+                    dd.setDomain(m.filters().getName());
+                    dd.setEntity(pf.filter().getEntity());
+                    return dd;
+                }
             }
         }
         return null;
     }
 
-    public DomainFilters add(@NonNull String domain, @NonNull String path, @NonNull String regex) throws Exception {
+    public DomainFilters add(@NonNull String domain, @NonNull String entity, @NonNull String path, @NonNull String regex) throws Exception {
         Preconditions.checkNotNull(zkConnection);
         Preconditions.checkState(zkConnection.isConnected());
 
@@ -140,14 +147,14 @@ public class DomainManager {
         if (!matchers.containsKey(domain)) {
             DomainFilters df = new DomainFilters();
             df.setName(domain);
-            DomainFilter d = df.add(path, regex);
+            DomainFilter d = df.add(entity, path, regex);
 
-            matcher = new DomainFilterMatcher(df);
+            matcher = new DomainFilterMatcher(domain, df);
             matchers.put(domain, matcher);
             filter = matcher.find(d);
         } else {
             matcher = matchers.get(domain);
-            filter = matcher.add(path, regex);
+            filter = matcher.add(entity, path, regex);
         }
 
         CuratorFramework client = zkConnection.client();

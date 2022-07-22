@@ -27,10 +27,12 @@ public class DomainFilterMatcher {
         }
     }
 
+    private final String domain;
     private final DomainFilters filters;
     private final List<PathFilter> patterns;
 
-    public DomainFilterMatcher(@NonNull DomainFilters filters) {
+    public DomainFilterMatcher(@NonNull String domain, @NonNull DomainFilters filters) {
+        this.domain = domain;
         this.filters = filters;
         patterns = new ArrayList<>(filters.getFilters().size());
         for (String path : filters.keySet()) {
@@ -52,7 +54,7 @@ public class DomainFilterMatcher {
         return null;
     }
 
-    public boolean matches(@NonNull String source) {
+    public PathFilter matches(@NonNull String source) {
         source = source.trim();
         for (PathFilter pf : patterns) {
             if (source.startsWith(pf.path)) {
@@ -60,14 +62,14 @@ public class DomainFilterMatcher {
                 if (part.startsWith("/")) {
                     part = part.substring(1);
                 }
-                if (pf.matches(part)) return true;
+                if (pf.matches(part)) return pf;
             }
         }
-        return false;
+        return null;
     }
 
-    public PathFilter add(@NonNull String path, @NonNull String regex) {
-        DomainFilter df = filters.add(path, regex);
+    public PathFilter add(@NonNull String entity, @NonNull String path, @NonNull String regex) {
+        DomainFilter df = filters.add(entity, path, regex);
 
         PathFilter pf = new PathFilter();
         pf.path = path;

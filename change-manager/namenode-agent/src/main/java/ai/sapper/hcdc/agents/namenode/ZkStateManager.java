@@ -559,7 +559,10 @@ public class ZkStateManager {
         }
     }
 
-    public DFSReplicationState create(long inodeId, @NonNull String hdfsPath, boolean enable) throws StateManagerError {
+    public DFSReplicationState create(long inodeId,
+                                      @NonNull String hdfsPath,
+                                      @NonNull Domain domain,
+                                      boolean enable) throws StateManagerError {
         checkState();
         try {
             replicationLock.lock();
@@ -573,6 +576,7 @@ public class ZkStateManager {
                 state = new DFSReplicationState();
                 state.setInode(inodeId);
                 state.setHdfsPath(hdfsPath);
+                state.setEntity(domain);
                 state.setZkPath(path);
                 state.setEnabled(enable);
                 if (enable) {

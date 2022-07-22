@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.agents.namenode.model;
 
+import ai.sapper.hcdc.core.model.Domain;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,6 +9,7 @@ import lombok.Setter;
 public class DFSReplicationState {
     private long inode;
     private String hdfsPath;
+    private Domain entity;
     private String zkPath;
     private boolean enabled = false;
     private long snapshotTxId = -1;

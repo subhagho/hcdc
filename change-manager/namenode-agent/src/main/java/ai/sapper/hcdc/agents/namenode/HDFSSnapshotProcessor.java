@@ -13,6 +13,7 @@ import ai.sapper.hcdc.core.filters.FilterAddCallback;
 import ai.sapper.hcdc.core.messaging.*;
 import ai.sapper.hcdc.core.model.DFSBlockState;
 import ai.sapper.hcdc.core.model.DFSFileState;
+import ai.sapper.hcdc.core.model.Domain;
 import ai.sapper.hcdc.core.utils.FileSystemUtils;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
@@ -78,7 +79,7 @@ public class HDFSSnapshotProcessor {
                 List<DomainFilterMatcher.PathFilter> filters = matcher.patterns();
                 if (filters != null && !filters.isEmpty()) {
                     for (DomainFilterMatcher.PathFilter filter : filters) {
-                        count += processFilter(filter);
+                        count += processFilter(filter, domain);
                     }
                 }
             }
@@ -89,7 +90,7 @@ public class HDFSSnapshotProcessor {
     public DomainFilters addFilter(@NonNull DomainFilter filter,
                                    @NonNull String domain) throws Exception {
         DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
-        return domainManager.add(domain, filter.getPath(), filter.getRegex());
+        return domainManager.add(domain, filter.getEntity(), filter.getPath(), filter.getRegex());
     }
 
     public int processFilter(@NonNull DomainFilter filter, @NonNull String domain) throws Exception {
@@ -103,10 +104,10 @@ public class HDFSSnapshotProcessor {
             throw new Exception(
                     String.format("Specified filter not registered. [domain=%s][filter=%s]", domain, filter.toString()));
         }
-        return processFilter(pf);
+        return processFilter(pf, domain);
     }
 
-    public int processFilter(@NonNull DomainFilterMatcher.PathFilter filter) throws Exception {
+    public int processFilter(@NonNull DomainFilterMatcher.PathFilter filter, String domain) throws Exception {
         DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
         FileSystem fs = domainManager.hdfsConnection().fileSystem();
         List<Path> paths = FileSystemUtils.list(filter.path(), fs);
@@ -116,7 +117,10 @@ public class HDFSSnapshotProcessor {
                 URI uri = path.toUri();
                 String hdfsPath = uri.getPath();
                 if (filter.matches(hdfsPath)) {
-                    snapshot(hdfsPath);
+                    Domain d = new Domain();
+                    d.setDomain(domain);
+                    d.setEntity(filter.filter().getEntity());
+                    snapshot(hdfsPath, d);
                     count++;
                 }
             }
@@ -124,7 +128,7 @@ public class HDFSSnapshotProcessor {
         return count;
     }
 
-    public void snapshot(@NonNull String hdfsPath) throws SnapshotError {
+    public void snapshot(@NonNull String hdfsPath, @NonNull Domain entity) throws SnapshotError {
         Preconditions.checkState(sender != null);
         try {
             DefaultLogger.LOG.info(String.format("Generating snapshot for file. [path=%s]", hdfsPath));
@@ -135,7 +139,7 @@ public class HDFSSnapshotProcessor {
             }
             DFSReplicationState rState = stateManager.get(fileState.getId());
             if (rState == null) {
-                rState = stateManager.create(fileState.getId(), fileState.getHdfsFilePath(), true);
+                rState = stateManager.create(fileState.getId(), fileState.getHdfsFilePath(), entity, true);
             }
             if (rState.getSnapshotTxId() > 0) {
                 return;
@@ -283,7 +287,7 @@ public class HDFSSnapshotProcessor {
         @Override
         public void process(@NonNull DomainFilterMatcher matcher, DomainFilterMatcher.PathFilter filter, @NonNull String path) {
             try {
-                processor.processFilter(filter);
+                processor.processFilter(filter, matcher.domain());
             } catch (Exception ex) {
                 DefaultLogger.LOG.error(String.format("Error processing filter: %s", filter.filter().toString()), ex);
                 DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));

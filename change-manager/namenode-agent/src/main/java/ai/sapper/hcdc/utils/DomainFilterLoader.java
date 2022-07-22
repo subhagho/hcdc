@@ -42,14 +42,15 @@ public class DomainFilterLoader {
                     if (line.startsWith("#")) continue;
 
                     String[] parts = line.split(";");
-                    if (parts.length == 3) {
+                    if (parts.length == 4) {
                         String d = parts[0];
-                        String p = parts[1];
-                        String r = parts[2];
+                        String e = parts[1];
+                        String p = parts[2];
+                        String r = parts[3];
                         if (!Strings.isNullOrEmpty(d) &&
                                 !Strings.isNullOrEmpty(p) &&
                                 !Strings.isNullOrEmpty(r)) {
-                            domainManager.add(d, p, r);
+                            domainManager.add(d, e, p, r);
                             DefaultLogger.LOG.info(String.format("Registered Filter: [DOMAIN=%s][PATH=%s][REGEX=%s]", d, p, r));
                         }
                     }

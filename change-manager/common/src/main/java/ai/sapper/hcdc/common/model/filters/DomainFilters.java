@@ -14,10 +14,10 @@ public class DomainFilters {
     private String name;
     private Map<String, DomainFilter> filters = new HashMap<>();
 
-    public DomainFilter add(@NonNull String path, @NonNull String regex) {
+    public DomainFilter add(@NonNull String entity, @NonNull String path, @NonNull String regex) {
         DomainFilter filter = get(path);
         if (filter == null) {
-            filter = new DomainFilter(path, regex);
+            filter = new DomainFilter(entity, path, regex);
             filters.put(path, filter);
         } else {
             filter.setRegex(regex);

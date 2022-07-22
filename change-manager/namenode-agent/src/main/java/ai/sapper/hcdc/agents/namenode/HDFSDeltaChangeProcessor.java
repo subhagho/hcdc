@@ -2,6 +2,7 @@ package ai.sapper.hcdc.agents.namenode;
 
 import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
 import ai.sapper.hcdc.agents.namenode.model.DFSTransactionType;
+import ai.sapper.hcdc.core.model.Domain;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.*;
@@ -279,9 +280,9 @@ public class HDFSDeltaChangeProcessor implements Runnable {
                 prevBlockId = block.getBlockId();
             }
         }
-        String domain = isRegistered(fileState.getHdfsFilePath());
-        if (!Strings.isNullOrEmpty(domain)) {
-            DFSReplicationState rState = stateManager.create(fileState.getId(), fileState.getHdfsFilePath(), true);
+        Domain domain = isRegistered(fileState.getHdfsFilePath());
+        if (domain != null) {
+            DFSReplicationState rState = stateManager.create(fileState.getId(), fileState.getHdfsFilePath(), domain, true);
             rState.setSnapshotTxId(fileState.getLastTnxId());
             rState.setSnapshotTime(System.currentTimeMillis());
             rState.setSnapshotReady(true);
@@ -293,7 +294,7 @@ public class HDFSDeltaChangeProcessor implements Runnable {
         }
     }
 
-    private String isRegistered(String hdfsPath) throws Exception {
+    private Domain isRegistered(String hdfsPath) throws Exception {
         Preconditions.checkState(stateManager instanceof ProcessorStateManager);
         DomainManager dm = ((ProcessorStateManager) stateManager).domainManager();
 
@@ -630,9 +631,9 @@ public class HDFSDeltaChangeProcessor implements Runnable {
         if (rState != null) {
             stateManager.delete(rState.getInode());
         }
-        String domain = isRegistered(nfs.getHdfsFilePath());
-        if (!Strings.isNullOrEmpty(domain)) {
-            rState = stateManager.create(nfs.getId(), nfs.getHdfsFilePath(), true);
+        Domain domain = isRegistered(nfs.getHdfsFilePath());
+        if (domain != null) {
+            rState = stateManager.create(nfs.getId(), nfs.getHdfsFilePath(), domain, true);
             rState.setSnapshotTxId(nfs.getLastTnxId());
             rState.setSnapshotTime(System.currentTimeMillis());
             rState.setSnapshotReady(true);
