@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.core.filters;
+package ai.sapper.hcdc.common.model.filters;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -9,7 +9,7 @@ import java.util.Objects;
 
 @Getter
 @Setter
-@ToString
+@ToString(exclude = {"createdTime", "updatedTime"})
 public class DomainFilter {
     private String path;
     private String regex;

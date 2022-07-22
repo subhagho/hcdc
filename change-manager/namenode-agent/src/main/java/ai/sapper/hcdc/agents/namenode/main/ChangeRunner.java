@@ -39,12 +39,6 @@ public class ChangeRunner {
 
     public static void main(String[] args) {
         try {
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                public void run() {
-                    NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose();
-                    DefaultLogger.LOG.warn(String.format("Edit Log Processor Shutdown...[state=%s]", state.name()));
-                }
-            });
             ChangeRunner runner = new ChangeRunner();
             JCommander.newBuilder().addObject(runner).build().parse(args);
             runner.init();

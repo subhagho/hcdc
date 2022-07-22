@@ -48,10 +48,16 @@ public class NameNodeEnv {
 
     private final NameNodeAgentState.AgentState agentState = new NameNodeAgentState.AgentState();
 
-    public NameNodeEnv init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws NameNodeError {
+    public synchronized NameNodeEnv init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws NameNodeError {
         try {
             if (state.isAvailable()) return this;
 
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                public void run() {
+                    NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose();
+                    DefaultLogger.LOG.warn(String.format("Edit Log Processor Shutdown...[state=%s]", state.name()));
+                }
+            });
             configNode = xmlConfig.configurationAt(NameNEnvConfig.Constants.__CONFIG_PATH);
 
             this.config = new NameNEnvConfig(xmlConfig);
@@ -113,7 +119,12 @@ public class NameNodeEnv {
         }
     }
 
-    public ENameNEnvState stop() {
+    public ENameNEnvState error(@NonNull Throwable t) {
+        state.error(t);
+        return state.state();
+    }
+
+    public synchronized ENameNEnvState stop() {
         if (agentState.state() == NameNodeAgentState.EAgentState.Active
                 || agentState.state() == NameNodeAgentState.EAgentState.StandBy) {
             agentState.state(NameNodeAgentState.EAgentState.Stopped);

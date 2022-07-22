@@ -21,7 +21,7 @@ public class SnapshotRunner {
     private HierarchicalConfiguration<ImmutableNode> config;
     private HDFSSnapshotProcessor processor;
 
-    private void init() throws Exception {
+    public void init() throws Exception {
         Preconditions.checkState(!Strings.isNullOrEmpty(configfile));
 
         config = ConfigReader.read(configfile);
@@ -33,12 +33,7 @@ public class SnapshotRunner {
 
     public static void main(String[] args) {
         try {
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                public void run() {
-                    NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose();
-                    DefaultLogger.LOG.warn(String.format("Edit Log Processor Shutdown...[state=%s]", state.name()));
-                }
-            });
+
             SnapshotRunner runner = new SnapshotRunner();
             JCommander.newBuilder().addObject(runner).build().parse(args);
             runner.init();

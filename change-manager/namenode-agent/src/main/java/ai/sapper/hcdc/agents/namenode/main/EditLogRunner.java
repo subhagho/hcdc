@@ -7,6 +7,7 @@ import ai.sapper.hcdc.common.utils.DefaultLogger;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.base.Preconditions;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -19,23 +20,36 @@ import org.apache.parquet.Strings;
 public class EditLogRunner {
     @Parameter(names = {"--config", "-c"}, required = true, description = "Path to the configuration file.")
     private String configfile;
+    @Setter(AccessLevel.NONE)
     private HierarchicalConfiguration<ImmutableNode> config;
+    @Setter(AccessLevel.NONE)
     private EditLogProcessor processor;
+    @Setter(AccessLevel.NONE)
     private Thread runner;
 
-    private void init() throws Exception {
-        Preconditions.checkState(!Strings.isNullOrEmpty(configfile));
+    public void init() throws Exception {
+        try {
+            Preconditions.checkState(!Strings.isNullOrEmpty(configfile));
 
-        config = ConfigReader.read(configfile);
-        NameNodeEnv.setup(config);
+            config = ConfigReader.read(configfile);
+            NameNodeEnv.setup(config);
 
-        processor = new EditLogProcessor(NameNodeEnv.stateManager());
-        processor.init(NameNodeEnv.get().configNode(), NameNodeEnv.connectionManager());
+            processor = new EditLogProcessor(NameNodeEnv.stateManager());
+            processor.init(NameNodeEnv.get().configNode(), NameNodeEnv.connectionManager());
+        } catch (Throwable t) {
+            NameNodeEnv.get().error(t);
+            throw t;
+        }
     }
 
-    private void run() throws Exception {
-        runner = new Thread(processor);
-        runner.start();
+    public void run() throws Exception {
+        try {
+            runner = new Thread(processor);
+            runner.start();
+        } catch (Throwable t) {
+            NameNodeEnv.get().error(t);
+            throw t;
+        }
     }
 
     public long runOnce(@NonNull String configfile) throws Exception {
@@ -51,12 +65,6 @@ public class EditLogRunner {
 
     public static void main(String[] args) {
         try {
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                public void run() {
-                    NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose();
-                    DefaultLogger.LOG.warn(String.format("Edit Log Processor Shutdown...[state=%s]", state.name()));
-                }
-            });
             EditLogRunner runner = new EditLogRunner();
             JCommander.newBuilder().addObject(runner).build().parse(args);
             runner.init();

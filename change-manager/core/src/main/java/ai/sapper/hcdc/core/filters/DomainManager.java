@@ -1,6 +1,9 @@
 package ai.sapper.hcdc.core.filters;
 
 import ai.sapper.hcdc.common.ConfigReader;
+import ai.sapper.hcdc.common.model.filters.DomainFilter;
+import ai.sapper.hcdc.common.model.filters.DomainFilterMatcher;
+import ai.sapper.hcdc.common.model.filters.DomainFilters;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.common.utils.PathUtils;

@@ -6,7 +6,6 @@ group 'ai.sapper.hcdc'
 version '1.0-SNAPSHOT'
 
 configurations {
-    compile.exclude module: "spring-boot-starter-tomcat"
     compile.exclude module: "logback-classic"
 }
 
@@ -23,7 +22,6 @@ dependencies {
         exclude group: 'ch.qos.logback', module: 'logback-classic'
         exclude group: 'org.apache.logging.log4j', module: 'log4j-to-slf4j'
     }
-    implementation 'org.springframework.boot:spring-boot-starter-jetty:2.7.0'
 
     implementation 'com.opencsv:opencsv:5.6'
     implementation 'org.apache.parquet:parquet-hadoop-bundle:1.12.3'

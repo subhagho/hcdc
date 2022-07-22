@@ -5,6 +5,16 @@ plugins {
 group 'ai.sapper.hcdc'
 version '1.0-SNAPSHOT'
 
+configurations {
+    compile.exclude module: "spring-boot-starter-tomcat"
+    compile.exclude module: "logback-classic"
+}
+
 dependencies {
+    implementation project(':common')
     implementation project(':core')
+    implementation project(':namenode-agent')
+
+    implementation 'org.springframework.boot:spring-boot-starter-jetty:2.7.1'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: '2.7.1'
 }

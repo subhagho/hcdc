@@ -3,9 +3,11 @@ package ai.sapper.hcdc.agents.namenode;
 import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.*;
+import ai.sapper.hcdc.common.model.filters.DomainFilter;
+import ai.sapper.hcdc.common.model.filters.DomainFilters;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
-import ai.sapper.hcdc.core.filters.DomainFilterMatcher;
+import ai.sapper.hcdc.common.model.filters.DomainFilterMatcher;
 import ai.sapper.hcdc.core.filters.DomainManager;
 import ai.sapper.hcdc.core.filters.FilterAddCallback;
 import ai.sapper.hcdc.core.messaging.*;
@@ -65,36 +67,61 @@ public class HDFSSnapshotProcessor {
         }
     }
 
-    public void run() throws Exception {
+    public int run() throws Exception {
         Preconditions.checkState(stateManager instanceof ProcessorStateManager);
         DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
         Preconditions.checkNotNull(domainManager.hdfsConnection());
+        int count = 0;
         for (String domain : domainManager.matchers().keySet()) {
             DomainFilterMatcher matcher = domainManager.matchers().get(domain);
             if (matcher != null) {
                 List<DomainFilterMatcher.PathFilter> filters = matcher.patterns();
                 if (filters != null && !filters.isEmpty()) {
                     for (DomainFilterMatcher.PathFilter filter : filters) {
-                        processFilter(filter);
+                        count += processFilter(filter);
                     }
                 }
             }
         }
+        return count;
     }
 
-    public void processFilter(@NonNull DomainFilterMatcher.PathFilter filter) throws Exception {
+    public DomainFilters addFilter(@NonNull DomainFilter filter,
+                                   @NonNull String domain) throws Exception {
+        DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
+        return domainManager.add(domain, filter.getPath(), filter.getRegex());
+    }
+
+    public int processFilter(@NonNull DomainFilter filter, @NonNull String domain) throws Exception {
+        DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
+        DomainFilterMatcher matcher = domainManager.matchers().get(domain);
+        if (matcher == null) {
+            throw new Exception(String.format("No matcher found for domain. [domain=%s]", domain));
+        }
+        DomainFilterMatcher.PathFilter pf = matcher.find(filter);
+        if (pf == null) {
+            throw new Exception(
+                    String.format("Specified filter not registered. [domain=%s][filter=%s]", domain, filter.toString()));
+        }
+        return processFilter(pf);
+    }
+
+    public int processFilter(@NonNull DomainFilterMatcher.PathFilter filter) throws Exception {
         DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
         FileSystem fs = domainManager.hdfsConnection().fileSystem();
         List<Path> paths = FileSystemUtils.list(filter.path(), fs);
+        int count = 0;
         if (paths != null) {
             for (Path path : paths) {
                 URI uri = path.toUri();
                 String hdfsPath = uri.getPath();
                 if (filter.matches(hdfsPath)) {
                     snapshot(hdfsPath);
+                    count++;
                 }
             }
         }
+        return count;
     }
 
     public void snapshot(@NonNull String hdfsPath) throws SnapshotError {
@@ -130,7 +157,7 @@ public class HDFSSnapshotProcessor {
         }
     }
 
-    public void snapshotReady(@NonNull String hdfsPath, long tnxId) throws SnapshotError {
+    public DFSReplicationState snapshotReady(@NonNull String hdfsPath, long tnxId) throws SnapshotError {
         Preconditions.checkState(tnxSender != null);
         try {
             DFSFileState fileState = stateManager.get(hdfsPath);
@@ -148,6 +175,8 @@ public class HDFSSnapshotProcessor {
             MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
                     addFile, DFSAddFile.class, MessageObject.MessageMode.Backlog);
             tnxSender.send(message);
+
+            return rState;
         } catch (SnapshotError se) {
             throw se;
         } catch (Exception ex) {
@@ -184,7 +213,7 @@ public class HDFSSnapshotProcessor {
 
     public static DFSBlock generateBlockSnapshot(DFSBlockState block) throws Exception {
         DFSBlock.Builder builder = DFSBlock.newBuilder();
-        long eoff = (block.getDataSize() > 0? block.getDataSize() -1 :  0);
+        long eoff = (block.getDataSize() > 0 ? block.getDataSize() - 1 : 0);
         builder.setBlockId(block.getBlockId())
                 .setGenerationStamp(block.getGenerationStamp())
                 .setSize(block.getDataSize())

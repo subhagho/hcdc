@@ -90,6 +90,7 @@ public class EditLogProcessor implements Runnable {
         } catch (Throwable t) {
             LOG.error("Edits Log Processor terminated with error", t);
             DefaultLogger.stacktrace(LOG, t);
+            NameNodeEnv.get().error(t);
         }
     }
 
