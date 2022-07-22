@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.utils;
 
 import ai.sapper.hcdc.common.ConfigReader;
+import ai.sapper.hcdc.common.model.services.EConfigFileType;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
@@ -46,7 +47,7 @@ public class HadoopDataLoader {
 
     public void run() throws Exception {
         try {
-            config = ConfigReader.read(configfile);
+            config = ConfigReader.read(configfile, EConfigFileType.File);
             loaderConfig = new LoaderConfig(config);
             loaderConfig.read();
 

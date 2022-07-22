@@ -6,6 +6,7 @@ import ai.sapper.hcdc.common.model.services.ConfigSource;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.common.model.services.BasicResponse;
 import ai.sapper.hcdc.common.model.services.EResponseState;
+import ai.sapper.hcdc.services.ServiceHelper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,6 +44,7 @@ public class EditsLogReaderService {
     @RequestMapping(value = "/editslog/status")
     public ResponseEntity<BasicResponse<NameNodeEnv.ENameNEnvState>> state() {
         try {
+            ServiceHelper.checkService(processor);
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
                     NameNodeEnv.get().state().state()),
                     HttpStatus.OK);
@@ -56,6 +58,7 @@ public class EditsLogReaderService {
     @RequestMapping(value = "/editslog/stop")
     public ResponseEntity<BasicResponse<NameNodeEnv.ENameNEnvState>> stop() {
         try {
+            ServiceHelper.checkService(processor);
             NameNodeEnv.dispose();
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
                     NameNodeEnv.get().state().state()),

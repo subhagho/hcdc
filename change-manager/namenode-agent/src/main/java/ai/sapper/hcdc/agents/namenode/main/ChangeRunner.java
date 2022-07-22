@@ -3,6 +3,7 @@ package ai.sapper.hcdc.agents.namenode.main;
 import ai.sapper.hcdc.agents.namenode.HDFSDeltaChangeProcessor;
 import ai.sapper.hcdc.agents.namenode.NameNodeEnv;
 import ai.sapper.hcdc.common.ConfigReader;
+import ai.sapper.hcdc.common.model.services.EConfigFileType;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -25,7 +26,7 @@ public class ChangeRunner {
     private void init() throws Exception {
         Preconditions.checkState(!Strings.isNullOrEmpty(configfile));
 
-        config = ConfigReader.read(configfile);
+        config = ConfigReader.read(configfile, EConfigFileType.File);
         NameNodeEnv.setup(config);
 
         processor = new HDFSDeltaChangeProcessor(NameNodeEnv.stateManager());

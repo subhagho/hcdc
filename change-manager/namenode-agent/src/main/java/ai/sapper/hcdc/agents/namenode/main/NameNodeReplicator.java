@@ -5,6 +5,7 @@ import ai.sapper.hcdc.agents.namenode.NameNodeError;
 import ai.sapper.hcdc.agents.namenode.ZkStateManager;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
 import ai.sapper.hcdc.common.ConfigReader;
+import ai.sapper.hcdc.common.model.services.EConfigFileType;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
@@ -62,7 +63,7 @@ public class NameNodeReplicator {
 
     public void init() throws NameNodeError {
         try {
-            config = ConfigReader.read(configfile);
+            config = ConfigReader.read(configfile, EConfigFileType.File);
             NameNodeEnv.setup(config);
             replicatorConfig = new ReplicatorConfig(config);
             replicatorConfig.read();
@@ -144,7 +145,7 @@ public class NameNodeReplicator {
     }
 
     private void readFSImageXml(String file) throws Exception {
-        HierarchicalConfiguration<ImmutableNode> rootNode = ConfigReader.read(file);
+        HierarchicalConfiguration<ImmutableNode> rootNode = ConfigReader.read(file, EConfigFileType.File);
         String s = rootNode.getString(Constants.NODE_TX_ID);
         if (Strings.isNullOrEmpty(s)) {
             throw new NameNodeError(String.format("NameNode Last Transaction ID not found. [file=%s]", file));

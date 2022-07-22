@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.agents.namenode;
 
 import ai.sapper.hcdc.common.ConfigReader;
+import ai.sapper.hcdc.common.model.services.EConfigFileType;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.model.Heartbeat;
 import com.google.common.base.Preconditions;
@@ -17,7 +18,7 @@ class NameNodeEnvTest {
 
     @BeforeAll
     public static void setup() throws Exception {
-        xmlConfiguration = ConfigReader.read(__CONFIG_FILE);
+        xmlConfiguration = ConfigReader.read(__CONFIG_FILE, EConfigFileType.File);
         Preconditions.checkState(xmlConfiguration != null);
     }
 

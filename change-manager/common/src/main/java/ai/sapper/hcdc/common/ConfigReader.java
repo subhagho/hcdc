@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.common;
 
+import ai.sapper.hcdc.common.model.services.EConfigFileType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -12,9 +13,14 @@ import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
 import org.apache.commons.configuration2.builder.fluent.Parameters;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.ex.ConfigurationRuntimeException;
+import org.apache.commons.configuration2.io.ClasspathLocationStrategy;
+import org.apache.commons.configuration2.io.CombinedLocationStrategy;
+import org.apache.commons.configuration2.io.FileLocationStrategy;
+import org.apache.commons.configuration2.io.ProvidedURLLocationStrategy;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -89,7 +95,7 @@ public class ConfigReader {
         return null;
     }
 
-    public static XMLConfiguration read(@NonNull String filename) throws ConfigurationException {
+    public static XMLConfiguration readFromFile(@NonNull String filename) throws ConfigurationException {
         File cf = new File(filename);
         if (!cf.exists()) {
             throw new ConfigurationException(String.format("Specified configuration file not found. [file=%s]", cf.getAbsolutePath()));
@@ -103,6 +109,42 @@ public class ConfigReader {
                         .configure(params.xml()
                                 .setFileName(cf.getAbsolutePath()));
         return builder.getConfiguration();
+    }
+
+    public static XMLConfiguration readFromClasspath(@NonNull String path) throws ConfigurationException {
+        List<FileLocationStrategy> subs = List.of(
+                new ProvidedURLLocationStrategy());
+        FileLocationStrategy strategy = new CombinedLocationStrategy(subs);
+        Parameters params = new Parameters();
+        FileBasedConfigurationBuilder<XMLConfiguration> builder =
+                new FileBasedConfigurationBuilder<XMLConfiguration>(XMLConfiguration.class)
+                        .configure(params.xml()
+                                .setLocationStrategy(strategy).setFileName(path));
+        return builder.getConfiguration();
+    }
+
+    public static XMLConfiguration readFromURI(@NonNull String path) throws ConfigurationException {
+        List<FileLocationStrategy> subs = List.of(
+                new ClasspathLocationStrategy());
+        FileLocationStrategy strategy = new CombinedLocationStrategy(subs);
+        Parameters params = new Parameters();
+        FileBasedConfigurationBuilder<XMLConfiguration> builder =
+                new FileBasedConfigurationBuilder<XMLConfiguration>(XMLConfiguration.class)
+                        .configure(params.xml()
+                                .setLocationStrategy(strategy).setFileName(path));
+        return builder.getConfiguration();
+    }
+
+    public static XMLConfiguration read(@NonNull String path, @NonNull EConfigFileType type) throws ConfigurationException {
+        switch (type) {
+            case File:
+                return readFromFile(path);
+            case Remote:
+                return readFromURI(path);
+            case Resource:
+                return readFromClasspath(path);
+        }
+        throw new ConfigurationException(String.format("Invalid Config File type. [type=%s]", type.name()));
     }
 
     public static boolean checkIfNodeExists(@NonNull HierarchicalConfiguration<ImmutableNode> node, @NonNull String name) {

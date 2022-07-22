@@ -1,21 +1,22 @@
 package ai.sapper.hcdc.services.namenode;
 
-import ai.sapper.hcdc.agents.namenode.HDFSSnapshotProcessor;
 import ai.sapper.hcdc.agents.namenode.NameNodeEnv;
-import ai.sapper.hcdc.agents.namenode.main.EditLogRunner;
 import ai.sapper.hcdc.agents.namenode.main.SnapshotRunner;
+import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
 import ai.sapper.hcdc.common.model.filters.DomainFilter;
 import ai.sapper.hcdc.common.model.filters.DomainFilters;
 import ai.sapper.hcdc.common.model.services.BasicResponse;
 import ai.sapper.hcdc.common.model.services.ConfigSource;
 import ai.sapper.hcdc.common.model.services.EResponseState;
+import ai.sapper.hcdc.common.model.services.SnapshotDoneRequest;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
+import ai.sapper.hcdc.services.ServiceHelper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-public class SnapshotReaderService {
+public class SnapshotService {
     private static SnapshotRunner processor;
 
     @RequestMapping(value = "/snapshot/start", method = RequestMethod.POST)
@@ -39,6 +40,7 @@ public class SnapshotReaderService {
                                                                   @PathVariable("enable") Boolean enable,
                                                                   @RequestBody DomainFilter filter) {
         try {
+            ServiceHelper.checkService(processor);
             DomainFilters filters = processor.getProcessor().addFilter(filter, domain);
             if (enable) {
                 processor.getProcessor().processFilter(filter, domain);
@@ -55,6 +57,7 @@ public class SnapshotReaderService {
     @RequestMapping(value = "/snapshot/run")
     public ResponseEntity<BasicResponse<Integer>> run() {
         try {
+            ServiceHelper.checkService(processor);
             int count = processor.getProcessor().run();
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
                     count),
@@ -66,9 +69,25 @@ public class SnapshotReaderService {
         }
     }
 
+    @RequestMapping(value = "/snapshot/done", method = RequestMethod.POST)
+    public ResponseEntity<BasicResponse<DFSReplicationState>> snapshotDone(@RequestBody SnapshotDoneRequest request) {
+        try {
+            ServiceHelper.checkService(processor);
+            DFSReplicationState rState = processor.getProcessor().snapshotReady(request.getHdfsPath(), request.getTransactionId());
+            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
+                    rState),
+                    HttpStatus.OK);
+        } catch (Throwable t) {
+            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
+                    (DFSReplicationState) null).withError(t),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @RequestMapping(value = "/snapshot/status")
     public ResponseEntity<BasicResponse<NameNodeEnv.ENameNEnvState>> state() {
         try {
+            ServiceHelper.checkService(processor);
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
                     NameNodeEnv.get().state().state()),
                     HttpStatus.OK);
@@ -82,7 +101,9 @@ public class SnapshotReaderService {
     @RequestMapping(value = "/snapshot/stop")
     public ResponseEntity<BasicResponse<NameNodeEnv.ENameNEnvState>> stop() {
         try {
+            ServiceHelper.checkService(processor);
             NameNodeEnv.dispose();
+            processor = null;
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
                     NameNodeEnv.get().state().state()),
                     HttpStatus.OK);

@@ -3,6 +3,7 @@ package ai.sapper.hcdc.utils;
 import ai.sapper.hcdc.agents.namenode.NameNodeEnv;
 import ai.sapper.hcdc.agents.namenode.ProcessorStateManager;
 import ai.sapper.hcdc.common.ConfigReader;
+import ai.sapper.hcdc.common.model.services.EConfigFileType;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.filters.DomainManager;
 import com.beust.jcommander.JCommander;
@@ -67,7 +68,7 @@ public class DomainFilterLoader {
             });
             DomainFilterLoader loader = new DomainFilterLoader();
             JCommander.newBuilder().addObject(loader).build().parse(args);
-            XMLConfiguration config = ConfigReader.read(loader.configfile);
+            XMLConfiguration config = ConfigReader.read(loader.configfile, EConfigFileType.File);
             NameNodeEnv.setup(config);
             if (!(NameNodeEnv.stateManager() instanceof ProcessorStateManager)) {
                 throw new Exception(
