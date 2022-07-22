@@ -57,7 +57,7 @@ public class NameNodeReplicator {
     @Parameter(names = {"--type", "-t"}, description = "Configuration file type. (File, Resource, Remote)")
     private String configSource;
     private EConfigFileType fileSource = EConfigFileType.File;
-    @Parameter(names = {"--tmp", "-t"}, description = "Temp directory to use to create local files. [DEFAULT=System.getProperty(\"java.io.tmpdir\")]")
+    @Parameter(names = {"--tmp"}, description = "Temp directory to use to create local files. [DEFAULT=System.getProperty(\"java.io.tmpdir\")]")
     private String tempDir = System.getProperty("java.io.tmpdir");
 
     private long txnId;
