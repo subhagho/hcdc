@@ -19,14 +19,20 @@ import org.apache.parquet.Strings;
 public class ChangeRunner {
     @Parameter(names = {"--config", "-c"}, required = true, description = "Path to the configuration file.")
     private String configfile;
+    @Parameter(names = {"--type", "-t"}, description = "Configuration file type. (File, Resource, Remote)")
+    private String configSource;
+    private EConfigFileType fileSource = EConfigFileType.File;
     private HierarchicalConfiguration<ImmutableNode> config;
     private Thread runner;
     private HDFSDeltaChangeProcessor processor;
 
     private void init() throws Exception {
         Preconditions.checkState(!Strings.isNullOrEmpty(configfile));
-
-        config = ConfigReader.read(configfile, EConfigFileType.File);
+        if (!Strings.isNullOrEmpty(configSource)) {
+            fileSource = EConfigFileType.parse(configSource);
+        }
+        Preconditions.checkNotNull(fileSource);
+        config = ConfigReader.read(configfile, fileSource);
         NameNodeEnv.setup(config);
 
         processor = new HDFSDeltaChangeProcessor(NameNodeEnv.stateManager());

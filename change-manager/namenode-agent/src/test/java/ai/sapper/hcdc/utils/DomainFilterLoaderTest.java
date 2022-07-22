@@ -3,6 +3,7 @@ package ai.sapper.hcdc.utils;
 import ai.sapper.hcdc.agents.namenode.NameNodeEnv;
 import ai.sapper.hcdc.agents.namenode.ProcessorStateManager;
 import ai.sapper.hcdc.common.ConfigReader;
+import ai.sapper.hcdc.common.model.services.EConfigFileType;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.filters.DomainManager;
 import com.google.common.base.Preconditions;
@@ -20,7 +21,7 @@ class DomainFilterLoaderTest {
 
     @BeforeAll
     public static void setup() throws Exception {
-        xmlConfiguration = ConfigReader.read(__CONFIG_PATH);
+        xmlConfiguration = ConfigReader.read(__CONFIG_PATH, EConfigFileType.File);
         Preconditions.checkState(xmlConfiguration != null);
     }
 
@@ -28,7 +29,7 @@ class DomainFilterLoaderTest {
     void read() {
         try {
             NameNodeEnv.setup(xmlConfiguration);
-            DefaultLogger.LOG.info(String.format("Name Node Agent environment initialized. [namespace=%s]", NameNodeEnv.get().hadoopNamespace()));
+            DefaultLogger.LOG.info(String.format("Name Node Agent environment initialized. [namespace=%s]", NameNodeEnv.get().module()));
             assertNotNull(NameNodeEnv.stateManager());
             assertTrue(NameNodeEnv.stateManager() instanceof ProcessorStateManager);
             DomainManager domainManager = ((ProcessorStateManager) NameNodeEnv.stateManager()).domainManager();

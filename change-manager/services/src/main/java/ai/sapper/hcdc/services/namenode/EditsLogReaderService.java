@@ -29,6 +29,7 @@ public class EditsLogReaderService {
             });
             processor = new EditLogRunner();
             processor.setConfigfile(config.getPath());
+            processor.setFileSource(config.getType());
             processor.init();
             processor.run();
             DefaultLogger.LOG.info(String.format("EditsLog processor started. [config=%s]", config.toString()));

@@ -24,6 +24,7 @@ public class SnapshotService {
         try {
             processor = new SnapshotRunner();
             processor.setConfigfile(config.getPath());
+            processor.setFileSource(config.getType());
             processor.init();
             DefaultLogger.LOG.info(String.format("EditsLog processor started. [config=%s]", config.toString()));
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,

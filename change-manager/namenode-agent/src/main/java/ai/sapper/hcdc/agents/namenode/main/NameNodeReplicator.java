@@ -54,6 +54,9 @@ public class NameNodeReplicator {
     private String fsImageFile;
     @Parameter(names = {"--config", "-c"}, required = true, description = "Path to the configuration file.")
     private String configfile;
+    @Parameter(names = {"--type", "-t"}, description = "Configuration file type. (File, Resource, Remote)")
+    private String configSource;
+    private EConfigFileType fileSource = EConfigFileType.File;
     @Parameter(names = {"--tmp", "-t"}, description = "Temp directory to use to create local files. [DEFAULT=System.getProperty(\"java.io.tmpdir\")]")
     private String tempDir = System.getProperty("java.io.tmpdir");
 
@@ -63,7 +66,12 @@ public class NameNodeReplicator {
 
     public void init() throws NameNodeError {
         try {
-            config = ConfigReader.read(configfile, EConfigFileType.File);
+            Preconditions.checkState(!Strings.isNullOrEmpty(configfile));
+            if (!org.apache.parquet.Strings.isNullOrEmpty(configSource)) {
+                fileSource = EConfigFileType.parse(configSource);
+            }
+            Preconditions.checkNotNull(fileSource);
+            config = ConfigReader.read(configfile, fileSource);
             NameNodeEnv.setup(config);
             replicatorConfig = new ReplicatorConfig(config);
             replicatorConfig.read();
