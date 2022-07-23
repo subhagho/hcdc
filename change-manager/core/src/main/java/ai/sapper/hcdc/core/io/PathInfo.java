@@ -14,6 +14,7 @@ import java.io.IOException;
 @Accessors(fluent = true)
 public abstract class PathInfo {
     private final String path;
+    private long dataSize = -1;
 
     protected PathInfo(@NonNull String path) {
         this.path = path;
@@ -22,6 +23,8 @@ public abstract class PathInfo {
     public String parent() {
         return FilenameUtils.getFullPath(path);
     }
+
+    public abstract PathInfo parentPathInfo();
 
     public String name() {
         return FilenameUtils.getName(path);
@@ -36,4 +39,6 @@ public abstract class PathInfo {
     public abstract boolean isFile() throws IOException;
 
     public abstract boolean exists() throws IOException;
+
+    public abstract long size() throws IOException;
 }

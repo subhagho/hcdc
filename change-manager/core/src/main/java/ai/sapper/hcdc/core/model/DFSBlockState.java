@@ -19,6 +19,7 @@ public class DFSBlockState {
     private long lastTnxId;
     private long generationStamp;
     private String blockChecksum;
+    private boolean stored = false;
 
     private EBlockState state = EBlockState.Unknown;
 

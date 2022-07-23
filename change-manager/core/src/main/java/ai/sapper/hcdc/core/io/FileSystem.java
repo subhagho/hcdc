@@ -16,7 +16,9 @@ public abstract class FileSystem {
 
     public abstract FileSystem init(@NonNull HierarchicalConfiguration<ImmutableNode> config, String pathPrefix) throws IOException;
 
-    public abstract PathInfo get(@NonNull String path, String... options) throws IOException;
+    public abstract PathInfo get(@NonNull String path, String domain) throws IOException;
+
+    protected abstract PathInfo get(@NonNull String path) throws IOException;
 
     public abstract String mkdir(@NonNull PathInfo path, @NonNull String name) throws IOException;
 
@@ -34,22 +36,22 @@ public abstract class FileSystem {
 
     public abstract List<String> findFiles(@NonNull PathInfo path, String dirQuery, @NonNull String fileQuery) throws IOException;
 
-    public boolean exists(@NonNull String path) throws IOException {
-        PathInfo pi = get(path);
+    public boolean exists(@NonNull String path, String domain) throws IOException {
+        PathInfo pi = get(path, domain);
         if (pi != null) return pi.exists();
         return false;
     }
 
-    public boolean isDirectory(@NonNull String path) throws IOException {
-        PathInfo pi = get(path);
+    public boolean isDirectory(@NonNull String path, String domain) throws IOException {
+        PathInfo pi = get(path, domain);
         if (pi != null) return pi.isDirectory();
         else {
             throw new IOException(String.format("File not found. [path=%s]", path));
         }
     }
 
-    public boolean isFile(@NonNull String path) throws IOException {
-        PathInfo pi = get(path);
+    public boolean isFile(@NonNull String path, String domain) throws IOException {
+        PathInfo pi = get(path, domain);
         if (pi != null) return pi.isFile();
         else {
             throw new IOException(String.format("File not found. [path=%s]", path));

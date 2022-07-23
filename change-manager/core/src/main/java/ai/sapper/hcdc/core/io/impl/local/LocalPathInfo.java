@@ -7,6 +7,9 @@ import lombok.experimental.Accessors;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Getter
 @Accessors(fluent = true)
@@ -16,6 +19,14 @@ public class LocalPathInfo extends PathInfo {
     protected LocalPathInfo(@NonNull String path) {
         super(path);
         file = new File(path);
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public PathInfo parentPathInfo() {
+        return new LocalPathInfo(file.getParentFile().getAbsolutePath());
     }
 
     /**
@@ -43,5 +54,22 @@ public class LocalPathInfo extends PathInfo {
     @Override
     public boolean exists() throws IOException {
         return file.exists();
+    }
+
+    /**
+     * @return
+     * @throws IOException
+     */
+    @Override
+    public long size() throws IOException {
+        if (dataSize() < 0) {
+            if (!exists()) {
+                dataSize(0);
+            } else {
+                Path p = Paths.get(file.toURI());
+                dataSize(Files.size(p));
+            }
+        }
+        return dataSize();
     }
 }

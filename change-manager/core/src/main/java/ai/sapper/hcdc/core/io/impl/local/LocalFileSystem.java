@@ -37,12 +37,23 @@ public class LocalFileSystem extends FileSystem {
      * @throws IOException
      */
     @Override
-    public PathInfo get(@NonNull String path, String... options) throws IOException {
+    public PathInfo get(@NonNull String path, String domain) throws IOException {
         if (root() != null) {
-            path = String.format("%s/%s", root().path(), path);
+            path = String.format("%s/%s/%s", root().path(), domain, path);
         }
         return new LocalPathInfo(path);
     }
+
+    /**
+     * @param path
+     * @return
+     * @throws IOException
+     */
+    @Override
+    protected PathInfo get(@NonNull String path) throws IOException {
+        return new LocalPathInfo(path);
+    }
+
 
     /**
      * @param path
