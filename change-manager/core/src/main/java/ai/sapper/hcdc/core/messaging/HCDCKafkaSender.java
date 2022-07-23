@@ -20,14 +20,14 @@ import java.util.concurrent.Future;
 public class HCDCKafkaSender extends MessageSender<String, DFSChangeDelta> {
     private BasicKafkaProducer producer = null;
     private String topic = null;
-    private KafkaPartitioner<String> partitioner;
+    private KafkaPartitioner<DFSChangeDelta> partitioner;
 
     public HCDCKafkaSender withTopic(String topic) {
         this.topic = topic;
         return this;
     }
 
-    public HCDCKafkaSender withPartitioner(KafkaPartitioner<String> partitioner) {
+    public HCDCKafkaSender withPartitioner(KafkaPartitioner<DFSChangeDelta> partitioner) {
         this.partitioner = partitioner;
         return this;
     }
@@ -62,7 +62,7 @@ public class HCDCKafkaSender extends MessageSender<String, DFSChangeDelta> {
             Future<RecordMetadata> result = null;
             Integer partition = null;
             if (partitioner != null) {
-                partition = partitioner.partition(message.key());
+                partition = partitioner.partition(message.value());
             }
             result = producer.producer().send(new ProducerRecord<>(topic, partition, message.key(), data, headers));
             RecordMetadata rm = result.get();

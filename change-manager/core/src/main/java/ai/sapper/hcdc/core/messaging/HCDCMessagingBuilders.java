@@ -61,9 +61,9 @@ public class HCDCMessagingBuilders {
                 if (!kc.isConnected()) {
                     kc.connect();
                 }
-                KafkaPartitioner<String> part = null;
+                KafkaPartitioner<DFSChangeDelta> part = null;
                 if (!Strings.isNullOrEmpty(partitioner)) {
-                    Class<? extends KafkaPartitioner<String>> cp = (Class<? extends KafkaPartitioner<String>>) Class.forName(partitioner);
+                    Class<? extends KafkaPartitioner<DFSChangeDelta>> cp = (Class<? extends KafkaPartitioner<DFSChangeDelta>>) Class.forName(partitioner);
                     part = cp.newInstance();
                     if (config != null) {
                         part.init(config);
