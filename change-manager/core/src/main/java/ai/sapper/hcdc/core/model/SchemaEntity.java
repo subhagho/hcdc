@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Domain {
+public class SchemaEntity {
     private String domain;
     private String entity;
 }

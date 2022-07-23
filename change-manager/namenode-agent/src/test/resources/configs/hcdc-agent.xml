@@ -15,12 +15,12 @@
                 <connection>zk-state-connection</connection>
             </manager>
         </state>
-        <domain>
+        <schemaEntity>
             <manager>
                 <basePath>/hcdc/registry/files</basePath>
                 <connection>zk-state-connection</connection>
             </manager>
-        </domain>
+        </schemaEntity>
         <processor>
             <cdc>
                 <sender>

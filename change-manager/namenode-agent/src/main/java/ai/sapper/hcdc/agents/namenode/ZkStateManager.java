@@ -561,7 +561,7 @@ public class ZkStateManager {
 
     public DFSReplicationState create(long inodeId,
                                       @NonNull String hdfsPath,
-                                      @NonNull Domain domain,
+                                      @NonNull SchemaEntity schemaEntity,
                                       boolean enable) throws StateManagerError {
         checkState();
         try {
@@ -576,7 +576,7 @@ public class ZkStateManager {
                 state = new DFSReplicationState();
                 state.setInode(inodeId);
                 state.setHdfsPath(hdfsPath);
-                state.setEntity(domain);
+                state.setEntity(schemaEntity);
                 state.setZkPath(path);
                 state.setEnabled(enable);
                 if (enable) {

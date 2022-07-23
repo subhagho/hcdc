@@ -19,12 +19,12 @@
                 <connection>test-zk</connection>
             </manager>
         </state>
-        <domain>
+        <schemaEntity>
             <manager>
                 <basePath>/hcdc/registry/files</basePath>
                 <connection>test-zk</connection>
             </manager>
-        </domain>
+        </schemaEntity>
         <useSSL>false</useSSL>
         <locks>
             <lock>

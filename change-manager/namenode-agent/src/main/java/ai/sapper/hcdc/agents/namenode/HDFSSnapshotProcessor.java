@@ -13,7 +13,7 @@ import ai.sapper.hcdc.core.filters.FilterAddCallback;
 import ai.sapper.hcdc.core.messaging.*;
 import ai.sapper.hcdc.core.model.DFSBlockState;
 import ai.sapper.hcdc.core.model.DFSFileState;
-import ai.sapper.hcdc.core.model.Domain;
+import ai.sapper.hcdc.core.model.SchemaEntity;
 import ai.sapper.hcdc.core.utils.FileSystemUtils;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
@@ -117,7 +117,7 @@ public class HDFSSnapshotProcessor {
                 URI uri = path.toUri();
                 String hdfsPath = uri.getPath();
                 if (filter.matches(hdfsPath)) {
-                    Domain d = new Domain();
+                    SchemaEntity d = new SchemaEntity();
                     d.setDomain(domain);
                     d.setEntity(filter.filter().getEntity());
                     snapshot(hdfsPath, d);
@@ -128,7 +128,7 @@ public class HDFSSnapshotProcessor {
         return count;
     }
 
-    public void snapshot(@NonNull String hdfsPath, @NonNull Domain entity) throws SnapshotError {
+    public void snapshot(@NonNull String hdfsPath, @NonNull SchemaEntity entity) throws SnapshotError {
         Preconditions.checkState(sender != null);
         try {
             DefaultLogger.LOG.info(String.format("Generating snapshot for file. [path=%s]", hdfsPath));

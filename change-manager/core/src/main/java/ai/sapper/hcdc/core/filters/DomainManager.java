@@ -10,7 +10,7 @@ import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
-import ai.sapper.hcdc.core.model.Domain;
+import ai.sapper.hcdc.core.model.SchemaEntity;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -118,7 +118,7 @@ public class DomainManager {
         return PathUtils.formatZkPath(String.format("%s/%s", getZkPath(), domain));
     }
 
-    public Domain matches(@NonNull String path) {
+    public SchemaEntity matches(@NonNull String path) {
         Preconditions.checkNotNull(zkConnection);
         Preconditions.checkState(zkConnection.isConnected());
 
@@ -128,7 +128,7 @@ public class DomainManager {
                 DomainFilterMatcher m = ms.get(d);
                 DomainFilterMatcher.PathFilter pf = m.matches(path);
                 if (pf != null) {
-                    Domain dd = new Domain();
+                    SchemaEntity dd = new SchemaEntity();
                     dd.setDomain(m.filters().getDomain());
                     dd.setEntity(pf.filter().getEntity());
                     return dd;
