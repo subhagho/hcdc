@@ -30,7 +30,7 @@ public class HDFSBlockReader extends DFSInputStream {
             if (fileInfo == null) {
                 throw new IOException(String.format("File not found. [path=%s]", src));
             }
-            locatedBlocks = dfsClient.getLocatedBlocks(src, 0);
+            locatedBlocks = dfsClient.getLocatedBlocks(src, 0, fileInfo.getLen());
             return this;
         } catch (Exception ex) {
             throw new DFSError(ex);

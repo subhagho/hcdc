@@ -11,6 +11,7 @@ import java.util.Objects;
 @Setter
 @ToString(exclude = {"createdTime", "updatedTime"})
 public class DomainFilter {
+    private String domain;
     private String entity;
     private String path;
     private String regex;
@@ -20,7 +21,8 @@ public class DomainFilter {
     public DomainFilter() {
     }
 
-    public DomainFilter(@NonNull String entity, @NonNull String path, @NonNull String regex) {
+    public DomainFilter(@NonNull String domain, @NonNull String entity, @NonNull String path, @NonNull String regex) {
+        this.domain = domain;
         this.entity = entity;
         this.path = path;
         this.regex = regex;

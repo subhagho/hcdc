@@ -94,8 +94,8 @@ public class DomainManager {
                     if (data != null && data.length > 0) {
                         String json = new String(data, StandardCharsets.UTF_8);
                         DomainFilters df = JSONUtils.read(json, DomainFilters.class);
-                        DomainFilterMatcher m = new DomainFilterMatcher(df.getName(), df);
-                        matchers.put(df.getName(), m);
+                        DomainFilterMatcher m = new DomainFilterMatcher(df.getDomain(), df);
+                        matchers.put(df.getDomain(), m);
                         if (!callbacks.isEmpty()) {
                             for (FilterAddCallback callback : callbacks) {
                                 callback.onStart(m);
@@ -129,7 +129,7 @@ public class DomainManager {
                 DomainFilterMatcher.PathFilter pf = m.matches(path);
                 if (pf != null) {
                     Domain dd = new Domain();
-                    dd.setDomain(m.filters().getName());
+                    dd.setDomain(m.filters().getDomain());
                     dd.setEntity(pf.filter().getEntity());
                     return dd;
                 }
@@ -146,7 +146,7 @@ public class DomainManager {
         DomainFilterMatcher.PathFilter filter = null;
         if (!matchers.containsKey(domain)) {
             DomainFilters df = new DomainFilters();
-            df.setName(domain);
+            df.setDomain(domain);
             DomainFilter d = df.add(entity, path, regex);
 
             matcher = new DomainFilterMatcher(domain, df);

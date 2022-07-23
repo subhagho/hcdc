@@ -11,13 +11,13 @@ import java.util.Set;
 @Getter
 @Setter
 public class DomainFilters {
-    private String name;
+    private String domain;
     private Map<String, DomainFilter> filters = new HashMap<>();
 
     public DomainFilter add(@NonNull String entity, @NonNull String path, @NonNull String regex) {
         DomainFilter filter = get(path);
         if (filter == null) {
-            filter = new DomainFilter(entity, path, regex);
+            filter = new DomainFilter(domain, entity, path, regex);
             filters.put(path, filter);
         } else {
             filter.setRegex(regex);
