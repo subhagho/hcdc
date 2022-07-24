@@ -4,6 +4,7 @@ import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeAgentState;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
 import ai.sapper.hcdc.common.model.DFSError;
+import ai.sapper.hcdc.common.model.SchemaEntity;
 import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.DistributedLock;
@@ -55,7 +56,6 @@ public class ZkStateManager {
         try {
             this.instance = instance;
             this.module = module;
-
             config = new ZkStateManagerConfig(xmlConfig);
             config.read();
 
@@ -91,6 +91,11 @@ public class ZkStateManager {
         } catch (Exception ex) {
             throw new StateManagerError(ex);
         }
+    }
+
+    public ZkStateManager withReplicationLock(@NonNull DistributedLock replicationLock) {
+        this.replicationLock = replicationLock;
+        return this;
     }
 
     private void checkAgentState() throws Exception {
@@ -696,14 +701,6 @@ public class ZkStateManager {
     private synchronized void checkState() {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
-
-        if (replicationLock == null) {
-            replicationLock = NameNodeEnv.get().lock(Constants.LOCK_REPLICATION);
-            if (replicationLock == null) {
-                throw new RuntimeException(
-                        String.format("Distributed Lock instance not found. [name=%s]", Constants.LOCK_REPLICATION));
-            }
-        }
     }
 
     public String basePath() {

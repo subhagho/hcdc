@@ -6,7 +6,6 @@ import ai.sapper.hcdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.hcdc.core.messaging.InvalidMessageError;
 import ai.sapper.hcdc.core.messaging.MessageObject;
 import ai.sapper.hcdc.core.messaging.MessageSender;
-import ai.sapper.hcdc.core.model.SchemaEntity;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;

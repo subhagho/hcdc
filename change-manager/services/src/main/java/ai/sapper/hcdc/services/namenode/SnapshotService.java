@@ -74,7 +74,10 @@ public class SnapshotService {
     public ResponseEntity<BasicResponse<DFSReplicationState>> snapshotDone(@RequestBody SnapshotDoneRequest request) {
         try {
             ServiceHelper.checkService(processor);
-            DFSReplicationState rState = processor.getProcessor().snapshotReady(request.getHdfsPath(), request.getTransactionId());
+            DFSReplicationState rState = processor.getProcessor()
+                    .snapshotReady(request.getHdfsPath(),
+                            request.getEntity(),
+                            request.getTransactionId());
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
                     rState),
                     HttpStatus.OK);

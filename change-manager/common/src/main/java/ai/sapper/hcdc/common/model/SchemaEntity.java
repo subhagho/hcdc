@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.core.model;
+package ai.sapper.hcdc.common.model;
 
 import lombok.Getter;
 import lombok.Setter;

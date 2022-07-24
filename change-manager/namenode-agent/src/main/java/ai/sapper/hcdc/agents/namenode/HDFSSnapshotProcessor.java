@@ -17,7 +17,6 @@ import ai.sapper.hcdc.core.filters.FilterAddCallback;
 import ai.sapper.hcdc.core.messaging.*;
 import ai.sapper.hcdc.core.model.DFSBlockState;
 import ai.sapper.hcdc.core.model.DFSFileState;
-import ai.sapper.hcdc.core.model.SchemaEntity;
 import ai.sapper.hcdc.core.utils.FileSystemUtils;
 import com.google.common.base.Preconditions;
 import lombok.Getter;

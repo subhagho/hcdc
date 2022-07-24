@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.core.filters;
 
 import ai.sapper.hcdc.common.ConfigReader;
+import ai.sapper.hcdc.common.model.SchemaEntity;
 import ai.sapper.hcdc.common.model.filters.DomainFilter;
 import ai.sapper.hcdc.common.model.filters.DomainFilterMatcher;
 import ai.sapper.hcdc.common.model.filters.DomainFilters;
@@ -10,7 +11,6 @@ import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
-import ai.sapper.hcdc.core.model.SchemaEntity;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;

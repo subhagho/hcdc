@@ -95,6 +95,14 @@ public class NameNodeEnv {
             stateManager.init(configNode, connectionManager, config.module, config.instance);
 
             readLocks();
+            DistributedLock lock = lock(ZkStateManager.Constants.LOCK_REPLICATION);
+            if (lock == null) {
+                throw new ConfigurationException(
+                        String.format("Replication Lock not defined. [name=%s]",
+                                ZkStateManager.Constants.LOCK_REPLICATION));
+            }
+            stateManager.withReplicationLock(lock);
+
             state.state(ENameNEnvState.Initialized);
 
             stateManager.heartbeat(config.instance, agentState);

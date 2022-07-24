@@ -15,13 +15,13 @@
                 <connection>zk-state-connection</connection>
             </manager>
         </state>
-        <schemaEntity>
+        <domain>
             <manager>
                 <basePath>/hcdc/registry/files</basePath>
                 <connection>zk-state-connection</connection>
                 <hdfs>source-hdfs</hdfs>
             </manager>
-        </schemaEntity>
+        </domain>
         <useSSL>false</useSSL>
         <locks>
             <lock>
