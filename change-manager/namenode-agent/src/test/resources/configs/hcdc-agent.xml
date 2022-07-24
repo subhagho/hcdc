@@ -22,7 +22,7 @@
             </manager>
         </schemaEntity>
         <processor>
-            <cdc>
+            <source>
                 <sender>
                     <connectionType>kafka</connectionType>
                     <connection>cdc-kafka-queue</connection>
@@ -39,7 +39,7 @@
                     <!--partitioner></partitioner-->
                 </errorQueue>
                 <readBatchTimeout>5000</readBatchTimeout>
-            </cdc>
+            </source>
         </processor>
         <useSSL>false</useSSL>
         <locks>

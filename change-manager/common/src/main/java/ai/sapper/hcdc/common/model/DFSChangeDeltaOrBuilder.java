@@ -85,4 +85,34 @@ public interface DFSChangeDeltaOrBuilder
    * <code>required bytes body = 6;</code>
    */
   com.google.protobuf.ByteString getBody();
+
+  // optional string domain = 7;
+  /**
+   * <code>optional string domain = 7;</code>
+   */
+  boolean hasDomain();
+  /**
+   * <code>optional string domain = 7;</code>
+   */
+  java.lang.String getDomain();
+  /**
+   * <code>optional string domain = 7;</code>
+   */
+  com.google.protobuf.ByteString
+      getDomainBytes();
+
+  // optional string entityName = 8;
+  /**
+   * <code>optional string entityName = 8;</code>
+   */
+  boolean hasEntityName();
+  /**
+   * <code>optional string entityName = 8;</code>
+   */
+  java.lang.String getEntityName();
+  /**
+   * <code>optional string entityName = 8;</code>
+   */
+  com.google.protobuf.ByteString
+      getEntityNameBytes();
 }

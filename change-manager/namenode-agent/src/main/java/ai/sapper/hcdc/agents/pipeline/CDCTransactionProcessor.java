@@ -1,7 +1,8 @@
-package ai.sapper.hcdc.agents.namenode;
+package ai.sapper.hcdc.agents.pipeline;
 
 import ai.sapper.hcdc.agents.common.InvalidTransactionError;
 import ai.sapper.hcdc.agents.common.TransactionProcessor;
+import ai.sapper.hcdc.agents.namenode.HDFSSnapshotProcessor;
 import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.core.messaging.ChangeDeltaSerDe;
@@ -14,7 +15,7 @@ import lombok.NonNull;
 
 import java.util.List;
 
-public class HCDCTransactionProcessor extends TransactionProcessor {
+public class CDCTransactionProcessor extends TransactionProcessor {
     private MessageSender<String, DFSChangeDelta> sender;
 
     public TransactionProcessor withSenderQueue(@NonNull MessageSender<String, DFSChangeDelta> sender) {
@@ -75,18 +76,15 @@ public class HCDCTransactionProcessor extends TransactionProcessor {
                 prevBlockId = block.getBlockId();
             }
         }
-        SchemaEntity schemaEntity = isRegistered(fileState.getHdfsFilePath());
-        if (schemaEntity != null) {
-            DFSReplicationState rState = stateManager().create(fileState.getId(), fileState.getHdfsFilePath(), schemaEntity, true);
-            rState.setSnapshotTxId(fileState.getLastTnxId());
-            rState.setSnapshotTime(System.currentTimeMillis());
-            rState.setSnapshotReady(true);
+        SchemaEntity schemaEntity = new SchemaEntity();
+        schemaEntity.setDomain(message.value().getNamespace());
+        DFSReplicationState rState = stateManager().create(fileState.getId(), fileState.getHdfsFilePath(), schemaEntity, true);
+        rState.setSnapshotTxId(fileState.getLastTnxId());
+        rState.setSnapshotTime(System.currentTimeMillis());
+        rState.setSnapshotReady(true);
 
-            stateManager().update(rState);
-            sender.send(message);
-        } else {
-            sendIgnoreTx(message, data);
-        }
+        stateManager().update(rState);
+        sender.send(message);
     }
 
     /**
@@ -116,7 +114,12 @@ public class HCDCTransactionProcessor extends TransactionProcessor {
             DFSFile df = data.getFile();
             df = df.toBuilder().setInodeId(fileState.getId()).build();
             data = data.toBuilder().setFile(df).build();
-            message = ChangeDeltaSerDe.create(message.value().getNamespace(), data, DFSAppendFile.class, message.mode());
+            message = ChangeDeltaSerDe.create(message.value().getNamespace(),
+                    data,
+                    DFSAppendFile.class,
+                    rState.getEntity().getDomain(),
+                    rState.getEntity().getEntity(),
+                    message.mode());
             sender.send(message);
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
@@ -157,7 +160,12 @@ public class HCDCTransactionProcessor extends TransactionProcessor {
             df = df.toBuilder().setInodeId(fileState.getId()).build();
             data = data.toBuilder().setFile(df).build();
 
-            message = ChangeDeltaSerDe.create(message.value().getNamespace(), data, DFSDeleteFile.class, message.mode());
+            message = ChangeDeltaSerDe.create(message.value().getNamespace(),
+                    data,
+                    DFSDeleteFile.class,
+                    rState.getEntity().getDomain(),
+                    rState.getEntity().getEntity(),
+                    message.mode());
             sender.send(message);
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
@@ -212,7 +220,12 @@ public class HCDCTransactionProcessor extends TransactionProcessor {
             df = df.toBuilder().setInodeId(fileState.getId()).build();
             data = data.toBuilder().setFile(df).build();
 
-            message = ChangeDeltaSerDe.create(message.value().getNamespace(), data, DFSAddBlock.class, message.mode());
+            message = ChangeDeltaSerDe.create(message.value().getNamespace(),
+                    data,
+                    DFSAddBlock.class,
+                    rState.getEntity().getDomain(),
+                    rState.getEntity().getEntity(),
+                    message.mode());
             sender.send(message);
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
@@ -278,7 +291,12 @@ public class HCDCTransactionProcessor extends TransactionProcessor {
             df = df.toBuilder().setInodeId(fileState.getId()).build();
             data = data.toBuilder().setFile(df).build();
 
-            message = ChangeDeltaSerDe.create(message.value().getNamespace(), data, DFSUpdateBlocks.class, message.mode());
+            message = ChangeDeltaSerDe.create(message.value().getNamespace(),
+                    data,
+                    DFSUpdateBlocks.class,
+                    rState.getEntity().getDomain(),
+                    rState.getEntity().getEntity(),
+                    message.mode());
             sender.send(message);
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
@@ -404,6 +422,8 @@ public class HCDCTransactionProcessor extends TransactionProcessor {
             message = ChangeDeltaSerDe.create(message.value().getNamespace(),
                     data,
                     DFSCloseFile.class,
+                    rState.getEntity().getDomain(),
+                    rState.getEntity().getEntity(),
                     message.mode());
             sender.send(message);
         } else if (fileState.hasError()) {
@@ -466,6 +486,8 @@ public class HCDCTransactionProcessor extends TransactionProcessor {
             MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
                     addFile,
                     DFSAddFile.class,
+                    rState.getEntity().getDomain(),
+                    rState.getEntity().getEntity(),
                     MessageObject.MessageMode.New);
             sender.send(m);
         } else if (nfs.hasError()) {

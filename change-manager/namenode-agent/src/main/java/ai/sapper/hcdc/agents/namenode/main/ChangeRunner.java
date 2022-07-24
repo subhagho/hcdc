@@ -1,7 +1,7 @@
 package ai.sapper.hcdc.agents.namenode.main;
 
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
-import ai.sapper.hcdc.agents.namenode.HDFSDeltaChangeProcessor;
+import ai.sapper.hcdc.agents.namenode.SourceChangeDeltaProcessor;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.services.EConfigFileType;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
@@ -24,7 +24,7 @@ public class ChangeRunner {
     private EConfigFileType fileSource = EConfigFileType.File;
     private HierarchicalConfiguration<ImmutableNode> config;
     private Thread runner;
-    private HDFSDeltaChangeProcessor processor;
+    private SourceChangeDeltaProcessor processor;
 
     private void init() throws Exception {
         Preconditions.checkState(!Strings.isNullOrEmpty(configfile));
@@ -35,7 +35,7 @@ public class ChangeRunner {
         config = ConfigReader.read(configfile, fileSource);
         NameNodeEnv.setup(config);
 
-        processor = new HDFSDeltaChangeProcessor(NameNodeEnv.stateManager());
+        processor = new SourceChangeDeltaProcessor(NameNodeEnv.stateManager());
         processor.init(NameNodeEnv.get().configNode(), NameNodeEnv.connectionManager());
     }
 

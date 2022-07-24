@@ -82,8 +82,8 @@ public abstract class ChangeDeltaProcessor implements Runnable {
     @Setter
     @Accessors(fluent = true)
     public static class ChangeDeltaProcessorConfig extends ConfigReader {
+        public static final String __CONFIG_PATH = "processor.source";
         public static class Constants {
-            public static final String __CONFIG_PATH = "processor.cdc";
             public static final String __CONFIG_PATH_SENDER = "sender";
             public static final String __CONFIG_PATH_RECEIVER = "receiver";
             public static final String __CONFIG_PATH_ERROR = "errorQueue";
@@ -96,7 +96,7 @@ public abstract class ChangeDeltaProcessor implements Runnable {
         private String batchTimeout;
 
         public ChangeDeltaProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
-            super(config, Constants.__CONFIG_PATH);
+            super(config, __CONFIG_PATH);
         }
 
         public ChangeDeltaProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config, @NonNull String path) {

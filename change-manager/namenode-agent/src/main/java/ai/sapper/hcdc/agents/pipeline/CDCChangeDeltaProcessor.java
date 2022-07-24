@@ -1,8 +1,9 @@
-package ai.sapper.hcdc.agents.namenode;
+package ai.sapper.hcdc.agents.pipeline;
 
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
+import ai.sapper.hcdc.agents.namenode.SourceTransactionProcessor;
 import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
 import ai.sapper.hcdc.agents.namenode.model.DFSTransactionType;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
@@ -31,22 +32,23 @@ import java.util.List;
 
 @Getter
 @Accessors(fluent = true)
-public class HDFSDeltaChangeProcessor extends ChangeDeltaProcessor {
-    private static Logger LOG = LoggerFactory.getLogger(HDFSDeltaChangeProcessor.class.getCanonicalName());
+public class CDCChangeDeltaProcessor extends ChangeDeltaProcessor {
+    private static Logger LOG = LoggerFactory.getLogger(CDCChangeDeltaProcessor.class.getCanonicalName());
 
-    private final HCDCTransactionProcessor processor = new HCDCTransactionProcessor();
+    private CDCTransactionProcessor processor;
 
     private long receiveBatchTimeout = 1000;
 
-    public HDFSDeltaChangeProcessor(@NonNull ZkStateManager stateManager) {
+    public CDCChangeDeltaProcessor(@NonNull ZkStateManager stateManager) {
         super(stateManager);
     }
 
-    public HDFSDeltaChangeProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                                         @NonNull ConnectionManager manger) throws ConfigurationException {
-        ChangeDeltaProcessorConfig config = new ChangeDeltaProcessorConfig(xmlConfig);
+    public CDCChangeDeltaProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                                        @NonNull ConnectionManager manger) throws ConfigurationException {
+        ChangeDeltaProcessorConfig config = new CDCChangeDeltaProcessorConfig(xmlConfig);
         super.init(config, manger);
-
+        processor = (CDCTransactionProcessor) new CDCTransactionProcessor()
+                .withSenderQueue(sender());
         return this;
     }
 
@@ -113,6 +115,8 @@ public class HDFSDeltaChangeProcessor extends ChangeDeltaProcessor {
         if (message.mode() == MessageObject.MessageMode.Backlog) {
             processBacklogMessage(message, txId);
             txId = -1;
+        } else if (message.mode() == MessageObject.MessageMode.Snapshot) {
+
         } else {
             processor.processTxMessage(message, txId);
         }
@@ -156,6 +160,8 @@ public class HDFSDeltaChangeProcessor extends ChangeDeltaProcessor {
             MessageObject<String, DFSChangeDelta> mesg = ChangeDeltaSerDe.create(message.value().getNamespace(),
                     closeFile,
                     DFSCloseFile.class,
+                    rState.getEntity().getDomain(),
+                    rState.getEntity().getEntity(),
                     MessageObject.MessageMode.Backlog);
             sender().send(mesg);
             rState = stateManager().update(rState);
@@ -224,5 +230,13 @@ public class HDFSDeltaChangeProcessor extends ChangeDeltaProcessor {
             ret = message.value().hasTxId();
         }
         return ret;
+    }
+
+    public static class CDCChangeDeltaProcessorConfig extends ChangeDeltaProcessorConfig {
+        public static final String __CONFIG_PATH = "processor.cdc";
+
+        public CDCChangeDeltaProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
+            super(config, __CONFIG_PATH);
+        }
     }
 }

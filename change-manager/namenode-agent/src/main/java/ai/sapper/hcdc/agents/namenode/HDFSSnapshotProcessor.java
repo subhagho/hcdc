@@ -150,7 +150,11 @@ public class HDFSSnapshotProcessor {
             }
             DFSAddFile addFile = generateSnapshot(fileState, true);
             MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
-                    addFile, DFSAddFile.class, MessageObject.MessageMode.Snapshot);
+                    addFile,
+                    DFSAddFile.class,
+                    entity.getDomain(),
+                    entity.getEntity(),
+                    MessageObject.MessageMode.Snapshot);
             sender.send(message);
 
             rState.setSnapshotTxId(fileState.getLastTnxId());
@@ -165,7 +169,7 @@ public class HDFSSnapshotProcessor {
         }
     }
 
-    public DFSReplicationState snapshotReady(@NonNull String hdfsPath, long tnxId) throws SnapshotError {
+    public DFSReplicationState snapshotReady(@NonNull String hdfsPath, @NonNull SchemaEntity entity, long tnxId) throws SnapshotError {
         Preconditions.checkState(tnxSender != null);
         try {
             DFSFileState fileState = stateManager.get(hdfsPath);
@@ -181,7 +185,11 @@ public class HDFSSnapshotProcessor {
             }
             DFSAddFile addFile = generateSnapshot(fileState, true);
             MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
-                    addFile, DFSAddFile.class, MessageObject.MessageMode.Backlog);
+                    addFile,
+                    DFSAddFile.class,
+                    entity.getDomain(),
+                    entity.getEntity(),
+                    MessageObject.MessageMode.Backlog);
             tnxSender.send(message);
 
             return rState;

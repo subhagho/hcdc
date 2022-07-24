@@ -131,4 +131,6 @@ message DFSChangeDelta {
   required string type = 4;
   required uint64 timestamp = 5;
   required bytes body = 6;
+  optional string domain = 7;
+  optional string entityName = 8;
 }

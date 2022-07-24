@@ -84,6 +84,16 @@ public  final class DFSChangeDelta extends
             body_ = input.readBytes();
             break;
           }
+          case 58: {
+            bitField0_ |= 0x00000040;
+            domain_ = input.readBytes();
+            break;
+          }
+          case 66: {
+            bitField0_ |= 0x00000080;
+            entityName_ = input.readBytes();
+            break;
+          }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -328,6 +338,92 @@ public  final class DFSChangeDelta extends
     return body_;
   }
 
+  // optional string domain = 7;
+  public static final int DOMAIN_FIELD_NUMBER = 7;
+  private java.lang.Object domain_;
+  /**
+   * <code>optional string domain = 7;</code>
+   */
+  public boolean hasDomain() {
+    return ((bitField0_ & 0x00000040) == 0x00000040);
+  }
+  /**
+   * <code>optional string domain = 7;</code>
+   */
+  public java.lang.String getDomain() {
+    java.lang.Object ref = domain_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      if (bs.isValidUtf8()) {
+        domain_ = s;
+      }
+      return s;
+    }
+  }
+  /**
+   * <code>optional string domain = 7;</code>
+   */
+  public com.google.protobuf.ByteString
+      getDomainBytes() {
+    java.lang.Object ref = domain_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      domain_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  // optional string entityName = 8;
+  public static final int ENTITYNAME_FIELD_NUMBER = 8;
+  private java.lang.Object entityName_;
+  /**
+   * <code>optional string entityName = 8;</code>
+   */
+  public boolean hasEntityName() {
+    return ((bitField0_ & 0x00000080) == 0x00000080);
+  }
+  /**
+   * <code>optional string entityName = 8;</code>
+   */
+  public java.lang.String getEntityName() {
+    java.lang.Object ref = entityName_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      if (bs.isValidUtf8()) {
+        entityName_ = s;
+      }
+      return s;
+    }
+  }
+  /**
+   * <code>optional string entityName = 8;</code>
+   */
+  public com.google.protobuf.ByteString
+      getEntityNameBytes() {
+    java.lang.Object ref = entityName_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      entityName_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
   private void initFields() {
     namespace_ = "";
     txId_ = "";
@@ -335,6 +431,8 @@ public  final class DFSChangeDelta extends
     type_ = "";
     timestamp_ = 0L;
     body_ = com.google.protobuf.ByteString.EMPTY;
+    domain_ = "";
+    entityName_ = "";
   }
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
@@ -390,6 +488,12 @@ public  final class DFSChangeDelta extends
     if (((bitField0_ & 0x00000020) == 0x00000020)) {
       output.writeBytes(6, body_);
     }
+    if (((bitField0_ & 0x00000040) == 0x00000040)) {
+      output.writeBytes(7, getDomainBytes());
+    }
+    if (((bitField0_ & 0x00000080) == 0x00000080)) {
+      output.writeBytes(8, getEntityNameBytes());
+    }
     getUnknownFields().writeTo(output);
   }
 
@@ -422,6 +526,14 @@ public  final class DFSChangeDelta extends
     if (((bitField0_ & 0x00000020) == 0x00000020)) {
       size += com.google.protobuf.CodedOutputStream
         .computeBytesSize(6, body_);
+    }
+    if (((bitField0_ & 0x00000040) == 0x00000040)) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBytesSize(7, getDomainBytes());
+    }
+    if (((bitField0_ & 0x00000080) == 0x00000080)) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBytesSize(8, getEntityNameBytes());
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSerializedSize = size;
@@ -551,6 +663,10 @@ public  final class DFSChangeDelta extends
       bitField0_ = (bitField0_ & ~0x00000010);
       body_ = com.google.protobuf.ByteString.EMPTY;
       bitField0_ = (bitField0_ & ~0x00000020);
+      domain_ = "";
+      bitField0_ = (bitField0_ & ~0x00000040);
+      entityName_ = "";
+      bitField0_ = (bitField0_ & ~0x00000080);
       return this;
     }
 
@@ -603,6 +719,14 @@ public  final class DFSChangeDelta extends
         to_bitField0_ |= 0x00000020;
       }
       result.body_ = body_;
+      if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
+        to_bitField0_ |= 0x00000040;
+      }
+      result.domain_ = domain_;
+      if (((from_bitField0_ & 0x00000080) == 0x00000080)) {
+        to_bitField0_ |= 0x00000080;
+      }
+      result.entityName_ = entityName_;
       result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
@@ -644,6 +768,16 @@ public  final class DFSChangeDelta extends
       }
       if (other.hasBody()) {
         setBody(other.getBody());
+      }
+      if (other.hasDomain()) {
+        bitField0_ |= 0x00000040;
+        domain_ = other.domain_;
+        onChanged();
+      }
+      if (other.hasEntityName()) {
+        bitField0_ |= 0x00000080;
+        entityName_ = other.entityName_;
+        onChanged();
       }
       this.mergeUnknownFields(other.getUnknownFields());
       return this;
@@ -1057,6 +1191,154 @@ public  final class DFSChangeDelta extends
     public Builder clearBody() {
       bitField0_ = (bitField0_ & ~0x00000020);
       body_ = getDefaultInstance().getBody();
+      onChanged();
+      return this;
+    }
+
+    // optional string domain = 7;
+    private java.lang.Object domain_ = "";
+    /**
+     * <code>optional string domain = 7;</code>
+     */
+    public boolean hasDomain() {
+      return ((bitField0_ & 0x00000040) == 0x00000040);
+    }
+    /**
+     * <code>optional string domain = 7;</code>
+     */
+    public java.lang.String getDomain() {
+      java.lang.Object ref = domain_;
+      if (!(ref instanceof java.lang.String)) {
+        java.lang.String s = ((com.google.protobuf.ByteString) ref)
+            .toStringUtf8();
+        domain_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>optional string domain = 7;</code>
+     */
+    public com.google.protobuf.ByteString
+        getDomainBytes() {
+      java.lang.Object ref = domain_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        domain_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>optional string domain = 7;</code>
+     */
+    public Builder setDomain(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000040;
+      domain_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional string domain = 7;</code>
+     */
+    public Builder clearDomain() {
+      bitField0_ = (bitField0_ & ~0x00000040);
+      domain_ = getDefaultInstance().getDomain();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional string domain = 7;</code>
+     */
+    public Builder setDomainBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000040;
+      domain_ = value;
+      onChanged();
+      return this;
+    }
+
+    // optional string entityName = 8;
+    private java.lang.Object entityName_ = "";
+    /**
+     * <code>optional string entityName = 8;</code>
+     */
+    public boolean hasEntityName() {
+      return ((bitField0_ & 0x00000080) == 0x00000080);
+    }
+    /**
+     * <code>optional string entityName = 8;</code>
+     */
+    public java.lang.String getEntityName() {
+      java.lang.Object ref = entityName_;
+      if (!(ref instanceof java.lang.String)) {
+        java.lang.String s = ((com.google.protobuf.ByteString) ref)
+            .toStringUtf8();
+        entityName_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>optional string entityName = 8;</code>
+     */
+    public com.google.protobuf.ByteString
+        getEntityNameBytes() {
+      java.lang.Object ref = entityName_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        entityName_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>optional string entityName = 8;</code>
+     */
+    public Builder setEntityName(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000080;
+      entityName_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional string entityName = 8;</code>
+     */
+    public Builder clearEntityName() {
+      bitField0_ = (bitField0_ & ~0x00000080);
+      entityName_ = getDefaultInstance().getEntityName();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional string entityName = 8;</code>
+     */
+    public Builder setEntityNameBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000080;
+      entityName_ = value;
       onChanged();
       return this;
     }
