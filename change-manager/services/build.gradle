@@ -1,14 +1,12 @@
 plugins {
+    id 'org.springframework.boot' version '2.6.0'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'java'
 }
 
 group 'ai.sapper.hcdc'
 version '1.0-SNAPSHOT'
 
-configurations {
-    compile.exclude module: "spring-boot-starter-tomcat"
-    compile.exclude module: "logback-classic"
-}
 
 dependencies {
     implementation project(':common')
@@ -16,5 +14,9 @@ dependencies {
     implementation project(':namenode-agent')
 
     implementation 'org.springframework.boot:spring-boot-starter-jetty:2.7.1'
-    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: '2.7.1'
+    implementation ('org.springframework.boot:spring-boot-starter-web:2.7.0') {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+        exclude group: 'ch.qos.logback', module: 'logback-classic'
+        exclude group: 'org.apache.logging.log4j', module: 'log4j-to-slf4j'
+    }
 }
