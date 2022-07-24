@@ -42,7 +42,10 @@ public class ChangeDeltaKafkaPartitioner implements KafkaPartitioner<DFSChangeDe
         if (Strings.isNullOrEmpty(pk)) {
             pk = key.getNamespace();
         }
-        int hash = Objects.hash(pk);
+        int hash = pk.hashCode();
+        if (hash < 0) {
+            hash *= -1;
+        }
         return (hash % partitionCount);
     }
 }

@@ -48,7 +48,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 LOG.warn(String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
                         message.id(), message.mode().name()));
                 return;
-            } else {
+            } else if (!fileState.checkDeleted()) {
                 throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                         fileState.getHdfsFilePath(),
                         String.format("Valid File already exists. [path=%s]", fileState.getHdfsFilePath()));

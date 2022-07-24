@@ -47,7 +47,9 @@ public class CDCChangeDeltaProcessor extends ChangeDeltaProcessor {
         ChangeDeltaProcessorConfig config = new CDCChangeDeltaProcessorConfig(xmlConfig);
         super.init(config, manger);
         processor = (CDCTransactionProcessor) new CDCTransactionProcessor()
-                .withSenderQueue(sender());
+                .withSenderQueue(sender())
+                .withStateManager(stateManager())
+                .withErrorQueue(errorSender());
         return this;
     }
 
@@ -81,8 +83,15 @@ public class CDCChangeDeltaProcessor extends ChangeDeltaProcessor {
                         try {
                             long txId = process(message);
                             if (txId > 0) {
-                                stateManager().update(txId);
-                                LOG.debug(String.format("Processed transaction delta. [TXID=%d]", txId));
+                                if (message.mode() == MessageObject.MessageMode.New) {
+                                    stateManager().update(txId);
+                                    LOG.debug(String.format("Processed transaction delta. [TXID=%d]", txId));
+                                } else if (message.mode() == MessageObject.MessageMode.Snapshot){
+                                    if (stateManager().agentTxState().getProcessedTxId() < txId) {
+                                        stateManager().update(txId);
+                                        LOG.debug(String.format("Processed transaction delta. [TXID=%d]", txId));
+                                    }
+                                }
                             }
                         } catch (InvalidMessageError ie) {
                             LOG.error("Error processing message.", ie);

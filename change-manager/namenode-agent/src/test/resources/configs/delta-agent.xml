@@ -2,7 +2,7 @@
 <configuration>
     <agent>
         <module>ChangeProcessor</module>
-        <instance>edits-processor</instance>
+        <instance>delta-processor</instance>
         <source>ha-cluster</source>
         <needHadoop>false</needHadoop>
         <connections>
@@ -25,7 +25,7 @@
             <cdc>
                 <sender>
                     <connectionType>kafka</connectionType>
-                    <connection>cdc-kafka-queue</connection>
+                    <connection>delta-kafka-queue</connection>
                     <partitioner>
                         <type>ai.sapper.hcdc.agents.pipeline.ChangeDeltaKafkaPartitioner</type>
                         <config>
@@ -35,7 +35,7 @@
                 </sender>
                 <receiver>
                     <connectionType>kafka</connectionType>
-                    <connection>edits-kafka-queue</connection>
+                    <connection>cdc-kafka-queue</connection>
                     <!--partitioner></partitioner-->
                 </receiver>
                 <errorQueue>
@@ -51,12 +51,12 @@
             <lock>
                 <name>global</name>
                 <connection>zk-state-connection</connection>
-                <lock-node>NN-GLOBAL-LOCK</lock-node>
+                <lock-node>PROCESSOR-GLOBAL-LOCK</lock-node>
             </lock>
             <lock>
                 <name>LOCK_REPLICATION</name>
                 <connection>zk-state-connection</connection>
-                <lock-node>NN-REPLICATION-LOCK</lock-node>
+                <lock-node>PROCESSOR-DELTA-LOCK</lock-node>
             </lock>
         </locks>
     </agent>
@@ -109,7 +109,7 @@
             <connection>
                 <type>ai.sapper.hcdc.core.connections.impl.BasicKafkaProducer</type>
                 <kafka>
-                    <name>cdc-kafka-queue</name>
+                    <name>delta-kafka-queue</name>
                     <mode>Producer</mode>
                     <producer>
                         <config>src/test/resources/producer.properties</config>
@@ -131,13 +131,13 @@
             <connection>
                 <type>ai.sapper.hcdc.core.connections.impl.BasicKafkaConsumer</type>
                 <kafka>
-                    <name>ha-cluster-cdc</name>
+                    <name>cdc-kafka-queue</name>
                     <mode>Consumer</mode>
                     <consumer>
                         <config>src/test/resources/consumer.properties</config>
                         <partitions>0</partitions>
                     </consumer>
-                    <topic>ha-cluster-edits</topic>
+                    <topic>ha-cluster-cdc</topic>
                 </kafka>
             </connection>
         </connections>

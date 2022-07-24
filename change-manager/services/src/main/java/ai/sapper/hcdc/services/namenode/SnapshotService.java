@@ -75,7 +75,7 @@ public class SnapshotService {
         try {
             ServiceHelper.checkService(processor);
             DFSReplicationState rState = processor.getProcessor()
-                    .snapshotReady(request.getHdfsPath(),
+                    .snapshotDone(request.getHdfsPath(),
                             request.getEntity(),
                             request.getTransactionId());
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,

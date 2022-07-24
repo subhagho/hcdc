@@ -133,6 +133,7 @@ public class HDFSSnapshotProcessor {
 
     public void snapshot(@NonNull String hdfsPath, @NonNull SchemaEntity entity) throws SnapshotError {
         Preconditions.checkState(sender != null);
+        stateManager.replicationLock().lock();
         try {
             DefaultLogger.LOG.info(String.format("Generating snapshot for file. [path=%s]", hdfsPath));
             DFSFileState fileState = stateManager.get(hdfsPath);
@@ -165,11 +166,14 @@ public class HDFSSnapshotProcessor {
             throw se;
         } catch (Exception ex) {
             throw new SnapshotError(ex);
+        } finally {
+            stateManager.replicationLock().unlock();
         }
     }
 
-    public DFSReplicationState snapshotReady(@NonNull String hdfsPath, @NonNull SchemaEntity entity, long tnxId) throws SnapshotError {
+public DFSReplicationState snapshotDone(@NonNull String hdfsPath, @NonNull SchemaEntity entity, long tnxId) throws SnapshotError {
         Preconditions.checkState(tnxSender != null);
+        stateManager.replicationLock().lock();
         try {
             DFSFileState fileState = stateManager.get(hdfsPath);
             if (fileState == null) {
@@ -191,11 +195,17 @@ public class HDFSSnapshotProcessor {
                     MessageObject.MessageMode.Backlog);
             tnxSender.send(message);
 
+            rState.setSnapshotReady(true);
+            rState.setLastReplicationTime(System.currentTimeMillis());
+            stateManager.update(rState);
+
             return rState;
         } catch (SnapshotError se) {
             throw se;
         } catch (Exception ex) {
             throw new SnapshotError(ex);
+        } finally {
+            stateManager.replicationLock().unlock();
         }
     }
 

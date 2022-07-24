@@ -532,13 +532,12 @@ public class ZkStateManager {
         try {
             CuratorFramework client = connection().client();
             String path = getFilePath(hdfsPath);
-            if (client.checkExists().forPath(path) == null) {
-                throw new StateManagerError(String.format("File record not found. [path=%s]", hdfsPath));
-            }
-            byte[] data = client.getData().forPath(path);
-            if (data != null && data.length > 0) {
-                String json = new String(data, StandardCharsets.UTF_8);
-                return JSONUtils.read(json, DFSFileState.class);
+            if (client.checkExists().forPath(path) != null) {
+                byte[] data = client.getData().forPath(path);
+                if (data != null && data.length > 0) {
+                    String json = new String(data, StandardCharsets.UTF_8);
+                    return JSONUtils.read(json, DFSFileState.class);
+                }
             }
             return null;
         } catch (Exception ex) {
@@ -570,7 +569,6 @@ public class ZkStateManager {
                                       boolean enable) throws StateManagerError {
         checkState();
         try {
-            replicationLock.lock();
             CuratorFramework client = connection().client();
             DFSReplicationState state = get(inodeId);
             if (state == null) {
@@ -595,15 +593,12 @@ public class ZkStateManager {
             return state;
         } catch (Exception ex) {
             throw new StateManagerError(ex);
-        } finally {
-            replicationLock.unlock();
         }
     }
 
     public DFSReplicationState update(@NonNull DFSReplicationState state) throws StateManagerError, StaleDataException {
         checkState();
         try {
-            replicationLock.lock();
             CuratorFramework client = connection().client();
             DFSReplicationState nstate = get(state.getInode());
             if (nstate.getUpdateTime() > 0 && nstate.getUpdateTime() != state.getUpdateTime()) {
@@ -620,15 +615,12 @@ public class ZkStateManager {
             throw se;
         } catch (Exception ex) {
             throw new StateManagerError(ex);
-        } finally {
-            replicationLock.unlock();
         }
     }
 
     public boolean delete(long inodeId) throws StateManagerError {
         checkState();
         try {
-            replicationLock.lock();
             CuratorFramework client = connection().client();
             DFSReplicationState state = get(inodeId);
             if (state != null) {
@@ -638,8 +630,6 @@ public class ZkStateManager {
             return false;
         } catch (Exception ex) {
             throw new StateManagerError(ex);
-        } finally {
-            replicationLock.unlock();
         }
     }
 
@@ -647,7 +637,6 @@ public class ZkStateManager {
         checkState();
         synchronized (this) {
             try {
-                replicationLock.lock();
                 CuratorFramework client = connection().client();
                 String path = getFilePath(null);
                 if (client.checkExists().forPath(path) != null) {
@@ -658,8 +647,6 @@ public class ZkStateManager {
                 }
             } catch (Exception ex) {
                 throw new StateManagerError(ex);
-            } finally {
-                replicationLock.unlock();
             }
         }
     }

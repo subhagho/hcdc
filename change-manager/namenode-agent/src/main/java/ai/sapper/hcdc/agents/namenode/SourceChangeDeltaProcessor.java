@@ -47,7 +47,9 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
         ChangeDeltaProcessorConfig config = new ChangeDeltaProcessorConfig(xmlConfig);
         super.init(config, manger);
         processor = (SourceTransactionProcessor) new SourceTransactionProcessor()
-                .withSenderQueue(sender());
+                .withSenderQueue(sender())
+                .withStateManager(stateManager())
+                .withErrorQueue(errorSender());
         return this;
     }
 
