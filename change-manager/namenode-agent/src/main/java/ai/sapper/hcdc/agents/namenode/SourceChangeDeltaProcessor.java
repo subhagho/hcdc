@@ -109,7 +109,7 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
             throw new InvalidMessageError(message.id(),
                     String.format("Invalid Message mode. [id=%s][mode=%s]", message.id(), message.mode().name()));
         }
-        txId = checkMessageSequence(message);
+        txId = processor.checkMessageSequence(message);
 
         if (message.mode() == MessageObject.MessageMode.Backlog) {
             processBacklogMessage(message, txId);
@@ -200,28 +200,11 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
         return closeFile;
     }
 
-    private long checkMessageSequence(MessageObject<String, DFSChangeDelta> message) throws Exception {
-        long txId = Long.parseLong(message.value().getTxId());
-        if (message.mode() == MessageObject.MessageMode.New) {
-            NameNodeTxState txState = stateManager().agentTxState();
-            if (txState.getProcessedTxId() + 1 != txId) {
-                if (txId <= txState.getProcessedTxId()) {
-                    throw new InvalidMessageError(message.id(),
-                            String.format("Duplicate message: Transaction already processed. [TXID=%d][CURRENT=%d]",
-                                    txId, txState.getProcessedTxId()));
-                } else {
-                    throw new Exception(String.format("Detected missing transaction. [expected TX ID=%d][actual TX ID=%d]",
-                            (txState.getProcessedTxId() + 1), txId));
-                }
-            }
-        }
-        return txId;
-    }
-
     private boolean isValidMessage(MessageObject<String, DFSChangeDelta> message) {
         boolean ret = false;
         if (message.mode() != null) {
-            ret = (message.mode() == MessageObject.MessageMode.New || message.mode() == MessageObject.MessageMode.Backlog);
+            ret = (message.mode() == MessageObject.MessageMode.New
+                    || message.mode() == MessageObject.MessageMode.Backlog);
         }
         if (ret) {
             ret = message.value().hasTxId();

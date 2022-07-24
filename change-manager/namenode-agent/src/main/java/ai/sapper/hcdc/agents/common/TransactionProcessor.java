@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.agents.common;
 
+import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.core.filters.DomainManager;
 import ai.sapper.hcdc.core.messaging.ChangeDeltaSerDe;
@@ -32,9 +33,7 @@ public abstract class TransactionProcessor {
         return this;
     }
 
-    public abstract void processAddFileTxMessage(DFSAddFile data,
-                                                 MessageObject<String, DFSChangeDelta> message,
-                                                 long txId) throws Exception;
+    public abstract void processAddFileTxMessage(DFSAddFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception;
 
     public SchemaEntity isRegistered(String hdfsPath) throws Exception {
         Preconditions.checkState(stateManager instanceof ProcessorStateManager);
@@ -43,41 +42,25 @@ public abstract class TransactionProcessor {
         return dm.matches(hdfsPath);
     }
 
-    public abstract void processAppendFileTxMessage(DFSAppendFile data,
-                                                    MessageObject<String, DFSChangeDelta> message,
-                                                    long txId) throws Exception;
+    public abstract void processAppendFileTxMessage(DFSAppendFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception;
 
-    public abstract void processDeleteFileTxMessage(DFSDeleteFile data,
-                                                    MessageObject<String, DFSChangeDelta> message,
-                                                    long txId) throws Exception;
+    public abstract void processDeleteFileTxMessage(DFSDeleteFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception;
 
-    public abstract void processAddBlockTxMessage(DFSAddBlock data,
-                                                  MessageObject<String, DFSChangeDelta> message,
-                                                  long txId) throws Exception;
+    public abstract void processAddBlockTxMessage(DFSAddBlock data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception;
 
-    public abstract void processUpdateBlocksTxMessage(DFSUpdateBlocks data,
-                                                      MessageObject<String, DFSChangeDelta> message,
-                                                      long txId) throws Exception;
+    public abstract void processUpdateBlocksTxMessage(DFSUpdateBlocks data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception;
 
-    public abstract void processTruncateBlockTxMessage(DFSTruncateBlock data,
-                                                       MessageObject<String, DFSChangeDelta> message,
-                                                       long txId) throws Exception;
+    public abstract void processTruncateBlockTxMessage(DFSTruncateBlock data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception;
 
-    public abstract void processCloseFileTxMessage(DFSCloseFile data,
-                                                   MessageObject<String, DFSChangeDelta> message,
-                                                   long txId) throws Exception;
+    public abstract void processCloseFileTxMessage(DFSCloseFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception;
 
-    public abstract void processRenameFileTxMessage(DFSRenameFile data,
-                                                    MessageObject<String, DFSChangeDelta> message,
-                                                    long txId) throws Exception;
+    public abstract void processRenameFileTxMessage(DFSRenameFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception;
 
-    public abstract void processIgnoreTxMessage(DFSIgnoreTx data,
-                                                MessageObject<String, DFSChangeDelta> message,
-                                                long txId) throws Exception;
+    public abstract void processIgnoreTxMessage(DFSIgnoreTx data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception;
 
-    public abstract void processErrorMessage(MessageObject<String, DFSChangeDelta> message,
-                                             Object data,
-                                             InvalidTransactionError te) throws Exception;
+    public abstract void processErrorTxMessage(DFSError data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception;
+
+    public abstract void processErrorMessage(MessageObject<String, DFSChangeDelta> message, Object data, InvalidTransactionError te) throws Exception;
 
     public DFSTransaction extractTransaction(Object data) {
         if (data instanceof DFSAddFile) {
@@ -127,12 +110,26 @@ public abstract class TransactionProcessor {
             } else if (data instanceof DFSIgnoreTx) {
                 processIgnoreTxMessage((DFSIgnoreTx) data, message, txId);
             } else {
-                throw new InvalidMessageError(message.id(),
-                        String.format("Message Body type not supported. [type=%s]", data.getClass().getCanonicalName()));
+                throw new InvalidMessageError(message.id(), String.format("Message Body type not supported. [type=%s]", data.getClass().getCanonicalName()));
             }
         } catch (InvalidTransactionError te) {
             processErrorMessage(message, data, te);
             throw new InvalidMessageError(message.id(), te);
         }
+    }
+
+    public long checkMessageSequence(MessageObject<String, DFSChangeDelta> message) throws Exception {
+        long txId = Long.parseLong(message.value().getTxId());
+        if (message.mode() == MessageObject.MessageMode.New) {
+            NameNodeTxState txState = stateManager().agentTxState();
+            if (txState.getProcessedTxId() + 1 != txId) {
+                if (txId <= txState.getProcessedTxId()) {
+                    throw new InvalidMessageError(message.id(), String.format("Duplicate message: Transaction already processed. [TXID=%d][CURRENT=%d]", txId, txState.getProcessedTxId()));
+                } else {
+                    throw new Exception(String.format("Detected missing transaction. [expected TX ID=%d][actual TX ID=%d]", (txState.getProcessedTxId() + 1), txId));
+                }
+            }
+        }
+        return txId;
     }
 }

@@ -111,22 +111,16 @@ public class CDCTransactionProcessor extends TransactionProcessor {
 
         DFSReplicationState rState = stateManager().get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
-            DFSFile df = data.getFile();
-            df = df.toBuilder().setInodeId(fileState.getId()).build();
-            data = data.toBuilder().setFile(df).build();
-            message = ChangeDeltaSerDe.create(message.value().getNamespace(),
-                    data,
-                    DFSAppendFile.class,
-                    rState.getEntity().getDomain(),
-                    rState.getEntity().getEntity(),
-                    message.mode());
             sender.send(message);
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getHdfsFilePath(),
                     String.format("FileSystem sync error. [path=%s]", fileState.getHdfsFilePath()));
-        } else {
-            sendIgnoreTx(message, data);
+        } else if (rState == null) {
+            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    data.getFile().getPath(),
+                    String.format("File not setup for replication. [path=%s]",
+                            data.getFile().getPath()));
         }
     }
 
@@ -155,24 +149,16 @@ public class CDCTransactionProcessor extends TransactionProcessor {
         DFSReplicationState rState = stateManager().get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
             stateManager().delete(fileState.getId());
-
-            DFSFile df = data.getFile();
-            df = df.toBuilder().setInodeId(fileState.getId()).build();
-            data = data.toBuilder().setFile(df).build();
-
-            message = ChangeDeltaSerDe.create(message.value().getNamespace(),
-                    data,
-                    DFSDeleteFile.class,
-                    rState.getEntity().getDomain(),
-                    rState.getEntity().getEntity(),
-                    message.mode());
             sender.send(message);
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getHdfsFilePath(),
                     String.format("FileSystem sync error. [path=%s]", fileState.getHdfsFilePath()));
-        } else {
-            sendIgnoreTx(message, data);
+        } else if (rState == null) {
+            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    data.getFile().getPath(),
+                    String.format("File not setup for replication. [path=%s]",
+                            data.getFile().getPath()));
         }
     }
 
@@ -216,23 +202,16 @@ public class CDCTransactionProcessor extends TransactionProcessor {
 
         DFSReplicationState rState = stateManager().get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
-            DFSFile df = data.getFile();
-            df = df.toBuilder().setInodeId(fileState.getId()).build();
-            data = data.toBuilder().setFile(df).build();
-
-            message = ChangeDeltaSerDe.create(message.value().getNamespace(),
-                    data,
-                    DFSAddBlock.class,
-                    rState.getEntity().getDomain(),
-                    rState.getEntity().getEntity(),
-                    message.mode());
             sender.send(message);
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getHdfsFilePath(),
                     String.format("FileSystem sync error. [path=%s]", fileState.getHdfsFilePath()));
-        } else {
-            sendIgnoreTx(message, data);
+        } else if (rState == null) {
+            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    data.getFile().getPath(),
+                    String.format("File not setup for replication. [path=%s]",
+                            data.getFile().getPath()));
         }
     }
 
@@ -287,23 +266,16 @@ public class CDCTransactionProcessor extends TransactionProcessor {
         }
         DFSReplicationState rState = stateManager().get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
-            DFSFile df = data.getFile();
-            df = df.toBuilder().setInodeId(fileState.getId()).build();
-            data = data.toBuilder().setFile(df).build();
-
-            message = ChangeDeltaSerDe.create(message.value().getNamespace(),
-                    data,
-                    DFSUpdateBlocks.class,
-                    rState.getEntity().getDomain(),
-                    rState.getEntity().getEntity(),
-                    message.mode());
             sender.send(message);
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getHdfsFilePath(),
                     String.format("FileSystem sync error. [path=%s]", fileState.getHdfsFilePath()));
-        } else {
-            sendIgnoreTx(message, data);
+        } else if (rState == null) {
+            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    data.getFile().getPath(),
+                    String.format("File not setup for replication. [path=%s]",
+                            data.getFile().getPath()));
         }
     }
 
@@ -394,44 +366,16 @@ public class CDCTransactionProcessor extends TransactionProcessor {
 
         DFSReplicationState rState = stateManager().get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
-            DFSFile df = data.getFile();
-            df = df.toBuilder().setInodeId(fileState.getId()).build();
-            DFSCloseFile.Builder builder = data.toBuilder();
-            for (int ii = 0; ii < blocks.size(); ii++) {
-                builder.removeBlocks(ii);
-            }
-            builder.setFile(df);
-            for (DFSBlock block : blocks) {
-                DFSBlock.Builder bb = block.toBuilder();
-                DFSBlockState bs = fileState.get(block.getBlockId());
-
-                BlockTnxDelta bd = bs.delta(txId);
-                if (bd == null) {
-                    throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                            fileState.getHdfsFilePath(),
-                            String.format("Block State out of sync, missing transaction delta. [path=%s][blockID=%d]",
-                                    fileState.getHdfsFilePath(), block.getBlockId()));
-                }
-                bb.setStartOffset(bd.getStartOffset())
-                        .setEndOffset(bd.getEndOffset())
-                        .setDeltaSize(bd.getEndOffset() - bd.getStartOffset() + 1);
-                builder.addBlocks(bb.build());
-            }
-            data = builder.build();
-
-            message = ChangeDeltaSerDe.create(message.value().getNamespace(),
-                    data,
-                    DFSCloseFile.class,
-                    rState.getEntity().getDomain(),
-                    rState.getEntity().getEntity(),
-                    message.mode());
             sender.send(message);
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getHdfsFilePath(),
                     String.format("FileSystem sync error. [path=%s]", fileState.getHdfsFilePath()));
-        } else {
-            sendIgnoreTx(message, data);
+        } else if (rState == null) {
+            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    data.getFile().getPath(),
+                    String.format("File not setup for replication. [path=%s]",
+                            data.getFile().getPath()));
         }
     }
 
@@ -507,7 +451,18 @@ public class CDCTransactionProcessor extends TransactionProcessor {
      */
     @Override
     public void processIgnoreTxMessage(DFSIgnoreTx data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
-        sender.send(message);
+        LOG.debug(String.format("Received Ignore Transaction: [ID=%d]", txId));
+    }
+
+    /**
+     * @param data
+     * @param message
+     * @param txId
+     * @throws Exception
+     */
+    @Override
+    public void processErrorTxMessage(DFSError data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+        LOG.error(String.format("Received Error Message: %s. [TX=%d][ERROR CODE=%s]", data.getMessage(), txId, data.getCode().name()));
     }
 
     /**

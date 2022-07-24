@@ -16,7 +16,7 @@ public class MessagingConfig {
     public static class Constants {
         public static final String CONFIG_CONNECTION_TYPE = "connectionType";
         public static final String CONFIG_CONNECTION = "connection";
-        public static final String CONFIG_PARTITIONER_CLASS = "partitioner";
+        public static final String CONFIG_PARTITIONER_CLASS = "partitioner.type";
         public static final String CONFIG_BATCH_SIZE = "batchSize";
     }
     private HierarchicalConfiguration<ImmutableNode> config;

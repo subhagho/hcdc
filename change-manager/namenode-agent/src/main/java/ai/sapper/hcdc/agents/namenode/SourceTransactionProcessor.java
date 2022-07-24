@@ -513,6 +513,17 @@ public class SourceTransactionProcessor extends TransactionProcessor {
     }
 
     /**
+     * @param data
+     * @param message
+     * @param txId
+     * @throws Exception
+     */
+    @Override
+    public void processErrorTxMessage(DFSError data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+        throw new InvalidMessageError(message.id(), data.getMessage());
+    }
+
+    /**
      * @param message
      * @param data
      * @param te

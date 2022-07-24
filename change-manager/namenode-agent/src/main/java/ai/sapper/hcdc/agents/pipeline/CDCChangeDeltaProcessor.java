@@ -109,121 +109,19 @@ public class CDCChangeDeltaProcessor extends ChangeDeltaProcessor {
             throw new InvalidMessageError(message.id(),
                     String.format("Invalid Message mode. [id=%s][mode=%s]", message.id(), message.mode().name()));
         }
-        txId = checkMessageSequence(message);
+        txId = processor.checkMessageSequence(message);
 
-        if (message.mode() == MessageObject.MessageMode.Backlog) {
-            processBacklogMessage(message, txId);
-            txId = -1;
-        } else if (message.mode() == MessageObject.MessageMode.Snapshot) {
+        processor.processTxMessage(message, txId);
 
-        } else {
-            processor.processTxMessage(message, txId);
-        }
-        return txId;
-    }
-
-    private void processBacklogMessage(MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
-        DFSAddFile addFile = (DFSAddFile) ChangeDeltaSerDe.parse(message.value());
-        DFSFileState fileState = stateManager().get(addFile.getFile().getPath());
-        if (fileState == null) {
-            throw new InvalidMessageError(message.id(),
-                    String.format("HDFS File Not found. [path=%s]", addFile.getFile().getPath()));
-        }
-        DFSReplicationState rState = stateManager().get(fileState.getId());
-        if (rState == null || !rState.isEnabled()) {
-            throw new InvalidMessageError(message.id(),
-                    String.format("HDFS File not registered for snapshot. [path=%s][inode=%d]",
-                            addFile.getFile().getPath(), fileState.getId()));
-        }
-        if (rState.isSnapshotReady()) {
-            throw new InvalidMessageError(message.id(),
-                    String.format("Snapshot already completed for file. [path=%s][inode=%d]",
-                            addFile.getFile().getPath(), fileState.getId()));
-        }
-        if (rState.getSnapshotTxId() != txId) {
-            throw new InvalidMessageError(message.id(),
-                    String.format("Snapshot transaction mismatch. [path=%s][inode=%d] [expected=%d][actual=%d]",
-                            addFile.getFile().getPath(), fileState.getId(), rState.getSnapshotTxId(), txId));
-        }
-        if (fileState.getLastTnxId() > txId)
-            sendBackLogMessage(message, fileState, rState, txId);
-    }
-
-    private void sendBackLogMessage(MessageObject<String, DFSChangeDelta> message,
-                                    DFSFileState fileState,
-                                    DFSReplicationState rState,
-                                    long txId) throws Exception {
-        DFSTransactionType.DFSCloseFileType tnx = buildBacklogTransactions(fileState, rState, txId);
-        if (tnx != null) {
-            DFSCloseFile closeFile = tnx.convertToProto();
-            MessageObject<String, DFSChangeDelta> mesg = ChangeDeltaSerDe.create(message.value().getNamespace(),
-                    closeFile,
-                    DFSCloseFile.class,
-                    rState.getEntity().getDomain(),
-                    rState.getEntity().getEntity(),
-                    MessageObject.MessageMode.Backlog);
-            sender().send(mesg);
-            rState = stateManager().update(rState);
-        }
-    }
-
-    private DFSTransactionType.DFSCloseFileType buildBacklogTransactions(DFSFileState fileState,
-                                                                         DFSReplicationState rState,
-                                                                         long txId) throws Exception {
-        DFSTransactionType.DFSFileType file = new DFSTransactionType.DFSFileType();
-        file.path(fileState.getHdfsFilePath());
-        file.inodeId(fileState.getId());
-
-        DFSTransactionType.DFSCloseFileType closeFile = new DFSTransactionType.DFSCloseFileType();
-        closeFile.file(file);
-        closeFile.overwrite(false);
-        closeFile.blockSize(fileState.getBlockSize());
-        closeFile.modifiedTime(fileState.getUpdatedTime());
-        closeFile.accessedTime(fileState.getCreatedTime());
-        closeFile.length(fileState.getDataSize());
-
-        if (fileState.hasBlocks()) {
-            for (DFSBlockState bs : fileState.getBlocks()) {
-                BlockTnxDelta delta = bs.compressedChangeSet(txId);
-                if (delta != null) {
-                    DFSTransactionType.DFSBlockType bd = new DFSTransactionType.DFSBlockType();
-                    bd.blockId(bs.getBlockId());
-                    bd.generationStamp(bs.getGenerationStamp());
-                    bd.startOffset(delta.getStartOffset());
-                    bd.endOffset(delta.getEndOffset());
-                    bd.deltaSize(bd.endOffset() - bd.startOffset() + 1);
-                    closeFile.addBlock(bd);
-                }
-            }
-        }
-        rState.setLastReplicatedTx(fileState.getLastTnxId());
-        rState.setLastReplicationTime(System.currentTimeMillis());
-
-        return closeFile;
-    }
-
-    private long checkMessageSequence(MessageObject<String, DFSChangeDelta> message) throws Exception {
-        long txId = Long.parseLong(message.value().getTxId());
-        if (message.mode() == MessageObject.MessageMode.New) {
-            NameNodeTxState txState = stateManager().agentTxState();
-            if (txState.getProcessedTxId() + 1 != txId) {
-                if (txId <= txState.getProcessedTxId()) {
-                    throw new InvalidMessageError(message.id(),
-                            String.format("Duplicate message: Transaction already processed. [TXID=%d][CURRENT=%d]",
-                                    txId, txState.getProcessedTxId()));
-                } else {
-                    throw new Exception(String.format("Detected missing transaction. [expected TX ID=%d][actual TX ID=%d]",
-                            (txState.getProcessedTxId() + 1), txId));
-                }
-            }
-        }
         return txId;
     }
 
     private boolean isValidMessage(MessageObject<String, DFSChangeDelta> message) {
         boolean ret = false;
         if (message.mode() != null) {
-            ret = (message.mode() == MessageObject.MessageMode.New || message.mode() == MessageObject.MessageMode.Backlog);
+            ret = (message.mode() == MessageObject.MessageMode.New
+                    || message.mode() == MessageObject.MessageMode.Backlog
+                    || message.mode() == MessageObject.MessageMode.Snapshot);
         }
         if (ret) {
             ret = message.value().hasTxId();
