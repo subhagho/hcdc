@@ -5,7 +5,6 @@ import ai.sapper.hcdc.core.io.Reader;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
