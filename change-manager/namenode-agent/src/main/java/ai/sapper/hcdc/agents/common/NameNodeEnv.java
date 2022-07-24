@@ -1,5 +1,7 @@
-package ai.sapper.hcdc.agents.namenode;
+package ai.sapper.hcdc.agents.common;
 
+import ai.sapper.hcdc.agents.namenode.HadoopEnvConfig;
+import ai.sapper.hcdc.agents.namenode.NameNodeAdminClient;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeAgentState;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeStatus;
 import ai.sapper.hcdc.common.AbstractState;

@@ -1,5 +1,9 @@
 package ai.sapper.hcdc.agents.namenode;
 
+import ai.sapper.hcdc.agents.common.NameNodeEnv;
+import ai.sapper.hcdc.agents.common.ProcessorStateManager;
+import ai.sapper.hcdc.agents.common.SnapshotError;
+import ai.sapper.hcdc.agents.common.ZkStateManager;
 import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.*;

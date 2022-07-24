@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.agents.namenode;
+package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.filters.DomainManager;

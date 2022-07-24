@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.agents.namenode;
+package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeAgentState;

@@ -1,5 +1,9 @@
 package ai.sapper.hcdc.agents.namenode;
 
+import ai.sapper.hcdc.agents.common.InvalidTransactionError;
+import ai.sapper.hcdc.agents.common.NameNodeEnv;
+import ai.sapper.hcdc.agents.common.ProcessorStateManager;
+import ai.sapper.hcdc.agents.common.ZkStateManager;
 import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
 import ai.sapper.hcdc.agents.namenode.model.DFSTransactionType;
 import ai.sapper.hcdc.core.model.SchemaEntity;
@@ -786,6 +790,10 @@ public class HDFSDeltaChangeProcessor implements Runnable {
 
         public HDFSDeltaChangeProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, Constants.__CONFIG_PATH);
+        }
+
+        public HDFSDeltaChangeProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config, @NonNull String path) {
+            super(config, path);
         }
 
         public void read() throws ConfigurationException {

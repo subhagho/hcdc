@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.services;
 
-import ai.sapper.hcdc.agents.namenode.NameNodeEnv;
+import ai.sapper.hcdc.agents.common.NameNodeEnv;
 
 public class ServiceHelper {
     public static void checkService(Object processor) throws Exception {

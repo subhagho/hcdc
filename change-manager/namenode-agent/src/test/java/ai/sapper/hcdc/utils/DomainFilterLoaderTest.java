@@ -1,7 +1,7 @@
 package ai.sapper.hcdc.utils;
 
-import ai.sapper.hcdc.agents.namenode.NameNodeEnv;
-import ai.sapper.hcdc.agents.namenode.ProcessorStateManager;
+import ai.sapper.hcdc.agents.common.NameNodeEnv;
+import ai.sapper.hcdc.agents.common.ProcessorStateManager;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.services.EConfigFileType;
 import ai.sapper.hcdc.common.utils.DefaultLogger;

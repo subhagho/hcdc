@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <configuration>
     <agent>
-        <module>NameNodeAgent</module>
+        <module>ChangeProcessor</module>
         <instance>edits-processor</instance>
         <source>ha-cluster</source>
         <needHadoop>false</needHadoop>
@@ -19,9 +19,28 @@
             <manager>
                 <basePath>/hcdc/registry/files</basePath>
                 <connection>zk-state-connection</connection>
-                <hdfs>source-hdfs</hdfs>
             </manager>
         </schemaEntity>
+        <processor>
+            <cdc>
+                <sender>
+                    <connectionType>kafka</connectionType>
+                    <connection>cdc-kafka-queue</connection>
+                    <!--partitioner></partitioner-->
+                </sender>
+                <receiver>
+                    <connectionType>kafka</connectionType>
+                    <connection>edits-kafka-queue</connection>
+                    <!--partitioner></partitioner-->
+                </receiver>
+                <errorQueue>
+                    <connectionType>kafka</connectionType>
+                    <connection>errors-kafka-queue</connection>
+                    <!--partitioner></partitioner-->
+                </errorQueue>
+                <readBatchTimeout>5000</readBatchTimeout>
+            </cdc>
+        </processor>
         <useSSL>false</useSSL>
         <locks>
             <lock>
@@ -35,21 +54,6 @@
                 <lock-node>NN-REPLICATION-LOCK</lock-node>
             </lock>
         </locks>
-        <processor>
-            <snapshot>
-                <sender>
-                    <connectionType>kafka</connectionType>
-                    <connection>cdc-kafka-queue</connection>
-                    <!--partitioner></partitioner-->
-                </sender>
-                <tnxSender>
-                    <connectionType>kafka</connectionType>
-                    <connection>edits-kafka-queue</connection>
-                    <!--partitioner></partitioner-->
-                </tnxSender>
-                <readBatchTimeout>5000</readBatchTimeout>
-            </snapshot>
-        </processor>
     </agent>
     <config>
         <connections>
@@ -111,11 +115,23 @@
             <connection>
                 <type>ai.sapper.hcdc.core.connections.impl.BasicKafkaProducer</type>
                 <kafka>
-                    <name>edits-kafka-queue</name>
+                    <name>errors-kafka-queue</name>
                     <mode>Producer</mode>
                     <producer>
                         <config>src/test/resources/producer.properties</config>
                     </producer>
+                    <topic>ha-cluster-errors</topic>
+                </kafka>
+            </connection>
+            <connection>
+                <type>ai.sapper.hcdc.core.connections.impl.BasicKafkaConsumer</type>
+                <kafka>
+                    <name>edits-kafka-queue</name>
+                    <mode>Consumer</mode>
+                    <consumer>
+                        <config>src/test/resources/consumer.properties</config>
+                        <partitions>0</partitions>
+                    </consumer>
                     <topic>ha-cluster-edits</topic>
                 </kafka>
             </connection>

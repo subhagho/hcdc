@@ -1,10 +1,10 @@
-package ai.sapper.hcdc.pipeline;
+package ai.sapper.hcdc.agents.pipeline;
 
+import ai.sapper.hcdc.agents.common.*;
 import ai.sapper.hcdc.agents.namenode.*;
 import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
 import ai.sapper.hcdc.agents.namenode.model.DFSTransactionType;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
-import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
@@ -48,33 +48,33 @@ public class DeltaChangeProcessor implements Runnable {
             processorConfig.read();
 
             sender = new HCDCMessagingBuilders.SenderBuilder()
-                    .config(processorConfig.senderConfig.config())
+                    .config(processorConfig.senderConfig().config())
                     .manager(manger)
-                    .connection(processorConfig().senderConfig.connection())
-                    .type(processorConfig().senderConfig.type())
-                    .partitioner(processorConfig().senderConfig.partitionerClass())
+                    .connection(processorConfig().senderConfig().connection())
+                    .type(processorConfig().senderConfig().type())
+                    .partitioner(processorConfig().senderConfig().partitionerClass())
                     .build();
 
             receiver = new HCDCMessagingBuilders.ReceiverBuilder()
-                    .config(processorConfig().receiverConfig.config())
+                    .config(processorConfig().receiverConfig().config())
                     .manager(manger)
-                    .connection(processorConfig.receiverConfig.connection())
-                    .type(processorConfig.receiverConfig.type())
+                    .connection(processorConfig.receiverConfig().connection())
+                    .type(processorConfig.receiverConfig().type())
                     .saveState(true)
                     .zkConnection(stateManager().connection())
                     .zkStatePath(stateManager.zkPath())
-                    .batchSize(processorConfig.receiverConfig.batchSize())
+                    .batchSize(processorConfig.receiverConfig().batchSize())
                     .build();
 
-            if (!Strings.isNullOrEmpty(processorConfig.batchTimeout)) {
-                receiveBatchTimeout = Long.parseLong(processorConfig.batchTimeout);
+            if (!Strings.isNullOrEmpty(processorConfig.batchTimeout())) {
+                receiveBatchTimeout = Long.parseLong(processorConfig.batchTimeout());
             }
             errorSender = new HCDCMessagingBuilders.SenderBuilder()
-                    .config(processorConfig.errorConfig.config())
+                    .config(processorConfig.errorConfig().config())
                     .manager(manger)
-                    .connection(processorConfig().errorConfig.connection())
-                    .type(processorConfig().errorConfig.type())
-                    .partitioner(processorConfig().errorConfig.partitionerClass())
+                    .connection(processorConfig().errorConfig().connection())
+                    .type(processorConfig().errorConfig().type())
+                    .partitioner(processorConfig().errorConfig().partitionerClass())
                     .build();
 
             long txId = stateManager().getSnapshotTxId();
@@ -151,6 +151,8 @@ public class DeltaChangeProcessor implements Runnable {
         if (message.mode() == MessageObject.MessageMode.Backlog) {
             processBacklogMessage(message, txId);
             txId = -1;
+        } else if (message.mode() == MessageObject.MessageMode.Snapshot) {
+
         } else {
             processTxMessage(message, txId);
         }
@@ -205,7 +207,7 @@ public class DeltaChangeProcessor implements Runnable {
                     tnx,
                     te.getErrorCode(),
                     te.getMessage());
-            sender.send(m);
+            errorSender.send(m);
         }
     }
 
@@ -770,56 +772,11 @@ public class DeltaChangeProcessor implements Runnable {
     @Getter
     @Setter
     @Accessors(fluent = true)
-    public static class DeltaChangeProcessorConfig extends ConfigReader {
-        public static class Constants {
-            public static final String __CONFIG_PATH = "processor.cdc";
-            public static final String __CONFIG_PATH_SENDER = "sender";
-            public static final String __CONFIG_PATH_RECEIVER = "receiver";
-            public static final String __CONFIG_PATH_ERROR = "errorQueue";
-            public static final String CONFIG_RECEIVE_TIMEOUT = "readBatchTimeout";
-        }
-
-        private MessagingConfig senderConfig;
-        private MessagingConfig receiverConfig;
-        private MessagingConfig errorConfig;
-        private String batchTimeout;
+    public static class DeltaChangeProcessorConfig extends HDFSDeltaChangeProcessor.HDFSDeltaChangeProcessorConfig {
+        public static final String __CONFIG_PATH = "processor.delta";
 
         public DeltaChangeProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
-            super(config, Constants.__CONFIG_PATH);
-        }
-
-        public void read() throws ConfigurationException {
-            if (get() == null) {
-                throw new ConfigurationException("Kafka Configuration not drt or is NULL");
-            }
-            try {
-                HierarchicalConfiguration<ImmutableNode> config = get().configurationAt(Constants.__CONFIG_PATH_SENDER);
-                if (config == null) {
-                    throw new ConfigurationException(String.format("Sender configuration node not found. [path=%s]", Constants.__CONFIG_PATH_SENDER));
-                }
-                senderConfig = new MessagingConfig();
-                senderConfig.read(config);
-                if (config.containsKey(Constants.CONFIG_RECEIVE_TIMEOUT)) {
-                    batchTimeout = config.getString(Constants.CONFIG_RECEIVE_TIMEOUT);
-                }
-
-                config = get().configurationAt(Constants.__CONFIG_PATH_RECEIVER);
-                if (config == null) {
-                    throw new ConfigurationException(String.format("Receiver configuration node not found. [path=%s]", Constants.__CONFIG_PATH_RECEIVER));
-                }
-                receiverConfig = new MessagingConfig();
-                receiverConfig.read(config);
-
-                config = get().configurationAt(Constants.__CONFIG_PATH_ERROR);
-                if (config == null) {
-                    throw new ConfigurationException(String.format("Error Queue configuration node not found. [path=%s]", Constants.__CONFIG_PATH_ERROR));
-                }
-                errorConfig = new MessagingConfig();
-                errorConfig.read(config);
-
-            } catch (Exception ex) {
-                throw new ConfigurationException(ex);
-            }
+            super(config, __CONFIG_PATH);
         }
     }
 }

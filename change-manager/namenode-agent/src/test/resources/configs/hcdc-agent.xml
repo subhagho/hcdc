@@ -8,7 +8,7 @@
         <connections>
             <path>config</path>
         </connections>
-        <stateManagerClass>ai.sapper.hcdc.agents.namenode.ProcessorStateManager</stateManagerClass>
+        <stateManagerClass>ai.sapper.hcdc.agents.common.ProcessorStateManager</stateManagerClass>
         <state>
             <manager>
                 <basePath>/hcdc/state</basePath>

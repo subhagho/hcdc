@@ -1,9 +1,15 @@
-package ai.sapper.hcdc.agents.namenode;
+package ai.sapper.hcdc.agents.common;
+
+import ai.sapper.hcdc.common.model.DFSError;
+import lombok.Getter;
 
 import java.security.PrivilegedActionException;
 
-public class StateManagerError extends Exception {
-    private static final String __PREFIX = "State Manager Error : %s";
+@Getter
+public class InvalidTransactionError extends Exception {
+    private static final String __PREFIX = "Invalid DFS Transaction: %s";
+    private final String hdfsPath;
+    private final DFSError.ErrorCode errorCode;
 
     /**
      * Constructs a new exception with the specified detail message.  The
@@ -13,8 +19,10 @@ public class StateManagerError extends Exception {
      * @param message the detail message. The detail message is saved for
      *                later retrieval by the {@link #getMessage()} method.
      */
-    public StateManagerError(String message) {
-        super(String.format(__PREFIX, message));
+    public InvalidTransactionError(DFSError.ErrorCode errorCode, String hdfsPath, String message) {
+        super( String.format(__PREFIX, message));
+        this.hdfsPath = hdfsPath;
+        this.errorCode = errorCode;
     }
 
     /**
@@ -31,8 +39,10 @@ public class StateManagerError extends Exception {
      *                unknown.)
      * @since 1.4
      */
-    public StateManagerError(String message, Throwable cause) {
+    public InvalidTransactionError(DFSError.ErrorCode errorCode, String hdfsPath, String message, Throwable cause) {
         super(String.format(__PREFIX, message), cause);
+        this.hdfsPath = hdfsPath;
+        this.errorCode = errorCode;
     }
 
     /**
@@ -49,7 +59,9 @@ public class StateManagerError extends Exception {
      *              unknown.)
      * @since 1.4
      */
-    public StateManagerError(Throwable cause) {
+    public InvalidTransactionError(DFSError.ErrorCode errorCode, String hdfsPath, Throwable cause) {
         super(String.format(__PREFIX, cause.getLocalizedMessage()), cause);
+        this.hdfsPath = hdfsPath;
+        this.errorCode = errorCode;
     }
 }

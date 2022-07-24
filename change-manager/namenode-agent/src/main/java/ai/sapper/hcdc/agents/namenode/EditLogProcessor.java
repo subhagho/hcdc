@@ -1,5 +1,8 @@
 package ai.sapper.hcdc.agents.namenode;
 
+import ai.sapper.hcdc.agents.common.DFSEditsFileFinder;
+import ai.sapper.hcdc.agents.common.NameNodeEnv;
+import ai.sapper.hcdc.agents.common.ZkStateManager;
 import ai.sapper.hcdc.agents.namenode.model.DFSEditLogBatch;
 import ai.sapper.hcdc.agents.namenode.model.DFSTransactionType;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;

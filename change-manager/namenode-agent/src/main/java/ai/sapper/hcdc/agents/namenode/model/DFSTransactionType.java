@@ -1,7 +1,7 @@
 package ai.sapper.hcdc.agents.namenode.model;
 
-import ai.sapper.hcdc.agents.namenode.DFSAgentError;
-import ai.sapper.hcdc.agents.namenode.NameNodeEnv;
+import ai.sapper.hcdc.agents.common.DFSAgentError;
+import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.common.messaging.ChangeDeltaMessage;
 import ai.sapper.hcdc.common.model.*;
 import com.google.common.base.Preconditions;

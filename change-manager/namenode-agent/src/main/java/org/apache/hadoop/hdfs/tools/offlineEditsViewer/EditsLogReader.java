@@ -1,7 +1,7 @@
 package org.apache.hadoop.hdfs.tools.offlineEditsViewer;
 
-import ai.sapper.hcdc.agents.namenode.DFSAgentError;
-import ai.sapper.hcdc.agents.namenode.DFSEditsFileFinder;
+import ai.sapper.hcdc.agents.common.DFSAgentError;
+import ai.sapper.hcdc.agents.common.DFSEditsFileFinder;
 import ai.sapper.hcdc.agents.namenode.model.DFSEditLogBatch;
 import ai.sapper.hcdc.agents.namenode.model.DFSTransactionType;
 import ai.sapper.hcdc.common.model.DFSTransaction;

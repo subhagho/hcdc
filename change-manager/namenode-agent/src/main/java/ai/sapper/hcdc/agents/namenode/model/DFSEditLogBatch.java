@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.agents.namenode.model;
 
-import ai.sapper.hcdc.agents.namenode.DFSEditsFileFinder;
+import ai.sapper.hcdc.agents.common.DFSEditsFileFinder;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;

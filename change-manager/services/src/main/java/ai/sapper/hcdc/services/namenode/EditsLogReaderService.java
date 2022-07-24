@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.services.namenode;
 
-import ai.sapper.hcdc.agents.namenode.NameNodeEnv;
+import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.namenode.main.EditLogRunner;
 import ai.sapper.hcdc.common.model.services.ConfigSource;
 import ai.sapper.hcdc.common.utils.DefaultLogger;

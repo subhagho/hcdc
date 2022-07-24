@@ -1,8 +1,8 @@
 package ai.sapper.hcdc.agents.namenode.main;
 
-import ai.sapper.hcdc.agents.namenode.NameNodeEnv;
-import ai.sapper.hcdc.agents.namenode.NameNodeError;
-import ai.sapper.hcdc.agents.namenode.ZkStateManager;
+import ai.sapper.hcdc.agents.common.NameNodeEnv;
+import ai.sapper.hcdc.agents.common.NameNodeError;
+import ai.sapper.hcdc.agents.common.ZkStateManager;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.services.EConfigFileType;

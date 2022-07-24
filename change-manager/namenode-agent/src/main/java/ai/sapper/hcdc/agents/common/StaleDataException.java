@@ -1,9 +1,9 @@
-package ai.sapper.hcdc.agents.namenode;
+package ai.sapper.hcdc.agents.common;
 
 import java.security.PrivilegedActionException;
 
-public class NameNodeError extends Exception {
-    private static final String __PREFIX = "NameNode Agent Error : %s";
+public class StaleDataException extends Exception {
+    private static final String __PREFIX = "Stale Data Error: %s";
 
     /**
      * Constructs a new exception with the specified detail message.  The
@@ -13,7 +13,7 @@ public class NameNodeError extends Exception {
      * @param message the detail message. The detail message is saved for
      *                later retrieval by the {@link #getMessage()} method.
      */
-    public NameNodeError(String message) {
+    public StaleDataException(String message) {
         super(String.format(__PREFIX, message));
     }
 
@@ -31,7 +31,7 @@ public class NameNodeError extends Exception {
      *                unknown.)
      * @since 1.4
      */
-    public NameNodeError(String message, Throwable cause) {
+    public StaleDataException(String message, Throwable cause) {
         super(String.format(__PREFIX, message), cause);
     }
 
@@ -49,7 +49,7 @@ public class NameNodeError extends Exception {
      *              unknown.)
      * @since 1.4
      */
-    public NameNodeError(Throwable cause) {
+    public StaleDataException(Throwable cause) {
         super(String.format(__PREFIX, cause.getLocalizedMessage()), cause);
     }
 }
