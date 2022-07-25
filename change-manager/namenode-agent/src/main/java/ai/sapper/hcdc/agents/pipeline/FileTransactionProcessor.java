@@ -3,9 +3,11 @@ package ai.sapper.hcdc.agents.pipeline;
 import ai.sapper.hcdc.agents.common.InvalidTransactionError;
 import ai.sapper.hcdc.agents.common.TransactionProcessor;
 import ai.sapper.hcdc.agents.namenode.HDFSSnapshotProcessor;
+import ai.sapper.hcdc.agents.namenode.model.DFSBlockReplicaState;
 import ai.sapper.hcdc.agents.namenode.model.DFSFileReplicaState;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
 import ai.sapper.hcdc.common.model.*;
+import ai.sapper.hcdc.core.connections.HdfsConnection;
 import ai.sapper.hcdc.core.io.FSBlock;
 import ai.sapper.hcdc.core.io.FSFile;
 import ai.sapper.hcdc.core.io.FileSystem;
@@ -16,14 +18,22 @@ import ai.sapper.hcdc.core.messaging.MessageSender;
 import ai.sapper.hcdc.core.model.DFSBlockState;
 import ai.sapper.hcdc.core.model.DFSFileState;
 import ai.sapper.hcdc.core.model.EFileState;
+import ai.sapper.hcdc.core.model.HDFSBlockData;
 import com.google.common.base.Strings;
 import lombok.NonNull;
+import org.apache.hadoop.hdfs.HDFSBlockReader;
 
 import java.util.List;
 
 public class FileTransactionProcessor extends TransactionProcessor {
     private MessageSender<String, DFSChangeDelta> sender;
     private FileSystem fs;
+    private HdfsConnection connection;
+
+    public FileTransactionProcessor withHdfsConnection(@NonNull HdfsConnection connection) {
+        this.connection = connection;
+        return this;
+    }
 
     public FileTransactionProcessor withSenderQueue(@NonNull MessageSender<String, DFSChangeDelta> sender) {
         this.sender = sender;
@@ -64,34 +74,44 @@ public class FileTransactionProcessor extends TransactionProcessor {
      */
     @Override
     public void processAddFileTxMessage(DFSAddFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
-        DFSFileState fileState = stateManager().get(data.getFile().getPath());
-        if (fileState == null) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                    message.value().getEntity(),
-                    String.format("File not found. [path=%s]", message.value().getEntity()));
-        }
         SchemaEntity schemaEntity = new SchemaEntity();
         schemaEntity.setDomain(message.value().getNamespace());
         schemaEntity.setEntity(message.value().getEntityName());
+        registerFile(data.getFile().getPath(), schemaEntity, message.mode());
+    }
 
-        DFSFileReplicaState rState = stateManager().get(fileState.getId());
-        if (rState == null) {
+    private DFSFileReplicaState registerFile(String hdfsPath, SchemaEntity schemaEntity, MessageObject.MessageMode mode) throws Exception {
+        DFSFileState fileState = stateManager().get(hdfsPath);
+        if (fileState == null) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                    fileState.getHdfsFilePath(),
-                    String.format("File replication state not found. [path=%s]", fileState.getHdfsFilePath()));
+                    hdfsPath,
+                    String.format("File not found. [path=%s]", hdfsPath));
         }
+
         FSFile file = FileSystemHelper.createFile(fileState, fs, schemaEntity);
         stateManager().replicationLock().lock();
         try {
-            rState = stateManager().get(fileState.getId());
-            rState.setStoragePath(file.directory().path());
-            rState.setState(EFileState.New);
+            DFSFileReplicaState rState = stateManager().create(fileState.getId(), fileState.getHdfsFilePath(), schemaEntity, true);
+            rState.setSnapshotTxId(fileState.getLastTnxId());
+            rState.setSnapshotTime(System.currentTimeMillis());
+            rState.setSnapshotReady(mode != MessageObject.MessageMode.Snapshot);
+            rState.setState(fileState.getState());
+            for (DFSBlockState bs : fileState.getBlocks()) {
+                DFSBlockReplicaState b = new DFSBlockReplicaState();
+                b.setState(EFileState.New);
+                b.setBlockId(bs.getBlockId());
+                b.setPrevBlockId(bs.getPrevBlockId());
+                b.setStartOffset(0);
+                b.setDataSize(bs.getDataSize());
+                b.setUpdateTime(System.currentTimeMillis());
+                rState.add(b);
+            }
+            stateManager().update(rState);
 
-            rState = stateManager().update(rState);
+            return rState;
         } finally {
             stateManager().replicationLock().unlock();
         }
-        sender.send(message);
     }
 
     /**
@@ -211,7 +231,9 @@ public class FileTransactionProcessor extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processAddBlockTxMessage(DFSAddBlock data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+    public void processAddBlockTxMessage(DFSAddBlock data,
+                                         MessageObject<String, DFSChangeDelta> message,
+                                         long txId) throws Exception {
         DFSFileState fileState = stateManager().get(data.getFile().getPath());
         if (fileState == null || fileState.checkDeleted()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
@@ -265,15 +287,10 @@ public class FileTransactionProcessor extends TransactionProcessor {
     @Override
     public void processUpdateBlocksTxMessage(DFSUpdateBlocks data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
         DFSFileState fileState = stateManager().get(data.getFile().getPath());
-        if (fileState == null || fileState.checkDeleted()) {
+        if (fileState == null || !fileState.canProcess()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
-                            data.getFile().getPath()));
-        } else if (!fileState.canUpdate()) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                    data.getFile().getPath(),
-                    String.format("NameNode Replica out of sync, file not marked for update. [path=%s]",
                             data.getFile().getPath()));
         }
         if (fileState.getLastTnxId() >= txId) {
@@ -345,15 +362,10 @@ public class FileTransactionProcessor extends TransactionProcessor {
     @Override
     public void processTruncateBlockTxMessage(DFSTruncateBlock data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
         DFSFileState fileState = stateManager().get(data.getFile().getPath());
-        if (fileState == null || fileState.checkDeleted()) {
+        if (fileState == null || !fileState.canProcess()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
-                            data.getFile().getPath()));
-        } else if (!fileState.canUpdate()) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                    data.getFile().getPath(),
-                    String.format("NameNode Replica out of sync, file not marked for update. [path=%s]",
                             data.getFile().getPath()));
         }
         if (fileState.getLastTnxId() >= txId) {
@@ -371,29 +383,28 @@ public class FileTransactionProcessor extends TransactionProcessor {
      */
     @Override
     public void processCloseFileTxMessage(DFSCloseFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+        SchemaEntity schemaEntity = new SchemaEntity();
+        schemaEntity.setDomain(message.value().getNamespace());
+        schemaEntity.setEntity(message.value().getEntityName());
+        if (message.mode() == MessageObject.MessageMode.Snapshot) {
+            registerFile(data.getFile().getPath(), schemaEntity, message.mode());
+        }
         DFSFileState fileState = stateManager().get(data.getFile().getPath());
-        if (fileState == null || fileState.checkDeleted()) {
+        if (fileState == null || !fileState.canProcess()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()));
-        } else if (!fileState.canUpdate()) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                    data.getFile().getPath(),
-                    String.format("NameNode Replica out of sync, file not marked for update. [path=%s]",
-                            data.getFile().getPath()));
         }
-        if (fileState.getLastTnxId() >= txId) {
+        if (fileState.getLastTnxId() >= txId && message.mode() != MessageObject.MessageMode.Snapshot) {
             LOG.warn(String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
                     message.id(), message.mode().name()));
             return;
         }
-        SchemaEntity schemaEntity = new SchemaEntity();
-        schemaEntity.setDomain(message.value().getNamespace());
-        schemaEntity.setEntity(message.value().getEntityName());
 
         DFSFileReplicaState rState = stateManager().get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.canUpdate()) {
+            HDFSBlockReader reader = new HDFSBlockReader(connection.dfsClient(), rState.getHdfsPath());
             FSFile file = fs.get(fileState, fs, schemaEntity);
             if (file == null) {
                 throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
@@ -404,30 +415,27 @@ public class FileTransactionProcessor extends TransactionProcessor {
             List<DFSBlock> blocks = data.getBlocksList();
             if (!blocks.isEmpty()) {
                 for (DFSBlock block : blocks) {
-                    DFSBlockState bs = fileState.get(block.getBlockId());
+                    DFSBlockReplicaState bs = rState.get(block.getBlockId());
                     if (bs == null) {
                         throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                                fileState.getHdfsFilePath(),
-                                String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
-                                        fileState.getHdfsFilePath(), block.getBlockId()));
-                    } else if (bs.canUpdate()) {
-
-                    } else if (bs.getDataSize() != block.getSize()) {
-                        throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                                fileState.getHdfsFilePath(),
-                                String.format("File State out of sync, block size mismatch. [path=%s][blockID=%d]",
-                                        fileState.getHdfsFilePath(), block.getBlockId()));
-                    } else {
-                        throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                                fileState.getHdfsFilePath(),
-                                String.format("File State out of sync, block state mismatch. [path=%s][blockID=%d]",
-                                        fileState.getHdfsFilePath(), block.getBlockId()));
+                                data.getFile().getPath(),
+                                String.format("Block not registered for update. [path=%s][block ID=%d]",
+                                        data.getFile().getPath(), block.getBlockId()));
                     }
+                    FSBlock fsb = file.get(block.getBlockId());
+                    if (fsb == null) {
+                        throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                                data.getFile().getPath(),
+                                String.format("Block not found in FileSystem. [path=%s][block ID=%d]",
+                                        data.getFile().getPath(), block.getBlockId()));
+                    }
+                    long size = copyBlock(block, rState, bs, fsb, reader);
                 }
             }
             stateManager().replicationLock().lock();
             try {
                 rState = stateManager().get(fileState.getId());
+                rState.clear();
                 rState.setState(EFileState.Finalized);
 
                 rState = stateManager().update(rState);
@@ -446,9 +454,24 @@ public class FileTransactionProcessor extends TransactionProcessor {
         }
     }
 
-    private long copyBlock() throws Exception {
+    private long copyBlock(DFSBlock source,
+                           DFSFileReplicaState fileState,
+                           DFSBlockReplicaState blockState,
+                           FSBlock fsBlock,
+                           HDFSBlockReader reader) throws Exception {
+        HDFSBlockData data = reader.read(source.getBlockId(),
+                source.getGenerationStamp(),
+                0L,
+                (int) source.getEndOffset());
+        if (data == null) {
+            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    fileState.getHdfsPath(),
+                    String.format("Error reading block from HDFS. [path=%s][block ID=%d]",
+                            fileState.getHdfsPath(), source.getBlockId()));
+        }
+        fsBlock.write(data.data().array());
 
-        return -1;
+        return data.dataSize();
     }
 
     /**
@@ -459,60 +482,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
      */
     @Override
     public void processRenameFileTxMessage(DFSRenameFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
-        DFSFileState fileState = stateManager().get(data.getSrcFile().getPath());
-        if (fileState == null || fileState.checkDeleted()) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                    data.getSrcFile().getPath(),
-                    String.format("NameNode Replica out of sync, missing file state. [path=%s]",
-                            data.getSrcFile().getPath()));
-        } else if (!fileState.canUpdate()) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                    data.getSrcFile().getPath(),
-                    String.format("NameNode Replica out of sync, file not marked for update. [path=%s]",
-                            data.getSrcFile().getPath()));
-        }
-        fileState = stateManager().markDeleted(data.getSrcFile().getPath());
-        EFileState state = (fileState.getState() == EFileState.Error ? fileState.getState() : EFileState.New);
-        DFSFileState nfs = stateManager().create(data.getDestFile().getPath(),
-                data.getDestFile().getInodeId(),
-                fileState.getCreatedTime(),
-                fileState.getBlockSize(),
-                state,
-                txId);
-        nfs.setBlocks(fileState.getBlocks());
-        nfs.setNumBlocks(fileState.getNumBlocks());
-        nfs.setDataSize(fileState.getDataSize());
-        nfs.setUpdatedTime(data.getTransaction().getTimestamp());
-
-        nfs = stateManager().update(nfs);
-
-        DFSFileReplicaState rState = stateManager().get(fileState.getId());
-        if (rState != null) {
-            stateManager().delete(rState.getInode());
-        }
-        SchemaEntity schemaEntity = isRegistered(nfs.getHdfsFilePath());
-        if (schemaEntity != null) {
-            rState = stateManager().create(nfs.getId(), nfs.getHdfsFilePath(), schemaEntity, true);
-            rState.setSnapshotTxId(nfs.getLastTnxId());
-            rState.setSnapshotTime(System.currentTimeMillis());
-            rState.setSnapshotReady(true);
-
-            stateManager().update(rState);
-            DFSAddFile addFile = HDFSSnapshotProcessor.generateSnapshot(nfs, true);
-            MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
-                    addFile,
-                    DFSAddFile.class,
-                    rState.getEntity().getDomain(),
-                    rState.getEntity().getEntity(),
-                    MessageObject.MessageMode.New);
-            sender.send(m);
-        } else if (nfs.hasError()) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                    nfs.getHdfsFilePath(),
-                    String.format("FileSystem sync error. [path=%s]", nfs.getHdfsFilePath()));
-        } else {
-            sendIgnoreTx(message, data);
-        }
+        throw new InvalidMessageError(message.id(), "Rename transaction should not come...");
     }
 
     /**

@@ -85,7 +85,7 @@ public class FSBlock implements Closeable {
                         path.path()));
             }
             if (!path.exists()) {
-                write("EMPTY BLOCK".getBytes(StandardCharsets.UTF_8));
+                write(new byte[0]);
                 close();
             }
         }

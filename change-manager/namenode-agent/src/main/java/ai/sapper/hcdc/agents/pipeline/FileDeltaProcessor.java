@@ -55,12 +55,15 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
                 throw new ConfigurationException(
                         String.format("HDFS Connection not found. [name=%s]", config.hdfsConnection));
             }
+            if (!connection.isConnected()) connection.connect();
+
             Class<? extends FileSystem> fsc = (Class<? extends FileSystem>) Class.forName(config.fsType);
             fs = fsc.newInstance();
             fs.init(config.config(), FileDeltaProcessorConfig.Constants.CONFIG_PATH_FS);
 
             processor = (FileTransactionProcessor) new FileTransactionProcessor()
                     .withFileSystem(fs)
+                    .withHdfsConnection(connection)
                     .withSenderQueue(sender())
                     .withStateManager(stateManager())
                     .withErrorQueue(errorSender());

@@ -469,6 +469,29 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                             data.getSrcFile().getPath()));
         }
         fileState = stateManager().markDeleted(data.getSrcFile().getPath());
+        SchemaEntity schemaEntity = isRegistered(fileState.getHdfsFilePath());
+        if (schemaEntity != null) {
+            DFSDeleteFile.Builder builder = DFSDeleteFile.newBuilder();
+            DFSTransaction txb = DFSTransaction.newBuilder()
+                    .setTransactionId(txId)
+                    .setTimestamp(System.currentTimeMillis())
+                    .setOp(DFSTransaction.Operation.DELETE)
+                    .build();
+            DFSFile f = DFSFile.newBuilder()
+                    .setPath(data.getSrcFile().getPath())
+                    .setInodeId(data.getSrcFile().getInodeId())
+                    .build();
+            builder.setTransaction(txb)
+                    .setFile(f)
+                    .setTimestamp(System.currentTimeMillis());
+            MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
+                    builder.build(),
+                    DFSDeleteFile.class,
+                    schemaEntity.getDomain(),
+                    schemaEntity.getEntity(),
+                    MessageObject.MessageMode.New);
+            sender.send(m);
+        }
         EFileState state = (fileState.getState() == EFileState.Error ? fileState.getState() : EFileState.New);
         DFSFileState nfs = stateManager().create(data.getDestFile().getPath(),
                 data.getDestFile().getInodeId(),
@@ -487,7 +510,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
         if (rState != null) {
             stateManager().delete(rState.getInode());
         }
-        SchemaEntity schemaEntity = isRegistered(nfs.getHdfsFilePath());
+        schemaEntity = isRegistered(nfs.getHdfsFilePath());
         if (schemaEntity != null) {
             rState = stateManager().create(nfs.getId(), nfs.getHdfsFilePath(), schemaEntity, true);
             rState.setSnapshotTxId(nfs.getLastTnxId());
@@ -501,7 +524,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                     DFSAddFile.class,
                     rState.getEntity().getDomain(),
                     rState.getEntity().getEntity(),
-                    MessageObject.MessageMode.New);
+                    MessageObject.MessageMode.Snapshot);
             sender.send(m);
         } else if (nfs.hasError()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,

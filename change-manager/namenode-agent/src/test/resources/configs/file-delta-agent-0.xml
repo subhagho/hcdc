@@ -27,6 +27,7 @@
                     <type>ai.sapper.hcdc.core.io.impl.local.LocalFileSystem</type>
                     <root>C:\Work\temp\output\fs</root>
                 </filesystem>
+                <hdfs>source-hdfs</hdfs>
                 <sender>
                     <connectionType>kafka</connectionType>
                     <connection>delta-kafka-queue</connection>
