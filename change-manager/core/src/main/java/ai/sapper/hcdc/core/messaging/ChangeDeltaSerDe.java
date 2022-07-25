@@ -59,6 +59,8 @@ public class ChangeDeltaSerDe {
             create(namespace, (DFSRenameFile) data, builder);
         } else if (type.equals(DFSIgnoreTx.class)) {
             create(namespace, (DFSIgnoreTx) data, builder);
+        } else if (type.equals(DFSError.class)) {
+            create(namespace, (DFSError) data, builder);
         } else {
             throw new MessagingError(String.format("Invalid Message DataType. [type=%s]", type.getCanonicalName()));
         }
@@ -220,6 +222,8 @@ public class ChangeDeltaSerDe {
             return DFSRenameFile.parseFrom(changeDelta.getBody());
         } else if (type.compareTo(DFSIgnoreTx.class.getCanonicalName()) == 0) {
             return DFSIgnoreTx.parseFrom(changeDelta.getBody());
+        } else if (type.compareTo(DFSError.class.getCanonicalName()) == 0) {
+            return DFSError.parseFrom(changeDelta.getBody());
         } else {
             throw new MessagingError(String.format("Invalid Message Type. [type=%s]", type));
         }

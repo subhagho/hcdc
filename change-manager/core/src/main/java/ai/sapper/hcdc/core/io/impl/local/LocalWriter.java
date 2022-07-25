@@ -24,11 +24,13 @@ public class LocalWriter extends Writer {
     @Override
     public Writer open(boolean overwrite) throws IOException {
         LocalPathInfo pi = (LocalPathInfo) path();
-        if (pi.exists() && overwrite) {
-            if (!pi.file().delete()) {
+        if (!pi.exists() || overwrite) {
+            /*
+            if (pi.exists() && !pi.file().delete()) {
                 throw new IOException(String.format("Failed to delete existing file. [path=%s]",
                         pi.file().getAbsolutePath()));
             }
+             */
             outputStream = new FileOutputStream(pi.file());
         } else if (pi.exists()) {
             outputStream = new FileOutputStream(pi.file(), true);
@@ -99,6 +101,7 @@ public class LocalWriter extends Writer {
     @Override
     public void close() throws IOException {
         if (outputStream != null) {
+            outputStream.flush();
             outputStream.close();
             outputStream = null;
         }

@@ -518,10 +518,10 @@ public class SourceTransactionProcessor extends TransactionProcessor {
             rState.setSnapshotReady(true);
 
             stateManager().update(rState);
-            DFSAddFile addFile = HDFSSnapshotProcessor.generateSnapshot(nfs, true);
+            DFSCloseFile addFile = HDFSSnapshotProcessor.generateSnapshot(nfs, true);
             MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
                     addFile,
-                    DFSAddFile.class,
+                    DFSCloseFile.class,
                     rState.getEntity().getDomain(),
                     rState.getEntity().getEntity(),
                     MessageObject.MessageMode.Snapshot);

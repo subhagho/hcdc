@@ -71,7 +71,7 @@ public class LocalFileSystem extends FileSystem {
         if (prefix) {
             return get(path, domain);
         }
-        return new LocalPathInfo(PathUtils.formatPath(String.format("%s/%s", domain, path)));
+        return new LocalPathInfo(path);
     }
 
     /**

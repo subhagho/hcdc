@@ -1,2 +1,2 @@
-test-schemaEntity;test-01;/test/hcdc/loader;(.*/)(.*\.parquet)
-test-schemaEntity;test-02;/test/hcdc/core;(.*/)(.*\.xml)
+test-domain-1;test-01;/test/hcdc/loader;(.*/)(.*\.parquet)
+test-domain-2;test-02;/test/hcdc/core;(.*/)(.*\.xml)

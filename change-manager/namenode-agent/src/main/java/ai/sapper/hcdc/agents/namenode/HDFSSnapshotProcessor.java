@@ -161,10 +161,10 @@ public class HDFSSnapshotProcessor {
                 rState.add(b);
             }
 
-            DFSAddFile addFile = generateSnapshot(fileState, true);
+            DFSCloseFile addFile = generateSnapshot(fileState, true);
             MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
                     addFile,
-                    DFSAddFile.class,
+                    DFSCloseFile.class,
                     entity.getDomain(),
                     entity.getEntity(),
                     MessageObject.MessageMode.Snapshot);
@@ -199,10 +199,10 @@ public class HDFSSnapshotProcessor {
             if (tnxId != rState.getSnapshotTxId()) {
                 throw new SnapshotError(String.format("Snapshot transaction mismatch. [expected=%d][actual=%d]", rState.getSnapshotTxId(), tnxId));
             }
-            DFSAddFile addFile = generateSnapshot(fileState, true);
+            DFSCloseFile addFile = generateSnapshot(fileState, true);
             MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
                     addFile,
-                    DFSAddFile.class,
+                    DFSCloseFile.class,
                     entity.getDomain(),
                     entity.getEntity(),
                     MessageObject.MessageMode.Backlog);
@@ -223,7 +223,7 @@ public class HDFSSnapshotProcessor {
         }
     }
 
-    public static DFSAddFile generateSnapshot(DFSFileState state, boolean addBlocks) throws Exception {
+    public static DFSCloseFile generateSnapshot(DFSFileState state, boolean addBlocks) throws Exception {
         DFSTransaction tx = DFSTransaction.newBuilder()
                 .setOp(DFSTransaction.Operation.ADD_FILE)
                 .setTransactionId(state.getLastTnxId())
@@ -233,7 +233,7 @@ public class HDFSSnapshotProcessor {
                 .setInodeId(state.getId())
                 .setPath(state.getHdfsFilePath())
                 .build();
-        DFSAddFile.Builder builder = DFSAddFile.newBuilder();
+        DFSCloseFile.Builder builder = DFSCloseFile.newBuilder();
         builder.setOverwrite(false)
                 .setModifiedTime(state.getUpdatedTime())
                 .setBlockSize(state.getBlockSize())

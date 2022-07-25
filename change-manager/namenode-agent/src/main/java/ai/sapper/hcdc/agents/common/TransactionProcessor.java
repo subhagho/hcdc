@@ -81,6 +81,8 @@ public abstract class TransactionProcessor {
             return ((DFSRenameFile) data).getTransaction();
         } else if (data instanceof DFSIgnoreTx) {
             return ((DFSIgnoreTx) data).getTransaction();
+        } else if (data instanceof DFSError) {
+            return ((DFSError) data).getTransaction();
         }
         return null;
     }

@@ -74,20 +74,14 @@ public class FSBlock implements Closeable {
     }
 
     private void setup(DFSBlockState blockState, boolean create) throws IOException {
-        if (blockState.isStored()) {
-            if (!path.exists()) {
-                throw new IOException(String.format("File not found. [path=%s]", path.path()));
-            }
-        } else {
-            if (!create) {
-                throw new IOException(String.format("Block File not found. [block ID=%d][path=%s]",
-                        blockState.getBlockId(),
-                        path.path()));
-            }
-            if (!path.exists()) {
-                write(new byte[0]);
-                close();
-            }
+        boolean exists = path.exists();
+        if (!create && !exists) {
+            throw new IOException(String.format("Block File not found. [block ID=%d][path=%s]",
+                    blockState.getBlockId(),
+                    path.path()));
+        } else if (!exists) {
+            write(new byte[0]);
+            close();
         }
     }
 
@@ -195,6 +189,7 @@ public class FSBlock implements Closeable {
                 reader = null;
             }
             if (writer != null) {
+                writer.flush();
                 writer.close();
                 writer = null;
             }

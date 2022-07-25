@@ -78,6 +78,42 @@ public class CDCTransactionProcessor extends TransactionProcessor {
         sender.send(message);
     }
 
+    private void addFile(DFSCloseFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+        DFSFileState fileState = stateManager().get(data.getFile().getPath());
+        if (fileState != null) {
+            if (fileState.getLastTnxId() >= txId) {
+                LOG.warn(String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
+                        message.id(), message.mode().name()));
+                return;
+            } else if (!fileState.checkDeleted()) {
+                throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                        fileState.getHdfsFilePath(),
+                        String.format("Valid File already exists. [path=%s]", fileState.getHdfsFilePath()));
+            }
+        }
+        fileState = stateManager().create(data.getFile().getPath(),
+                data.getFile().getInodeId(),
+                data.getModifiedTime(),
+                data.getBlockSize(),
+                EFileState.New,
+                data.getTransaction().getTransactionId());
+        List<DFSBlock> blocks = data.getBlocksList();
+        if (!blocks.isEmpty()) {
+            long prevBlockId = -1;
+            for (DFSBlock block : blocks) {
+                fileState = stateManager().addOrUpdateBlock(fileState.getHdfsFilePath(),
+                        block.getBlockId(),
+                        prevBlockId,
+                        data.getModifiedTime(),
+                        block.getSize(),
+                        block.getGenerationStamp(),
+                        EBlockState.New,
+                        data.getTransaction().getTransactionId());
+                prevBlockId = block.getBlockId();
+            }
+        }
+    }
+
     /**
      * @param data
      * @param message
@@ -238,6 +274,9 @@ public class CDCTransactionProcessor extends TransactionProcessor {
      */
     @Override
     public void processCloseFileTxMessage(DFSCloseFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+        if (message.mode() == MessageObject.MessageMode.Snapshot) {
+            addFile(data, message, txId);
+        }
         DFSFileState fileState = stateManager().get(data.getFile().getPath());
         if (fileState == null || !fileState.canProcess()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
@@ -245,7 +284,7 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()));
         }
-        if (fileState.getLastTnxId() >= txId) {
+        if (fileState.getLastTnxId() >= txId && message.mode() != MessageObject.MessageMode.Snapshot) {
             LOG.warn(String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
                     message.id(), message.mode().name()));
             return;
