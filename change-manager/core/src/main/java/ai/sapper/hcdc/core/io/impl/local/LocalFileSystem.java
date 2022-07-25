@@ -8,6 +8,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.NonNull;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
+import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
@@ -20,6 +21,8 @@ import java.util.Collection;
 import java.util.List;
 
 public class LocalFileSystem extends FileSystem {
+    private FileSystemConfig fsConfig = null;
+
     /**
      * @param config
      * @param pathPrefix
@@ -28,7 +31,18 @@ public class LocalFileSystem extends FileSystem {
      */
     @Override
     public FileSystem init(@NonNull HierarchicalConfiguration<ImmutableNode> config, String pathPrefix) throws IOException {
-        return this;
+        try {
+            if (fsConfig == null) {
+                fsConfig = new LocalFileSystemConfig(config, pathPrefix);
+            }
+            fsConfig.read();
+            LocalPathInfo rp = new LocalPathInfo(fsConfig.rootPath());
+            setRootPath(rp);
+
+            return this;
+        } catch (Exception ex) {
+            throw new IOException(ex);
+        }
     }
 
     /**
@@ -214,5 +228,22 @@ public class LocalFileSystem extends FileSystem {
             throw new IOException(String.format("File not found. [path=%s]", ((LocalPathInfo) path).file().getAbsolutePath()));
         }
         return new LocalReader(path).open();
+    }
+
+    public static class LocalFileSystemConfig extends FileSystemConfig {
+        public LocalFileSystemConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config, @NonNull String path) {
+            super(config, path);
+        }
+
+        /**
+         * @throws ConfigurationException
+         */
+        @Override
+        public void read() throws ConfigurationException {
+            super.read();
+            if (Strings.isNullOrEmpty(rootPath())) {
+                rootPath(System.getProperty("java.io.tmpdir"));
+            }
+        }
     }
 }

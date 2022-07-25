@@ -10,6 +10,8 @@ import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
+import org.apache.commons.configuration2.builder.combined.CombinedConfigurationBuilder;
+import org.apache.commons.configuration2.builder.fluent.CombinedBuilderParameters;
 import org.apache.commons.configuration2.builder.fluent.Parameters;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.ex.ConfigurationRuntimeException;
@@ -20,6 +22,7 @@ import org.apache.commons.configuration2.io.ProvidedURLLocationStrategy;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 
 import java.io.File;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -115,23 +118,36 @@ public class ConfigReader {
                 new ProvidedURLLocationStrategy());
         FileLocationStrategy strategy = new CombinedLocationStrategy(subs);
         Parameters params = new Parameters();
-        FileBasedConfigurationBuilder<XMLConfiguration> builder =
-                new FileBasedConfigurationBuilder<XMLConfiguration>(XMLConfiguration.class)
-                        .configure(params.xml()
-                                .setLocationStrategy(strategy).setFileName(path));
+        FileBasedConfigurationBuilder<XMLConfiguration> builder
+                = new FileBasedConfigurationBuilder<XMLConfiguration>(XMLConfiguration.class)
+                .configure(params
+                        .xml()
+                        .setLocationStrategy(strategy)
+                        .setURL(
+                                ConfigReader.class.getClassLoader().getResource(path)
+                        ));
+
         return builder.getConfiguration();
     }
 
     public static XMLConfiguration readFromURI(@NonNull String path) throws ConfigurationException {
-        List<FileLocationStrategy> subs = List.of(
-                new ClasspathLocationStrategy());
-        FileLocationStrategy strategy = new CombinedLocationStrategy(subs);
-        Parameters params = new Parameters();
-        FileBasedConfigurationBuilder<XMLConfiguration> builder =
-                new FileBasedConfigurationBuilder<XMLConfiguration>(XMLConfiguration.class)
-                        .configure(params.xml()
-                                .setLocationStrategy(strategy).setFileName(path));
-        return builder.getConfiguration();
+        try {
+            List<FileLocationStrategy> subs = List.of(
+                    new ClasspathLocationStrategy());
+            FileLocationStrategy strategy = new CombinedLocationStrategy(subs);
+            Parameters params = new Parameters();
+            FileBasedConfigurationBuilder<XMLConfiguration> builder
+                    = new FileBasedConfigurationBuilder<XMLConfiguration>(XMLConfiguration.class)
+                    .configure(params
+                            .xml()
+                            .setLocationStrategy(strategy)
+                            .setURL(
+                                    new URI(path).toURL()
+                            ));
+            return builder.getConfiguration();
+        } catch (Exception ex) {
+            throw new ConfigurationException(ex);
+        }
     }
 
     public static XMLConfiguration read(@NonNull String path, @NonNull EConfigFileType type) throws ConfigurationException {

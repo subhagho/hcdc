@@ -22,7 +22,11 @@
             </manager>
         </domain>
         <processor>
-            <cdc>
+            <files>
+                <filesystem>
+                    <type>ai.sapper.hcdc.core.io.impl.local.LocalFileSystem</type>
+                    <root>C:\Work\temp\output\fs</root>
+                </filesystem>
                 <sender>
                     <connectionType>kafka</connectionType>
                     <connection>delta-kafka-queue</connection>
@@ -44,7 +48,7 @@
                     <!--partitioner></partitioner-->
                 </errorQueue>
                 <readBatchTimeout>5000</readBatchTimeout>
-            </cdc>
+            </files>
         </processor>
         <useSSL>false</useSSL>
         <locks>

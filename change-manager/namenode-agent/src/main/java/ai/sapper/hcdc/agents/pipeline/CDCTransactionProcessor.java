@@ -81,7 +81,7 @@ public class CDCTransactionProcessor extends TransactionProcessor {
         DFSReplicationState rState = stateManager().create(fileState.getId(), fileState.getHdfsFilePath(), schemaEntity, true);
         rState.setSnapshotTxId(fileState.getLastTnxId());
         rState.setSnapshotTime(System.currentTimeMillis());
-        rState.setSnapshotReady(true);
+        rState.setSnapshotReady(message.mode() != MessageObject.MessageMode.Snapshot);
 
         stateManager().update(rState);
         sender.send(message);
@@ -341,14 +341,7 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                             String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
                                     fileState.getHdfsFilePath(), block.getBlockId()));
                 } else if (bs.canUpdate()) {
-                    fileState = stateManager().addOrUpdateBlock(fileState.getHdfsFilePath(),
-                            bs.getBlockId(),
-                            bs.getPrevBlockId(),
-                            data.getModifiedTime(),
-                            block.getSize(),
-                            block.getGenerationStamp(),
-                            EBlockState.Finalized,
-                            txId);
+                    LOG.debug(String.format("Updating block: [block ID=%d]", bs.getBlockId()));
                 } else if (bs.getDataSize() != block.getSize()) {
                     throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getHdfsFilePath(),
@@ -362,7 +355,6 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                 }
             }
         }
-        fileState = stateManager().updateState(fileState.getHdfsFilePath(), EFileState.Finalized);
 
         DFSReplicationState rState = stateManager().get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {

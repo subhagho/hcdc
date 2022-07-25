@@ -21,7 +21,6 @@ public class DFSFileState {
     private long lastTnxId;
     private long timestamp;
     private EFileType fileType = EFileType.UNKNOWN;
-    private String storagePath;
 
     private EFileState state = EFileState.Unknown;
 

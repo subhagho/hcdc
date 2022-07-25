@@ -18,4 +18,5 @@ public class DFSReplicationState {
     private boolean snapshotReady = false;
     private long lastReplicationTime;
     private long updateTime = 0;
+    private String storagePath;
 }

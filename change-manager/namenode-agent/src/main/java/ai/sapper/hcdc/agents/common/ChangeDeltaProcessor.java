@@ -78,6 +78,9 @@ public abstract class ChangeDeltaProcessor implements Runnable {
         }
     }
 
+    public abstract ChangeDeltaProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                                              @NonNull ConnectionManager manger) throws ConfigurationException;
+
     @Getter
     @Setter
     @Accessors(fluent = true)

@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.core.io;
 
 import ai.sapper.hcdc.core.model.DFSBlockState;
+import ai.sapper.hcdc.core.model.DFSFileState;
 import com.google.common.base.Preconditions;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -9,6 +10,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 @Getter
 @Accessors(fluent = true)
@@ -54,9 +56,37 @@ public class FSBlock implements Closeable {
         this.previousBlockId = blockState.getPrevBlockId();
         filename = blockFile(blockState.getBlockId(), blockState.getPrevBlockId());
         path = fs.get(String.format("%s/%s", directory.path(), filename), domain);
+        setup(blockState, false);
+    }
+
+    protected FSBlock(@NonNull DFSBlockState blockState,
+                      @NonNull PathInfo directory,
+                      @NonNull FileSystem fs,
+                      String domain,
+                      boolean create) throws IOException {
+        this.directory = directory;
+        this.fs = fs;
+        this.blockId = blockState.getBlockId();
+        this.previousBlockId = blockState.getPrevBlockId();
+        filename = blockFile(blockState.getBlockId(), blockState.getPrevBlockId());
+        path = fs.get(String.format("%s/%s", directory.path(), filename), domain);
+        setup(blockState, create);
+    }
+
+    private void setup(DFSBlockState blockState, boolean create) throws IOException {
         if (blockState.isStored()) {
             if (!path.exists()) {
                 throw new IOException(String.format("File not found. [path=%s]", path.path()));
+            }
+        } else {
+            if (!create) {
+                throw new IOException(String.format("Block File not found. [block ID=%d][path=%s]",
+                        blockState.getBlockId(),
+                        path.path()));
+            }
+            if (!path.exists()) {
+                write("EMPTY BLOCK".getBytes(StandardCharsets.UTF_8));
+                close();
             }
         }
     }
@@ -134,6 +164,14 @@ public class FSBlock implements Closeable {
             writer = fs.writer(path, false);
         }
         return writer.truncate(length);
+    }
+
+    public boolean exists() throws IOException {
+        return path.exists();
+    }
+
+    protected boolean delete() throws IOException {
+        return fs.delete(path);
     }
 
     /**
