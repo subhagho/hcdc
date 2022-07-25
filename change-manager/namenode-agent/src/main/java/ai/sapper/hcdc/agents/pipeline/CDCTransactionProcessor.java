@@ -3,7 +3,7 @@ package ai.sapper.hcdc.agents.pipeline;
 import ai.sapper.hcdc.agents.common.InvalidTransactionError;
 import ai.sapper.hcdc.agents.common.TransactionProcessor;
 import ai.sapper.hcdc.agents.namenode.HDFSSnapshotProcessor;
-import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
+import ai.sapper.hcdc.agents.namenode.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.hcdc.core.messaging.InvalidMessageError;
@@ -78,10 +78,11 @@ public class CDCTransactionProcessor extends TransactionProcessor {
         }
         SchemaEntity schemaEntity = new SchemaEntity();
         schemaEntity.setDomain(message.value().getNamespace());
-        DFSReplicationState rState = stateManager().create(fileState.getId(), fileState.getHdfsFilePath(), schemaEntity, true);
+        DFSFileReplicaState rState = stateManager().create(fileState.getId(), fileState.getHdfsFilePath(), schemaEntity, true);
         rState.setSnapshotTxId(fileState.getLastTnxId());
         rState.setSnapshotTime(System.currentTimeMillis());
         rState.setSnapshotReady(message.mode() != MessageObject.MessageMode.Snapshot);
+        rState.setState(fileState.getState());
 
         stateManager().update(rState);
         sender.send(message);
@@ -109,7 +110,7 @@ public class CDCTransactionProcessor extends TransactionProcessor {
         }
         fileState = stateManager().updateState(fileState.getHdfsFilePath(), EFileState.Updating);
 
-        DFSReplicationState rState = stateManager().get(fileState.getId());
+        DFSFileReplicaState rState = stateManager().get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
             sender.send(message);
         } else if (fileState.hasError()) {
@@ -146,7 +147,7 @@ public class CDCTransactionProcessor extends TransactionProcessor {
         }
         fileState = stateManager().markDeleted(fileState.getHdfsFilePath());
 
-        DFSReplicationState rState = stateManager().get(fileState.getId());
+        DFSFileReplicaState rState = stateManager().get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
             stateManager().delete(fileState.getId());
             sender.send(message);
@@ -200,7 +201,7 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                 EBlockState.New,
                 data.getTransaction().getTransactionId());
 
-        DFSReplicationState rState = stateManager().get(fileState.getId());
+        DFSFileReplicaState rState = stateManager().get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
             sender.send(message);
         } else if (fileState.hasError()) {
@@ -264,7 +265,7 @@ public class CDCTransactionProcessor extends TransactionProcessor {
 
             stateManager().updateState(fileState.getHdfsFilePath(), bs.getBlockId(), EBlockState.Updating);
         }
-        DFSReplicationState rState = stateManager().get(fileState.getId());
+        DFSFileReplicaState rState = stateManager().get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
             sender.send(message);
         } else if (fileState.hasError()) {
@@ -341,7 +342,14 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                             String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
                                     fileState.getHdfsFilePath(), block.getBlockId()));
                 } else if (bs.canUpdate()) {
-                    LOG.debug(String.format("Updating block: [block ID=%d]", bs.getBlockId()));
+                    fileState = stateManager().addOrUpdateBlock(fileState.getHdfsFilePath(),
+                            bs.getBlockId(),
+                            bs.getPrevBlockId(),
+                            data.getModifiedTime(),
+                            block.getSize(),
+                            block.getGenerationStamp(),
+                            EBlockState.Finalized,
+                            txId);
                 } else if (bs.getDataSize() != block.getSize()) {
                     throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getHdfsFilePath(),
@@ -356,7 +364,8 @@ public class CDCTransactionProcessor extends TransactionProcessor {
             }
         }
 
-        DFSReplicationState rState = stateManager().get(fileState.getId());
+        fileState = stateManager().updateState(fileState.getHdfsFilePath(), EFileState.Finalized);
+        DFSFileReplicaState rState = stateManager().get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
             sender.send(message);
         } else if (fileState.hasError()) {
@@ -406,7 +415,7 @@ public class CDCTransactionProcessor extends TransactionProcessor {
 
         nfs = stateManager().update(nfs);
 
-        DFSReplicationState rState = stateManager().get(fileState.getId());
+        DFSFileReplicaState rState = stateManager().get(fileState.getId());
         if (rState != null) {
             stateManager().delete(rState.getInode());
         }

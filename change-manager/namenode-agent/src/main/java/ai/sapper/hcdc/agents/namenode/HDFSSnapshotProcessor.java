@@ -4,7 +4,8 @@ import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ProcessorStateManager;
 import ai.sapper.hcdc.agents.common.SnapshotError;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
-import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
+import ai.sapper.hcdc.agents.namenode.model.DFSBlockReplicaState;
+import ai.sapper.hcdc.agents.namenode.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.common.model.filters.DomainFilter;
@@ -17,6 +18,7 @@ import ai.sapper.hcdc.core.filters.FilterAddCallback;
 import ai.sapper.hcdc.core.messaging.*;
 import ai.sapper.hcdc.core.model.DFSBlockState;
 import ai.sapper.hcdc.core.model.DFSFileState;
+import ai.sapper.hcdc.core.model.EFileState;
 import ai.sapper.hcdc.core.utils.FileSystemUtils;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
@@ -141,13 +143,24 @@ public class HDFSSnapshotProcessor {
                 DefaultLogger.LOG.warn(String.format("HDFS File State not found. [path=%s]", hdfsPath));
                 return;
             }
-            DFSReplicationState rState = stateManager.get(fileState.getId());
+            DFSFileReplicaState rState = stateManager.get(fileState.getId());
             if (rState == null) {
                 rState = stateManager.create(fileState.getId(), fileState.getHdfsFilePath(), entity, true);
             }
             if (rState.getSnapshotTxId() > 0) {
                 return;
             }
+            for (DFSBlockState bs : fileState.getBlocks()) {
+                DFSBlockReplicaState b = new DFSBlockReplicaState();
+                b.setState(EFileState.New);
+                b.setBlockId(bs.getBlockId());
+                b.setPrevBlockId(bs.getPrevBlockId());
+                b.setStartOffset(0);
+                b.setDataSize(bs.getDataSize());
+                b.setUpdateTime(System.currentTimeMillis());
+                rState.add(b);
+            }
+
             DFSAddFile addFile = generateSnapshot(fileState, true);
             MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
                     addFile,
@@ -171,7 +184,7 @@ public class HDFSSnapshotProcessor {
         }
     }
 
-public DFSReplicationState snapshotDone(@NonNull String hdfsPath, @NonNull SchemaEntity entity, long tnxId) throws SnapshotError {
+    public DFSFileReplicaState snapshotDone(@NonNull String hdfsPath, @NonNull SchemaEntity entity, long tnxId) throws SnapshotError {
         Preconditions.checkState(tnxSender != null);
         stateManager.replicationLock().lock();
         try {
@@ -179,7 +192,7 @@ public DFSReplicationState snapshotDone(@NonNull String hdfsPath, @NonNull Schem
             if (fileState == null) {
                 throw new SnapshotError(String.format("HDFS File State not found. [path=%s]", hdfsPath));
             }
-            DFSReplicationState rState = stateManager.get(fileState.getId());
+            DFSFileReplicaState rState = stateManager.get(fileState.getId());
             if (rState == null) {
                 throw new SnapshotError(String.format("HDFS File replication record not found. [path=%s]", hdfsPath));
             }
@@ -195,6 +208,7 @@ public DFSReplicationState snapshotDone(@NonNull String hdfsPath, @NonNull Schem
                     MessageObject.MessageMode.Backlog);
             tnxSender.send(message);
 
+            rState.clear();
             rState.setSnapshotReady(true);
             rState.setLastReplicationTime(System.currentTimeMillis());
             stateManager.update(rState);

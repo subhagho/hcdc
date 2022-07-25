@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
+import ai.sapper.hcdc.agents.namenode.model.DFSFileReplicaState;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeAgentState;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
 import ai.sapper.hcdc.common.model.DFSError;
@@ -545,7 +545,7 @@ public class ZkStateManager {
         }
     }
 
-    public DFSReplicationState get(long inodeId) throws StateManagerError {
+    public DFSFileReplicaState get(long inodeId) throws StateManagerError {
         checkState();
         try {
             CuratorFramework client = connection().client();
@@ -554,7 +554,7 @@ public class ZkStateManager {
                 byte[] data = client.getData().forPath(path);
                 if (data != null && data.length > 0) {
                     String json = new String(data, StandardCharsets.UTF_8);
-                    return JSONUtils.read(json, DFSReplicationState.class);
+                    return JSONUtils.read(json, DFSFileReplicaState.class);
                 }
             }
             return null;
@@ -563,20 +563,20 @@ public class ZkStateManager {
         }
     }
 
-    public DFSReplicationState create(long inodeId,
+    public DFSFileReplicaState create(long inodeId,
                                       @NonNull String hdfsPath,
                                       @NonNull SchemaEntity schemaEntity,
                                       boolean enable) throws StateManagerError {
         checkState();
         try {
             CuratorFramework client = connection().client();
-            DFSReplicationState state = get(inodeId);
+            DFSFileReplicaState state = get(inodeId);
             if (state == null) {
                 String path = PathUtils.formatZkPath(String.format("%s/%d", zkPathReplication, inodeId));
                 if (client.checkExists().forPath(path) == null) {
                     client.create().creatingParentContainersIfNeeded().forPath(path);
                 }
-                state = new DFSReplicationState();
+                state = new DFSFileReplicaState();
                 state.setInode(inodeId);
                 state.setHdfsPath(hdfsPath);
                 state.setEntity(schemaEntity);
@@ -587,7 +587,7 @@ public class ZkStateManager {
                 }
                 state.setUpdateTime(System.currentTimeMillis());
 
-                String json = JSONUtils.asString(state, DFSReplicationState.class);
+                String json = JSONUtils.asString(state, DFSFileReplicaState.class);
                 client.setData().forPath(path, json.getBytes(StandardCharsets.UTF_8));
             }
             return state;
@@ -596,18 +596,18 @@ public class ZkStateManager {
         }
     }
 
-    public DFSReplicationState update(@NonNull DFSReplicationState state) throws StateManagerError, StaleDataException {
+    public DFSFileReplicaState update(@NonNull DFSFileReplicaState state) throws StateManagerError, StaleDataException {
         checkState();
         try {
             CuratorFramework client = connection().client();
-            DFSReplicationState nstate = get(state.getInode());
+            DFSFileReplicaState nstate = get(state.getInode());
             if (nstate.getUpdateTime() > 0 && nstate.getUpdateTime() != state.getUpdateTime()) {
                 throw new StaleDataException(String.format("Replication state changed. [path=%s]", state.getHdfsPath()));
             }
             String path = PathUtils.formatZkPath(String.format("%s/%d", zkPathReplication, state.getInode()));
 
             state.setUpdateTime(System.currentTimeMillis());
-            String json = JSONUtils.asString(state, DFSReplicationState.class);
+            String json = JSONUtils.asString(state, DFSFileReplicaState.class);
             client.setData().forPath(path, json.getBytes(StandardCharsets.UTF_8));
 
             return state;
@@ -622,7 +622,7 @@ public class ZkStateManager {
         checkState();
         try {
             CuratorFramework client = connection().client();
-            DFSReplicationState state = get(inodeId);
+            DFSFileReplicaState state = get(inodeId);
             if (state != null) {
                 client.delete().deletingChildrenIfNeeded().forPath(state.getZkPath());
                 return true;

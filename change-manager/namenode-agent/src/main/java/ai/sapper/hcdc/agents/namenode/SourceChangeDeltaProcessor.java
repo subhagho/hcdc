@@ -3,9 +3,8 @@ package ai.sapper.hcdc.agents.namenode;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
-import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
+import ai.sapper.hcdc.agents.namenode.model.DFSFileReplicaState;
 import ai.sapper.hcdc.agents.namenode.model.DFSTransactionType;
-import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
 import ai.sapper.hcdc.common.model.DFSAddFile;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSCloseFile;
@@ -129,7 +128,7 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
             throw new InvalidMessageError(message.id(),
                     String.format("HDFS File Not found. [path=%s]", addFile.getFile().getPath()));
         }
-        DFSReplicationState rState = stateManager().get(fileState.getId());
+        DFSFileReplicaState rState = stateManager().get(fileState.getId());
         if (rState == null || !rState.isEnabled()) {
             throw new InvalidMessageError(message.id(),
                     String.format("HDFS File not registered for snapshot. [path=%s][inode=%d]",
@@ -151,7 +150,7 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
 
     private void sendBackLogMessage(MessageObject<String, DFSChangeDelta> message,
                                     DFSFileState fileState,
-                                    DFSReplicationState rState,
+                                    DFSFileReplicaState rState,
                                     long txId) throws Exception {
         DFSTransactionType.DFSCloseFileType tnx = buildBacklogTransactions(fileState, rState, txId);
         if (tnx != null) {
@@ -168,7 +167,7 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
     }
 
     private DFSTransactionType.DFSCloseFileType buildBacklogTransactions(DFSFileState fileState,
-                                                                         DFSReplicationState rState,
+                                                                         DFSFileReplicaState rState,
                                                                          long txId) throws Exception {
         DFSTransactionType.DFSFileType file = new DFSTransactionType.DFSFileType();
         file.path(fileState.getHdfsFilePath());
