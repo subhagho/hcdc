@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.core.io.impl.local;
 
+import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.io.FileSystem;
 import ai.sapper.hcdc.core.io.PathInfo;
 import ai.sapper.hcdc.core.io.Reader;
@@ -53,9 +54,24 @@ public class LocalFileSystem extends FileSystem {
     @Override
     public PathInfo get(@NonNull String path, String domain) throws IOException {
         if (root() != null) {
-            path = String.format("%s/%s/%s", root().path(), domain, path);
+            path = PathUtils.formatPath(String.format("%s/%s/%s", root().path(), domain, path));
         }
         return new LocalPathInfo(path);
+    }
+
+    /**
+     * @param path
+     * @param domain
+     * @param prefix
+     * @return
+     * @throws IOException
+     */
+    @Override
+    public PathInfo get(@NonNull String path, String domain, boolean prefix) throws IOException {
+        if (prefix) {
+            return get(path, domain);
+        }
+        return new LocalPathInfo(PathUtils.formatPath(String.format("%s/%s", domain, path)));
     }
 
     /**

@@ -24,6 +24,8 @@ public abstract class FileSystem {
 
     public abstract PathInfo get(@NonNull String path, String domain) throws IOException;
 
+    public abstract PathInfo get(@NonNull String path, String domain, boolean prefix) throws IOException;
+
     protected abstract PathInfo get(@NonNull String path) throws IOException;
 
     public abstract String mkdir(@NonNull PathInfo path, @NonNull String name) throws IOException;
@@ -72,14 +74,14 @@ public abstract class FileSystem {
     public FSFile create(@NonNull DFSFileState fileState,
                          @NonNull FileSystem fs,
                          @NonNull SchemaEntity entity) throws IOException {
-        return new FSFile(fileState, entity.getDomain(), fs);
+        return new FSFile(fileState, entity.getDomain(), fs, true);
     }
 
     public FSBlock create(@NonNull PathInfo dir,
                           @NonNull DFSBlockState blockState,
                           @NonNull FileSystem fs,
                           @NonNull SchemaEntity entity) throws IOException {
-        return new FSBlock(blockState, dir, fs, entity.getDomain());
+        return new FSBlock(blockState, dir, fs, entity.getDomain(), true);
     }
 
     public FSFile get(@NonNull DFSFileState fileState,

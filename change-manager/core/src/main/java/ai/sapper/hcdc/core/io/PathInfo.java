@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.core.io;
 
+import ai.sapper.hcdc.common.utils.PathUtils;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -16,7 +17,7 @@ public abstract class PathInfo {
     private long dataSize = -1;
 
     protected PathInfo(@NonNull String path) {
-        this.path = path;
+        this.path = PathUtils.formatPath(path);
     }
 
     public String parent() {

@@ -39,7 +39,7 @@ public class FSBlock implements Closeable {
         this.blockId = blockId;
         this.previousBlockId = previousBlockId;
         filename = blockFile(blockId, previousBlockId);
-        path = fs.get(String.format("%s/%s", directory.path(), filename), domain);
+        path = fs.get(String.format("%s/%s", directory.path(), filename), domain, false);
     }
 
     private String blockFile(long blockId, long previousBlockId) {
@@ -55,7 +55,7 @@ public class FSBlock implements Closeable {
         this.blockId = blockState.getBlockId();
         this.previousBlockId = blockState.getPrevBlockId();
         filename = blockFile(blockState.getBlockId(), blockState.getPrevBlockId());
-        path = fs.get(String.format("%s/%s", directory.path(), filename), domain);
+        path = fs.get(String.format("%s/%s", directory.path(), filename), domain, false);
         setup(blockState, false);
     }
 
@@ -69,7 +69,7 @@ public class FSBlock implements Closeable {
         this.blockId = blockState.getBlockId();
         this.previousBlockId = blockState.getPrevBlockId();
         filename = blockFile(blockState.getBlockId(), blockState.getPrevBlockId());
-        path = fs.get(String.format("%s/%s", directory.path(), filename), domain);
+        path = fs.get(String.format("%s/%s", directory.path(), filename), domain, false);
         setup(blockState, create);
     }
 
@@ -111,7 +111,7 @@ public class FSBlock implements Closeable {
 
     public synchronized void seek(int position) throws IOException {
         if (reader == null) {
-            reader = fs.reader(path);
+            reader = fs.reader(path).open();
         }
         reader.seek(position);
     }
@@ -119,7 +119,7 @@ public class FSBlock implements Closeable {
     public synchronized long read(byte[] data, int offset, int length) throws IOException {
         Preconditions.checkNotNull(data);
         if (reader == null) {
-            reader = fs.reader(path);
+            reader = fs.reader(path).open();
         }
         return reader.read(data, offset, length);
     }
@@ -131,7 +131,7 @@ public class FSBlock implements Closeable {
     public synchronized void write(byte[] data, int offset, int length) throws IOException {
         Preconditions.checkNotNull(data);
         if (writer == null) {
-            writer = fs.writer(path, true);
+            writer = fs.writer(path, true).open();
         }
         writer.write(data, offset, length);
     }
@@ -143,7 +143,7 @@ public class FSBlock implements Closeable {
     public synchronized void append(byte[] data, int offset, int length) throws IOException {
         Preconditions.checkNotNull(data);
         if (writer == null) {
-            writer = fs.writer(path, false);
+            writer = fs.writer(path, false).open();
         }
         writer.write(data, offset, length);
     }
@@ -154,14 +154,14 @@ public class FSBlock implements Closeable {
 
     public long truncate(int offset, int length) throws IOException {
         if (writer == null) {
-            writer = fs.writer(path, false);
+            writer = fs.writer(path, false).open();
         }
         return writer.truncate(offset, length);
     }
 
     public long truncate(int length) throws IOException {
         if (writer == null) {
-            writer = fs.writer(path, false);
+            writer = fs.writer(path, false).open();
         }
         return writer.truncate(length);
     }
