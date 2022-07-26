@@ -123,12 +123,16 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
 
     private void processBacklogMessage(MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
         DFSAddFile addFile = (DFSAddFile) ChangeDeltaSerDe.parse(message.value());
-        DFSFileState fileState = stateManager().get(addFile.getFile().getPath());
+        DFSFileState fileState = stateManager()
+                .fileStateHelper()
+                .get(addFile.getFile().getPath());
         if (fileState == null) {
             throw new InvalidMessageError(message.id(),
                     String.format("HDFS File Not found. [path=%s]", addFile.getFile().getPath()));
         }
-        DFSFileReplicaState rState = stateManager().get(fileState.getId());
+        DFSFileReplicaState rState = stateManager()
+                .replicaStateHelper()
+                .get(fileState.getId());
         if (rState == null || !rState.isEnabled()) {
             throw new InvalidMessageError(message.id(),
                     String.format("HDFS File not registered for snapshot. [path=%s][inode=%d]",
@@ -162,7 +166,9 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
                     message.value().getEntityName(),
                     MessageObject.MessageMode.Backlog);
             sender().send(mesg);
-            rState = stateManager().update(rState);
+            rState = stateManager()
+                    .replicaStateHelper()
+                    .update(rState);
         }
     }
 

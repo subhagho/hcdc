@@ -27,9 +27,11 @@ class NameNodeReplicatorTest {
 
             ZkStateManager stateManager = NameNodeEnv.stateManager();
             assertNotNull(stateManager);
-            DFSFileState fileState = stateManager.get("/test/hcdc/loader/parquet/tags/2022/06/13/11/tags_54.parquet");
+            DFSFileState fileState = stateManager
+                    .fileStateHelper()
+                    .get("/test/hcdc/loader/parquet/tags/2022/06/13/11/tags_54.parquet");
             assertNotNull(fileState);
-            
+
             NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose();
             assertEquals(NameNodeEnv.ENameNEnvState.Disposed, state);
         } catch (Throwable t) {

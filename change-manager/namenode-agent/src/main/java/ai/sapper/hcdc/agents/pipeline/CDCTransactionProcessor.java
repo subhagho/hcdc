@@ -41,7 +41,9 @@ public class CDCTransactionProcessor extends TransactionProcessor {
      */
     @Override
     public void processAddFileTxMessage(DFSAddFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
-        DFSFileState fileState = stateManager().get(data.getFile().getPath());
+        DFSFileState fileState = stateManager()
+                .fileStateHelper()
+                .get(data.getFile().getPath());
         if (fileState != null) {
             if (fileState.getLastTnxId() >= txId) {
                 LOG.warn(String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
@@ -53,24 +55,28 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                         String.format("Valid File already exists. [path=%s]", fileState.getHdfsFilePath()));
             }
         }
-        fileState = stateManager().create(data.getFile().getPath(),
-                data.getFile().getInodeId(),
-                data.getModifiedTime(),
-                data.getBlockSize(),
-                EFileState.New,
-                data.getTransaction().getTransactionId());
+        fileState = stateManager()
+                .fileStateHelper()
+                .create(data.getFile().getPath(),
+                        data.getFile().getInodeId(),
+                        data.getModifiedTime(),
+                        data.getBlockSize(),
+                        EFileState.New,
+                        data.getTransaction().getTransactionId());
         List<DFSBlock> blocks = data.getBlocksList();
         if (!blocks.isEmpty()) {
             long prevBlockId = -1;
             for (DFSBlock block : blocks) {
-                fileState = stateManager().addOrUpdateBlock(fileState.getHdfsFilePath(),
-                        block.getBlockId(),
-                        prevBlockId,
-                        data.getModifiedTime(),
-                        block.getSize(),
-                        block.getGenerationStamp(),
-                        EBlockState.New,
-                        data.getTransaction().getTransactionId());
+                fileState = stateManager()
+                        .fileStateHelper()
+                        .addOrUpdateBlock(fileState.getHdfsFilePath(),
+                                block.getBlockId(),
+                                prevBlockId,
+                                data.getModifiedTime(),
+                                block.getSize(),
+                                block.getGenerationStamp(),
+                                EBlockState.New,
+                                data.getTransaction().getTransactionId());
                 prevBlockId = block.getBlockId();
             }
         }
@@ -79,7 +85,9 @@ public class CDCTransactionProcessor extends TransactionProcessor {
     }
 
     private void addFile(DFSCloseFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
-        DFSFileState fileState = stateManager().get(data.getFile().getPath());
+        DFSFileState fileState = stateManager()
+                .fileStateHelper()
+                .get(data.getFile().getPath());
         if (fileState != null) {
             if (fileState.getLastTnxId() >= txId) {
                 LOG.warn(String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
@@ -91,24 +99,28 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                         String.format("Valid File already exists. [path=%s]", fileState.getHdfsFilePath()));
             }
         }
-        fileState = stateManager().create(data.getFile().getPath(),
-                data.getFile().getInodeId(),
-                data.getModifiedTime(),
-                data.getBlockSize(),
-                EFileState.New,
-                data.getTransaction().getTransactionId());
+        fileState = stateManager()
+                .fileStateHelper()
+                .create(data.getFile().getPath(),
+                        data.getFile().getInodeId(),
+                        data.getModifiedTime(),
+                        data.getBlockSize(),
+                        EFileState.New,
+                        data.getTransaction().getTransactionId());
         List<DFSBlock> blocks = data.getBlocksList();
         if (!blocks.isEmpty()) {
             long prevBlockId = -1;
             for (DFSBlock block : blocks) {
-                fileState = stateManager().addOrUpdateBlock(fileState.getHdfsFilePath(),
-                        block.getBlockId(),
-                        prevBlockId,
-                        data.getModifiedTime(),
-                        block.getSize(),
-                        block.getGenerationStamp(),
-                        EBlockState.New,
-                        data.getTransaction().getTransactionId());
+                fileState = stateManager()
+                        .fileStateHelper()
+                        .addOrUpdateBlock(fileState.getHdfsFilePath(),
+                                block.getBlockId(),
+                                prevBlockId,
+                                data.getModifiedTime(),
+                                block.getSize(),
+                                block.getGenerationStamp(),
+                                EBlockState.New,
+                                data.getTransaction().getTransactionId());
                 prevBlockId = block.getBlockId();
             }
         }
@@ -122,7 +134,9 @@ public class CDCTransactionProcessor extends TransactionProcessor {
      */
     @Override
     public void processAppendFileTxMessage(DFSAppendFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
-        DFSFileState fileState = stateManager().get(data.getFile().getPath());
+        DFSFileState fileState = stateManager()
+                .fileStateHelper()
+                .get(data.getFile().getPath());
         if (fileState == null || fileState.checkDeleted()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
@@ -134,7 +148,9 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                     message.id(), message.mode().name()));
             return;
         }
-        fileState = stateManager().updateState(fileState.getHdfsFilePath(), EFileState.Updating);
+        fileState = stateManager()
+                .fileStateHelper()
+                .updateState(fileState.getHdfsFilePath(), EFileState.Updating);
         sender.send(message);
     }
 
@@ -146,7 +162,9 @@ public class CDCTransactionProcessor extends TransactionProcessor {
      */
     @Override
     public void processDeleteFileTxMessage(DFSDeleteFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
-        DFSFileState fileState = stateManager().get(data.getFile().getPath());
+        DFSFileState fileState = stateManager()
+                .fileStateHelper()
+                .get(data.getFile().getPath());
         if (fileState == null || fileState.checkDeleted()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
@@ -158,7 +176,9 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                     message.id(), message.mode().name()));
             return;
         }
-        fileState = stateManager().markDeleted(fileState.getHdfsFilePath());
+        fileState = stateManager()
+                .fileStateHelper()
+                .markDeleted(fileState.getHdfsFilePath());
         sender.send(message);
     }
 
@@ -170,7 +190,9 @@ public class CDCTransactionProcessor extends TransactionProcessor {
      */
     @Override
     public void processAddBlockTxMessage(DFSAddBlock data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
-        DFSFileState fileState = stateManager().get(data.getFile().getPath());
+        DFSFileState fileState = stateManager()
+                .fileStateHelper()
+                .get(data.getFile().getPath());
         if (fileState == null || !fileState.canProcess()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
@@ -186,14 +208,16 @@ public class CDCTransactionProcessor extends TransactionProcessor {
         if (data.hasPenultimateBlock()) {
             lastBlockId = data.getPenultimateBlock().getBlockId();
         }
-        fileState = stateManager().addOrUpdateBlock(fileState.getHdfsFilePath(),
-                data.getLastBlock().getBlockId(),
-                lastBlockId,
-                data.getTransaction().getTimestamp(),
-                data.getLastBlock().getSize(),
-                data.getLastBlock().getGenerationStamp(),
-                EBlockState.New,
-                data.getTransaction().getTransactionId());
+        fileState = stateManager()
+                .fileStateHelper()
+                .addOrUpdateBlock(fileState.getHdfsFilePath(),
+                        data.getLastBlock().getBlockId(),
+                        lastBlockId,
+                        data.getTransaction().getTimestamp(),
+                        data.getLastBlock().getSize(),
+                        data.getLastBlock().getGenerationStamp(),
+                        EBlockState.New,
+                        data.getTransaction().getTransactionId());
         sender.send(message);
     }
 
@@ -205,7 +229,9 @@ public class CDCTransactionProcessor extends TransactionProcessor {
      */
     @Override
     public void processUpdateBlocksTxMessage(DFSUpdateBlocks data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
-        DFSFileState fileState = stateManager().get(data.getFile().getPath());
+        DFSFileState fileState = stateManager()
+                .fileStateHelper()
+                .get(data.getFile().getPath());
         if (fileState == null || !fileState.canProcess()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
@@ -239,7 +265,11 @@ public class CDCTransactionProcessor extends TransactionProcessor {
             }
             if (bs.blockIsFull()) continue;
 
-            stateManager().updateState(fileState.getHdfsFilePath(), bs.getBlockId(), EBlockState.Updating);
+            stateManager()
+                    .fileStateHelper()
+                    .updateState(fileState.getHdfsFilePath(),
+                            bs.getBlockId(),
+                            EBlockState.Updating);
         }
         sender.send(message);
     }
@@ -252,7 +282,9 @@ public class CDCTransactionProcessor extends TransactionProcessor {
      */
     @Override
     public void processTruncateBlockTxMessage(DFSTruncateBlock data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
-        DFSFileState fileState = stateManager().get(data.getFile().getPath());
+        DFSFileState fileState = stateManager()
+                .fileStateHelper()
+                .get(data.getFile().getPath());
         if (fileState == null || !fileState.canProcess()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
@@ -277,7 +309,9 @@ public class CDCTransactionProcessor extends TransactionProcessor {
         if (message.mode() == MessageObject.MessageMode.Snapshot) {
             addFile(data, message, txId);
         }
-        DFSFileState fileState = stateManager().get(data.getFile().getPath());
+        DFSFileState fileState = stateManager()
+                .fileStateHelper()
+                .get(data.getFile().getPath());
         if (fileState == null || !fileState.canProcess()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
@@ -299,14 +333,16 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                             String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
                                     fileState.getHdfsFilePath(), block.getBlockId()));
                 } else if (bs.canUpdate()) {
-                    fileState = stateManager().addOrUpdateBlock(fileState.getHdfsFilePath(),
-                            bs.getBlockId(),
-                            bs.getPrevBlockId(),
-                            data.getModifiedTime(),
-                            block.getSize(),
-                            block.getGenerationStamp(),
-                            EBlockState.Finalized,
-                            txId);
+                    fileState = stateManager()
+                            .fileStateHelper()
+                            .addOrUpdateBlock(fileState.getHdfsFilePath(),
+                                    bs.getBlockId(),
+                                    bs.getPrevBlockId(),
+                                    data.getModifiedTime(),
+                                    block.getSize(),
+                                    block.getGenerationStamp(),
+                                    EBlockState.Finalized,
+                                    txId);
                 } else if (bs.getDataSize() != block.getSize()) {
                     throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getHdfsFilePath(),
@@ -321,7 +357,9 @@ public class CDCTransactionProcessor extends TransactionProcessor {
             }
         }
 
-        fileState = stateManager().updateState(fileState.getHdfsFilePath(), EFileState.Finalized);
+        fileState = stateManager()
+                .fileStateHelper()
+                .updateState(fileState.getHdfsFilePath(), EFileState.Finalized);
         sender.send(message);
     }
 
@@ -367,9 +405,13 @@ public class CDCTransactionProcessor extends TransactionProcessor {
     @Override
     public void processErrorMessage(MessageObject<String, DFSChangeDelta> message, Object data, InvalidTransactionError te) throws Exception {
         if (!Strings.isNullOrEmpty(te.getHdfsPath())) {
-            DFSFileState fileState = stateManager().get(te.getHdfsPath());
+            DFSFileState fileState = stateManager()
+                    .fileStateHelper()
+                    .get(te.getHdfsPath());
             if (fileState != null) {
-                stateManager().updateState(fileState.getHdfsFilePath(), EFileState.Error);
+                stateManager()
+                        .fileStateHelper()
+                        .updateState(fileState.getHdfsFilePath(), EFileState.Error);
             }
         }
         DFSTransaction tnx = extractTransaction(data);

@@ -138,14 +138,20 @@ public class HDFSSnapshotProcessor {
         stateManager.replicationLock().lock();
         try {
             DefaultLogger.LOG.info(String.format("Generating snapshot for file. [path=%s]", hdfsPath));
-            DFSFileState fileState = stateManager.get(hdfsPath);
+            DFSFileState fileState = stateManager
+                    .fileStateHelper()
+                    .get(hdfsPath);
             if (fileState == null) {
                 DefaultLogger.LOG.warn(String.format("HDFS File State not found. [path=%s]", hdfsPath));
                 return;
             }
-            DFSFileReplicaState rState = stateManager.get(fileState.getId());
+            DFSFileReplicaState rState = stateManager
+                    .replicaStateHelper()
+                    .get(fileState.getId());
             if (rState == null) {
-                rState = stateManager.create(fileState.getId(), fileState.getHdfsFilePath(), entity, true);
+                rState = stateManager
+                        .replicaStateHelper()
+                        .create(fileState.getId(), fileState.getHdfsFilePath(), entity, true);
             }
             if (rState.getSnapshotTxId() > 0) {
                 return;
@@ -172,7 +178,9 @@ public class HDFSSnapshotProcessor {
 
             rState.setSnapshotTxId(fileState.getLastTnxId());
             rState.setSnapshotTime(System.currentTimeMillis());
-            stateManager.update(rState);
+            stateManager
+                    .replicaStateHelper()
+                    .update(rState);
 
             DefaultLogger.LOG.info(String.format("Snapshot generated for path. [path=%s][inode=%d]", fileState.getHdfsFilePath(), fileState.getId()));
         } catch (SnapshotError se) {
@@ -188,11 +196,15 @@ public class HDFSSnapshotProcessor {
         Preconditions.checkState(tnxSender != null);
         stateManager.replicationLock().lock();
         try {
-            DFSFileState fileState = stateManager.get(hdfsPath);
+            DFSFileState fileState = stateManager
+                    .fileStateHelper()
+                    .get(hdfsPath);
             if (fileState == null) {
                 throw new SnapshotError(String.format("HDFS File State not found. [path=%s]", hdfsPath));
             }
-            DFSFileReplicaState rState = stateManager.get(fileState.getId());
+            DFSFileReplicaState rState = stateManager
+                    .replicaStateHelper()
+                    .get(fileState.getId());
             if (rState == null) {
                 throw new SnapshotError(String.format("HDFS File replication record not found. [path=%s]", hdfsPath));
             }
@@ -211,7 +223,9 @@ public class HDFSSnapshotProcessor {
             rState.clear();
             rState.setSnapshotReady(true);
             rState.setLastReplicationTime(System.currentTimeMillis());
-            stateManager.update(rState);
+            stateManager
+                    .replicaStateHelper()
+                    .update(rState);
 
             return rState;
         } catch (SnapshotError se) {
