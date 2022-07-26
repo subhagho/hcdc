@@ -7,26 +7,50 @@ import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.ListObjectsRequest;
+import software.amazon.awssdk.services.s3.model.ListObjectsResponse;
+import software.amazon.awssdk.services.s3.model.S3Object;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Getter
 @Accessors(fluent = true)
 public class S3PathInfo extends LocalPathInfo {
     public static final String CONFIG_KEY_BUCKET = "bucket";
 
-    private final String bucket;
+    private final S3Client client;
 
-    protected S3PathInfo(@NonNull String domain, @NonNull String bucket, @NonNull String path) {
+    private final String bucket;
+    private final File temp;
+
+    protected S3PathInfo(@NonNull S3Client client,
+                         @NonNull String domain,
+                         @NonNull String bucket,
+                         @NonNull String path) {
         super(path, domain);
+        this.client = client;
         this.bucket = bucket;
+        String tempf = String.format("%s/%s.tmp",
+                S3FileSystem.TEMP_PATH,
+                UUID.randomUUID().toString());
+        temp = new File(tempf);
     }
 
-    protected S3PathInfo(@NonNull Map<String, String> config) {
+    protected S3PathInfo(@NonNull S3Client client, @NonNull Map<String, String> config) {
         super(config);
+        this.client = client;
         bucket = config.get(CONFIG_KEY_BUCKET);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(bucket));
+        String tempf = String.format("%s/%s.tmp",
+                S3FileSystem.TEMP_PATH,
+                UUID.randomUUID().toString());
+        temp = new File(tempf);
     }
 
     /**
@@ -43,7 +67,7 @@ public class S3PathInfo extends LocalPathInfo {
      */
     @Override
     public boolean isDirectory() throws IOException {
-        return super.isDirectory();
+        return true;
     }
 
     /**
@@ -52,7 +76,7 @@ public class S3PathInfo extends LocalPathInfo {
      */
     @Override
     public boolean isFile() throws IOException {
-        return super.isFile();
+        return exists();
     }
 
     /**
@@ -61,7 +85,21 @@ public class S3PathInfo extends LocalPathInfo {
      */
     @Override
     public boolean exists() throws IOException {
-        return super.exists();
+        try {
+            ListObjectsRequest request = ListObjectsRequest
+                    .builder()
+                    .bucket(bucket())
+                    .prefix(path())
+                    .build();
+
+            ListObjectsResponse res = client.listObjects(request);
+            List<S3Object> objects = res.contents();
+            if (objects != null && !objects.isEmpty())
+                return true;
+        } catch (Exception ex) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -70,7 +108,7 @@ public class S3PathInfo extends LocalPathInfo {
      */
     @Override
     public long size() throws IOException {
-        return super.size();
+        return 0L;
     }
 
     /**

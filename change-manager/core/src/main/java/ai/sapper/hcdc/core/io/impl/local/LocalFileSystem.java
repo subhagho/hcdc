@@ -7,7 +7,10 @@ import ai.sapper.hcdc.core.io.Reader;
 import ai.sapper.hcdc.core.io.Writer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
@@ -23,6 +26,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+@Getter
+@Setter
+@Accessors(fluent = true)
 public class LocalFileSystem extends FileSystem {
     private FileSystemConfig fsConfig = null;
 
@@ -37,8 +43,8 @@ public class LocalFileSystem extends FileSystem {
         try {
             if (fsConfig == null) {
                 fsConfig = new LocalFileSystemConfig(config, pathPrefix);
+                fsConfig.read();
             }
-            fsConfig.read();
             LocalPathInfo rp = new LocalPathInfo(fsConfig.rootPath(), "");
             setRootPath(rp);
 

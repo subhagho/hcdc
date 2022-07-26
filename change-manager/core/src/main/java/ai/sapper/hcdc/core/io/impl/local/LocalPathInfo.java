@@ -27,6 +27,11 @@ public class LocalPathInfo extends PathInfo {
         file = new File(path());
     }
 
+    protected LocalPathInfo(@NonNull File file, @NonNull String domain) {
+        super(file.getAbsolutePath(), domain);
+        this.file = file;
+    }
+
     /**
      * @return
      */

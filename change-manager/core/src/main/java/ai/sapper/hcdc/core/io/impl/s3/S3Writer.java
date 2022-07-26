@@ -3,13 +3,25 @@ package ai.sapper.hcdc.core.io.impl.s3;
 import ai.sapper.hcdc.core.io.PathInfo;
 import ai.sapper.hcdc.core.io.Writer;
 import ai.sapper.hcdc.core.io.impl.local.LocalWriter;
+import com.google.common.base.Preconditions;
 import lombok.NonNull;
+import software.amazon.awssdk.core.ResponseBytes;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.sync.ResponseTransformer;
+import software.amazon.awssdk.core.waiters.WaiterResponse;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.waiters.S3Waiter;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class S3Writer extends LocalWriter {
-    protected S3Writer(@NonNull PathInfo path) {
+    private final S3Client client;
+
+    protected S3Writer(@NonNull PathInfo path, @NonNull S3Client client) {
         super(path);
+        this.client = client;
     }
 
     /**
@@ -18,7 +30,24 @@ public class S3Writer extends LocalWriter {
      */
     @Override
     public Writer open(boolean overwrite) throws IOException {
-        return super.open(overwrite);
+        S3PathInfo s3path = S3FileSystem.checkPath(path());
+        if (!overwrite && s3path.exists()) {
+            download(s3path);
+            FileOutputStream fos = new FileOutputStream(s3path.file(), true);
+            outputStream(fos);
+        } else {
+            FileOutputStream fos = new FileOutputStream(s3path.file());
+            outputStream(fos);
+        }
+        return this;
+    }
+
+    private void download(S3PathInfo path) throws IOException {
+        GetObjectRequest request = GetObjectRequest.builder()
+                .bucket(path.bucket())
+                .key(path.path())
+                .build();
+        client.getObject(request, ResponseTransformer.toFile(path.file()));
     }
 
     /**
@@ -68,5 +97,20 @@ public class S3Writer extends LocalWriter {
     @Override
     public void close() throws IOException {
         super.close();
+        S3PathInfo s3path = S3FileSystem.checkPath(path());
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(s3path.bucket())
+                .key(s3path.path())
+                .build();
+        PutObjectResponse response = client.putObject(request, RequestBody.fromFile(s3path.file()));
+        S3Waiter waiter = client.waiter();
+        HeadObjectRequest requestWait = HeadObjectRequest.builder()
+                .bucket(s3path.bucket())
+                .key(s3path.path())
+                .build();
+
+        WaiterResponse<HeadObjectResponse> waiterResponse = waiter.waitUntilObjectExists(requestWait);
+
+        waiterResponse.matched().response().ifPresent(System.out::println);
     }
 }

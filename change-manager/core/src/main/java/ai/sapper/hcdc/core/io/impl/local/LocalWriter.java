@@ -3,12 +3,18 @@ package ai.sapper.hcdc.core.io.impl.local;
 import ai.sapper.hcdc.core.io.PathInfo;
 import ai.sapper.hcdc.core.io.Writer;
 import com.google.common.base.Preconditions;
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 
+@Getter
+@Setter
+@Accessors(fluent = true)
 public class LocalWriter extends Writer {
     private FileOutputStream outputStream;
 
@@ -25,12 +31,6 @@ public class LocalWriter extends Writer {
     public Writer open(boolean overwrite) throws IOException {
         LocalPathInfo pi = (LocalPathInfo) path();
         if (!pi.exists() || overwrite) {
-            /*
-            if (pi.exists() && !pi.file().delete()) {
-                throw new IOException(String.format("Failed to delete existing file. [path=%s]",
-                        pi.file().getAbsolutePath()));
-            }
-             */
             outputStream = new FileOutputStream(pi.file());
         } else if (pi.exists()) {
             outputStream = new FileOutputStream(pi.file(), true);
