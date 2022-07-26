@@ -588,7 +588,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
             stateManager()
                     .replicaStateHelper()
                     .update(rState);
-            DFSCloseFile addFile = HDFSSnapshotProcessor.generateSnapshot(nfs, true);
+            DFSCloseFile addFile = HDFSSnapshotProcessor.generateSnapshot(nfs, true, txId);
             MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
                     addFile,
                     DFSCloseFile.class,

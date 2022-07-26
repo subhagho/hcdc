@@ -12,6 +12,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.Strings;
 import org.apache.parquet.avro.AvroParquetReader;
+import org.apache.parquet.avro.AvroReadSupport;
 import org.apache.parquet.avro.AvroSchemaConverter;
 import org.apache.parquet.hadoop.ParquetFileReader;
 import org.apache.parquet.hadoop.ParquetReader;
@@ -19,8 +20,6 @@ import org.apache.parquet.hadoop.util.HadoopInputFile;
 import org.apache.parquet.schema.MessageType;
 
 import java.io.File;
-import java.io.FileDescriptor;
-import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class ParquetConverter implements FormatConverter {
@@ -44,11 +43,13 @@ public class ParquetConverter implements FormatConverter {
      */
     @Override
     public void convert(@NonNull File source, @NonNull File output) throws IOException {
-        ParquetReader<GenericRecord> reader = AvroParquetReader.genericRecordReader(new Path(source.toURI()));
+        Configuration conf = new Configuration();
+        conf.set(AvroReadSupport.READ_INT96_AS_FIXED, "true");
+        ParquetReader<GenericRecord> reader = new AvroParquetReader(conf, new Path(source.toURI()));
         try {
             Schema schema = getSchema(source);
             final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema);
-            try (DataFileWriter<GenericRecord> fos = new DataFileWriter(writer)) {
+            try (DataFileWriter<GenericRecord> fos = new DataFileWriter<>(writer)) {
                 fos.create(schema, output);
                 while (true) {
                     GenericRecord record = reader.read();
@@ -63,6 +64,7 @@ public class ParquetConverter implements FormatConverter {
 
     private Schema getSchema(File file) throws Exception {
         Configuration conf = new Configuration();
+        conf.set(AvroReadSupport.READ_INT96_AS_FIXED, "true");
         try (ParquetFileReader reader =
                      ParquetFileReader.open(HadoopInputFile.fromPath(new Path(file.toURI()), conf))) {
             MessageType pschema = reader.getFooter().getFileMetaData().getSchema();
