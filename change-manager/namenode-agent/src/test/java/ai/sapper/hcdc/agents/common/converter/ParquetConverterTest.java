@@ -9,7 +9,7 @@ import java.io.File;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ParquetConverterTest {
-    private static final String FILE = "src/test/resources/data/userdata2.parquet";
+    private static final String FILE = "src/test/resources/data/links_1.parquet";
     private static final String OUTDIR = "C:\\Work\\temp\\output";
 
     @Test
