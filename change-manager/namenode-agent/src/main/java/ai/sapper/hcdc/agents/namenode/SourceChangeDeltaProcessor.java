@@ -13,7 +13,7 @@ import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.hcdc.core.messaging.InvalidMessageError;
 import ai.sapper.hcdc.core.messaging.MessageObject;
-import ai.sapper.hcdc.core.model.BlockTnxDelta;
+import ai.sapper.hcdc.core.model.BlockTransactionDelta;
 import ai.sapper.hcdc.core.model.DFSBlockState;
 import ai.sapper.hcdc.core.model.DFSFileState;
 import com.google.common.base.Preconditions;
@@ -189,7 +189,7 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
 
         if (fileState.hasBlocks()) {
             for (DFSBlockState bs : fileState.getBlocks()) {
-                BlockTnxDelta delta = bs.compressedChangeSet(txId);
+                BlockTransactionDelta delta = bs.compressedChangeSet(txId);
                 if (delta != null) {
                     DFSTransactionType.DFSBlockType bd = new DFSTransactionType.DFSBlockType();
                     bd.blockId(bs.getBlockId());

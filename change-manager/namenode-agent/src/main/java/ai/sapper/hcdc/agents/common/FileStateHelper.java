@@ -181,22 +181,24 @@ public class FileStateHelper {
                 } else {
                     prevDataSize = bs.getDataSize();
                 }
-                bs.setUpdatedTime(updatedTime);
-                bs.setLastTnxId(txId);
-                bs.setDataSize(dataSize);
-                bs.setGenerationStamp(generationStamp);
-                bs.setState(state);
-                BlockTnxDelta bd = new BlockTnxDelta();
-                bd.setTnxId(txId);
-                long soff = (prevDataSize > 0 ? prevDataSize - 1 : 0);
-                long eoff = (dataSize > 0 ? dataSize - 1 : 0);
-                bd.setStartOffset(soff);
-                bd.setEndOffset(eoff);
-                bd.setTimestamp(updatedTime);
-                bs.add(bd);
+                if (!bs.hasTransaction(txId)) {
+                    bs.setUpdatedTime(updatedTime);
+                    bs.setLastTnxId(txId);
+                    bs.setDataSize(dataSize);
+                    bs.setGenerationStamp(generationStamp);
+                    bs.setState(state);
+                    BlockTransactionDelta bd = new BlockTransactionDelta();
+                    bd.setTnxId(txId);
+                    long soff = (prevDataSize > 0 ? prevDataSize : 0);
+                    long eoff = (dataSize > 0 ? dataSize - 1 : 0);
+                    bd.setStartOffset(soff);
+                    bd.setEndOffset(eoff);
+                    bd.setTimestamp(updatedTime);
+                    bs.add(bd);
 
-                long ds = fs.getDataSize() + (dataSize - prevDataSize);
-                fs.setDataSize(ds);
+                    long ds = fs.getDataSize() + (dataSize - prevDataSize);
+                    fs.setDataSize(ds);
+                }
 
                 return update(fs);
             } catch (InvalidTransactionError te) {
@@ -241,9 +243,9 @@ public class FileStateHelper {
             if (fileState.hasBlocks()) {
                 for (DFSBlockState blockState : fileState.getBlocks()) {
                     if (blockState.hasTransactions()) {
-                        List<BlockTnxDelta> array = new ArrayList<>();
+                        List<BlockTransactionDelta> array = new ArrayList<>();
                         long ts = System.currentTimeMillis() - age;
-                        for (BlockTnxDelta tnx : blockState.getTransactions()) {
+                        for (BlockTransactionDelta tnx : blockState.getTransactions()) {
                             if (tnx.getTimestamp() > ts) {
                                 array.add(tnx);
                             }

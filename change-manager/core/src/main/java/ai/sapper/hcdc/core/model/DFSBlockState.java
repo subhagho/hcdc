@@ -23,28 +23,37 @@ public class DFSBlockState {
 
     private EBlockState state = EBlockState.Unknown;
 
-    private List<BlockTnxDelta> transactions;
+    private List<BlockTransactionDelta> transactions;
 
-    public DFSBlockState add(@NonNull BlockTnxDelta transaction) {
+    public DFSBlockState add(@NonNull BlockTransactionDelta transaction) {
         if (transactions == null)
             transactions = new ArrayList<>();
         transactions.add(transaction);
         return this;
     }
 
-    public BlockTnxDelta delta(long tnxId) {
+    public boolean hasTransaction(long txId) {
+        if (transactions != null) {
+            for (BlockTransactionDelta delta : transactions) {
+                if (delta.getTnxId() == txId) return true;
+            }
+        }
+        return false;
+    }
+
+    public BlockTransactionDelta delta(long tnxId) {
         if (tnxId <= lastTnxId && transactions != null) {
-            for (BlockTnxDelta delta : transactions) {
+            for (BlockTransactionDelta delta : transactions) {
                 if (delta.getTnxId() == tnxId) return delta;
             }
         }
         return null;
     }
 
-    public List<BlockTnxDelta> changeSet(long tnxId) {
+    public List<BlockTransactionDelta> changeSet(long tnxId) {
         if (tnxId <= lastTnxId && transactions != null) {
-            List<BlockTnxDelta> set = new ArrayList<>();
-            for (BlockTnxDelta delta : transactions) {
+            List<BlockTransactionDelta> set = new ArrayList<>();
+            for (BlockTransactionDelta delta : transactions) {
                 if (delta.getTnxId() >= tnxId) {
                     set.add(delta);
                 }
@@ -54,14 +63,14 @@ public class DFSBlockState {
         return null;
     }
 
-    public BlockTnxDelta compressedChangeSet(long tnxId) {
-        List<BlockTnxDelta> deltas = changeSet(tnxId);
+    public BlockTransactionDelta compressedChangeSet(long tnxId) {
+        List<BlockTransactionDelta> deltas = changeSet(tnxId);
         if (deltas != null && !deltas.isEmpty()) {
-            BlockTnxDelta delta = new BlockTnxDelta();
+            BlockTransactionDelta delta = new BlockTransactionDelta();
             delta.setTnxId(lastTnxId);
             delta.setTimestamp(updatedTime);
             boolean truncate = false;
-            for (BlockTnxDelta d : deltas) {
+            for (BlockTransactionDelta d : deltas) {
                 if (d.isDeleted()) {
                     delta.setDeleted(true);
                     break;

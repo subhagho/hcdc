@@ -475,7 +475,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 DFSBlock.Builder bb = block.toBuilder();
                 DFSBlockState bs = fileState.get(block.getBlockId());
 
-                BlockTnxDelta bd = bs.delta(txId);
+                BlockTransactionDelta bd = bs.delta(txId);
                 if (bd == null) {
                     throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getHdfsFilePath(),

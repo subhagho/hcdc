@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class BlockTnxDelta {
+public class BlockTransactionDelta {
     private long startOffset = 0;
     private long endOffset = 0;
     private long tnxId;
