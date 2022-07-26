@@ -10,15 +10,21 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 
 @Getter
 @Accessors(fluent = true)
 public class LocalPathInfo extends PathInfo {
     private final File file;
 
-    protected LocalPathInfo(@NonNull String path) {
-        super(path);
+    protected LocalPathInfo(@NonNull String path, @NonNull String domain) {
+        super(path, domain);
         file = new File(path);
+    }
+
+    public LocalPathInfo(@NonNull Map<String, String> config) {
+        super(config);
+        file = new File(path());
     }
 
     /**
@@ -26,7 +32,8 @@ public class LocalPathInfo extends PathInfo {
      */
     @Override
     public PathInfo parentPathInfo() {
-        return new LocalPathInfo(file.getParentFile().getAbsolutePath());
+        return new LocalPathInfo(file.getParentFile().getAbsolutePath(),
+                domain());
     }
 
     /**

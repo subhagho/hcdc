@@ -4,6 +4,8 @@ import ai.sapper.hcdc.core.model.EFileState;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Map;
+
 @Getter
 @Setter
 public class DFSBlockReplicaState {
@@ -11,7 +13,7 @@ public class DFSBlockReplicaState {
     private long prevBlockId = -1;
     private long updateTime = 0;
     private EFileState state = EFileState.Unknown;
-    private String storagePath;
+    private Map<String, String> storagePath;
     private long startOffset;
     private long dataSize;
 

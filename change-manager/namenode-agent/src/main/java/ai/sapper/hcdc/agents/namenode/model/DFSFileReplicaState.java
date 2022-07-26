@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -24,7 +25,7 @@ public class DFSFileReplicaState {
     private long lastReplicationTime;
     private long updateTime = 0;
     private EFileState state = EFileState.Unknown;
-    private String storagePath;
+    private Map<String, String> storagePath;
 
     private List<DFSBlockReplicaState> blocks = new ArrayList<>();
 

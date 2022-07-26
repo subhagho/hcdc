@@ -12,6 +12,7 @@ import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public class LocalFileSystem extends FileSystem {
     private FileSystemConfig fsConfig = null;
@@ -37,7 +39,7 @@ public class LocalFileSystem extends FileSystem {
                 fsConfig = new LocalFileSystemConfig(config, pathPrefix);
             }
             fsConfig.read();
-            LocalPathInfo rp = new LocalPathInfo(fsConfig.rootPath());
+            LocalPathInfo rp = new LocalPathInfo(fsConfig.rootPath(), "");
             setRootPath(rp);
 
             return this;
@@ -56,7 +58,7 @@ public class LocalFileSystem extends FileSystem {
         if (root() != null) {
             path = PathUtils.formatPath(String.format("%s/%s/%s", root().path(), domain, path));
         }
-        return new LocalPathInfo(path);
+        return new LocalPathInfo(path, domain);
     }
 
     /**
@@ -71,17 +73,16 @@ public class LocalFileSystem extends FileSystem {
         if (prefix) {
             return get(path, domain);
         }
-        return new LocalPathInfo(path);
+        return new LocalPathInfo(path, domain);
     }
 
     /**
-     * @param path
+     * @param config
      * @return
-     * @throws IOException
      */
     @Override
-    protected PathInfo get(@NonNull String path) throws IOException {
-        return new LocalPathInfo(path);
+    public PathInfo get(@NonNull Map<String, String> config) {
+        return new LocalPathInfo(config);
     }
 
 
@@ -93,7 +94,7 @@ public class LocalFileSystem extends FileSystem {
      */
     @Override
     public String mkdir(@NonNull PathInfo path, @NonNull String name) throws IOException {
-        LocalPathInfo di = new LocalPathInfo(String.format("%s/%s", path.path(), name));
+        LocalPathInfo di = new LocalPathInfo(String.format("%s/%s", path.path(), name), path.domain());
         if (!di.exists()) {
             if (!di.file().mkdir()) {
                 throw new IOException(String.format("Failed to create directory. [path=%s]", di.file().getAbsolutePath()));
@@ -109,13 +110,27 @@ public class LocalFileSystem extends FileSystem {
      */
     @Override
     public String mkdirs(@NonNull PathInfo path) throws IOException {
-        LocalPathInfo di = new LocalPathInfo(path.path());
+        LocalPathInfo di = new LocalPathInfo(path.path(), path.domain());
         if (!di.exists()) {
             if (!di.file().mkdirs()) {
                 throw new IOException(String.format("Failed to create directory. [path=%s]", di.file().getAbsolutePath()));
             }
         }
         return di.file().getAbsolutePath();
+    }
+
+    /**
+     * @param source
+     * @param directory
+     * @throws IOException
+     */
+    @Override
+    public PathInfo upload(@NonNull File source, @NonNull PathInfo directory) throws IOException {
+        Preconditions.checkArgument(directory.isDirectory());
+        File dest = new File(String.format("%s/%s", directory.path(), FilenameUtils.getName(source.getAbsolutePath())));
+        FileUtils.copyFile(source, dest);
+
+        return get(dest.getAbsolutePath(), directory.domain(), false);
     }
 
     /**

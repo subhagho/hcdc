@@ -12,8 +12,10 @@ import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Accessors(fluent = true)
@@ -26,11 +28,13 @@ public abstract class FileSystem {
 
     public abstract PathInfo get(@NonNull String path, String domain, boolean prefix) throws IOException;
 
-    protected abstract PathInfo get(@NonNull String path) throws IOException;
+    public abstract PathInfo get(@NonNull Map<String, String> config);
 
     public abstract String mkdir(@NonNull PathInfo path, @NonNull String name) throws IOException;
 
     public abstract String mkdirs(@NonNull PathInfo path) throws IOException;
+
+    public abstract PathInfo upload(@NonNull File source, @NonNull PathInfo directory) throws IOException;
 
     public abstract boolean delete(@NonNull PathInfo path, boolean recursive) throws IOException;
 

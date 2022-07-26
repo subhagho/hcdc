@@ -6,9 +6,9 @@ import java.io.File;
 import java.io.IOException;
 
 public interface FormatConverter {
-    boolean canParse(@NonNull File path) throws IOException;
+    boolean canParse(@NonNull String path) throws IOException;
 
-    void convert(@NonNull File source, @NonNull File output) throws IOException;
+    File convert(@NonNull File source, @NonNull File output) throws IOException;
 
     boolean supportsPartial();
 }

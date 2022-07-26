@@ -116,7 +116,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
                 b.setUpdateTime(System.currentTimeMillis());
                 rState.add(b);
             }
-            rState.setStoragePath(file.directory().path());
+            rState.setStoragePath(file.directory().pathConfig());
             rState.setLastReplicatedTx(txId);
             rState.setLastReplicationTime(System.currentTimeMillis());
             stateManager()
@@ -571,7 +571,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
         fsBlock.write(data.data().array());
         fsBlock.close();
 
-        blockState.setStoragePath(fsBlock.path().path());
+        blockState.setStoragePath(fsBlock.path().pathConfig());
         return data.dataSize();
     }
 
