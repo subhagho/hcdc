@@ -53,6 +53,20 @@ public class DFSFileState {
         return blocks;
     }
 
+    public List<BlockTransactionDelta> compressedChangeSet(long startTxnId, long endTxnId) {
+        if (!blocks.isEmpty()) {
+            List<BlockTransactionDelta> change = new ArrayList<>();
+            for (DFSBlockState block : sortedBlocks()) {
+                BlockTransactionDelta c = block.compressedChangeSet(startTxnId, endTxnId);
+                if (c != null) {
+                    change.add(c);
+                }
+            }
+            if (!change.isEmpty()) return change;
+        }
+        return null;
+    }
+
     public boolean checkDeleted() {
         return (state == EFileState.Deleted);
     }

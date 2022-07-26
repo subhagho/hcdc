@@ -167,7 +167,7 @@ public class HDFSSnapshotProcessor {
                 rState.add(b);
             }
 
-            DFSCloseFile addFile = generateSnapshot(fileState, true);
+            DFSCloseFile addFile = generateSnapshot(fileState, true, fileState.getLastTnxId());
             MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
                     addFile,
                     DFSCloseFile.class,
@@ -211,9 +211,9 @@ public class HDFSSnapshotProcessor {
             if (tnxId != rState.getSnapshotTxId()) {
                 throw new SnapshotError(String.format("Snapshot transaction mismatch. [expected=%d][actual=%d]", rState.getSnapshotTxId(), tnxId));
             }
-            DFSCloseFile addFile = generateSnapshot(fileState, true);
+            DFSCloseFile closeFile = generateSnapshot(fileState, true, tnxId);
             MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
-                    addFile,
+                    closeFile,
                     DFSCloseFile.class,
                     entity.getDomain(),
                     entity.getEntity(),
@@ -237,11 +237,13 @@ public class HDFSSnapshotProcessor {
         }
     }
 
-    public static DFSCloseFile generateSnapshot(DFSFileState state, boolean addBlocks) throws Exception {
+    public static DFSCloseFile generateSnapshot(DFSFileState state,
+                                                boolean addBlocks,
+                                                long txId) throws Exception {
         DFSTransaction tx = DFSTransaction.newBuilder()
-                .setOp(DFSTransaction.Operation.ADD_FILE)
-                .setTransactionId(state.getLastTnxId())
-                .setTimestamp(state.getUpdatedTime())
+                .setOp(DFSTransaction.Operation.CLOSE)
+                .setTransactionId(txId)
+                .setTimestamp(System.currentTimeMillis())
                 .build();
         DFSFile file = DFSFile.newBuilder()
                 .setInodeId(state.getId())

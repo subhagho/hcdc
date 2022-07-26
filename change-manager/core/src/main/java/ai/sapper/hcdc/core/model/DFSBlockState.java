@@ -50,11 +50,16 @@ public class DFSBlockState {
         return null;
     }
 
-    public List<BlockTransactionDelta> changeSet(long tnxId) {
-        if (tnxId <= lastTnxId && transactions != null) {
+    public List<BlockTransactionDelta> changeSet(long startTxnId) {
+        return changeSet(startTxnId, Long.MAX_VALUE);
+    }
+
+    public List<BlockTransactionDelta> changeSet(long startTxnId, long endTxnId) {
+        if (transactions != null) {
+            if (endTxnId > lastTnxId) endTxnId = lastTnxId;
             List<BlockTransactionDelta> set = new ArrayList<>();
             for (BlockTransactionDelta delta : transactions) {
-                if (delta.getTnxId() >= tnxId) {
+                if (delta.getTnxId() >= startTxnId && delta.getTnxId() <= endTxnId) {
                     set.add(delta);
                 }
             }
@@ -63,8 +68,12 @@ public class DFSBlockState {
         return null;
     }
 
-    public BlockTransactionDelta compressedChangeSet(long tnxId) {
-        List<BlockTransactionDelta> deltas = changeSet(tnxId);
+    public BlockTransactionDelta compressedChangeSet(long startTnxId) {
+        return compressedChangeSet(startTnxId, Long.MAX_VALUE);
+    }
+
+    public BlockTransactionDelta compressedChangeSet(long startTnxId, long endTxnId) {
+        List<BlockTransactionDelta> deltas = changeSet(startTnxId, endTxnId);
         if (deltas != null && !deltas.isEmpty()) {
             BlockTransactionDelta delta = new BlockTransactionDelta();
             delta.setTnxId(lastTnxId);

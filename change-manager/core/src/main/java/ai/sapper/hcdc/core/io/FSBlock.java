@@ -43,7 +43,9 @@ public class FSBlock implements Closeable {
     }
 
     private String blockFile(long blockId, long previousBlockId) {
-        return String.format("%d-%d.%s", blockId, previousBlockId, EXT_BLOCK_FILE);
+        String p = String.valueOf(previousBlockId);
+        if (previousBlockId < 0) p = "NULL";
+        return String.format("%d-%s.%s", blockId, p, EXT_BLOCK_FILE);
     }
 
     protected FSBlock(@NonNull DFSBlockState blockState,

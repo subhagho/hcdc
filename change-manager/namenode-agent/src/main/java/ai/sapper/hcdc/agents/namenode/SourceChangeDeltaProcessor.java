@@ -156,7 +156,7 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
                                     DFSFileState fileState,
                                     DFSFileReplicaState rState,
                                     long txId) throws Exception {
-        DFSTransactionType.DFSCloseFileType tnx = buildBacklogTransactions(fileState, rState, txId);
+        DFSTransactionType.DFSCloseFileType tnx = buildBacklogTransactions(fileState, rState, txId + 1);
         if (tnx != null) {
             DFSCloseFile closeFile = tnx.convertToProto();
             MessageObject<String, DFSChangeDelta> mesg = ChangeDeltaSerDe.create(message.value().getNamespace(),
