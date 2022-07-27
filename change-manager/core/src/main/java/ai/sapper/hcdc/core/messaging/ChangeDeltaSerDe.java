@@ -62,6 +62,8 @@ public class ChangeDeltaSerDe {
             id = create(namespace, (DFSRenameFile) data, builder);
         } else if (type.equals(DFSIgnoreTx.class)) {
             id = create(namespace, (DFSIgnoreTx) data, builder);
+        } else if (type.equals(DFSChangeData.class)) {
+            id = create(namespace, (DFSChangeData) data, builder);
         } else if (type.equals(DFSError.class)) {
             id = create(namespace, (DFSError) data, builder);
         } else {
@@ -85,6 +87,19 @@ public class ChangeDeltaSerDe {
         message.key(key);
         message.value(delta);
         return message;
+    }
+
+    public static String create(@NonNull String namespace,
+                                @NonNull DFSChangeData data,
+                                @NonNull DFSChangeDelta.Builder builder) throws Exception {
+        builder
+                .setNamespace(namespace)
+                .setTimestamp(System.currentTimeMillis())
+                .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
+                .setEntity(data.getFile().getPath())
+                .setType(data.getClass().getCanonicalName())
+                .setBody(data.toByteString());
+        return String.valueOf(data.getFile().getInodeId());
     }
 
     public static String create(@NonNull String namespace,
@@ -238,6 +253,8 @@ public class ChangeDeltaSerDe {
             return DFSRenameFile.parseFrom(changeDelta.getBody());
         } else if (type.compareTo(DFSIgnoreTx.class.getCanonicalName()) == 0) {
             return DFSIgnoreTx.parseFrom(changeDelta.getBody());
+        } else if (type.compareTo(DFSChangeData.class.getCanonicalName()) == 0) {
+            return DFSChangeData.parseFrom(changeDelta.getBody());
         } else if (type.compareTo(DFSError.class.getCanonicalName()) == 0) {
             return DFSError.parseFrom(changeDelta.getBody());
         } else {

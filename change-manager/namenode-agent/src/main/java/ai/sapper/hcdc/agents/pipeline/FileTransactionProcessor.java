@@ -127,6 +127,9 @@ public class FileTransactionProcessor extends TransactionProcessor {
                     .update(rState);
 
             return rState;
+        } catch (Exception ex) {
+            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    hdfsPath, ex.getLocalizedMessage());
         } finally {
             stateManager().replicationLock().unlock();
         }
@@ -532,7 +535,26 @@ public class FileTransactionProcessor extends TransactionProcessor {
                 CDCDataConverter converter = new CDCDataConverter()
                         .withFileSystem(fs);
                 PathInfo outPath = converter.convert(fileState, rState, startTxId, txId);
+                if (outPath == null) {
+                    throw new IOException(String.format("Error converting source file. [TXID=%d]", txId));
+                }
                 rState.setLastDeltaPath(outPath.pathConfig());
+                DFSChangeData delta = DFSChangeData.newBuilder()
+                        .setTransaction(data.getTransaction())
+                        .setFile(data.getFile())
+                        .setDomain(schemaEntity.getDomain())
+                        .setEntityName(schemaEntity.getEntity())
+                        .setFileSystem(fs.fileSystemCode())
+                        .setOutputPath(outPath.path())
+                        .build();
+                MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(
+                        message.value().getNamespace(),
+                        delta,
+                        DFSChangeData.class,
+                        schemaEntity.getDomain(),
+                        schemaEntity.getEntity(),
+                        message.mode());
+                sender.send(m);
             } catch (IOException ex) {
                 throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                         data.getFile().getPath(),
