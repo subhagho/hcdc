@@ -115,7 +115,7 @@ public class HadoopDataLoader {
                             if (batch == null) break;
                             writer.write(folder, reader.header(), batch);
 
-                            upload(String.format("%s/%s", td.getAbsolutePath(), filename), dir, filename);
+                            upload(fs, String.format("%s/%s", td.getAbsolutePath(), filename), dir, filename);
 
                             arrayIndex += batch.size();
                             index++;
@@ -128,7 +128,10 @@ public class HadoopDataLoader {
         }
     }
 
-    private void upload(String source, String dir, String filename) throws IOException {
+    public static void upload(@NonNull FileSystem fs,
+                              @NonNull String source,
+                              @NonNull String dir,
+                              @NonNull String filename) throws IOException {
         Path path = new Path(String.format("%s/%s", dir, filename));
         try (FSDataOutputStream writer = fs.create(path, true)) {
             File file = new File(source);    //creates a new file instance

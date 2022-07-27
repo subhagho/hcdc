@@ -137,12 +137,12 @@ public class HDFSSnapshotProcessor {
         Preconditions.checkState(sender != null);
         stateManager.replicationLock().lock();
         try {
-            DefaultLogger.LOG.info(String.format("Generating snapshot for file. [path=%s]", hdfsPath));
+            DefaultLogger.LOG.debug(String.format("Generating snapshot for file. [path=%s]", hdfsPath));
             DFSFileState fileState = stateManager
                     .fileStateHelper()
                     .get(hdfsPath);
             if (fileState == null) {
-                DefaultLogger.LOG.warn(String.format("HDFS File State not found. [path=%s]", hdfsPath));
+                DefaultLogger.LOG.info(String.format("HDFS File State not found. [path=%s]", hdfsPath));
                 return;
             }
             DFSFileReplicaState rState = stateManager

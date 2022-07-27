@@ -13,6 +13,9 @@ import java.util.regex.Pattern;
 @Getter
 @Accessors(fluent = true)
 public class DomainFilterMatcher {
+    private static final String IGNORE_REGEX = ".*\\._COPYING_";
+    private static final Pattern IGNORE_PATTERN = Pattern.compile(IGNORE_REGEX);
+
     @Getter
     @Setter
     @Accessors(fluent = true)
@@ -62,7 +65,11 @@ public class DomainFilterMatcher {
                 if (part.startsWith("/")) {
                     part = part.substring(1);
                 }
-                if (pf.matches(part)) return pf;
+                if (pf.matches(part)) {
+                    Matcher ignore = IGNORE_PATTERN.matcher(source);
+                    if (!ignore.matches())
+                        return pf;
+                }
             }
         }
         return null;

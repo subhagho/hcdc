@@ -48,23 +48,6 @@ public class FileTransactionProcessor extends TransactionProcessor {
         return this;
     }
 
-    /**
-     * @param message
-     * @return
-     * @throws Exception
-     */
-    @Override
-    public long checkMessageSequence(MessageObject<String, DFSChangeDelta> message) throws Exception {
-        long txId = Long.parseLong(message.value().getTxId());
-        if (message.mode() == MessageObject.MessageMode.New) {
-            NameNodeTxState txState = stateManager().agentTxState();
-            if (txId <= txState.getProcessedTxId()) {
-                throw new InvalidMessageError(message.id(), String.format("Duplicate message: Transaction already processed. [TXID=%d][CURRENT=%d]", txId, txState.getProcessedTxId()));
-            }
-        }
-        return txId;
-    }
-
     private void sendIgnoreTx(MessageObject<String, DFSChangeDelta> message, Object data) throws Exception {
         // Do nothing...
     }

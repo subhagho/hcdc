@@ -110,7 +110,7 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
             throw new InvalidMessageError(message.id(),
                     String.format("Invalid Message mode. [id=%s][mode=%s]", message.id(), message.mode().name()));
         }
-        txId = processor.checkMessageSequence(message);
+        txId = processor.checkMessageSequence(message, false);
 
         if (message.mode() == MessageObject.MessageMode.Backlog) {
             processBacklogMessage(message, txId);

@@ -104,31 +104,29 @@ public class DFSEditLogParser {
                                     op.getTransactionId(), batch.endTnxId()));
                 }
             }
-        } else {
-            switch (op.opCode) {
-                case OP_ADD:
-                    return handleOpAdd(op, batch);
-                case OP_ADD_BLOCK:
-                    return handleOpAddBlock(op, batch);
-                case OP_APPEND:
-                    return handleOpAppend(op, batch);
-                case OP_UPDATE_BLOCKS:
-                    return handleOpUpdateBlocks(op, batch);
-                case OP_DELETE:
-                    return handleOpDelete(op, batch);
-                case OP_TRUNCATE:
-                    return handleOpTruncate(op, batch);
-                case OP_CLOSE:
-                    return handleOpClose(op, batch);
-                case OP_RENAME:
-                    return handleOpRename(op, batch);
-                case OP_RENAME_OLD:
-                    return handleOpRenameOld(op, batch);
-                default:
-                    return handleDefault(op, batch);
-            }
         }
-        return null;
+        switch (op.opCode) {
+            case OP_ADD:
+                return handleOpAdd(op, batch);
+            case OP_ADD_BLOCK:
+                return handleOpAddBlock(op, batch);
+            case OP_APPEND:
+                return handleOpAppend(op, batch);
+            case OP_UPDATE_BLOCKS:
+                return handleOpUpdateBlocks(op, batch);
+            case OP_DELETE:
+                return handleOpDelete(op, batch);
+            case OP_TRUNCATE:
+                return handleOpTruncate(op, batch);
+            case OP_CLOSE:
+                return handleOpClose(op, batch);
+            case OP_RENAME:
+                return handleOpRename(op, batch);
+            case OP_RENAME_OLD:
+                return handleOpRenameOld(op, batch);
+            default:
+                return handleDefault(op, batch);
+        }
     }
 
     private boolean shouldLogTx(long txid) {

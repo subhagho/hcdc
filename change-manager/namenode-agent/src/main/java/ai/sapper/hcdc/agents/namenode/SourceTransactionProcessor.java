@@ -29,7 +29,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
             MessageObject<String, DFSChangeDelta> im = ChangeDeltaSerDe.createIgnoreTx(message.value().getNamespace(),
                     tnx,
                     message.mode());
-            sender.send(im);
+            // sender.send(im);
         } else {
             throw new InvalidMessageError(message.id(), "Transaction data not found in message.");
         }
@@ -613,7 +613,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
      */
     @Override
     public void processIgnoreTxMessage(DFSIgnoreTx data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
-        sender.send(message);
+        //sender.send(message);
     }
 
     /**

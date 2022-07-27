@@ -101,18 +101,16 @@ public class EditLogProcessor implements Runnable {
         NameNodeTxState state = stateManager.agentTxState();
         EditsLogReader reader = new EditsLogReader();
         long txId = state.getProcessedTxId();
-        List<DFSEditsFileFinder.EditsLogFile> files = DFSEditsFileFinder.findEditsFiles(editsDir.getAbsolutePath(), state.getProcessedTxId(), -1);
+        List<DFSEditsFileFinder.EditsLogFile> files = DFSEditsFileFinder
+                .findEditsFiles(editsDir.getAbsolutePath(),
+                        state.getProcessedTxId() + 1, -1);
         if (files != null && !files.isEmpty()) {
             for (DFSEditsFileFinder.EditsLogFile file : files) {
-                if (file.startTxId() != (txId + 1)) {
-                    throw new Exception(String.format("Missing edits log file. [expected TXID=%d][file start TXID=%d]",
-                            (txId + 1), file.startTxId()));
-                }
                 LOG.debug(String.format("Reading edits file [path=%s][startTx=%d]", file, state.getProcessedTxId()));
                 reader.run(file, state.getProcessedTxId(), file.endTxId());
                 DFSEditLogBatch batch = reader.batch();
                 if (batch.transactions() != null && !batch.transactions().isEmpty()) {
-                    long tid = processBatch(batch);
+                    long tid = processBatch(batch, txId);
                     if (tid > 0) {
                         txId = tid;
                         stateManager.update(txId);
@@ -131,10 +129,11 @@ public class EditLogProcessor implements Runnable {
         return txId;
     }
 
-    private long processBatch(DFSEditLogBatch batch) throws Exception {
+    private long processBatch(DFSEditLogBatch batch, long lastTxId) throws Exception {
         if (batch != null && batch.transactions() != null && !batch.transactions().isEmpty()) {
             long txid = -1;
             for (DFSTransactionType<?> tnx : batch.transactions()) {
+                if (tnx.id() <= lastTxId) continue;
                 Object proto = tnx.convertToProto();
                 MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
                         proto,

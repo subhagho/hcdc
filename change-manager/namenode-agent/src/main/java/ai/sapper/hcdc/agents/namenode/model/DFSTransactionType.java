@@ -196,6 +196,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         private long startOffset = 0;
         private long endOffset = 0;
         private long deltaSize = 0;
+        private long blockSize = 0;
 
         public DFSBlock getProto() {
             return DFSBlock.newBuilder()
@@ -205,6 +206,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
                     .setStartOffset(startOffset)
                     .setEndOffset(endOffset)
                     .setDeltaSize(deltaSize)
+                    .setBlockSize(blockSize)
                     .build();
         }
 
@@ -215,6 +217,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             this.startOffset = block.getStartOffset();
             this.endOffset = block.getEndOffset();
             this.deltaSize = block.getDeltaSize();
+            this.blockSize = block.getBlockSize();
         }
     }
 
