@@ -26,6 +26,7 @@ public class DFSFileReplicaState {
     private long updateTime = 0;
     private EFileState state = EFileState.Unknown;
     private Map<String, String> storagePath;
+    private Map<String, String> lastDeltaPath;
 
     private List<DFSBlockReplicaState> blocks = new ArrayList<>();
 

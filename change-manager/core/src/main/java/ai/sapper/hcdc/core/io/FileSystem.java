@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.core.io;
 
 import ai.sapper.hcdc.common.ConfigReader;
+import ai.sapper.hcdc.common.model.DFSChangeData;
 import ai.sapper.hcdc.common.model.SchemaEntity;
 import ai.sapper.hcdc.core.model.DFSBlockState;
 import ai.sapper.hcdc.core.model.DFSFileState;
@@ -38,6 +39,8 @@ public abstract class FileSystem implements Closeable {
     public abstract PathInfo upload(@NonNull File source, @NonNull PathInfo directory) throws IOException;
 
     public abstract boolean delete(@NonNull PathInfo path, boolean recursive) throws IOException;
+
+    public abstract DFSChangeData.FileSystemCode fileSystemCode();
 
     public boolean delete(@NonNull PathInfo path) throws IOException {
         return delete(path, false);

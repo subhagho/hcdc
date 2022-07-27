@@ -12,6 +12,7 @@ import ai.sapper.hcdc.core.connections.HdfsConnection;
 import ai.sapper.hcdc.core.io.FSBlock;
 import ai.sapper.hcdc.core.io.FSFile;
 import ai.sapper.hcdc.core.io.FileSystem;
+import ai.sapper.hcdc.core.io.PathInfo;
 import ai.sapper.hcdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.hcdc.core.messaging.InvalidMessageError;
 import ai.sapper.hcdc.core.messaging.MessageObject;
@@ -24,6 +25,7 @@ import com.google.common.base.Strings;
 import lombok.NonNull;
 import org.apache.hadoop.hdfs.HDFSBlockReader;
 
+import java.io.IOException;
 import java.util.List;
 
 public class FileTransactionProcessor extends TransactionProcessor {
@@ -526,14 +528,19 @@ public class FileTransactionProcessor extends TransactionProcessor {
                     long size = copyBlock(block, rState, bs, fsb, reader);
                 }
             }
-            CDCDataConverter converter = new CDCDataConverter()
-                    .withFileSystem(fs);
-            converter.convert(fileState, rState, startTxId, txId);
+            try {
+                CDCDataConverter converter = new CDCDataConverter()
+                        .withFileSystem(fs);
+                PathInfo outPath = converter.convert(fileState, rState, startTxId, txId);
+                rState.setLastDeltaPath(outPath.pathConfig());
+            } catch (IOException ex) {
+                throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                        data.getFile().getPath(),
+                        String.format("Error converting change delta to Avro. [path=%s]",
+                                data.getFile().getPath()));
+            }
             stateManager().replicationLock().lock();
             try {
-                rState = stateManager()
-                        .replicaStateHelper()
-                        .get(fileState.getId());
                 rState.setState(EFileState.Finalized);
                 rState.setLastReplicatedTx(txId);
                 rState.setLastReplicationTime(System.currentTimeMillis());
@@ -561,10 +568,11 @@ public class FileTransactionProcessor extends TransactionProcessor {
                            DFSBlockReplicaState blockState,
                            FSBlock fsBlock,
                            HDFSBlockReader reader) throws Exception {
+        int length = (int) (source.getEndOffset() + 1);
         HDFSBlockData data = reader.read(source.getBlockId(),
                 source.getGenerationStamp(),
                 0L,
-                (int) source.getEndOffset());
+                length);
 
         if (data == null) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,

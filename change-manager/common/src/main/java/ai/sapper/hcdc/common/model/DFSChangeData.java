@@ -68,23 +68,42 @@ public  final class DFSChangeData extends
             break;
           }
           case 18: {
+            ai.sapper.hcdc.common.model.DFSFile.Builder subBuilder = null;
+            if (((bitField0_ & 0x00000002) == 0x00000002)) {
+              subBuilder = file_.toBuilder();
+            }
+            file_ = input.readMessage(ai.sapper.hcdc.common.model.DFSFile.PARSER, extensionRegistry);
+            if (subBuilder != null) {
+              subBuilder.mergeFrom(file_);
+              file_ = subBuilder.buildPartial();
+            }
             bitField0_ |= 0x00000002;
-            domain_ = input.readBytes();
             break;
           }
           case 26: {
             bitField0_ |= 0x00000004;
-            entityName_ = input.readBytes();
+            domain_ = input.readBytes();
             break;
           }
           case 34: {
             bitField0_ |= 0x00000008;
-            path_ = input.readBytes();
+            entityName_ = input.readBytes();
             break;
           }
-          case 42: {
-            bitField0_ |= 0x00000010;
-            filePath_ = input.readBytes();
+          case 40: {
+            int rawValue = input.readEnum();
+            ai.sapper.hcdc.common.model.DFSChangeData.FileSystemCode value = ai.sapper.hcdc.common.model.DFSChangeData.FileSystemCode.valueOf(rawValue);
+            if (value == null) {
+              unknownFields.mergeVarintField(5, rawValue);
+            } else {
+              bitField0_ |= 0x00000010;
+              fileSystem_ = value;
+            }
+            break;
+          }
+          case 50: {
+            bitField0_ |= 0x00000020;
+            outputPath_ = input.readBytes();
             break;
           }
         }
@@ -126,6 +145,88 @@ public  final class DFSChangeData extends
     return PARSER;
   }
 
+  /**
+   * Protobuf enum {@code ai_sapper_hcdc_common_model.DFSChangeData.FileSystemCode}
+   */
+  public enum FileSystemCode
+      implements com.google.protobuf.ProtocolMessageEnum {
+    /**
+     * <code>LOCAL = 0;</code>
+     */
+    LOCAL(0, 0),
+    /**
+     * <code>S3 = 1;</code>
+     */
+    S3(1, 1),
+    ;
+
+    /**
+     * <code>LOCAL = 0;</code>
+     */
+    public static final int LOCAL_VALUE = 0;
+    /**
+     * <code>S3 = 1;</code>
+     */
+    public static final int S3_VALUE = 1;
+
+
+    public final int getNumber() { return value; }
+
+    public static FileSystemCode valueOf(int value) {
+      switch (value) {
+        case 0: return LOCAL;
+        case 1: return S3;
+        default: return null;
+      }
+    }
+
+    public static com.google.protobuf.Internal.EnumLiteMap<FileSystemCode>
+        internalGetValueMap() {
+      return internalValueMap;
+    }
+    private static com.google.protobuf.Internal.EnumLiteMap<FileSystemCode>
+        internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<FileSystemCode>() {
+            public FileSystemCode findValueByNumber(int number) {
+              return FileSystemCode.valueOf(number);
+            }
+          };
+
+    public final com.google.protobuf.Descriptors.EnumValueDescriptor
+        getValueDescriptor() {
+      return getDescriptor().getValues().get(index);
+    }
+    public final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptorForType() {
+      return getDescriptor();
+    }
+    public static final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptor() {
+      return ai.sapper.hcdc.common.model.DFSChangeData.getDescriptor().getEnumTypes().get(0);
+    }
+
+    private static final FileSystemCode[] VALUES = values();
+
+    public static FileSystemCode valueOf(
+        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+      if (desc.getType() != getDescriptor()) {
+        throw new java.lang.IllegalArgumentException(
+          "EnumValueDescriptor is not for this type.");
+      }
+      return VALUES[desc.getIndex()];
+    }
+
+    private final int index;
+    private final int value;
+
+    private FileSystemCode(int index, int value) {
+      this.index = index;
+      this.value = value;
+    }
+
+    // @@protoc_insertion_point(enum_scope:ai_sapper_hcdc_common_model.DFSChangeData.FileSystemCode)
+  }
+
   private int bitField0_;
   // required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;
   public static final int TRANSACTION_FIELD_NUMBER = 1;
@@ -149,17 +250,39 @@ public  final class DFSChangeData extends
     return transaction_;
   }
 
-  // required string domain = 2;
-  public static final int DOMAIN_FIELD_NUMBER = 2;
-  private java.lang.Object domain_;
+  // required .ai_sapper_hcdc_common_model.DFSFile file = 2;
+  public static final int FILE_FIELD_NUMBER = 2;
+  private ai.sapper.hcdc.common.model.DFSFile file_;
   /**
-   * <code>required string domain = 2;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
    */
-  public boolean hasDomain() {
+  public boolean hasFile() {
     return ((bitField0_ & 0x00000002) == 0x00000002);
   }
   /**
-   * <code>required string domain = 2;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   */
+  public ai.sapper.hcdc.common.model.DFSFile getFile() {
+    return file_;
+  }
+  /**
+   * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   */
+  public ai.sapper.hcdc.common.model.DFSFileOrBuilder getFileOrBuilder() {
+    return file_;
+  }
+
+  // required string domain = 3;
+  public static final int DOMAIN_FIELD_NUMBER = 3;
+  private java.lang.Object domain_;
+  /**
+   * <code>required string domain = 3;</code>
+   */
+  public boolean hasDomain() {
+    return ((bitField0_ & 0x00000004) == 0x00000004);
+  }
+  /**
+   * <code>required string domain = 3;</code>
    */
   public java.lang.String getDomain() {
     java.lang.Object ref = domain_;
@@ -176,7 +299,7 @@ public  final class DFSChangeData extends
     }
   }
   /**
-   * <code>required string domain = 2;</code>
+   * <code>required string domain = 3;</code>
    */
   public com.google.protobuf.ByteString
       getDomainBytes() {
@@ -192,17 +315,17 @@ public  final class DFSChangeData extends
     }
   }
 
-  // required string entityName = 3;
-  public static final int ENTITYNAME_FIELD_NUMBER = 3;
+  // required string entityName = 4;
+  public static final int ENTITYNAME_FIELD_NUMBER = 4;
   private java.lang.Object entityName_;
   /**
-   * <code>required string entityName = 3;</code>
+   * <code>required string entityName = 4;</code>
    */
   public boolean hasEntityName() {
-    return ((bitField0_ & 0x00000004) == 0x00000004);
+    return ((bitField0_ & 0x00000008) == 0x00000008);
   }
   /**
-   * <code>required string entityName = 3;</code>
+   * <code>required string entityName = 4;</code>
    */
   public java.lang.String getEntityName() {
     java.lang.Object ref = entityName_;
@@ -219,7 +342,7 @@ public  final class DFSChangeData extends
     }
   }
   /**
-   * <code>required string entityName = 3;</code>
+   * <code>required string entityName = 4;</code>
    */
   public com.google.protobuf.ByteString
       getEntityNameBytes() {
@@ -235,63 +358,36 @@ public  final class DFSChangeData extends
     }
   }
 
-  // required string path = 4;
-  public static final int PATH_FIELD_NUMBER = 4;
-  private java.lang.Object path_;
+  // required .ai_sapper_hcdc_common_model.DFSChangeData.FileSystemCode fileSystem = 5;
+  public static final int FILESYSTEM_FIELD_NUMBER = 5;
+  private ai.sapper.hcdc.common.model.DFSChangeData.FileSystemCode fileSystem_;
   /**
-   * <code>required string path = 4;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSChangeData.FileSystemCode fileSystem = 5;</code>
    */
-  public boolean hasPath() {
-    return ((bitField0_ & 0x00000008) == 0x00000008);
-  }
-  /**
-   * <code>required string path = 4;</code>
-   */
-  public java.lang.String getPath() {
-    java.lang.Object ref = path_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        path_ = s;
-      }
-      return s;
-    }
-  }
-  /**
-   * <code>required string path = 4;</code>
-   */
-  public com.google.protobuf.ByteString
-      getPathBytes() {
-    java.lang.Object ref = path_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      path_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
-  }
-
-  // required string filePath = 5;
-  public static final int FILEPATH_FIELD_NUMBER = 5;
-  private java.lang.Object filePath_;
-  /**
-   * <code>required string filePath = 5;</code>
-   */
-  public boolean hasFilePath() {
+  public boolean hasFileSystem() {
     return ((bitField0_ & 0x00000010) == 0x00000010);
   }
   /**
-   * <code>required string filePath = 5;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSChangeData.FileSystemCode fileSystem = 5;</code>
    */
-  public java.lang.String getFilePath() {
-    java.lang.Object ref = filePath_;
+  public ai.sapper.hcdc.common.model.DFSChangeData.FileSystemCode getFileSystem() {
+    return fileSystem_;
+  }
+
+  // required string outputPath = 6;
+  public static final int OUTPUTPATH_FIELD_NUMBER = 6;
+  private java.lang.Object outputPath_;
+  /**
+   * <code>required string outputPath = 6;</code>
+   */
+  public boolean hasOutputPath() {
+    return ((bitField0_ & 0x00000020) == 0x00000020);
+  }
+  /**
+   * <code>required string outputPath = 6;</code>
+   */
+  public java.lang.String getOutputPath() {
+    java.lang.Object ref = outputPath_;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
@@ -299,22 +395,22 @@ public  final class DFSChangeData extends
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       if (bs.isValidUtf8()) {
-        filePath_ = s;
+        outputPath_ = s;
       }
       return s;
     }
   }
   /**
-   * <code>required string filePath = 5;</code>
+   * <code>required string outputPath = 6;</code>
    */
   public com.google.protobuf.ByteString
-      getFilePathBytes() {
-    java.lang.Object ref = filePath_;
+      getOutputPathBytes() {
+    java.lang.Object ref = outputPath_;
     if (ref instanceof java.lang.String) {
       com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
-      filePath_ = b;
+      outputPath_ = b;
       return b;
     } else {
       return (com.google.protobuf.ByteString) ref;
@@ -323,10 +419,11 @@ public  final class DFSChangeData extends
 
   private void initFields() {
     transaction_ = ai.sapper.hcdc.common.model.DFSTransaction.getDefaultInstance();
+    file_ = ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance();
     domain_ = "";
     entityName_ = "";
-    path_ = "";
-    filePath_ = "";
+    fileSystem_ = ai.sapper.hcdc.common.model.DFSChangeData.FileSystemCode.LOCAL;
+    outputPath_ = "";
   }
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
@@ -334,6 +431,10 @@ public  final class DFSChangeData extends
     if (isInitialized != -1) return isInitialized == 1;
 
     if (!hasTransaction()) {
+      memoizedIsInitialized = 0;
+      return false;
+    }
+    if (!hasFile()) {
       memoizedIsInitialized = 0;
       return false;
     }
@@ -345,15 +446,19 @@ public  final class DFSChangeData extends
       memoizedIsInitialized = 0;
       return false;
     }
-    if (!hasPath()) {
+    if (!hasFileSystem()) {
       memoizedIsInitialized = 0;
       return false;
     }
-    if (!hasFilePath()) {
+    if (!hasOutputPath()) {
       memoizedIsInitialized = 0;
       return false;
     }
     if (!getTransaction().isInitialized()) {
+      memoizedIsInitialized = 0;
+      return false;
+    }
+    if (!getFile().isInitialized()) {
       memoizedIsInitialized = 0;
       return false;
     }
@@ -368,16 +473,19 @@ public  final class DFSChangeData extends
       output.writeMessage(1, transaction_);
     }
     if (((bitField0_ & 0x00000002) == 0x00000002)) {
-      output.writeBytes(2, getDomainBytes());
+      output.writeMessage(2, file_);
     }
     if (((bitField0_ & 0x00000004) == 0x00000004)) {
-      output.writeBytes(3, getEntityNameBytes());
+      output.writeBytes(3, getDomainBytes());
     }
     if (((bitField0_ & 0x00000008) == 0x00000008)) {
-      output.writeBytes(4, getPathBytes());
+      output.writeBytes(4, getEntityNameBytes());
     }
     if (((bitField0_ & 0x00000010) == 0x00000010)) {
-      output.writeBytes(5, getFilePathBytes());
+      output.writeEnum(5, fileSystem_.getNumber());
+    }
+    if (((bitField0_ & 0x00000020) == 0x00000020)) {
+      output.writeBytes(6, getOutputPathBytes());
     }
     getUnknownFields().writeTo(output);
   }
@@ -394,19 +502,23 @@ public  final class DFSChangeData extends
     }
     if (((bitField0_ & 0x00000002) == 0x00000002)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(2, getDomainBytes());
+        .computeMessageSize(2, file_);
     }
     if (((bitField0_ & 0x00000004) == 0x00000004)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(3, getEntityNameBytes());
+        .computeBytesSize(3, getDomainBytes());
     }
     if (((bitField0_ & 0x00000008) == 0x00000008)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(4, getPathBytes());
+        .computeBytesSize(4, getEntityNameBytes());
     }
     if (((bitField0_ & 0x00000010) == 0x00000010)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(5, getFilePathBytes());
+        .computeEnumSize(5, fileSystem_.getNumber());
+    }
+    if (((bitField0_ & 0x00000020) == 0x00000020)) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBytesSize(6, getOutputPathBytes());
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSerializedSize = size;
@@ -517,6 +629,7 @@ public  final class DFSChangeData extends
     private void maybeForceBuilderInitialization() {
       if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
         getTransactionFieldBuilder();
+        getFileFieldBuilder();
       }
     }
     private static Builder create() {
@@ -531,14 +644,20 @@ public  final class DFSChangeData extends
         transactionBuilder_.clear();
       }
       bitField0_ = (bitField0_ & ~0x00000001);
-      domain_ = "";
+      if (fileBuilder_ == null) {
+        file_ = ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance();
+      } else {
+        fileBuilder_.clear();
+      }
       bitField0_ = (bitField0_ & ~0x00000002);
-      entityName_ = "";
+      domain_ = "";
       bitField0_ = (bitField0_ & ~0x00000004);
-      path_ = "";
+      entityName_ = "";
       bitField0_ = (bitField0_ & ~0x00000008);
-      filePath_ = "";
+      fileSystem_ = ai.sapper.hcdc.common.model.DFSChangeData.FileSystemCode.LOCAL;
       bitField0_ = (bitField0_ & ~0x00000010);
+      outputPath_ = "";
+      bitField0_ = (bitField0_ & ~0x00000020);
       return this;
     }
 
@@ -578,19 +697,27 @@ public  final class DFSChangeData extends
       if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
         to_bitField0_ |= 0x00000002;
       }
-      result.domain_ = domain_;
+      if (fileBuilder_ == null) {
+        result.file_ = file_;
+      } else {
+        result.file_ = fileBuilder_.build();
+      }
       if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
         to_bitField0_ |= 0x00000004;
       }
-      result.entityName_ = entityName_;
+      result.domain_ = domain_;
       if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
         to_bitField0_ |= 0x00000008;
       }
-      result.path_ = path_;
+      result.entityName_ = entityName_;
       if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
         to_bitField0_ |= 0x00000010;
       }
-      result.filePath_ = filePath_;
+      result.fileSystem_ = fileSystem_;
+      if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
+        to_bitField0_ |= 0x00000020;
+      }
+      result.outputPath_ = outputPath_;
       result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
@@ -610,24 +737,25 @@ public  final class DFSChangeData extends
       if (other.hasTransaction()) {
         mergeTransaction(other.getTransaction());
       }
+      if (other.hasFile()) {
+        mergeFile(other.getFile());
+      }
       if (other.hasDomain()) {
-        bitField0_ |= 0x00000002;
+        bitField0_ |= 0x00000004;
         domain_ = other.domain_;
         onChanged();
       }
       if (other.hasEntityName()) {
-        bitField0_ |= 0x00000004;
+        bitField0_ |= 0x00000008;
         entityName_ = other.entityName_;
         onChanged();
       }
-      if (other.hasPath()) {
-        bitField0_ |= 0x00000008;
-        path_ = other.path_;
-        onChanged();
+      if (other.hasFileSystem()) {
+        setFileSystem(other.getFileSystem());
       }
-      if (other.hasFilePath()) {
-        bitField0_ |= 0x00000010;
-        filePath_ = other.filePath_;
+      if (other.hasOutputPath()) {
+        bitField0_ |= 0x00000020;
+        outputPath_ = other.outputPath_;
         onChanged();
       }
       this.mergeUnknownFields(other.getUnknownFields());
@@ -639,6 +767,10 @@ public  final class DFSChangeData extends
         
         return false;
       }
+      if (!hasFile()) {
+        
+        return false;
+      }
       if (!hasDomain()) {
         
         return false;
@@ -647,15 +779,19 @@ public  final class DFSChangeData extends
         
         return false;
       }
-      if (!hasPath()) {
+      if (!hasFileSystem()) {
         
         return false;
       }
-      if (!hasFilePath()) {
+      if (!hasOutputPath()) {
         
         return false;
       }
       if (!getTransaction().isInitialized()) {
+        
+        return false;
+      }
+      if (!getFile().isInitialized()) {
         
         return false;
       }
@@ -798,16 +934,133 @@ public  final class DFSChangeData extends
       return transactionBuilder_;
     }
 
-    // required string domain = 2;
-    private java.lang.Object domain_ = "";
+    // required .ai_sapper_hcdc_common_model.DFSFile file = 2;
+    private ai.sapper.hcdc.common.model.DFSFile file_ = ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance();
+    private com.google.protobuf.SingleFieldBuilder<
+        ai.sapper.hcdc.common.model.DFSFile, ai.sapper.hcdc.common.model.DFSFile.Builder, ai.sapper.hcdc.common.model.DFSFileOrBuilder> fileBuilder_;
     /**
-     * <code>required string domain = 2;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
      */
-    public boolean hasDomain() {
+    public boolean hasFile() {
       return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
-     * <code>required string domain = 2;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+     */
+    public ai.sapper.hcdc.common.model.DFSFile getFile() {
+      if (fileBuilder_ == null) {
+        return file_;
+      } else {
+        return fileBuilder_.getMessage();
+      }
+    }
+    /**
+     * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+     */
+    public Builder setFile(ai.sapper.hcdc.common.model.DFSFile value) {
+      if (fileBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        file_ = value;
+        onChanged();
+      } else {
+        fileBuilder_.setMessage(value);
+      }
+      bitField0_ |= 0x00000002;
+      return this;
+    }
+    /**
+     * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+     */
+    public Builder setFile(
+        ai.sapper.hcdc.common.model.DFSFile.Builder builderForValue) {
+      if (fileBuilder_ == null) {
+        file_ = builderForValue.build();
+        onChanged();
+      } else {
+        fileBuilder_.setMessage(builderForValue.build());
+      }
+      bitField0_ |= 0x00000002;
+      return this;
+    }
+    /**
+     * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+     */
+    public Builder mergeFile(ai.sapper.hcdc.common.model.DFSFile value) {
+      if (fileBuilder_ == null) {
+        if (((bitField0_ & 0x00000002) == 0x00000002) &&
+            file_ != ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance()) {
+          file_ =
+            ai.sapper.hcdc.common.model.DFSFile.newBuilder(file_).mergeFrom(value).buildPartial();
+        } else {
+          file_ = value;
+        }
+        onChanged();
+      } else {
+        fileBuilder_.mergeFrom(value);
+      }
+      bitField0_ |= 0x00000002;
+      return this;
+    }
+    /**
+     * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+     */
+    public Builder clearFile() {
+      if (fileBuilder_ == null) {
+        file_ = ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance();
+        onChanged();
+      } else {
+        fileBuilder_.clear();
+      }
+      bitField0_ = (bitField0_ & ~0x00000002);
+      return this;
+    }
+    /**
+     * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+     */
+    public ai.sapper.hcdc.common.model.DFSFile.Builder getFileBuilder() {
+      bitField0_ |= 0x00000002;
+      onChanged();
+      return getFileFieldBuilder().getBuilder();
+    }
+    /**
+     * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+     */
+    public ai.sapper.hcdc.common.model.DFSFileOrBuilder getFileOrBuilder() {
+      if (fileBuilder_ != null) {
+        return fileBuilder_.getMessageOrBuilder();
+      } else {
+        return file_;
+      }
+    }
+    /**
+     * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+     */
+    private com.google.protobuf.SingleFieldBuilder<
+        ai.sapper.hcdc.common.model.DFSFile, ai.sapper.hcdc.common.model.DFSFile.Builder, ai.sapper.hcdc.common.model.DFSFileOrBuilder> 
+        getFileFieldBuilder() {
+      if (fileBuilder_ == null) {
+        fileBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+            ai.sapper.hcdc.common.model.DFSFile, ai.sapper.hcdc.common.model.DFSFile.Builder, ai.sapper.hcdc.common.model.DFSFileOrBuilder>(
+                file_,
+                getParentForChildren(),
+                isClean());
+        file_ = null;
+      }
+      return fileBuilder_;
+    }
+
+    // required string domain = 3;
+    private java.lang.Object domain_ = "";
+    /**
+     * <code>required string domain = 3;</code>
+     */
+    public boolean hasDomain() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>required string domain = 3;</code>
      */
     public java.lang.String getDomain() {
       java.lang.Object ref = domain_;
@@ -821,7 +1074,7 @@ public  final class DFSChangeData extends
       }
     }
     /**
-     * <code>required string domain = 2;</code>
+     * <code>required string domain = 3;</code>
      */
     public com.google.protobuf.ByteString
         getDomainBytes() {
@@ -837,51 +1090,51 @@ public  final class DFSChangeData extends
       }
     }
     /**
-     * <code>required string domain = 2;</code>
+     * <code>required string domain = 3;</code>
      */
     public Builder setDomain(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+  bitField0_ |= 0x00000004;
       domain_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>required string domain = 2;</code>
+     * <code>required string domain = 3;</code>
      */
     public Builder clearDomain() {
-      bitField0_ = (bitField0_ & ~0x00000002);
+      bitField0_ = (bitField0_ & ~0x00000004);
       domain_ = getDefaultInstance().getDomain();
       onChanged();
       return this;
     }
     /**
-     * <code>required string domain = 2;</code>
+     * <code>required string domain = 3;</code>
      */
     public Builder setDomainBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+  bitField0_ |= 0x00000004;
       domain_ = value;
       onChanged();
       return this;
     }
 
-    // required string entityName = 3;
+    // required string entityName = 4;
     private java.lang.Object entityName_ = "";
     /**
-     * <code>required string entityName = 3;</code>
+     * <code>required string entityName = 4;</code>
      */
     public boolean hasEntityName() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
+      return ((bitField0_ & 0x00000008) == 0x00000008);
     }
     /**
-     * <code>required string entityName = 3;</code>
+     * <code>required string entityName = 4;</code>
      */
     public java.lang.String getEntityName() {
       java.lang.Object ref = entityName_;
@@ -895,7 +1148,7 @@ public  final class DFSChangeData extends
       }
     }
     /**
-     * <code>required string entityName = 3;</code>
+     * <code>required string entityName = 4;</code>
      */
     public com.google.protobuf.ByteString
         getEntityNameBytes() {
@@ -911,185 +1164,147 @@ public  final class DFSChangeData extends
       }
     }
     /**
-     * <code>required string entityName = 3;</code>
+     * <code>required string entityName = 4;</code>
      */
     public Builder setEntityName(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000004;
+  bitField0_ |= 0x00000008;
       entityName_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>required string entityName = 3;</code>
+     * <code>required string entityName = 4;</code>
      */
     public Builder clearEntityName() {
-      bitField0_ = (bitField0_ & ~0x00000004);
+      bitField0_ = (bitField0_ & ~0x00000008);
       entityName_ = getDefaultInstance().getEntityName();
       onChanged();
       return this;
     }
     /**
-     * <code>required string entityName = 3;</code>
+     * <code>required string entityName = 4;</code>
      */
     public Builder setEntityNameBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000004;
+  bitField0_ |= 0x00000008;
       entityName_ = value;
       onChanged();
       return this;
     }
 
-    // required string path = 4;
-    private java.lang.Object path_ = "";
+    // required .ai_sapper_hcdc_common_model.DFSChangeData.FileSystemCode fileSystem = 5;
+    private ai.sapper.hcdc.common.model.DFSChangeData.FileSystemCode fileSystem_ = ai.sapper.hcdc.common.model.DFSChangeData.FileSystemCode.LOCAL;
     /**
-     * <code>required string path = 4;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSChangeData.FileSystemCode fileSystem = 5;</code>
      */
-    public boolean hasPath() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
+    public boolean hasFileSystem() {
+      return ((bitField0_ & 0x00000010) == 0x00000010);
     }
     /**
-     * <code>required string path = 4;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSChangeData.FileSystemCode fileSystem = 5;</code>
      */
-    public java.lang.String getPath() {
-      java.lang.Object ref = path_;
-      if (!(ref instanceof java.lang.String)) {
-        java.lang.String s = ((com.google.protobuf.ByteString) ref)
-            .toStringUtf8();
-        path_ = s;
-        return s;
-      } else {
-        return (java.lang.String) ref;
-      }
+    public ai.sapper.hcdc.common.model.DFSChangeData.FileSystemCode getFileSystem() {
+      return fileSystem_;
     }
     /**
-     * <code>required string path = 4;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSChangeData.FileSystemCode fileSystem = 5;</code>
      */
-    public com.google.protobuf.ByteString
-        getPathBytes() {
-      java.lang.Object ref = path_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        path_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-    /**
-     * <code>required string path = 4;</code>
-     */
-    public Builder setPath(
-        java.lang.String value) {
+    public Builder setFileSystem(ai.sapper.hcdc.common.model.DFSChangeData.FileSystemCode value) {
       if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000008;
-      path_ = value;
+        throw new NullPointerException();
+      }
+      bitField0_ |= 0x00000010;
+      fileSystem_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>required string path = 4;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSChangeData.FileSystemCode fileSystem = 5;</code>
      */
-    public Builder clearPath() {
-      bitField0_ = (bitField0_ & ~0x00000008);
-      path_ = getDefaultInstance().getPath();
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>required string path = 4;</code>
-     */
-    public Builder setPathBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000008;
-      path_ = value;
+    public Builder clearFileSystem() {
+      bitField0_ = (bitField0_ & ~0x00000010);
+      fileSystem_ = ai.sapper.hcdc.common.model.DFSChangeData.FileSystemCode.LOCAL;
       onChanged();
       return this;
     }
 
-    // required string filePath = 5;
-    private java.lang.Object filePath_ = "";
+    // required string outputPath = 6;
+    private java.lang.Object outputPath_ = "";
     /**
-     * <code>required string filePath = 5;</code>
+     * <code>required string outputPath = 6;</code>
      */
-    public boolean hasFilePath() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
+    public boolean hasOutputPath() {
+      return ((bitField0_ & 0x00000020) == 0x00000020);
     }
     /**
-     * <code>required string filePath = 5;</code>
+     * <code>required string outputPath = 6;</code>
      */
-    public java.lang.String getFilePath() {
-      java.lang.Object ref = filePath_;
+    public java.lang.String getOutputPath() {
+      java.lang.Object ref = outputPath_;
       if (!(ref instanceof java.lang.String)) {
         java.lang.String s = ((com.google.protobuf.ByteString) ref)
             .toStringUtf8();
-        filePath_ = s;
+        outputPath_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
       }
     }
     /**
-     * <code>required string filePath = 5;</code>
+     * <code>required string outputPath = 6;</code>
      */
     public com.google.protobuf.ByteString
-        getFilePathBytes() {
-      java.lang.Object ref = filePath_;
+        getOutputPathBytes() {
+      java.lang.Object ref = outputPath_;
       if (ref instanceof String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        filePath_ = b;
+        outputPath_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
     /**
-     * <code>required string filePath = 5;</code>
+     * <code>required string outputPath = 6;</code>
      */
-    public Builder setFilePath(
+    public Builder setOutputPath(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000010;
-      filePath_ = value;
+  bitField0_ |= 0x00000020;
+      outputPath_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>required string filePath = 5;</code>
+     * <code>required string outputPath = 6;</code>
      */
-    public Builder clearFilePath() {
-      bitField0_ = (bitField0_ & ~0x00000010);
-      filePath_ = getDefaultInstance().getFilePath();
+    public Builder clearOutputPath() {
+      bitField0_ = (bitField0_ & ~0x00000020);
+      outputPath_ = getDefaultInstance().getOutputPath();
       onChanged();
       return this;
     }
     /**
-     * <code>required string filePath = 5;</code>
+     * <code>required string outputPath = 6;</code>
      */
-    public Builder setFilePathBytes(
+    public Builder setOutputPathBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000010;
-      filePath_ = value;
+  bitField0_ |= 0x00000020;
+      outputPath_ = value;
       onChanged();
       return this;
     }

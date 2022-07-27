@@ -5,6 +5,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.NonNull;
 
+import java.util.UUID;
+
 public class ChangeDeltaSerDe {
     public static <T> MessageObject<String, DFSChangeDelta> createErrorTx(@NonNull String namespace,
                                                                           @NonNull String messageId,
@@ -41,26 +43,27 @@ public class ChangeDeltaSerDe {
         DFSChangeDelta delta = null;
         DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
         String key = null;
+        String id = null;
         if (type.equals(DFSAddFile.class)) {
-            create(namespace, (DFSAddFile) data, builder);
+            id = create(namespace, (DFSAddFile) data, builder);
         } else if (type.equals(DFSAppendFile.class)) {
-            create(namespace, (DFSAppendFile) data, builder);
+            id = create(namespace, (DFSAppendFile) data, builder);
         } else if (type.equals(DFSDeleteFile.class)) {
-            create(namespace, (DFSDeleteFile) data, builder);
+            id = create(namespace, (DFSDeleteFile) data, builder);
         } else if (type.equals(DFSAddBlock.class)) {
-            create(namespace, (DFSAddBlock) data, builder);
+            id = create(namespace, (DFSAddBlock) data, builder);
         } else if (type.equals(DFSUpdateBlocks.class)) {
-            create(namespace, (DFSUpdateBlocks) data, builder);
+            id = create(namespace, (DFSUpdateBlocks) data, builder);
         } else if (type.equals(DFSTruncateBlock.class)) {
-            create(namespace, (DFSTruncateBlock) data, builder);
+            id = create(namespace, (DFSTruncateBlock) data, builder);
         } else if (type.equals(DFSCloseFile.class)) {
-            create(namespace, (DFSCloseFile) data, builder);
+            id = create(namespace, (DFSCloseFile) data, builder);
         } else if (type.equals(DFSRenameFile.class)) {
-            create(namespace, (DFSRenameFile) data, builder);
+            id = create(namespace, (DFSRenameFile) data, builder);
         } else if (type.equals(DFSIgnoreTx.class)) {
-            create(namespace, (DFSIgnoreTx) data, builder);
+            id = create(namespace, (DFSIgnoreTx) data, builder);
         } else if (type.equals(DFSError.class)) {
-            create(namespace, (DFSError) data, builder);
+            id = create(namespace, (DFSError) data, builder);
         } else {
             throw new MessagingError(String.format("Invalid Message DataType. [type=%s]", type.getCanonicalName()));
         }
@@ -72,18 +75,21 @@ public class ChangeDeltaSerDe {
         }
         delta = builder.build();
         key = delta.getEntity();
+        if (Strings.isNullOrEmpty(id)) {
+            id = UUID.randomUUID().toString();
+        }
         MessageObject<String, DFSChangeDelta> message = new KafkaMessage<>();
-        message.id(String.format("%s:%s:%s", namespace, mode.name(), delta.getTxId()));
-        message.correlationId(key);
+        message.id(String.format("%s:%s:%s:%s", namespace, mode.name(), delta.getTxId(), id));
+        message.correlationId(String.valueOf(delta.getTxId()));
         message.mode(mode);
         message.key(key);
         message.value(delta);
         return message;
     }
 
-    public static void create(@NonNull String namespace,
-                              @NonNull DFSAddFile data,
-                              @NonNull DFSChangeDelta.Builder builder) throws Exception {
+    public static String create(@NonNull String namespace,
+                                @NonNull DFSAddFile data,
+                                @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
@@ -91,11 +97,12 @@ public class ChangeDeltaSerDe {
                 .setEntity(data.getFile().getPath())
                 .setType(data.getClass().getCanonicalName())
                 .setBody(data.toByteString());
+        return String.valueOf(data.getFile().getInodeId());
     }
 
-    public static void create(@NonNull String namespace,
-                              @NonNull DFSAppendFile data,
-                              @NonNull DFSChangeDelta.Builder builder) throws Exception {
+    public static String create(@NonNull String namespace,
+                                @NonNull DFSAppendFile data,
+                                @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
@@ -103,11 +110,12 @@ public class ChangeDeltaSerDe {
                 .setEntity(data.getFile().getPath())
                 .setType(data.getClass().getCanonicalName())
                 .setBody(data.toByteString());
+        return String.valueOf(data.getFile().getInodeId());
     }
 
-    public static void create(@NonNull String namespace,
-                              @NonNull DFSDeleteFile data,
-                              @NonNull DFSChangeDelta.Builder builder) throws Exception {
+    public static String create(@NonNull String namespace,
+                                @NonNull DFSDeleteFile data,
+                                @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
@@ -115,11 +123,12 @@ public class ChangeDeltaSerDe {
                 .setEntity(data.getFile().getPath())
                 .setType(data.getClass().getCanonicalName())
                 .setBody(data.toByteString());
+        return String.valueOf(data.getFile().getInodeId());
     }
 
-    public static void create(@NonNull String namespace,
-                              @NonNull DFSAddBlock data,
-                              @NonNull DFSChangeDelta.Builder builder) throws Exception {
+    public static String create(@NonNull String namespace,
+                                @NonNull DFSAddBlock data,
+                                @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
@@ -127,11 +136,12 @@ public class ChangeDeltaSerDe {
                 .setEntity(data.getFile().getPath())
                 .setType(data.getClass().getCanonicalName())
                 .setBody(data.toByteString());
+        return String.valueOf(data.getFile().getInodeId());
     }
 
-    public static void create(@NonNull String namespace,
-                              @NonNull DFSUpdateBlocks data,
-                              @NonNull DFSChangeDelta.Builder builder) throws Exception {
+    public static String create(@NonNull String namespace,
+                                @NonNull DFSUpdateBlocks data,
+                                @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
@@ -139,11 +149,12 @@ public class ChangeDeltaSerDe {
                 .setEntity(data.getFile().getPath())
                 .setType(data.getClass().getCanonicalName())
                 .setBody(data.toByteString());
+        return String.valueOf(data.getFile().getInodeId());
     }
 
-    public static void create(@NonNull String namespace,
-                              @NonNull DFSTruncateBlock data,
-                              @NonNull DFSChangeDelta.Builder builder) throws Exception {
+    public static String create(@NonNull String namespace,
+                                @NonNull DFSTruncateBlock data,
+                                @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
@@ -151,11 +162,12 @@ public class ChangeDeltaSerDe {
                 .setEntity(data.getFile().getPath())
                 .setType(data.getClass().getCanonicalName())
                 .setBody(data.toByteString());
+        return String.valueOf(data.getFile().getInodeId());
     }
 
-    public static void create(@NonNull String namespace,
-                              @NonNull DFSCloseFile data,
-                              @NonNull DFSChangeDelta.Builder builder) throws Exception {
+    public static String create(@NonNull String namespace,
+                                @NonNull DFSCloseFile data,
+                                @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
@@ -163,11 +175,12 @@ public class ChangeDeltaSerDe {
                 .setEntity(data.getFile().getPath())
                 .setType(data.getClass().getCanonicalName())
                 .setBody(data.toByteString());
+        return String.valueOf(data.getFile().getInodeId());
     }
 
-    public static void create(@NonNull String namespace,
-                              @NonNull DFSRenameFile data,
-                              @NonNull DFSChangeDelta.Builder builder) throws Exception {
+    public static String create(@NonNull String namespace,
+                                @NonNull DFSRenameFile data,
+                                @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
@@ -175,11 +188,12 @@ public class ChangeDeltaSerDe {
                 .setEntity(data.getSrcFile().getPath())
                 .setType(data.getClass().getCanonicalName())
                 .setBody(data.toByteString());
+        return String.valueOf(data.getSrcFile().getInodeId());
     }
 
-    public static void create(@NonNull String namespace,
-                              @NonNull DFSIgnoreTx data,
-                              @NonNull DFSChangeDelta.Builder builder) throws Exception {
+    public static String create(@NonNull String namespace,
+                                @NonNull DFSIgnoreTx data,
+                                @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
@@ -187,11 +201,12 @@ public class ChangeDeltaSerDe {
                 .setEntity(String.format("IGNORE:%s", data.getTransaction().getTransactionId()))
                 .setType(data.getClass().getCanonicalName())
                 .setBody(data.toByteString());
+        return String.valueOf(data.getFile().getInodeId());
     }
 
-    public static void create(@NonNull String namespace,
-                              @NonNull DFSError data,
-                              @NonNull DFSChangeDelta.Builder builder) throws Exception {
+    public static String create(@NonNull String namespace,
+                                @NonNull DFSError data,
+                                @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
@@ -199,6 +214,7 @@ public class ChangeDeltaSerDe {
                 .setEntity("")
                 .setType(data.getClass().getCanonicalName())
                 .setBody(data.toByteString());
+        return UUID.randomUUID().toString();
     }
 
     public static Object parse(@NonNull DFSChangeDelta changeDelta) throws Exception {

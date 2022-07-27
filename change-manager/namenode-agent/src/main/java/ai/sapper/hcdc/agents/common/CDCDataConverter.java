@@ -56,6 +56,8 @@ public class CDCDataConverter {
 
         String uploadPath = String.format("%s/%d", dir, txId);
         PathInfo path = fs.get(uploadPath, replicaState.getEntity().getDomain());
+        fs.mkdirs(path);
+
         return fs.upload(source, path);
     }
 

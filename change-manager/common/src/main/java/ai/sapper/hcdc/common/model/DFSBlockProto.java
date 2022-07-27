@@ -161,16 +161,20 @@ public final class DFSBlockProto {
       "FSTransaction\022=\n\004code\030\002 \002(\0162/.ai_sapper_" +
       "hcdc_common_model.DFSError.ErrorCode\022\017\n\007" +
       "message\030\003 \002(\t\"(\n\tErrorCode\022\020\n\014SYNC_STOPP" +
-      "ED\020\000\022\t\n\005FATAL\020\001\"\225\001\n\rDFSChangeData\022@\n\013tra",
+      "ED\020\000\022\t\n\005FATAL\020\001\"\261\002\n\rDFSChangeData\022@\n\013tra",
       "nsaction\030\001 \002(\0132+.ai_sapper_hcdc_common_m" +
-      "odel.DFSTransaction\022\016\n\006domain\030\002 \002(\t\022\022\n\ne" +
-      "ntityName\030\003 \002(\t\022\014\n\004path\030\004 \002(\t\022\020\n\010filePat" +
-      "h\030\005 \002(\t\"\224\001\n\016DFSChangeDelta\022\021\n\tnamespace\030" +
-      "\001 \002(\t\022\014\n\004txId\030\002 \002(\t\022\016\n\006entity\030\003 \002(\t\022\014\n\004t" +
-      "ype\030\004 \002(\t\022\021\n\ttimestamp\030\005 \002(\004\022\014\n\004body\030\006 \002" +
-      "(\014\022\016\n\006domain\030\007 \001(\t\022\022\n\nentityName\030\010 \001(\tB." +
-      "\n\033ai.sapper.hcdc.common.modelB\rDFSBlockP" +
-      "rotoP\001"
+      "odel.DFSTransaction\0222\n\004file\030\002 \002(\0132$.ai_s" +
+      "apper_hcdc_common_model.DFSFile\022\016\n\006domai" +
+      "n\030\003 \002(\t\022\022\n\nentityName\030\004 \002(\t\022M\n\nfileSyste" +
+      "m\030\005 \002(\01629.ai_sapper_hcdc_common_model.DF" +
+      "SChangeData.FileSystemCode\022\022\n\noutputPath" +
+      "\030\006 \002(\t\"#\n\016FileSystemCode\022\t\n\005LOCAL\020\000\022\006\n\002S" +
+      "3\020\001\"\224\001\n\016DFSChangeDelta\022\021\n\tnamespace\030\001 \002(" +
+      "\t\022\014\n\004txId\030\002 \002(\t\022\016\n\006entity\030\003 \002(\t\022\014\n\004type\030" +
+      "\004 \002(\t\022\021\n\ttimestamp\030\005 \002(\004\022\014\n\004body\030\006 \002(\014\022\016",
+      "\n\006domain\030\007 \001(\t\022\022\n\nentityName\030\010 \001(\tB.\n\033ai" +
+      ".sapper.hcdc.common.modelB\rDFSBlockProto" +
+      "P\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -260,7 +264,7 @@ public final class DFSBlockProto {
           internal_static_ai_sapper_hcdc_common_model_DFSChangeData_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_ai_sapper_hcdc_common_model_DFSChangeData_descriptor,
-              new java.lang.String[] { "Transaction", "Domain", "EntityName", "Path", "FilePath", });
+              new java.lang.String[] { "Transaction", "File", "Domain", "EntityName", "FileSystem", "OutputPath", });
           internal_static_ai_sapper_hcdc_common_model_DFSChangeDelta_descriptor =
             getDescriptor().getMessageTypes().get(14);
           internal_static_ai_sapper_hcdc_common_model_DFSChangeDelta_fieldAccessorTable = new

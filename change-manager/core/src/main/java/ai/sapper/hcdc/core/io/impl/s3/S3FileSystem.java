@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.core.io.impl.s3;
 
 import ai.sapper.hcdc.common.ConfigReader;
+import ai.sapper.hcdc.common.model.DFSChangeData;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.io.FileSystem;
@@ -401,5 +402,13 @@ public class S3FileSystem extends LocalFileSystem {
                 mappings = ConfigReader.readAsMap(get(), CONFIG_DOMAIN_MAP);
             }
         }
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public DFSChangeData.FileSystemCode fileSystemCode() {
+        return DFSChangeData.FileSystemCode.S3;
     }
 }

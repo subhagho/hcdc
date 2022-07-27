@@ -96,6 +96,8 @@ public class DFSBlockState {
                         throw new RuntimeException(
                                 String.format("Invalid Block state: Offset out of sync. [block ID=%d]", blockId));
                     }
+                } else {
+                    delta.setEndOffset(d.getEndOffset());
                 }
             }
             return delta;

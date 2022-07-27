@@ -107,7 +107,7 @@
                     <name>cdc-kafka-queue</name>
                     <mode>Producer</mode>
                     <producer>
-                        <config>src/test/resources/producer.properties</config>
+                        <config>src/test/resources/configs/kafka/producer-hcdc-out.properties</config>
                     </producer>
                     <topic>ha-cluster-cdc</topic>
                 </kafka>
@@ -118,7 +118,7 @@
                     <name>errors-kafka-queue</name>
                     <mode>Producer</mode>
                     <producer>
-                        <config>src/test/resources/producer.properties</config>
+                        <config>src/test/resources/configs/kafka/producer-hcdc-errors.properties</config>
                     </producer>
                     <topic>ha-cluster-errors</topic>
                 </kafka>

@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.core.io.impl.local;
 
+import ai.sapper.hcdc.common.model.DFSChangeData;
 import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.io.FileSystem;
 import ai.sapper.hcdc.core.io.PathInfo;
@@ -162,6 +163,14 @@ public class LocalFileSystem extends FileSystem {
             }
         }
         return false;
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public DFSChangeData.FileSystemCode fileSystemCode() {
+        return DFSChangeData.FileSystemCode.LOCAL;
     }
 
     /**

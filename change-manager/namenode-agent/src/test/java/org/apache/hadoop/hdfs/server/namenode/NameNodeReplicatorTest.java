@@ -18,7 +18,7 @@ class NameNodeReplicatorTest {
             System.setProperty("hadoop.home.dir", "C:/tools/hadoop");
 
             String[] args = {"--image",
-                    "src/test/resources/edits/fsimage_0000000000000014695",
+                    "src/test/resources/edits/logs/fsimage_0000000000000022315",
                     "--config",
                     __CONFIG_FILE,
                     "--tmp",
@@ -27,10 +27,6 @@ class NameNodeReplicatorTest {
 
             ZkStateManager stateManager = NameNodeEnv.stateManager();
             assertNotNull(stateManager);
-            DFSFileState fileState = stateManager
-                    .fileStateHelper()
-                    .get("/test/hcdc/loader/parquet/tags/2022/06/13/11/tags_54.parquet");
-            assertNotNull(fileState);
 
             NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose();
             assertEquals(NameNodeEnv.ENameNEnvState.Disposed, state);

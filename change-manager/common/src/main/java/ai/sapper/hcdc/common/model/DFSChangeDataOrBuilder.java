@@ -20,63 +20,72 @@ public interface DFSChangeDataOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSTransactionOrBuilder getTransactionOrBuilder();
 
-  // required string domain = 2;
+  // required .ai_sapper_hcdc_common_model.DFSFile file = 2;
   /**
-   * <code>required string domain = 2;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   */
+  boolean hasFile();
+  /**
+   * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   */
+  ai.sapper.hcdc.common.model.DFSFile getFile();
+  /**
+   * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   */
+  ai.sapper.hcdc.common.model.DFSFileOrBuilder getFileOrBuilder();
+
+  // required string domain = 3;
+  /**
+   * <code>required string domain = 3;</code>
    */
   boolean hasDomain();
   /**
-   * <code>required string domain = 2;</code>
+   * <code>required string domain = 3;</code>
    */
   java.lang.String getDomain();
   /**
-   * <code>required string domain = 2;</code>
+   * <code>required string domain = 3;</code>
    */
   com.google.protobuf.ByteString
       getDomainBytes();
 
-  // required string entityName = 3;
+  // required string entityName = 4;
   /**
-   * <code>required string entityName = 3;</code>
+   * <code>required string entityName = 4;</code>
    */
   boolean hasEntityName();
   /**
-   * <code>required string entityName = 3;</code>
+   * <code>required string entityName = 4;</code>
    */
   java.lang.String getEntityName();
   /**
-   * <code>required string entityName = 3;</code>
+   * <code>required string entityName = 4;</code>
    */
   com.google.protobuf.ByteString
       getEntityNameBytes();
 
-  // required string path = 4;
+  // required .ai_sapper_hcdc_common_model.DFSChangeData.FileSystemCode fileSystem = 5;
   /**
-   * <code>required string path = 4;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSChangeData.FileSystemCode fileSystem = 5;</code>
    */
-  boolean hasPath();
+  boolean hasFileSystem();
   /**
-   * <code>required string path = 4;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSChangeData.FileSystemCode fileSystem = 5;</code>
    */
-  java.lang.String getPath();
-  /**
-   * <code>required string path = 4;</code>
-   */
-  com.google.protobuf.ByteString
-      getPathBytes();
+  ai.sapper.hcdc.common.model.DFSChangeData.FileSystemCode getFileSystem();
 
-  // required string filePath = 5;
+  // required string outputPath = 6;
   /**
-   * <code>required string filePath = 5;</code>
+   * <code>required string outputPath = 6;</code>
    */
-  boolean hasFilePath();
+  boolean hasOutputPath();
   /**
-   * <code>required string filePath = 5;</code>
+   * <code>required string outputPath = 6;</code>
    */
-  java.lang.String getFilePath();
+  java.lang.String getOutputPath();
   /**
-   * <code>required string filePath = 5;</code>
+   * <code>required string outputPath = 6;</code>
    */
   com.google.protobuf.ByteString
-      getFilePathBytes();
+      getOutputPathBytes();
 }

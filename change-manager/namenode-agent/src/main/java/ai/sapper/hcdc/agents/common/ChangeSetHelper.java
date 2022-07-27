@@ -34,6 +34,9 @@ public class ChangeSetHelper {
                         try (Reader reader = fs.reader(path)) {
                             BlockTransactionDelta delta = changeSet.get(block.getBlockId());
                             reader.seek((int) delta.getStartOffset());
+                            if (delta.getStartOffset() == delta.getEndOffset()) {
+                                throw new IOException(String.format("No data to read. [path=%s]", path.toString()));
+                            }
                             long read = (delta.getEndOffset() - delta.getStartOffset() + 1);
                             while (read > 0) {
                                 int p = (read > bufflen ? bufflen : (int) read);
@@ -44,6 +47,7 @@ public class ChangeSetHelper {
                                 writer.write(buffer, 0, r);
                                 read -= r;
                             }
+                            ret = true;
                         }
                     }
                 }
