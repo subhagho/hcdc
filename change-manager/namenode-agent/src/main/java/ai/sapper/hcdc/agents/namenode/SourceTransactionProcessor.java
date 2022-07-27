@@ -514,7 +514,9 @@ public class SourceTransactionProcessor extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processRenameFileTxMessage(DFSRenameFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+    public void processRenameFileTxMessage(DFSRenameFile data,
+                                           MessageObject<String, DFSChangeDelta> message,
+                                           long txId) throws Exception {
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(data.getSrcFile().getPath());
@@ -537,7 +539,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                     .build();
             DFSFile f = DFSFile.newBuilder()
                     .setPath(data.getSrcFile().getPath())
-                    .setInodeId(data.getSrcFile().getInodeId())
+                    .setInodeId(fileState.getId())
                     .build();
             builder.setTransaction(txb)
                     .setFile(f)
@@ -554,7 +556,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
         DFSFileState nfs = stateManager()
                 .fileStateHelper()
                 .create(data.getDestFile().getPath(),
-                        data.getDestFile().getInodeId(),
+                        fileState.getId(),
                         fileState.getCreatedTime(),
                         fileState.getBlockSize(),
                         state,
@@ -588,9 +590,9 @@ public class SourceTransactionProcessor extends TransactionProcessor {
             stateManager()
                     .replicaStateHelper()
                     .update(rState);
-            DFSCloseFile addFile = HDFSSnapshotProcessor.generateSnapshot(nfs, true, txId);
+            DFSCloseFile closeFile = HDFSSnapshotProcessor.generateSnapshot(nfs, true, txId);
             MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
-                    addFile,
+                    closeFile,
                     DFSCloseFile.class,
                     rState.getEntity().getDomain(),
                     rState.getEntity().getEntity(),
