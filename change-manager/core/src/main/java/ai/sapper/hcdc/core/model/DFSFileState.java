@@ -5,7 +5,9 @@ import lombok.NonNull;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -53,13 +55,13 @@ public class DFSFileState {
         return blocks;
     }
 
-    public List<BlockTransactionDelta> compressedChangeSet(long startTxnId, long endTxnId) {
+    public Map<Long, BlockTransactionDelta> compressedChangeSet(long startTxnId, long endTxnId) {
         if (!blocks.isEmpty()) {
-            List<BlockTransactionDelta> change = new ArrayList<>();
+            Map<Long, BlockTransactionDelta> change = new HashMap<>();
             for (DFSBlockState block : sortedBlocks()) {
                 BlockTransactionDelta c = block.compressedChangeSet(startTxnId, endTxnId);
                 if (c != null) {
-                    change.add(c);
+                    change.put(block.getBlockId(), c);
                 }
             }
             if (!change.isEmpty()) return change;

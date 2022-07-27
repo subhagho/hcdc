@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.core.io.impl.s3;
 
 import ai.sapper.hcdc.common.ConfigReader;
+import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.io.FileSystem;
 import ai.sapper.hcdc.core.io.PathInfo;
@@ -8,15 +9,22 @@ import ai.sapper.hcdc.core.io.Reader;
 import ai.sapper.hcdc.core.io.Writer;
 import ai.sapper.hcdc.core.io.impl.local.LocalFileSystem;
 import com.google.common.base.Strings;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.commons.io.FilenameUtils;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.sync.ResponseTransformer;
+import software.amazon.awssdk.core.waiters.WaiterResponse;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.waiters.S3Waiter;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,11 +35,16 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Getter
+@Accessors(fluent = true)
 public class S3FileSystem extends LocalFileSystem {
     public static final String TEMP_PATH = String.format("%s/HCDC/S3",
             System.getProperty("java.io.tmpdir"));
+    @Getter(AccessLevel.PACKAGE)
     private S3Client client;
+    @Getter(AccessLevel.PACKAGE)
     private String defaultBucket;
+    @Getter(AccessLevel.PACKAGE)
     private Map<String, String> bucketMap = new HashMap<>();
 
     private String findBucket(String domain) {
@@ -306,6 +319,14 @@ public class S3FileSystem extends LocalFileSystem {
         return super.get(path, domain, prefix);
     }
 
+    protected void download(S3PathInfo path) throws IOException {
+        GetObjectRequest request = GetObjectRequest.builder()
+                .bucket(path.bucket())
+                .key(path.path())
+                .build();
+        client.getObject(request, ResponseTransformer.toFile(path.file()));
+    }
+
     /**
      * @param source
      * @param directory
@@ -313,7 +334,37 @@ public class S3FileSystem extends LocalFileSystem {
      */
     @Override
     public PathInfo upload(@NonNull File source, @NonNull PathInfo directory) throws IOException {
-        return super.upload(source, directory);
+        String path = String.format("%s/%s", directory.path(), FilenameUtils.getName(source.getAbsolutePath()));
+        PathInfo dest = get(path, directory.domain(), false);
+        S3PathInfo s3path = checkPath(dest);
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(s3path.bucket())
+                .key(s3path.path())
+                .build();
+        PutObjectResponse response = client().putObject(request, RequestBody.fromFile(s3path.file()));
+        S3Waiter waiter = client().waiter();
+        HeadObjectRequest requestWait = HeadObjectRequest.builder()
+                .bucket(s3path.bucket())
+                .key(s3path.path())
+                .build();
+
+        WaiterResponse<HeadObjectResponse> waiterResponse = waiter.waitUntilObjectExists(requestWait);
+
+        waiterResponse.matched().response().ifPresent(this::debug);
+
+        return dest;
+    }
+
+    private void debug(Object mesg) {
+        DefaultLogger.LOG.debug("RESPONSE: %s", mesg);
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public String tempPath() {
+        return TEMP_PATH;
     }
 
     public static class S3FileSystemConfig extends FileSystemConfig {

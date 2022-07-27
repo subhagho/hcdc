@@ -12,6 +12,7 @@ import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -19,7 +20,7 @@ import java.util.Map;
 
 @Getter
 @Accessors(fluent = true)
-public abstract class FileSystem {
+public abstract class FileSystem implements Closeable {
     private PathInfo root;
 
     public abstract FileSystem init(@NonNull HierarchicalConfiguration<ImmutableNode> config, String pathPrefix) throws IOException;
@@ -47,6 +48,8 @@ public abstract class FileSystem {
     public abstract List<String> find(@NonNull PathInfo path, String dirQuery, @NonNull String fileQuery) throws IOException;
 
     public abstract List<String> findFiles(@NonNull PathInfo path, String dirQuery, @NonNull String fileQuery) throws IOException;
+
+    public abstract String tempPath();
 
     public FileSystem setRootPath(@NonNull PathInfo rootPath) {
         this.root = rootPath;

@@ -30,6 +30,8 @@ import java.util.Map;
 @Setter
 @Accessors(fluent = true)
 public class LocalFileSystem extends FileSystem {
+    public static final String TEMP_PATH = String.format("%s/HCDC/LOCAL",
+            System.getProperty("java.io.tmpdir"));
     private FileSystemConfig fsConfig = null;
 
     /**
@@ -47,7 +49,10 @@ public class LocalFileSystem extends FileSystem {
             }
             LocalPathInfo rp = new LocalPathInfo(fsConfig.rootPath(), "");
             setRootPath(rp);
-
+            File tdir = new File(TEMP_PATH);
+            if (!tdir.exists()) {
+                tdir.mkdirs();
+            }
             return this;
         } catch (Exception ex) {
             throw new IOException(ex);
@@ -227,6 +232,14 @@ public class LocalFileSystem extends FileSystem {
     }
 
     /**
+     * @return
+     */
+    @Override
+    public String tempPath() {
+        return TEMP_PATH;
+    }
+
+    /**
      * @param path
      * @param createDir
      * @param overwrite
@@ -265,6 +278,24 @@ public class LocalFileSystem extends FileSystem {
             throw new IOException(String.format("File not found. [path=%s]", ((LocalPathInfo) path).file().getAbsolutePath()));
         }
         return new LocalReader(path).open();
+    }
+
+    /**
+     * Closes this stream and releases any system resources associated
+     * with it. If the stream is already closed then invoking this
+     * method has no effect.
+     *
+     * <p> As noted in {@link AutoCloseable#close()}, cases where the
+     * close may fail require careful attention. It is strongly advised
+     * to relinquish the underlying resources and to internally
+     * <em>mark</em> the {@code Closeable} as closed, prior to throwing
+     * the {@code IOException}.
+     *
+     * @throws IOException if an I/O error occurs
+     */
+    @Override
+    public void close() throws IOException {
+
     }
 
     public static class LocalFileSystemConfig extends FileSystemConfig {

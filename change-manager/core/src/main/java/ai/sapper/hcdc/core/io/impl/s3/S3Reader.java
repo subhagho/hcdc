@@ -8,8 +8,12 @@ import lombok.NonNull;
 import java.io.IOException;
 
 public class S3Reader extends LocalReader {
-    public S3Reader(@NonNull PathInfo path) {
+    private final S3FileSystem fs;
+
+    public S3Reader(@NonNull S3FileSystem fs,
+                    @NonNull PathInfo path) {
         super(path);
+        this.fs = fs;
     }
 
     /**
@@ -18,6 +22,8 @@ public class S3Reader extends LocalReader {
      */
     @Override
     public Reader open() throws IOException {
+        S3PathInfo s3path = S3FileSystem.checkPath(path());
+        fs.download(s3path);
         return super.open();
     }
 

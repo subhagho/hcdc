@@ -124,6 +124,14 @@ message DFSError {
   required string message = 3;
 }
 
+message DFSChangeData {
+  required DFSTransaction transaction = 1;
+  required string domain = 2;
+  required string entityName = 3;
+  required string path = 4;
+  required string filePath = 5;
+}
+
 message DFSChangeDelta {
   required string namespace = 1;
   required string txId = 2;

@@ -17,11 +17,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class S3Writer extends LocalWriter {
-    private final S3Client client;
+    private final S3FileSystem fs;
 
-    protected S3Writer(@NonNull PathInfo path, @NonNull S3Client client) {
+    protected S3Writer(@NonNull PathInfo path, @NonNull S3FileSystem fs) {
         super(path);
-        this.client = client;
+        this.fs = fs;
     }
 
     /**
@@ -32,7 +32,7 @@ public class S3Writer extends LocalWriter {
     public Writer open(boolean overwrite) throws IOException {
         S3PathInfo s3path = S3FileSystem.checkPath(path());
         if (!overwrite && s3path.exists()) {
-            download(s3path);
+            fs.download(s3path);
             FileOutputStream fos = new FileOutputStream(s3path.file(), true);
             outputStream(fos);
         } else {
@@ -42,13 +42,6 @@ public class S3Writer extends LocalWriter {
         return this;
     }
 
-    private void download(S3PathInfo path) throws IOException {
-        GetObjectRequest request = GetObjectRequest.builder()
-                .bucket(path.bucket())
-                .key(path.path())
-                .build();
-        client.getObject(request, ResponseTransformer.toFile(path.file()));
-    }
 
     /**
      * @param data
@@ -59,6 +52,9 @@ public class S3Writer extends LocalWriter {
      */
     @Override
     public long write(byte[] data, long offset, long length) throws IOException {
+        if (!isOpen()) {
+            throw new IOException(String.format("Writer not open: [path=%s]", path().toString()));
+        }
         return super.write(data, offset, length);
     }
 
@@ -67,6 +63,9 @@ public class S3Writer extends LocalWriter {
      */
     @Override
     public void flush() throws IOException {
+        if (!isOpen()) {
+            throw new IOException(String.format("Writer not open: [path=%s]", path().toString()));
+        }
         super.flush();
     }
 
@@ -78,6 +77,9 @@ public class S3Writer extends LocalWriter {
      */
     @Override
     public long truncate(long offset, long length) throws IOException {
+        if (!isOpen()) {
+            throw new IOException(String.format("Writer not open: [path=%s]", path().toString()));
+        }
         return super.truncate(offset, length);
     }
 
@@ -96,21 +98,13 @@ public class S3Writer extends LocalWriter {
      */
     @Override
     public void close() throws IOException {
-        super.close();
-        S3PathInfo s3path = S3FileSystem.checkPath(path());
-        PutObjectRequest request = PutObjectRequest.builder()
-                .bucket(s3path.bucket())
-                .key(s3path.path())
-                .build();
-        PutObjectResponse response = client.putObject(request, RequestBody.fromFile(s3path.file()));
-        S3Waiter waiter = client.waiter();
-        HeadObjectRequest requestWait = HeadObjectRequest.builder()
-                .bucket(s3path.bucket())
-                .key(s3path.path())
-                .build();
+        if (isOpen()) {
+            super.close();
 
-        WaiterResponse<HeadObjectResponse> waiterResponse = waiter.waitUntilObjectExists(requestWait);
-
-        waiterResponse.matched().response().ifPresent(System.out::println);
+            S3PathInfo s3path = S3FileSystem.checkPath(path());
+            fs.upload(s3path.file(), s3path.parentPathInfo());
+        } else {
+            throw new IOException(String.format("Writer not open: [path=%s]", path().toString()));
+        }
     }
 }
