@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.agents.pipeline;
 
+import ai.sapper.hcdc.agents.common.CDCDataConverter;
 import ai.sapper.hcdc.agents.common.InvalidTransactionError;
 import ai.sapper.hcdc.agents.common.TransactionProcessor;
 import ai.sapper.hcdc.agents.namenode.HDFSSnapshotProcessor;
@@ -493,6 +494,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
                 .get(fileState.getId());
+        long startTxId = rState.getLastReplicatedTx();
         if (message.mode() == MessageObject.MessageMode.Snapshot
                 || (!fileState.hasError() && rState != null && rState.canUpdate())) {
             HDFSBlockReader reader = new HDFSBlockReader(connection.dfsClient(), rState.getHdfsPath());
@@ -508,7 +510,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
             if (!blocks.isEmpty()) {
                 for (DFSBlock block : blocks) {
                     DFSBlockReplicaState bs = rState.get(block.getBlockId());
-                    if (bs == null) {
+                    if (bs == null || !bs.canUpdate()) {
                         throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                                 data.getFile().getPath(),
                                 String.format("Block not registered for update. [path=%s][block ID=%d]",
@@ -524,12 +526,14 @@ public class FileTransactionProcessor extends TransactionProcessor {
                     long size = copyBlock(block, rState, bs, fsb, reader);
                 }
             }
+            CDCDataConverter converter = new CDCDataConverter()
+                    .withFileSystem(fs);
+            converter.convert(fileState, rState, startTxId, txId);
             stateManager().replicationLock().lock();
             try {
                 rState = stateManager()
                         .replicaStateHelper()
                         .get(fileState.getId());
-                rState.clear();
                 rState.setState(EFileState.Finalized);
                 rState.setLastReplicatedTx(txId);
                 rState.setLastReplicationTime(System.currentTimeMillis());
@@ -572,6 +576,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
         fsBlock.close();
 
         blockState.setStoragePath(fsBlock.path().pathConfig());
+        blockState.setState(EFileState.Finalized);
         return data.dataSize();
     }
 

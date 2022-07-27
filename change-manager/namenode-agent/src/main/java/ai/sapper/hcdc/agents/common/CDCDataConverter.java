@@ -29,15 +29,16 @@ public class CDCDataConverter {
 
     public PathInfo convert(@NonNull DFSFileState fileState,
                             @NonNull DFSFileReplicaState replicaState,
-                            long txId) throws IOException {
+                            long startTxId,
+                            long currentTxId) throws IOException {
         Preconditions.checkNotNull(fs);
         Preconditions.checkArgument(replicaState.getEntity() != null);
         Preconditions.checkArgument(replicaState.getStoragePath() != null);
         try {
             for (FormatConverter converter : CONVERTERS) {
                 if (converter.canParse(fileState.getHdfsFilePath())) {
-                    File output = convert(converter, replicaState, txId);
-                    return upload(output, fileState, replicaState, txId);
+                    File output = convert(converter, fileState, replicaState, startTxId, currentTxId);
+                    return upload(output, fileState, replicaState, currentTxId);
                 }
             }
             return null;
@@ -46,7 +47,8 @@ public class CDCDataConverter {
         }
     }
 
-    private PathInfo upload(File source, DFSFileState fileState,
+    private PathInfo upload(File source,
+                            DFSFileState fileState,
                             DFSFileReplicaState replicaState,
                             long txId) throws Exception {
         Preconditions.checkNotNull(fs);
@@ -57,27 +59,65 @@ public class CDCDataConverter {
         return fs.upload(source, path);
     }
 
-    private File convert(FormatConverter converter, DFSFileReplicaState replicaState, long txId) throws Exception {
+    private File convert(FormatConverter converter,
+                         DFSFileState fileState,
+                         DFSFileReplicaState replicaState,
+                         long startTxId,
+                         long currentTxId) throws Exception {
         File source = null;
         if (converter.supportsPartial()) {
-            source = createDeltaFile(replicaState, txId);
+            source = createDeltaFile(fileState, replicaState, startTxId, currentTxId);
         } else {
-            source = createSourceFile(replicaState, txId);
+            source = createSourceFile(fileState, replicaState, currentTxId);
         }
         String fname = FilenameUtils.getName(replicaState.getHdfsPath());
-        String path = String.format("%s/%s-%d.avro", fs.tempPath(), fname, txId);
+        fname = FilenameUtils.removeExtension(fname);
+        String path = String.format("%s/%s-%d.avro", fs.tempPath(), fname, currentTxId);
         return converter.convert(source, new File(path));
     }
 
-    private File createSourceFile(DFSFileReplicaState replicaState, long txId) throws Exception {
+    private File createSourceFile(DFSFileState fileState,
+                                  DFSFileReplicaState replicaState,
+                                  long currentTxId) throws Exception {
         PathInfo source = fs.get(replicaState.getStoragePath());
         if (!source.exists()) {
             throw new IOException(String.format("Change Set not found. [path=%s]", source.toString()));
         }
-        return null;
+        String fname = FilenameUtils.getName(replicaState.getHdfsPath());
+        String path = String.format("%s/%s", fs.tempPath(), fname);
+        File file = new File(path);
+
+        if (!ChangeSetHelper.createChangeSet(fs,
+                fileState,
+                replicaState,
+                file,
+                -1,
+                currentTxId)) {
+            return null;
+        }
+        return file;
     }
 
-    private File createDeltaFile(DFSFileReplicaState replicaState, long txId) throws Exception {
-        return null;
+    private File createDeltaFile(DFSFileState fileState,
+                                 DFSFileReplicaState replicaState,
+                                 long startTxId,
+                                 long currentTxId) throws Exception {
+        PathInfo source = fs.get(replicaState.getStoragePath());
+        if (!source.exists()) {
+            throw new IOException(String.format("Change Set not found. [path=%s]", source.toString()));
+        }
+        String fname = FilenameUtils.getName(replicaState.getHdfsPath());
+        String path = String.format("%s/%s", fs.tempPath(), fname);
+        File file = new File(path);
+
+        if (!ChangeSetHelper.createChangeSet(fs,
+                fileState,
+                replicaState,
+                file,
+                startTxId,
+                currentTxId)) {
+            return null;
+        }
+        return file;
     }
 }

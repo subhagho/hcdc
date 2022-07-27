@@ -55,6 +55,6 @@ public class DFSFileReplicaState {
     }
 
     public void clear() {
-        blocks.clear();
+        // blocks.clear();
     }
 }
