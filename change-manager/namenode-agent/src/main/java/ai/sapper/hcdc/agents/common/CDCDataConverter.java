@@ -3,6 +3,7 @@ package ai.sapper.hcdc.agents.common;
 import ai.sapper.hcdc.agents.common.converter.AvroConverter;
 import ai.sapper.hcdc.agents.common.converter.ParquetConverter;
 import ai.sapper.hcdc.agents.namenode.model.DFSFileReplicaState;
+import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.io.FileSystem;
 import ai.sapper.hcdc.core.io.PathInfo;
 import ai.sapper.hcdc.core.model.DFSFileState;
@@ -74,7 +75,7 @@ public class CDCDataConverter {
         }
         String fname = FilenameUtils.getName(replicaState.getHdfsPath());
         fname = FilenameUtils.removeExtension(fname);
-        String path = String.format("%s/%s-%d.avro", fs.tempPath(), fname, currentTxId);
+        String path = PathUtils.formatPath(String.format("%s/%s-%d.avro", fs.tempPath(), fname, currentTxId));
         return converter.convert(source, new File(path));
     }
 

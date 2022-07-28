@@ -46,6 +46,7 @@ public class S3PathInfo extends LocalPathInfo {
                     fname);
             temp = new File(tempf);
         }
+        file(temp);
     }
 
     protected S3PathInfo(@NonNull S3Client client, @NonNull Map<String, String> config) {
@@ -60,6 +61,7 @@ public class S3PathInfo extends LocalPathInfo {
                     fname);
             temp = new File(tempf);
         }
+        file(temp);
     }
 
     /**
@@ -81,7 +83,7 @@ public class S3PathInfo extends LocalPathInfo {
      */
     @Override
     public boolean isDirectory() throws IOException {
-        return true;
+        return path().endsWith("/");
     }
 
     /**
@@ -99,6 +101,7 @@ public class S3PathInfo extends LocalPathInfo {
      */
     @Override
     public boolean exists() throws IOException {
+        if (path().endsWith("/")) return true;
         try {
             ListObjectsRequest request = ListObjectsRequest
                     .builder()

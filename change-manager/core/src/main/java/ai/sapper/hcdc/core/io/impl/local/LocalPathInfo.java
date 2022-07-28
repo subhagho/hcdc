@@ -3,6 +3,7 @@ package ai.sapper.hcdc.core.io.impl.local;
 import ai.sapper.hcdc.core.io.PathInfo;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.File;
@@ -13,9 +14,10 @@ import java.nio.file.Paths;
 import java.util.Map;
 
 @Getter
+@Setter
 @Accessors(fluent = true)
 public class LocalPathInfo extends PathInfo {
-    private final File file;
+    private File file;
 
     protected LocalPathInfo(@NonNull String path, @NonNull String domain) {
         super(path, domain);

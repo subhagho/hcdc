@@ -29,6 +29,7 @@ import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.waiters.S3Waiter;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -204,8 +205,7 @@ public class S3FileSystem extends LocalFileSystem {
                         .bucket(s3path.bucket())
                         .key(s3path.path())
                         .build();
-                DeleteObjectResponse dres = client.deleteObject(dr);
-                return dres.deleteMarker();
+                client.deleteObject(dr);
             }
         }
         return false;
@@ -307,7 +307,7 @@ public class S3FileSystem extends LocalFileSystem {
     @Override
     public Writer writer(@NonNull PathInfo path, boolean createDir, boolean overwrite) throws IOException {
         Preconditions.checkArgument(path instanceof S3PathInfo);
-        return new S3Writer(path, this);
+        return new S3Writer(path, this).open(overwrite);
     }
 
     /**
@@ -318,7 +318,7 @@ public class S3FileSystem extends LocalFileSystem {
     @Override
     public Reader reader(@NonNull PathInfo path) throws IOException {
         Preconditions.checkArgument(path instanceof S3PathInfo);
-        return new S3Reader(this, path);
+        return new S3Reader(this, path).open();
     }
 
     /**
@@ -343,11 +343,16 @@ public class S3FileSystem extends LocalFileSystem {
     }
 
     protected void download(S3PathInfo path) throws IOException {
+        if (path.temp().exists()) {
+            path.temp().delete();
+        }
         GetObjectRequest request = GetObjectRequest.builder()
                 .bucket(path.bucket())
                 .key(path.path())
                 .build();
-        client.getObject(request, ResponseTransformer.toFile(path.temp()));
+        try (FileOutputStream fos = new FileOutputStream(path.temp())) {
+            client.getObject(request, ResponseTransformer.toOutputStream(fos));
+        }
     }
 
     /**

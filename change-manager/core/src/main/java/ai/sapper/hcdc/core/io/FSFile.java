@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.core.io;
 
+import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.model.DFSBlockState;
 import ai.sapper.hcdc.core.model.DFSFileState;
 import lombok.AccessLevel;
@@ -25,29 +26,31 @@ public class FSFile implements Closeable {
     private int currentIndex = 0;
 
     public FSFile(@NonNull String domain,
-                     @NonNull PathInfo directory,
-                     @NonNull FileSystem fs) {
+                  @NonNull PathInfo directory,
+                  @NonNull FileSystem fs) {
         this.domain = domain;
         this.directory = directory;
         this.fs = fs;
     }
 
     public FSFile(@NonNull DFSFileState fileState,
-                     String domain,
-                     @NonNull FileSystem fs,
-                     boolean create) throws IOException {
+                  String domain,
+                  @NonNull FileSystem fs,
+                  boolean create) throws IOException {
         this.domain = domain;
         this.fs = fs;
-        directory = fs.get(fileState.getHdfsFilePath(), domain);
+        String p = PathUtils.formatPath(String.format("%s/", fileState.getHdfsFilePath()));
+        directory = fs.get(p, domain);
         setup(create, fileState);
     }
 
     public FSFile(@NonNull DFSFileState fileState,
-                     String domain,
-                     @NonNull FileSystem fs) throws IOException {
+                  String domain,
+                  @NonNull FileSystem fs) throws IOException {
         this.domain = domain;
         this.fs = fs;
-        directory = fs.get(fileState.getHdfsFilePath(), domain);
+        String p = PathUtils.formatPath(String.format("%s/", fileState.getHdfsFilePath()));
+        directory = fs.get(p, domain);
         setup(false, fileState);
     }
 

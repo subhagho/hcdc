@@ -8,6 +8,8 @@ public class PathUtils {
     }
 
     public static String formatPath(@NonNull String path) {
-        return path.replaceAll("/\\s*/", "/");
+        path = path.replaceAll("\\\\", "/");
+        path = path.replaceAll("/\\s*/", "/");
+        return path;
     }
 }

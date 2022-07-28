@@ -35,13 +35,13 @@ public class S3Writer extends LocalWriter {
         S3PathInfo s3path = S3FileSystem.checkPath(path());
         if (!overwrite && s3path.exists()) {
             fs.download(s3path);
-            FileOutputStream fos = new FileOutputStream(s3path.temp(), true);
-            outputStream(fos);
+            //FileOutputStream fos = new FileOutputStream(s3path.temp(), true);
+            //outputStream(fos);
         } else {
-            FileOutputStream fos = new FileOutputStream(s3path.temp());
-            outputStream(fos);
+            //FileOutputStream fos = new FileOutputStream(s3path.temp());
+            //outputStream(fos);
         }
-        return this;
+        return super.open(overwrite);
     }
 
 

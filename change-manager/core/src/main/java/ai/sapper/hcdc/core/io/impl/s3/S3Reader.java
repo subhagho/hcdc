@@ -6,6 +6,7 @@ import ai.sapper.hcdc.core.io.impl.local.LocalReader;
 import lombok.NonNull;
 
 import java.io.IOException;
+import java.io.RandomAccessFile;
 
 public class S3Reader extends LocalReader {
     private final S3FileSystem fs;
@@ -24,6 +25,7 @@ public class S3Reader extends LocalReader {
     public Reader open() throws IOException {
         S3PathInfo s3path = S3FileSystem.checkPath(path());
         fs.download(s3path);
+
         return super.open();
     }
 
