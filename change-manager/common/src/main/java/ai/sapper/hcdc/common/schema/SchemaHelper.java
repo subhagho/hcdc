@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.common.schema;
 
+import ai.sapper.hcdc.common.utils.ReflectionUtils;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
@@ -24,6 +25,10 @@ public class SchemaHelper {
             }
             return null;
         }
+    }
+
+    public enum ENumberType {
+        Integer, Long, Float, Double, Short
     }
 
     @Getter
@@ -53,9 +58,15 @@ public class SchemaHelper {
                     || value.compareToIgnoreCase("null") == 0;
         }
 
-        public Field parseField(String name, Object value) {
+        public static Field parseField(String name, Object value) {
+            if (value == null) {
+                return new NullField(name);
+            }
             if (value instanceof String) {
                 String sv = (String) value;
+                if (isNullValue(sv)) {
+                    return new NullField(name);
+                }
                 if (BooleanField.matches(sv)) {
                     return new BooleanField(name);
                 } else if (NumberField.matches(sv)) {
@@ -63,8 +74,28 @@ public class SchemaHelper {
                 } else {
                     return new StringField(name);
                 }
+            } else if (ReflectionUtils.isNumericType(value.getClass())) {
+                NumberField f = new NumberField(name);
+                Class<?> type = value.getClass();
+                if (type.equals(Short.class) || type.equals(short.class)) {
+                    f.numberType = ENumberType.Short;
+                } else if (type.equals(Integer.class) || type.equals(int.class)) {
+                    f.numberType = ENumberType.Integer;
+                } else if (type.equals(Long.class) || type.equals(long.class)) {
+                    f.numberType = ENumberType.Long;
+                } else if (type.equals(Float.class) || type.equals(float.class)) {
+                    f.numberType = ENumberType.Float;
+                } else if (type.equals(Double.class) || type.equals(double.class)) {
+                    f.numberType = ENumberType.Double;
+                } else {
+                    f.numberType = ENumberType.Long;
+                }
             } else if (value instanceof List) {
                 List<?> values = (List<?>) value;
+                return ArrayField.parse(name, values);
+            } else if (value instanceof Map) {
+                Map<?, ?> map = (Map<?, ?>) value;
+                return ObjectField.parse(name, (Map<String, Object>) map);
             }
             return null;
         }
@@ -76,7 +107,7 @@ public class SchemaHelper {
     public static class NullField extends Field {
 
         private NullField(@NonNull String name) {
-            super(name, EDataType.NULL);
+            super((Strings.isNullOrEmpty(name) ? "null" : name), EDataType.NULL);
         }
 
         /**
@@ -131,7 +162,7 @@ public class SchemaHelper {
         private static final String REGEX = "(^\\d+\\)(.?\\d*)$)";
         private static final Pattern PATTERN = Pattern.compile(REGEX);
 
-        private boolean isDecimal = false;
+        private ENumberType numberType;
 
         public NumberField(@NonNull String name) {
             super((Strings.isNullOrEmpty(name) ? "number" : name), EDataType.Number);
@@ -156,11 +187,12 @@ public class SchemaHelper {
             if (m.matches()) {
                 if (m.groupCount() > 1) {
                     if (m.group(2) != null) {
-                        isDecimal = true;
+                        numberType = ENumberType.Double;
                     } else {
                         return false;
                     }
                 }
+                numberType = ENumberType.Long;
                 return true;
             }
             return false;
@@ -251,7 +283,7 @@ public class SchemaHelper {
             fields.add(field);
         }
 
-        public ObjectField parse(String name, @NonNull Map<String, Object> values) {
+        public static ObjectField parse(String name, @NonNull Map<String, Object> values) {
             if (Strings.isNullOrEmpty(name)) {
                 name = "object";
             }
@@ -264,8 +296,6 @@ public class SchemaHelper {
             }
             return of;
         }
-
-
     }
 
     @Getter
@@ -300,9 +330,21 @@ public class SchemaHelper {
             return m.matches();
         }
 
-        public ArrayField parse(@NonNull List<?> value) {
-
-            return null;
+        public static ArrayField parse(String name, @NonNull List<?> values) {
+            ArrayField array = new ArrayField(name);
+            if (values.isEmpty()) {
+                array.innerType = new NullField("");
+            } else {
+                Field type = null;
+                for (Object value : values) {
+                    type = Field.parseField("", value);
+                    if (type != null && !(type instanceof NullField)) {
+                        break;
+                    }
+                }
+                array.innerType = type;
+            }
+            return array;
         }
     }
 }

@@ -2,13 +2,13 @@ package ai.sapper.hcdc.core.io.impl.s3;
 
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.DFSChangeData;
+import ai.sapper.hcdc.common.model.SchemaEntity;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.common.utils.PathUtils;
-import ai.sapper.hcdc.core.io.FileSystem;
-import ai.sapper.hcdc.core.io.PathInfo;
-import ai.sapper.hcdc.core.io.Reader;
-import ai.sapper.hcdc.core.io.Writer;
+import ai.sapper.hcdc.core.io.*;
 import ai.sapper.hcdc.core.io.impl.local.LocalFileSystem;
+import ai.sapper.hcdc.core.model.DFSBlockState;
+import ai.sapper.hcdc.core.model.DFSFileState;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.AccessLevel;
@@ -49,6 +49,11 @@ public class S3FileSystem extends LocalFileSystem {
     @Getter(AccessLevel.PACKAGE)
     private Map<String, String> bucketMap = new HashMap<>();
 
+    public S3FileSystem withClient(@NonNull S3Client client) {
+        this.client = client;
+        return this;
+    }
+
     private String findBucket(String domain) {
         if (bucketMap.containsKey(domain)) {
             return bucketMap.get(domain);
@@ -74,10 +79,12 @@ public class S3FileSystem extends LocalFileSystem {
             if (cfg.mappings != null) {
                 bucketMap = cfg.mappings;
             }
-            Region region = Region.of(cfg.region);
-            client = S3Client.builder()
-                    .region(region)
-                    .build();
+            if (client != null) {
+                Region region = Region.of(cfg.region);
+                client = S3Client.builder()
+                        .region(region)
+                        .build();
+            }
 
             File tdir = new File(TEMP_PATH);
             if (!tdir.exists()) {
@@ -100,6 +107,9 @@ public class S3FileSystem extends LocalFileSystem {
         String bucket = defaultBucket;
         if (bucketMap.containsKey(domain)) {
             bucket = bucketMap.get(domain);
+        }
+        if (root() != null) {
+            path = PathUtils.formatPath(String.format("%s/%s/%s", root().path(), domain, path));
         }
         return new S3PathInfo(this.client, domain, bucket, path);
     }
@@ -319,8 +329,17 @@ public class S3FileSystem extends LocalFileSystem {
      * @throws IOException
      */
     @Override
-    public PathInfo get(@NonNull String path, String domain, boolean prefix) throws IOException {
-        return super.get(path, domain, prefix);
+    public PathInfo get(@NonNull String path,
+                        String domain,
+                        boolean prefix) throws IOException {
+        if (prefix) {
+            return get(path, domain);
+        }
+        String bucket = defaultBucket;
+        if (bucketMap.containsKey(domain)) {
+            bucket = bucketMap.get(domain);
+        }
+        return new S3PathInfo(client, domain, bucket, path);
     }
 
     protected void download(S3PathInfo path) throws IOException {

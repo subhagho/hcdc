@@ -5,8 +5,17 @@ plugins {
 group 'ai.sapper.hcdc'
 version '1.0-SNAPSHOT'
 
-configurations {
-    compile.exclude module: "logback-classic"
+configurations.all {
+    exclude module: "logback-classic"
+    exclude module: "log4j-to-slf4j"
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        if (details.requested.name == 'log4j') {
+            details.useTarget "org.apache.logging.log4j:log4j-slf4j18-impl:2.17.2"
+        }
+        if (details.requested.name == 'commons-logging') {
+            details.useTarget "org.apache.logging.log4j:log4j-slf4j18-impl:2.17.2"
+        }
+    }
 }
 
 dependencies {
@@ -28,5 +37,7 @@ dependencies {
     implementation 'org.apache.kafka:kafka-clients:3.2.0'
     // https://mvnrepository.com/artifact/org.apache.parquet/parquet-avro
     implementation 'org.apache.parquet:parquet-avro:1.12.3'
+    // https://mvnrepository.com/artifact/com.adobe.testing/s3mock-junit5
+    testImplementation 'com.adobe.testing:s3mock-junit5:2.4.13'
 
 }

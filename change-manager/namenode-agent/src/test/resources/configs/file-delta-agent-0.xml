@@ -24,8 +24,10 @@
         <processor>
             <files>
                 <filesystem>
-                    <type>ai.sapper.hcdc.core.io.impl.local.LocalFileSystem</type>
-                    <root>C:\Work\temp\output\fs</root>
+                    <type>ai.sapper.hcdc.core.io.impl.s3.S3FileSystem</type>
+                    <!-- root>C:\Work\temp\output\fs</root -->
+                    <root>/hcdc/replication/</root>
+                    <defaultBucket>hcdc</defaultBucket>
                 </filesystem>
                 <hdfs>source-hdfs</hdfs>
                 <sender>

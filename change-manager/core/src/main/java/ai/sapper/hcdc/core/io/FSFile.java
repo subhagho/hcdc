@@ -24,7 +24,7 @@ public class FSFile implements Closeable {
     @Getter(AccessLevel.NONE)
     private int currentIndex = 0;
 
-    protected FSFile(@NonNull String domain,
+    public FSFile(@NonNull String domain,
                      @NonNull PathInfo directory,
                      @NonNull FileSystem fs) {
         this.domain = domain;
@@ -32,7 +32,7 @@ public class FSFile implements Closeable {
         this.fs = fs;
     }
 
-    protected FSFile(@NonNull DFSFileState fileState,
+    public FSFile(@NonNull DFSFileState fileState,
                      String domain,
                      @NonNull FileSystem fs,
                      boolean create) throws IOException {
@@ -42,7 +42,7 @@ public class FSFile implements Closeable {
         setup(create, fileState);
     }
 
-    protected FSFile(@NonNull DFSFileState fileState,
+    public FSFile(@NonNull DFSFileState fileState,
                      String domain,
                      @NonNull FileSystem fs) throws IOException {
         this.domain = domain;

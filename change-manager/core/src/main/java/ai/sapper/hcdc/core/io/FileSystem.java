@@ -81,31 +81,6 @@ public abstract class FileSystem implements Closeable {
         }
     }
 
-    public FSFile create(@NonNull DFSFileState fileState,
-                         @NonNull FileSystem fs,
-                         @NonNull SchemaEntity entity) throws IOException {
-        return new FSFile(fileState, entity.getDomain(), fs, true);
-    }
-
-    public FSBlock create(@NonNull PathInfo dir,
-                          @NonNull DFSBlockState blockState,
-                          @NonNull FileSystem fs,
-                          @NonNull SchemaEntity entity) throws IOException {
-        return new FSBlock(blockState, dir, fs, entity.getDomain(), true);
-    }
-
-    public FSFile get(@NonNull DFSFileState fileState,
-                      @NonNull FileSystem fs,
-                      @NonNull SchemaEntity entity) throws IOException {
-        return new FSFile(fileState, entity.getDomain(), fs, false);
-    }
-
-    public FSBlock get(@NonNull PathInfo dir,
-                       @NonNull DFSBlockState blockState,
-                       @NonNull FileSystem fs,
-                       @NonNull SchemaEntity entity) throws IOException {
-        return new FSBlock(blockState, dir, fs, entity.getDomain(), false);
-    }
 
     public abstract Writer writer(@NonNull PathInfo path, boolean createDir, boolean overwrite) throws IOException;
 
@@ -115,6 +90,28 @@ public abstract class FileSystem implements Closeable {
 
     public Writer writer(@NonNull PathInfo path) throws IOException {
         return writer(path, false, false);
+    }
+
+    public FSFile create(@NonNull DFSFileState fileState,
+                         @NonNull SchemaEntity entity) throws IOException {
+        return new FSFile(fileState, entity.getDomain(), this, true);
+    }
+
+    public FSBlock create(@NonNull PathInfo dir,
+                          @NonNull DFSBlockState blockState,
+                          @NonNull SchemaEntity entity) throws IOException {
+        return new FSBlock(blockState, dir, this, entity.getDomain(), true);
+    }
+
+    public FSFile get(@NonNull DFSFileState fileState,
+                      @NonNull SchemaEntity entity) throws IOException {
+        return new FSFile(fileState, entity.getDomain(), this, false);
+    }
+
+    public FSBlock get(@NonNull PathInfo dir,
+                       @NonNull DFSBlockState blockState,
+                       @NonNull SchemaEntity entity) throws IOException {
+        return new FSBlock(blockState, dir, this, entity.getDomain(), false);
     }
 
     public abstract Reader reader(@NonNull PathInfo path) throws IOException;
@@ -137,5 +134,9 @@ public abstract class FileSystem implements Closeable {
             }
             rootPath = get().getString(CONFIG_ROOT);
         }
+    }
+
+    public static interface FileSystemMocker {
+        FileSystem create(@NonNull HierarchicalConfiguration<ImmutableNode> config) throws Exception;
     }
 }

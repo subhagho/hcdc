@@ -20,12 +20,12 @@ public class FileSystemHelper {
             throw new IOException(String.format("Specified path is not a directory. [path=%s]", dir.path()));
         }
 
-        return fs.create(dir, blockState, fs, entity);
+        return fs.create(dir, blockState, entity);
     }
 
     public static FSFile createFile(@NonNull DFSFileState fileState,
                                     @NonNull FileSystem fs,
                                     @NonNull SchemaEntity entity) throws IOException {
-        return fs.create(fileState, fs, entity);
+        return fs.create(fileState, entity);
     }
 }

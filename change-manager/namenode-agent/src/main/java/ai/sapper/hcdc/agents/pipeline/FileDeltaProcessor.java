@@ -23,16 +23,25 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+@Getter
+@Accessors(fluent = true)
 public class FileDeltaProcessor extends ChangeDeltaProcessor {
     private static Logger LOG = LoggerFactory.getLogger(FileDeltaProcessor.class);
-    private FileTransactionProcessor processor;
+    private FileTransactionProcessor processor = new FileTransactionProcessor();
     private long receiveBatchTimeout = 1000;
     private FileSystem fs;
     private FileDeltaProcessorConfig config;
     private HdfsConnection connection;
+    private FileSystem.FileSystemMocker fileSystemMocker;
+
 
     public FileDeltaProcessor(@NonNull ZkStateManager stateManager) {
         super(stateManager);
+    }
+
+    public FileDeltaProcessor withMockFileSystem(@NonNull FileSystem.FileSystemMocker fileSystemMocker) {
+        this.fileSystemMocker = fileSystemMocker;
+        return this;
     }
 
     /**
@@ -57,12 +66,15 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
             }
             if (!connection.isConnected()) connection.connect();
 
-            Class<? extends FileSystem> fsc = (Class<? extends FileSystem>) Class.forName(config.fsType);
-            fs = fsc.newInstance();
-            fs.init(config.config(), FileDeltaProcessorConfig.Constants.CONFIG_PATH_FS);
+            if (fileSystemMocker == null) {
+                Class<? extends FileSystem> fsc = (Class<? extends FileSystem>) Class.forName(config.fsType);
+                fs = fsc.newInstance();
+                fs.init(config.config(), FileDeltaProcessorConfig.Constants.CONFIG_PATH_FS);
+            } else {
+                fs = fileSystemMocker.create(config.config());
+            }
 
-            processor = (FileTransactionProcessor) new FileTransactionProcessor()
-                    .withFileSystem(fs)
+            processor.withFileSystem(fs)
                     .withHdfsConnection(connection)
                     .withSenderQueue(sender())
                     .withStateManager(stateManager())
@@ -87,13 +99,23 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
      */
     @Override
     public void run() {
+        try {
+            run(false);
+        } catch (Exception ex) {
+            LOG.error(ex.getLocalizedMessage(), ex);
+        }
+    }
+
+    public void run(boolean once) throws Exception {
         Preconditions.checkState(sender() != null);
         Preconditions.checkState(receiver() != null);
         Preconditions.checkState(errorSender() != null);
+        Preconditions.checkArgument(fs != null);
         try {
             while (NameNodeEnv.get().state().isAvailable()) {
                 List<MessageObject<String, DFSChangeDelta>> batch = receiver().nextBatch(receiveBatchTimeout);
                 if (batch == null || batch.isEmpty()) {
+                    if (once) break;
                     Thread.sleep(receiveBatchTimeout);
                     continue;
                 }

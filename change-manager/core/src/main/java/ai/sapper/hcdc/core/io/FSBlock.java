@@ -29,7 +29,7 @@ public class FSBlock implements Closeable {
     @Getter(AccessLevel.NONE)
     private Reader reader = null;
 
-    protected FSBlock(@NonNull PathInfo directory,
+    public FSBlock(@NonNull PathInfo directory,
                       long blockId,
                       long previousBlockId,
                       @NonNull FileSystem fs,
@@ -48,7 +48,7 @@ public class FSBlock implements Closeable {
         return String.format("%d-%s.%s", blockId, p, EXT_BLOCK_FILE);
     }
 
-    protected FSBlock(@NonNull DFSBlockState blockState,
+    public FSBlock(@NonNull DFSBlockState blockState,
                       @NonNull PathInfo directory,
                       @NonNull FileSystem fs,
                       String domain) throws IOException {
@@ -61,7 +61,7 @@ public class FSBlock implements Closeable {
         setup(blockState, false);
     }
 
-    protected FSBlock(@NonNull DFSBlockState blockState,
+    public FSBlock(@NonNull DFSBlockState blockState,
                       @NonNull PathInfo directory,
                       @NonNull FileSystem fs,
                       String domain,

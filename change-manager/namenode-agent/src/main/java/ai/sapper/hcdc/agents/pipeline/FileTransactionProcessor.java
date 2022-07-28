@@ -148,7 +148,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
                 .replicaStateHelper()
                 .get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
-            FSFile file = fs.get(fileState, fs, schemaEntity);
+            FSFile file = fs.get(fileState, schemaEntity);
             if (file == null) {
                 throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                         data.getFile().getPath(),
@@ -213,7 +213,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
                 .replicaStateHelper()
                 .get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
-            FSFile file = fs.get(fileState, fs, schemaEntity);
+            FSFile file = fs.get(fileState, schemaEntity);
             if (file == null) {
                 throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                         data.getFile().getPath(),
@@ -277,7 +277,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
                 .replicaStateHelper()
                 .get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.canUpdate()) {
-            FSFile file = fs.get(fileState, fs, schemaEntity);
+            FSFile file = fs.get(fileState, schemaEntity);
             if (file == null) {
                 throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                         data.getFile().getPath(),
@@ -365,7 +365,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
                 .replicaStateHelper()
                 .get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.canUpdate()) {
-            FSFile file = fs.get(fileState, fs, schemaEntity);
+            FSFile file = fs.get(fileState, schemaEntity);
             if (file == null) {
                 throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                         data.getFile().getPath(),
@@ -487,7 +487,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
                 || (!fileState.hasError() && rState != null && rState.canUpdate())) {
             HDFSBlockReader reader = new HDFSBlockReader(connection.dfsClient(), rState.getHdfsPath());
             reader.init();
-            FSFile file = fs.get(fileState, fs, schemaEntity);
+            FSFile file = fs.get(fileState, schemaEntity);
             if (file == null) {
                 throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                         data.getFile().getPath(),
