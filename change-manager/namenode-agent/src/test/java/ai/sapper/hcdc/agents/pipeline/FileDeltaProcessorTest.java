@@ -23,7 +23,11 @@ class FileDeltaProcessorTest {
 
     @RegisterExtension
     static final S3MockExtension S3_MOCK =
-            S3MockExtension.builder().silent().withSecureConnection(false).build();
+            S3MockExtension.builder()
+                    .silent()
+                    .withSecureConnection(false)
+                    .withRootFolder(String.format("%s/s3mock/", System.getProperty("java.io.tmpdir")))
+                    .build();
 
     @Test
     void run() {

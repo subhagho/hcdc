@@ -52,7 +52,7 @@ public class CDCDataConverter {
                             DFSFileReplicaState replicaState,
                             long txId) throws Exception {
         Preconditions.checkNotNull(fs);
-        String dir = FilenameUtils.getPath(fileState.getHdfsFilePath());
+        String dir = FilenameUtils.getFullPath(fileState.getHdfsFilePath());
 
         String uploadPath = String.format("%s/%d", dir, txId);
         PathInfo path = fs.get(uploadPath, replicaState.getEntity().getDomain());

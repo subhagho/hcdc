@@ -7,6 +7,7 @@ import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
+import org.apache.commons.io.FilenameUtils;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsRequest;
@@ -15,6 +16,9 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -26,7 +30,7 @@ public class S3PathInfo extends LocalPathInfo {
 
     private final S3Client client;
     private final String bucket;
-    private final File temp;
+    private File temp;
 
     protected S3PathInfo(@NonNull S3Client client,
                          @NonNull String domain,
@@ -35,10 +39,13 @@ public class S3PathInfo extends LocalPathInfo {
         super(path, domain);
         this.client = client;
         this.bucket = bucket;
-        String tempf = String.format("%s/%s.tmp",
-                S3FileSystem.TEMP_PATH,
-                UUID.randomUUID().toString());
-        temp = new File(tempf);
+        String fname = FilenameUtils.getName(path());
+        if (!Strings.isNullOrEmpty(fname)) {
+            String tempf = String.format("%s/%s",
+                    S3FileSystem.TEMP_PATH,
+                    fname);
+            temp = new File(tempf);
+        }
     }
 
     protected S3PathInfo(@NonNull S3Client client, @NonNull Map<String, String> config) {
@@ -46,10 +53,13 @@ public class S3PathInfo extends LocalPathInfo {
         this.client = client;
         bucket = config.get(CONFIG_KEY_BUCKET);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(bucket));
-        String tempf = String.format("%s/%s.tmp",
-                S3FileSystem.TEMP_PATH,
-                UUID.randomUUID().toString());
-        temp = new File(tempf);
+        String fname = FilenameUtils.getName(path());
+        if (!Strings.isNullOrEmpty(fname)) {
+            String tempf = String.format("%s/%s",
+                    S3FileSystem.TEMP_PATH,
+                    fname);
+            temp = new File(tempf);
+        }
     }
 
     /**
@@ -57,7 +67,12 @@ public class S3PathInfo extends LocalPathInfo {
      */
     @Override
     public PathInfo parentPathInfo() {
-        return super.parentPathInfo();
+        String path = path();
+        if (path.endsWith("/")) {
+            path = path.substring(0, path.length() - 2);
+        }
+        String p = FilenameUtils.getFullPath(path);
+        return new S3PathInfo(client, domain(), bucket, p);
     }
 
     /**
@@ -98,7 +113,7 @@ public class S3PathInfo extends LocalPathInfo {
         } catch (Exception ex) {
             return false;
         }
-        return true;
+        return false;
     }
 
     /**
@@ -107,7 +122,13 @@ public class S3PathInfo extends LocalPathInfo {
      */
     @Override
     public long size() throws IOException {
-        return 0L;
+        if (temp.exists()) {
+            Path p = Paths.get(temp.toURI());
+            dataSize(Files.size(p));
+        } else {
+            dataSize(0);
+        }
+        return dataSize();
     }
 
     /**

@@ -79,7 +79,7 @@ public class S3FileSystem extends LocalFileSystem {
             if (cfg.mappings != null) {
                 bucketMap = cfg.mappings;
             }
-            if (client != null) {
+            if (client == null) {
                 Region region = Region.of(cfg.region);
                 client = S3Client.builder()
                         .region(region)
@@ -268,7 +268,7 @@ public class S3FileSystem extends LocalFileSystem {
             List<String> out = new ArrayList<>();
             for (String p : paths) {
                 String fname = FilenameUtils.getName(p);
-                String dir = FilenameUtils.getPath(p);
+                String dir = FilenameUtils.getFullPath(p);
                 Matcher dm = null;
                 if (dp != null) {
                     dm = dp.matcher(dir);
@@ -357,14 +357,19 @@ public class S3FileSystem extends LocalFileSystem {
      */
     @Override
     public PathInfo upload(@NonNull File source, @NonNull PathInfo directory) throws IOException {
+        S3PathInfo s3dir = (S3PathInfo) directory;
         String path = String.format("%s/%s", directory.path(), FilenameUtils.getName(source.getAbsolutePath()));
         PathInfo dest = get(path, directory.domain(), false);
         S3PathInfo s3path = checkPath(dest);
+        if (s3path.exists()) {
+            delete(s3path);
+        }
         PutObjectRequest request = PutObjectRequest.builder()
                 .bucket(s3path.bucket())
                 .key(s3path.path())
                 .build();
-        PutObjectResponse response = client().putObject(request, RequestBody.fromFile(s3path.file()));
+        PutObjectResponse response = client()
+                .putObject(request, RequestBody.fromFile(source));
         S3Waiter waiter = client().waiter();
         HeadObjectRequest requestWait = HeadObjectRequest.builder()
                 .bucket(s3path.bucket())

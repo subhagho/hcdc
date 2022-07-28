@@ -15,6 +15,17 @@ configurations.all {
         if (details.requested.name == 'commons-logging') {
             details.useTarget "org.apache.logging.log4j:log4j-slf4j18-impl:2.17.2"
         }
+
+    }
+}
+configurations.testRuntimeClasspath {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        if (details.requested.name == 'servlet-api') {
+            details.useTarget "javax.servlet:javax.servlet-api:3.1.0"
+        }
+        if (details.requested.name == 'gson') {
+            details.useTarget "com.google.code.gson:gson:2.9.0"
+        }
     }
 }
 
@@ -26,7 +37,7 @@ dependencies {
     implementation 'org.apache.hadoop:hadoop-client:2.10.2'
     implementation 'org.apache.hadoop:hadoop-hdfs:2.10.2'
 
-    implementation ('org.springframework.boot:spring-boot-starter-web:2.7.0') {
+    implementation('org.springframework.boot:spring-boot-starter-web:2.7.0') {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
         exclude group: 'ch.qos.logback', module: 'logback-classic'
         exclude group: 'org.apache.logging.log4j', module: 'log4j-to-slf4j'
@@ -38,6 +49,8 @@ dependencies {
     // https://mvnrepository.com/artifact/org.apache.parquet/parquet-avro
     implementation 'org.apache.parquet:parquet-avro:1.12.3'
     // https://mvnrepository.com/artifact/com.adobe.testing/s3mock-junit5
-    testImplementation 'com.adobe.testing:s3mock-junit5:2.1.36'
+    testImplementation 'com.adobe.testing:s3mock-junit5:2.4.13'
+    // https://mvnrepository.com/artifact/com.google.code.gson/gson
+    testImplementation 'com.google.code.gson:gson:2.9.0'
 
 }

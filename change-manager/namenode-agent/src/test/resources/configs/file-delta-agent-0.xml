@@ -27,6 +27,7 @@
                     <type>ai.sapper.hcdc.core.io.impl.s3.S3FileSystem</type>
                     <!-- root>C:\Work\temp\output\fs</root -->
                     <root>/hcdc/replication/</root>
+                    <region>US_WEST_2</region>
                     <defaultBucket>hcdc</defaultBucket>
                 </filesystem>
                 <hdfs>source-hdfs</hdfs>
