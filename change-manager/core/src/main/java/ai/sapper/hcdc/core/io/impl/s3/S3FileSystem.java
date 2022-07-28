@@ -9,6 +9,7 @@ import ai.sapper.hcdc.core.io.PathInfo;
 import ai.sapper.hcdc.core.io.Reader;
 import ai.sapper.hcdc.core.io.Writer;
 import ai.sapper.hcdc.core.io.impl.local.LocalFileSystem;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -295,7 +296,8 @@ public class S3FileSystem extends LocalFileSystem {
      */
     @Override
     public Writer writer(@NonNull PathInfo path, boolean createDir, boolean overwrite) throws IOException {
-        return super.writer(path, createDir, overwrite);
+        Preconditions.checkArgument(path instanceof S3PathInfo);
+        return new S3Writer(path, this);
     }
 
     /**
@@ -305,7 +307,8 @@ public class S3FileSystem extends LocalFileSystem {
      */
     @Override
     public Reader reader(@NonNull PathInfo path) throws IOException {
-        return super.reader(path);
+        Preconditions.checkArgument(path instanceof S3PathInfo);
+        return new S3Reader(this, path);
     }
 
     /**
@@ -325,7 +328,7 @@ public class S3FileSystem extends LocalFileSystem {
                 .bucket(path.bucket())
                 .key(path.path())
                 .build();
-        client.getObject(request, ResponseTransformer.toFile(path.file()));
+        client.getObject(request, ResponseTransformer.toFile(path.temp()));
     }
 
     /**

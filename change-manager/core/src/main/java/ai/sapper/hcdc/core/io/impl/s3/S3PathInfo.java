@@ -25,7 +25,6 @@ public class S3PathInfo extends LocalPathInfo {
     public static final String CONFIG_KEY_BUCKET = "bucket";
 
     private final S3Client client;
-
     private final String bucket;
     private final File temp;
 

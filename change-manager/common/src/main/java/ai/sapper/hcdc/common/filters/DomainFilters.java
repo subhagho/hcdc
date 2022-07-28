@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.common.model.filters;
+package ai.sapper.hcdc.common.filters;
 
 import lombok.Getter;
 import lombok.NonNull;

@@ -2,6 +2,7 @@ package ai.sapper.hcdc.core.io.impl.s3;
 
 import ai.sapper.hcdc.core.io.PathInfo;
 import ai.sapper.hcdc.core.io.Writer;
+import ai.sapper.hcdc.core.io.impl.local.LocalPathInfo;
 import ai.sapper.hcdc.core.io.impl.local.LocalWriter;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
@@ -13,6 +14,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.waiters.S3Waiter;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -33,10 +35,10 @@ public class S3Writer extends LocalWriter {
         S3PathInfo s3path = S3FileSystem.checkPath(path());
         if (!overwrite && s3path.exists()) {
             fs.download(s3path);
-            FileOutputStream fos = new FileOutputStream(s3path.file(), true);
+            FileOutputStream fos = new FileOutputStream(s3path.temp(), true);
             outputStream(fos);
         } else {
-            FileOutputStream fos = new FileOutputStream(s3path.file());
+            FileOutputStream fos = new FileOutputStream(s3path.temp());
             outputStream(fos);
         }
         return this;
@@ -102,7 +104,7 @@ public class S3Writer extends LocalWriter {
             super.close();
 
             S3PathInfo s3path = S3FileSystem.checkPath(path());
-            fs.upload(s3path.file(), s3path.parentPathInfo());
+            fs.upload(s3path.temp(), s3path.parentPathInfo());
         } else {
             throw new IOException(String.format("Writer not open: [path=%s]", path().toString()));
         }
