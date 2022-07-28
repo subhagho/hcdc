@@ -125,7 +125,7 @@ public class EditLogProcessor implements Runnable {
             throw new Exception(String.format("Current Edits file not found. [dir=%s]",
                     editsDir.getAbsolutePath()));
         }
-        long ltx = DFSEditsFileFinder.findSeenTxID(editsDir.getAbsolutePath());
+        long ltx = DFSEditsFileFinder.findSeenTxID(getPathNnCurrentDir(editsDir.getAbsolutePath()));
         LOG.info(String.format("Current Edits File: %s, Last Seen TXID=%d", cf, ltx));
 
         return txId;

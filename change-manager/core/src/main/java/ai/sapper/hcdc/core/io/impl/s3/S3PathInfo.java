@@ -103,17 +103,21 @@ public class S3PathInfo extends LocalPathInfo {
             ListObjectsRequest request = ListObjectsRequest
                     .builder()
                     .bucket(bucket())
-                    .prefix(path())
+                    .prefix(parent())
                     .build();
-
             ListObjectsResponse res = client.listObjects(request);
             List<S3Object> objects = res.contents();
-            if (objects != null && !objects.isEmpty())
-                return true;
+            if (objects != null && !objects.isEmpty()) {
+                for (S3Object so : objects) {
+                    if (so.key().compareTo(path()) == 0) {
+                        return true;
+                    }
+                }
+            }
+            return false;
         } catch (Exception ex) {
             return false;
         }
-        return false;
     }
 
     /**
