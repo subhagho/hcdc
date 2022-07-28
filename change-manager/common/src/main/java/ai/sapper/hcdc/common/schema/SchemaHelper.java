@@ -1,6 +1,9 @@
 package ai.sapper.hcdc.common.schema;
 
+import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.common.utils.ReflectionUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
@@ -15,7 +18,7 @@ import java.util.regex.Pattern;
 
 public class SchemaHelper {
     public enum EDataType {
-        NULL, String, Number, Object, Array, Boolean;
+        NULL, String, Number, Object, Array, Boolean, Enum;
 
         public static EDataType parse(String value) {
             for (EDataType dt : EDataType.values()) {
@@ -37,7 +40,7 @@ public class SchemaHelper {
     public static abstract class Field {
         private final String name;
         private final EDataType type;
-        private boolean nullable = true;
+        private boolean nullable = false;
 
         private Field(@NonNull String name, @NonNull EDataType type) {
             this.name = name;
@@ -46,16 +49,31 @@ public class SchemaHelper {
 
         public abstract boolean check(String value);
 
-        public String jsonSchema() {
-            StringBuilder builder = new StringBuilder();
-            builder.append(String.format("\"%s\":", name));
-            builder.append(String.format("{ \"type\": \"%s\" }", type.name().toLowerCase()));
-            return null;
+        public String avroSchema() {
+            return String.format("{\"name\": \"%s\", \"type\": \"%s\"}", name(), avroType());
         }
+
+        public abstract String avroType();
+
+        public abstract boolean matches(@NonNull Field target);
 
         public static boolean isNullValue(String value) {
             return Strings.isNullOrEmpty(value)
                     || value.compareToIgnoreCase("null") == 0;
+        }
+
+        public static Field parseField(String name, Class<?> type) {
+            if (type.equals(String.class)) {
+                return new StringField(name);
+            } else if (ReflectionUtils.isNumericType(type)) {
+                NumberField f = new NumberField(name);
+                f.fromJavaType(type);
+                return f;
+            } else if (type.equals(Boolean.class)
+                    || type.equals(boolean.class)) {
+                return new BooleanField(name);
+            }
+            return null;
         }
 
         public static Field parseField(String name, Object value) {
@@ -76,26 +94,16 @@ public class SchemaHelper {
                 }
             } else if (ReflectionUtils.isNumericType(value.getClass())) {
                 NumberField f = new NumberField(name);
-                Class<?> type = value.getClass();
-                if (type.equals(Short.class) || type.equals(short.class)) {
-                    f.numberType = ENumberType.Short;
-                } else if (type.equals(Integer.class) || type.equals(int.class)) {
-                    f.numberType = ENumberType.Integer;
-                } else if (type.equals(Long.class) || type.equals(long.class)) {
-                    f.numberType = ENumberType.Long;
-                } else if (type.equals(Float.class) || type.equals(float.class)) {
-                    f.numberType = ENumberType.Float;
-                } else if (type.equals(Double.class) || type.equals(double.class)) {
-                    f.numberType = ENumberType.Double;
-                } else {
-                    f.numberType = ENumberType.Long;
-                }
+                f.fromJavaType(value.getClass());
+                return f;
+            } else if (value.getClass().equals(Boolean.class)
+                    || value.getClass().equals(boolean.class)) {
+                return new BooleanField(name);
             } else if (value instanceof List) {
                 List<?> values = (List<?>) value;
                 return ArrayField.parse(name, values);
             } else if (value instanceof Map) {
-                Map<?, ?> map = (Map<?, ?>) value;
-                return ObjectField.parse(name, (Map<String, Object>) map);
+                return ObjectField.parse(name, (Map<String, Object>) value);
             }
             return null;
         }
@@ -117,6 +125,34 @@ public class SchemaHelper {
         @Override
         public boolean check(String value) {
             return isNullValue(value);
+        }
+
+        /**
+         * @return
+         */
+        @Override
+        public String avroSchema() {
+            return String.format("{\"name\": \"%s\", \"type\": \"%s\"}", name(), EDataType.String.name().toLowerCase());
+        }
+
+        /**
+         * @return
+         */
+        @Override
+        public String avroType() {
+            return EDataType.String.name().toLowerCase();
+        }
+
+        /**
+         * @param target
+         * @return
+         */
+        @Override
+        public boolean matches(@NonNull Field target) {
+            if (target instanceof NullField) {
+                return name().compareTo(target.name) == 0;
+            }
+            return false;
         }
 
         public static boolean matches(String value) {
@@ -153,6 +189,23 @@ public class SchemaHelper {
             Matcher m = PATTERN.matcher(value);
             return m.matches();
         }
+
+        /**
+         * @return
+         */
+        @Override
+        public String avroType() {
+            return type().name().toLowerCase();
+        }
+
+        @Override
+        public boolean matches(@NonNull Field target) {
+            if (target instanceof StringField) {
+                return name().compareTo(target.name) == 0;
+            }
+            return false;
+        }
+
     }
 
     @Getter
@@ -171,6 +224,24 @@ public class SchemaHelper {
         public static boolean matches(String value) {
             Matcher m = PATTERN.matcher(value);
             return m.matches();
+        }
+
+        public NumberField fromJavaType(Class<?> type) {
+            Preconditions.checkArgument(ReflectionUtils.isNumericType(type));
+            if (type.equals(Short.class) || type.equals(short.class)) {
+                numberType = ENumberType.Short;
+            } else if (type.equals(Integer.class) || type.equals(int.class)) {
+                numberType = ENumberType.Integer;
+            } else if (type.equals(Long.class) || type.equals(long.class)) {
+                numberType = ENumberType.Long;
+            } else if (type.equals(Float.class) || type.equals(float.class)) {
+                numberType = ENumberType.Float;
+            } else if (type.equals(Double.class) || type.equals(double.class)) {
+                numberType = ENumberType.Double;
+            } else {
+                numberType = ENumberType.Long;
+            }
+            return this;
         }
 
         /**
@@ -194,6 +265,31 @@ public class SchemaHelper {
                 }
                 numberType = ENumberType.Long;
                 return true;
+            }
+            return false;
+        }
+
+        /**
+         * @return
+         */
+        @Override
+        public String avroType() {
+            switch (numberType) {
+                case Integer:
+                case Short:
+                    return "int";
+                case Long:
+                case Float:
+                case Double:
+                    return numberType.name().toLowerCase();
+            }
+            return ENumberType.Long.name().toLowerCase();
+        }
+
+        @Override
+        public boolean matches(@NonNull Field target) {
+            if (target instanceof NumberField && numberType == ((NumberField) target).numberType) {
+                return name().compareTo(target.name) == 0;
             }
             return false;
         }
@@ -237,6 +333,23 @@ public class SchemaHelper {
             }
             return matches(value);
         }
+
+        /**
+         * @return
+         */
+        @Override
+        public String avroType() {
+            return type().name().toLowerCase();
+        }
+
+        @Override
+        public boolean matches(@NonNull Field target) {
+            if (target instanceof BooleanField) {
+                return name().compareTo(target.name) == 0;
+            }
+            return false;
+        }
+
     }
 
     @Getter
@@ -246,6 +359,7 @@ public class SchemaHelper {
         private static final String REGEX = "^\\{\\s*(.*\\r*\\n*\\s*)}$";
         private static final Pattern PATTERN = Pattern.compile(REGEX);
         private List<Field> fields;
+        private String namespace = "ai.sapper.hcdc";
 
         public ObjectField(@NonNull String name) {
             super((Strings.isNullOrEmpty(name) ? "object" : name), EDataType.Object);
@@ -272,6 +386,14 @@ public class SchemaHelper {
             return m.matches();
         }
 
+        /**
+         * @return
+         */
+        @Override
+        public String avroType() {
+            return type().name().toLowerCase();
+        }
+
         public boolean hasFields() {
             return (fields != null && !fields.isEmpty());
         }
@@ -283,13 +405,63 @@ public class SchemaHelper {
             fields.add(field);
         }
 
-        public static ObjectField parse(String name, @NonNull Map<String, Object> values) {
-            if (Strings.isNullOrEmpty(name)) {
-                name = "object";
+        @Override
+        public boolean matches(@NonNull Field target) {
+            if (target instanceof ObjectField) {
+                if (name().compareTo(target.name) == 0) {
+                    if (fields != null && !fields.isEmpty()) {
+                        for (Field field : fields) {
+                            if (!target.matches(field)) return false;
+                        }
+                        return true;
+                    }
+                }
             }
+            return false;
+        }
+
+        /**
+         * @return
+         */
+        @Override
+        public String avroSchema() {
+            StringBuilder builder = new StringBuilder();
+            builder.append(
+                    String.format("{\n\"type\": \"record\",\n\"namespace\": \"%s\",\n\"name\": \"%s\",\n\"fields\": [\n",
+                            namespace, name()));
+            if (fields != null && !fields.isEmpty()) {
+                boolean first = true;
+                for (Field field : fields) {
+                    if (first) first = false;
+                    else {
+                        builder.append(",\n");
+                    }
+                    if (field instanceof ObjectField || field instanceof ArrayField) {
+                        builder.append(String.format("{\"name\": \"%s\",\n\"type\": %s\n}",
+                                field.name, field.avroSchema()));
+                    } else
+                        builder.append(field.avroSchema());
+                }
+            }
+            builder.append("\n]\n}");
+            return builder.toString();
+        }
+
+        private boolean hasField(Field field) {
+            if (fields != null && !fields.isEmpty()) {
+                for (Field f : fields) {
+                    if (f.matches(field)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public static ObjectField parse(String name, @NonNull Map<String, Object> values) {
             ObjectField of = new ObjectField(name);
             for (String key : values.keySet()) {
-                Field f = parseField(key, values.get(name));
+                Field f = parseField(key, values.get(key));
                 if (f != null) {
                     of.addField(f);
                 }
@@ -330,6 +502,38 @@ public class SchemaHelper {
             return m.matches();
         }
 
+        /**
+         * @return
+         */
+        @Override
+        public String avroType() {
+            return type().name().toLowerCase();
+        }
+
+        /**
+         * @param target
+         * @return
+         */
+        @Override
+        public boolean matches(@NonNull Field target) {
+            if (target instanceof ArrayField) {
+                if (name().compareTo(target.name()) == 0) {
+                    if (innerType != null && ((ArrayField) target).innerType != null) {
+                        return innerType.matches(((ArrayField) target).innerType);
+                    }
+                }
+            }
+            return false;
+        }
+
+        /**
+         * @return
+         */
+        @Override
+        public String avroSchema() {
+            return String.format("{ \"type\": \"%s\", \"items\": %s }", avroType(), innerType.avroSchema());
+        }
+
         public static ArrayField parse(String name, @NonNull List<?> values) {
             ArrayField array = new ArrayField(name);
             if (values.isEmpty()) {
@@ -345,6 +549,36 @@ public class SchemaHelper {
                 array.innerType = type;
             }
             return array;
+        }
+    }
+
+    public static class JsonToAvroSchema {
+        public static String convert(@NonNull String json,
+                                     String namespace,
+                                     @NonNull String name) throws Exception {
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(json));
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
+
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> map = mapper.readValue(json, Map.class);
+
+            SchemaHelper.ObjectField field = SchemaHelper.ObjectField.parse(name, map);
+            if (!Strings.isNullOrEmpty(namespace))
+                field.namespace(namespace);
+            return field.avroSchema();
+        }
+    }
+
+    public static class POJOToAvroSchema {
+        public static String convert(@NonNull Object data) throws Exception {
+            ObjectMapper mapper = new ObjectMapper();
+            String json = mapper.writeValueAsString(data);
+            Map<String, Object> map = mapper.readValue(json, Map.class);
+            DefaultLogger.LOG.debug(String.format("\nJSON: [\n%s\n]", json));
+            SchemaHelper.ObjectField field =
+                    SchemaHelper.ObjectField.parse(data.getClass().getSimpleName(), map);
+            field.namespace(data.getClass().getPackageName());
+            return field.avroSchema();
         }
     }
 }
