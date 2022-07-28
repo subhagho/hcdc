@@ -1,2 +1,5 @@
-test-domain-1;test-01;/test/hcdc/loader;(.*/)(.*\.parquet)
+test-domain-1;DATA;/test/hcdc/loader/parquet/data;(.*/)(.*\.parquet)
+test-domain-1;LINKS;/test/hcdc/loader/parquet/links;(.*/)(.*\.parquet)
+test-domain-1;MOVIES;/test/hcdc/loader/parquet/movies;(.*/)(.*\.parquet)
+test-domain-1;TAGS;/test/hcdc/loader/parquet/tags;(.*/)(.*\.parquet)
 test-domain-2;test-02;/test/hcdc/core;(.*/)(.*\.xml)

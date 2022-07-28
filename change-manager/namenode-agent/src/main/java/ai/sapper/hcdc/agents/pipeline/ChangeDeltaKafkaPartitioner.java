@@ -38,10 +38,9 @@ public class ChangeDeltaKafkaPartitioner implements KafkaPartitioner<DFSChangeDe
      */
     @Override
     public int partition(@NonNull DFSChangeDelta key) {
-        String pk = key.getEntity();
-        if (Strings.isNullOrEmpty(pk)) {
-            pk = key.getNamespace();
-        }
+        String entity = key.getEntityName();
+        String domain = key.getDomain();
+        String pk = String.format("%s::%s", domain, entity);
         int hash = pk.hashCode();
         if (hash < 0) {
             hash *= -1;
