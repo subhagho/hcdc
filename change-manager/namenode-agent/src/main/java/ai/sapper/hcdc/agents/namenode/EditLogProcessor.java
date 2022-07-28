@@ -29,7 +29,8 @@ import java.util.List;
 @Getter
 @Accessors(fluent = true)
 public class EditLogProcessor implements Runnable {
-    private static Logger LOG = LoggerFactory.getLogger(EditLogProcessor.class.getCanonicalName());
+    private static final Logger LOG = LoggerFactory.getLogger(EditLogProcessor.class.getCanonicalName());
+    private static final String PATH_NN_CURRENT_DIR = "current";
 
     private final ZkStateManager stateManager;
     private MessageSender<String, DFSChangeDelta> sender;
@@ -97,12 +98,13 @@ public class EditLogProcessor implements Runnable {
         }
     }
 
+
     public long doRun() throws Exception {
         NameNodeTxState state = stateManager.agentTxState();
         EditsLogReader reader = new EditsLogReader();
         long txId = state.getProcessedTxId();
         List<DFSEditsFileFinder.EditsLogFile> files = DFSEditsFileFinder
-                .findEditsFiles(editsDir.getAbsolutePath(),
+                .findEditsFiles(getPathNnCurrentDir(editsDir.getAbsolutePath()),
                         state.getProcessedTxId() + 1, -1);
         if (files != null && !files.isEmpty()) {
             for (DFSEditsFileFinder.EditsLogFile file : files) {
@@ -118,7 +120,7 @@ public class EditLogProcessor implements Runnable {
                 }
             }
         }
-        String cf = DFSEditsFileFinder.getCurrentEditsFile(editsDir.getAbsolutePath());
+        String cf = DFSEditsFileFinder.getCurrentEditsFile(getPathNnCurrentDir(editsDir.getAbsolutePath()));
         if (cf == null) {
             throw new Exception(String.format("Current Edits file not found. [dir=%s]",
                     editsDir.getAbsolutePath()));
@@ -147,6 +149,10 @@ public class EditLogProcessor implements Runnable {
             return txid;
         }
         return -1;
+    }
+
+    private String getPathNnCurrentDir(String path) {
+        return String.format("%s/%s", path, PATH_NN_CURRENT_DIR);
     }
 
     @Getter

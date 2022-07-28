@@ -24,17 +24,20 @@ class FileDeltaProcessorTest {
     @RegisterExtension
     static final S3MockExtension S3_MOCK =
             S3MockExtension.builder().silent().withSecureConnection(false).build();
-    private static final S3Client s3Client = S3_MOCK.createS3ClientV2();
 
     @Test
     void run() {
         try {
+            final S3Client s3Client = S3_MOCK.createS3ClientV2();
+
             s3Client.createBucket(CreateBucketRequest.builder().bucket(DEFAULT_BUCKET_NAME).build());
 
             HierarchicalConfiguration<ImmutableNode> config = ConfigReader.read(CONFIG_FILE, EConfigFileType.File);
             NameNodeEnv.setup(config);
 
-            FileDeltaProcessor processor = new FileDeltaProcessor(NameNodeEnv.stateManager()).withMockFileSystem(new S3Mocker());
+            FileDeltaProcessor processor
+                    = new FileDeltaProcessor(NameNodeEnv.stateManager())
+                    .withMockFileSystem(new S3Mocker(s3Client));
             processor.init(NameNodeEnv.get().configNode(), NameNodeEnv.connectionManager());
             processor.run(true);
         } catch (Throwable t) {
@@ -44,6 +47,11 @@ class FileDeltaProcessorTest {
     }
 
     public static class S3Mocker implements FileSystem.FileSystemMocker {
+        private final S3Client s3Client;
+
+        public S3Mocker(@NonNull S3Client s3Client) {
+            this.s3Client = s3Client;
+        }
 
         /**
          * @param config
