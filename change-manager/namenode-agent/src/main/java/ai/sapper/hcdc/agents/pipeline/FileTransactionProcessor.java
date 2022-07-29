@@ -17,10 +17,7 @@ import ai.sapper.hcdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.hcdc.core.messaging.InvalidMessageError;
 import ai.sapper.hcdc.core.messaging.MessageObject;
 import ai.sapper.hcdc.core.messaging.MessageSender;
-import ai.sapper.hcdc.core.model.DFSBlockState;
-import ai.sapper.hcdc.core.model.DFSFileState;
-import ai.sapper.hcdc.core.model.EFileState;
-import ai.sapper.hcdc.core.model.HDFSBlockData;
+import ai.sapper.hcdc.core.model.*;
 import com.google.common.base.Strings;
 import jakarta.ws.rs.core.MediaType;
 import lombok.NonNull;
@@ -504,6 +501,8 @@ public class FileTransactionProcessor extends TransactionProcessor {
             }
             List<DFSBlock> blocks = data.getBlocksList();
             if (!blocks.isEmpty()) {
+                boolean detect = true;
+                CDCDataConverter converter = new CDCDataConverter().withFileSystem(fs);
                 for (DFSBlock block : blocks) {
                     DFSBlockReplicaState bs = rState.get(block.getBlockId());
                     if (bs == null || !bs.canUpdate()) {
@@ -519,7 +518,8 @@ public class FileTransactionProcessor extends TransactionProcessor {
                                 String.format("Block not found in FileSystem. [path=%s][block ID=%d]",
                                         data.getFile().getPath(), block.getBlockId()));
                     }
-                    long size = copyBlock(block, rState, bs, fsb, reader);
+                    long size = copyBlock(block, rState, bs, fsb, reader, converter, detect);
+                    detect = false;
                 }
             }
             try {
@@ -604,7 +604,9 @@ public class FileTransactionProcessor extends TransactionProcessor {
                            DFSFileReplicaState fileState,
                            DFSBlockReplicaState blockState,
                            FSBlock fsBlock,
-                           HDFSBlockReader reader) throws Exception {
+                           HDFSBlockReader reader,
+                           CDCDataConverter converter,
+                           boolean detect) throws Exception {
         int length = (int) (source.getEndOffset() + 1);
         HDFSBlockData data = reader.read(source.getBlockId(),
                 source.getGenerationStamp(),
@@ -616,6 +618,12 @@ public class FileTransactionProcessor extends TransactionProcessor {
                     fileState.getHdfsPath(),
                     String.format("Error reading block from HDFS. [path=%s][block ID=%d]",
                             fileState.getHdfsPath(), source.getBlockId()));
+        }
+        if (detect) {
+            EFileType fileType = converter.detect(data.data().array(), (int) data.dataSize());
+            if (fileType != null) {
+                fileState.setFileType(fileType);
+            }
         }
         fsBlock.write(data.data().array());
         fsBlock.close();

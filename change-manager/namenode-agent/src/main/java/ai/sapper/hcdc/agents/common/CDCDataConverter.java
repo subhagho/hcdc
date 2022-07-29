@@ -7,6 +7,7 @@ import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.io.FileSystem;
 import ai.sapper.hcdc.core.io.PathInfo;
 import ai.sapper.hcdc.core.model.DFSFileState;
+import ai.sapper.hcdc.core.model.EFileType;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -28,6 +29,17 @@ public class CDCDataConverter {
         return this;
     }
 
+    public EFileType detect(byte[] data, int length) throws IOException {
+        try {
+            for (FormatConverter converter : CONVERTERS) {
+                if (converter.detect(data, length)) return converter.fileType();
+            }
+            return null;
+        } catch (Exception ex) {
+            throw new IOException(ex);
+        }
+    }
+
     public PathInfo convert(@NonNull DFSFileState fileState,
                             @NonNull DFSFileReplicaState replicaState,
                             long startTxId,
@@ -37,7 +49,7 @@ public class CDCDataConverter {
         Preconditions.checkArgument(replicaState.getStoragePath() != null);
         try {
             for (FormatConverter converter : CONVERTERS) {
-                if (converter.canParse(fileState.getHdfsFilePath())) {
+                if (converter.canParse(fileState.getHdfsFilePath(), replicaState.getFileType())) {
                     File output = convert(converter, fileState, replicaState, startTxId, currentTxId);
                     return upload(output, fileState, replicaState, currentTxId);
                 }

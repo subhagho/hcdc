@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.agents.common.converter;
 
 import ai.sapper.hcdc.agents.common.FormatConverter;
+import ai.sapper.hcdc.core.model.EFileType;
 import lombok.NonNull;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
@@ -21,8 +22,11 @@ import org.apache.parquet.schema.MessageType;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public class ParquetConverter implements FormatConverter {
+    private static final String MAGIC_CODE = "PAR1";
+
     public static final String EXT = "parquet";
 
     /**
@@ -31,7 +35,8 @@ public class ParquetConverter implements FormatConverter {
      * @throws IOException
      */
     @Override
-    public boolean canParse(@NonNull String path) throws IOException {
+    public boolean canParse(@NonNull String path, EFileType fileType) throws IOException {
+        if (fileType == EFileType.PARQUET) return true;
         String ext = FilenameUtils.getExtension(path);
         return (!Strings.isNullOrEmpty(ext) && ext.compareToIgnoreCase(EXT) == 0);
     }
@@ -79,5 +84,28 @@ public class ParquetConverter implements FormatConverter {
     @Override
     public boolean supportsPartial() {
         return false;
+    }
+
+    /**
+     * @param data
+     * @param length
+     * @return
+     * @throws IOException
+     */
+    @Override
+    public boolean detect(byte[] data, int length) throws IOException {
+        if (data != null && length >= 4) {
+            String m = new String(data, 0, 4, StandardCharsets.UTF_8);
+            return m.compareTo(MAGIC_CODE) == 0;
+        }
+        return false;
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public EFileType fileType() {
+        return EFileType.PARQUET;
     }
 }

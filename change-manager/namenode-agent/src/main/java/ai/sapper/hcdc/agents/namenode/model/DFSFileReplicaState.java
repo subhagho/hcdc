@@ -2,6 +2,7 @@ package ai.sapper.hcdc.agents.namenode.model;
 
 import ai.sapper.hcdc.common.model.SchemaEntity;
 import ai.sapper.hcdc.core.model.EFileState;
+import ai.sapper.hcdc.core.model.EFileType;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -27,6 +28,7 @@ public class DFSFileReplicaState {
     private EFileState state = EFileState.Unknown;
     private Map<String, String> storagePath;
     private Map<String, String> lastDeltaPath;
+    private EFileType fileType = EFileType.UNKNOWN;
 
     private List<DFSBlockReplicaState> blocks = new ArrayList<>();
 
