@@ -16,7 +16,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 public class SnapshotService {
@@ -47,6 +49,27 @@ public class SnapshotService {
             DomainFilters filters = processor.getProcessor().addFilter(domain, filter);
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
                     filters),
+                    HttpStatus.OK);
+        } catch (Throwable t) {
+            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error, (DomainFilters) null).withError(t),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @RequestMapping(value = "/snapshot/filters/add/{domain}/batch", method = RequestMethod.POST)
+    public ResponseEntity<BasicResponse<DomainFilters>> addFilter(@PathVariable("domain") String domain,
+                                                                  @RequestBody Map<String, List<Filter>> filters) {
+        try {
+            ServiceHelper.checkService(processor);
+            DomainFilters dfs = null;
+            for (String entity : filters.keySet()) {
+                List<Filter> fs = filters.get(entity);
+                for (Filter filter : fs) {
+                    dfs = processor.getProcessor().addFilter(domain, filter);
+                }
+            }
+            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
+                    dfs),
                     HttpStatus.OK);
         } catch (Throwable t) {
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error, (DomainFilters) null).withError(t),

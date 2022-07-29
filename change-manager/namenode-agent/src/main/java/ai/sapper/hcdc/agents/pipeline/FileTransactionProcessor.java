@@ -32,7 +32,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
     private MessageSender<String, DFSChangeDelta> sender;
     private FileSystem fs;
     private HdfsConnection connection;
-    
+
     public FileTransactionProcessor withHdfsConnection(@NonNull HdfsConnection connection) {
         this.connection = connection;
         return this;
