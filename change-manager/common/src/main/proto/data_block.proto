@@ -147,3 +147,4 @@ message DFSChangeDelta {
   optional string domain = 7;
   optional string entityName = 8;
 }
+
