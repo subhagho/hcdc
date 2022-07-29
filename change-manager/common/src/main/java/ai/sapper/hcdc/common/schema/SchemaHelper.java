@@ -577,7 +577,7 @@ public class SchemaHelper {
             DefaultLogger.LOG.debug(String.format("\nJSON: [\n%s\n]", json));
             SchemaHelper.ObjectField field =
                     SchemaHelper.ObjectField.parse(data.getClass().getSimpleName(), map);
-            field.namespace(data.getClass().getPackageName());
+            field.namespace(data.getClass().getCanonicalName());
             return field.avroSchema();
         }
     }
