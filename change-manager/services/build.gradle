@@ -20,3 +20,13 @@ dependencies {
         exclude group: 'org.apache.logging.log4j', module: 'log4j-to-slf4j'
     }
 }
+
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'ai.sapper.hcdc.agents.namenode.main.SnapshotRunner'
+    }
+    baseName = 'change-manager-services-ALL-jar'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
