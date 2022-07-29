@@ -552,10 +552,18 @@ public class FileTransactionProcessor extends TransactionProcessor {
                         String.format("Error converting change delta to Avro. [path=%s]",
                                 data.getFile().getPath()));
             }
-            if (message.mode() == MessageObject.MessageMode.Snapshot)
-                rState = snapShotDone(fileState, rState);
+            if (message.mode() == MessageObject.MessageMode.Snapshot) {
+                DFSFileReplicaState nState = snapShotDone(fileState, rState);
+                if (!nState.isSnapshotReady()) {
+                    throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                            fileState.getHdfsFilePath(),
+                            String.format("Error marking Snapshot Done. [TXID=%d]", txId));
+                }
+            }
             stateManager().replicationLock().lock();
             try {
+                rState.setSnapshotReady(true);
+                rState.setSnapshotTime(System.currentTimeMillis());
                 rState.setState(EFileState.Finalized);
                 rState.setLastReplicatedTx(txId);
                 rState.setLastReplicationTime(System.currentTimeMillis());

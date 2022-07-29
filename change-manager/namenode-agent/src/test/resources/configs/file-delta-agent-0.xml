@@ -161,7 +161,7 @@
                     <mode>Consumer</mode>
                     <consumer>
                         <config>src/test/resources/consumer.properties</config>
-                        <partitions>1</partitions>
+                        <partitions>0</partitions>
                     </consumer>
                     <topic>ha-cluster-delta</topic>
                 </kafka>

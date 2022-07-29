@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.core;
 
 import ai.sapper.hcdc.common.ConfigReader;
+import ai.sapper.hcdc.common.model.services.BasicResponse;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.connections.ConnectionError;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
@@ -83,12 +84,12 @@ public class WebServiceClient {
                 throw new ConnectionError(
                         String.format("Service response was null. [service=%s]", target.getUri().toString()));
             } catch (Throwable t) {
-                if (handle) {
+                if (handle && count < config().retryCount) {
                     count++;
                     DefaultLogger.LOG.error(
                             String.format("Error calling web service. [tries=%d][service=%s]",
                                     count, target.getUri().toString()), t);
-                } else if (count >= config().retryCount) {
+                } else {
                     throw t;
                 }
             }
@@ -131,12 +132,12 @@ public class WebServiceClient {
                             String.format("Service response was null. [service=%s]", target.getUri().toString()));
                 }
             } catch (Throwable t) {
-                if (handle) {
+                if (handle && count < config().retryCount) {
                     count++;
                     DefaultLogger.LOG.error(
                             String.format("Error calling web service. [tries=%d][service=%s]",
                                     count, target.getUri().toString()), t);
-                } else if (count >= config().retryCount) {
+                } else {
                     throw t;
                 }
             }
@@ -179,12 +180,12 @@ public class WebServiceClient {
                             String.format("Service response was null. [service=%s]", target.getUri().toString()));
                 }
             } catch (Throwable t) {
-                if (handle) {
+                if (handle && count < config().retryCount) {
                     count++;
                     DefaultLogger.LOG.error(
                             String.format("Error calling web service. [tries=%d][service=%s]",
                                     count, target.getUri().toString()), t);
-                } else if (count >= config().retryCount) {
+                } else {
                     throw t;
                 }
             }
@@ -226,12 +227,12 @@ public class WebServiceClient {
                             String.format("Service response was null. [service=%s]", target.getUri().toString()));
                 }
             } catch (Throwable t) {
-                if (handle) {
+                if (handle && count < config().retryCount) {
                     count++;
                     DefaultLogger.LOG.error(
                             String.format("Error calling web service. [tries=%d][service=%s]",
                                     count, target.getUri().toString()), t);
-                } else if (count >= config().retryCount) {
+                } else {
                     throw t;
                 }
             }

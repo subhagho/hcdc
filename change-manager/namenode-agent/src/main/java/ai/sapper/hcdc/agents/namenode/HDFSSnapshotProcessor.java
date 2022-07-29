@@ -248,6 +248,7 @@ public class HDFSSnapshotProcessor {
 
             rState.clear();
             rState.setSnapshotReady(true);
+            rState.setSnapshotTime(System.currentTimeMillis());
             rState.setLastReplicationTime(System.currentTimeMillis());
             rState.setLastReplicatedTx(tnxId);
             rState.setState(EFileState.Finalized);
