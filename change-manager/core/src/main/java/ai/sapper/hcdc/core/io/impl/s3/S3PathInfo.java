@@ -9,7 +9,6 @@ import lombok.NonNull;
 import lombok.experimental.Accessors;
 import org.apache.commons.io.FilenameUtils;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsResponse;
 import software.amazon.awssdk.services.s3.model.S3Object;
@@ -21,7 +20,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Getter
 @Accessors(fluent = true)

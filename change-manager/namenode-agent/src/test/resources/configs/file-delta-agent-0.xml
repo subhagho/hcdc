@@ -30,7 +30,7 @@
                     <region>US_WEST_2</region>
                     <defaultBucket>hcdc</defaultBucket>
                 </filesystem>
-                <hdfs>source-hdfs</hdfs>
+                <hdfs>source-hdfs-ha</hdfs>
                 <sender>
                     <connectionType>kafka</connectionType>
                     <connection>delta-kafka-queue</connection>

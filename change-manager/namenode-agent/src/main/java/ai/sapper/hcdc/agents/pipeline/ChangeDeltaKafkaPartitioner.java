@@ -8,8 +8,6 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.parquet.Strings;
 
-import java.util.Objects;
-
 public class ChangeDeltaKafkaPartitioner implements KafkaPartitioner<DFSChangeDelta> {
     private static final String __CONFIG_PATH = "partitioner.config";
     private static final String CONFIG_PARTITION_COUNT = "partitions";

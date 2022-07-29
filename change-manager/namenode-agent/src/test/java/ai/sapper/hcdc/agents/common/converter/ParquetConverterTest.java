@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class ParquetConverterTest {
     private static final String FILE = "src/test/resources/data/1073742224-NULL.parquet";

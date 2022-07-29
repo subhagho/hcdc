@@ -5,6 +5,7 @@ import ai.sapper.hcdc.agents.namenode.main.SnapshotRunner;
 import ai.sapper.hcdc.agents.namenode.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.filters.DomainFilter;
 import ai.sapper.hcdc.common.filters.DomainFilters;
+import ai.sapper.hcdc.common.filters.Filter;
 import ai.sapper.hcdc.common.model.services.BasicResponse;
 import ai.sapper.hcdc.common.model.services.ConfigSource;
 import ai.sapper.hcdc.common.model.services.EResponseState;
@@ -14,6 +15,8 @@ import ai.sapper.hcdc.services.ServiceHelper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 public class SnapshotService {
@@ -36,21 +39,63 @@ public class SnapshotService {
         }
     }
 
-    @RequestMapping(value = "/snapshot/filters/add/{domain}/{enable}", method = RequestMethod.POST)
+    @RequestMapping(value = "/snapshot/filters/add/{domain}", method = RequestMethod.POST)
     public ResponseEntity<BasicResponse<DomainFilters>> addFilter(@PathVariable("domain") String domain,
-                                                                  @PathVariable("enable") Boolean enable,
-                                                                  @RequestBody DomainFilter filter) {
+                                                                  @RequestBody Filter filter) {
         try {
             ServiceHelper.checkService(processor);
-            DomainFilters filters = processor.getProcessor().addFilter(filter, domain);
-            if (enable) {
-                processor.getProcessor().processFilter(filter, domain);
-            }
+            DomainFilters filters = processor.getProcessor().addFilter(domain, filter);
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
                     filters),
                     HttpStatus.OK);
         } catch (Throwable t) {
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error, (DomainFilters) null).withError(t),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @RequestMapping(value = "/snapshot/filters/remove/{domain}", method = RequestMethod.DELETE)
+    public ResponseEntity<BasicResponse<Filter>> removeFilter(@PathVariable("domain") String domain,
+                                                              @RequestBody Filter filter) {
+        try {
+            ServiceHelper.checkService(processor);
+            Filter f = processor.getProcessor().removeFilter(domain, filter);
+            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
+                    f),
+                    HttpStatus.OK);
+        } catch (Throwable t) {
+            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error, (Filter) null).withError(t),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @RequestMapping(value = "/snapshot/filters/remove/{domain}/{entity}", method = RequestMethod.DELETE)
+    public ResponseEntity<BasicResponse<DomainFilter>> removeFilter(@PathVariable("domain") String domain,
+                                                                    @PathVariable("entity") String entity) {
+        try {
+            ServiceHelper.checkService(processor);
+            DomainFilter f = processor.getProcessor().removeFilter(domain, entity);
+            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
+                    f),
+                    HttpStatus.OK);
+        } catch (Throwable t) {
+            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error, (DomainFilter) null).withError(t),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @RequestMapping(value = "/snapshot/filters/remove/{domain}/{entity}/{path}", method = RequestMethod.DELETE)
+    public ResponseEntity<BasicResponse<List<Filter>>> removeFilter(@PathVariable("domain") String domain,
+                                                                    @PathVariable("entity") String entity,
+                                                                    @PathVariable("path") String path) {
+        try {
+            ServiceHelper.checkService(processor);
+            List<Filter> f = processor.getProcessor().removeFilter(domain, entity, path);
+            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
+                    f),
+                    HttpStatus.OK);
+        } catch (Throwable t) {
+            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error, (List<Filter>) null).withError(t),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

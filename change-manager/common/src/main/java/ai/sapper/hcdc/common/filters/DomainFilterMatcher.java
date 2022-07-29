@@ -22,7 +22,7 @@ public class DomainFilterMatcher {
     public static class PathFilter {
         private String path;
         private Pattern pattern;
-        private DomainFilter filter;
+        private Filter filter;
 
         public boolean matches(@NonNull String value) {
             Matcher m = pattern.matcher(value);
@@ -32,23 +32,24 @@ public class DomainFilterMatcher {
 
     private final String domain;
     private final DomainFilters filters;
-    private final List<PathFilter> patterns;
+    private final List<PathFilter> patterns = new ArrayList<>();
 
     public DomainFilterMatcher(@NonNull String domain, @NonNull DomainFilters filters) {
         this.domain = domain;
         this.filters = filters;
-        patterns = new ArrayList<>(filters.getFilters().size());
-        for (String path : filters.keySet()) {
-            PathFilter pf = new PathFilter();
-            pf.path = path;
-            pf.filter = filters.get(path);
-            pf.pattern = Pattern.compile(pf.filter.getRegex());
-
-            patterns.add(pf);
+        List<Filter> fs = filters.get();
+        if (fs != null && !fs.isEmpty()) {
+            for (Filter f : fs) {
+                PathFilter pf = new PathFilter();
+                pf.filter = f;
+                pf.path = f.getPath();
+                pf.pattern = Pattern.compile(f.getRegex());
+                patterns.add(pf);
+            }
         }
     }
 
-    public PathFilter find(@NonNull DomainFilter filter) {
+    public PathFilter find(@NonNull Filter filter) {
         for (PathFilter pf : patterns) {
             if (pf.filter.equals(filter)) {
                 return pf;
@@ -75,8 +76,10 @@ public class DomainFilterMatcher {
         return null;
     }
 
-    public PathFilter add(@NonNull String entity, @NonNull String path, @NonNull String regex) {
-        DomainFilter df = filters.add(entity, path, regex);
+    public PathFilter add(@NonNull String entity,
+                          @NonNull String path,
+                          @NonNull String regex) {
+        Filter df = filters.add(entity, path, regex);
 
         PathFilter pf = new PathFilter();
         pf.path = path;
@@ -85,5 +88,20 @@ public class DomainFilterMatcher {
         patterns.add(pf);
 
         return pf;
+    }
+
+    public DomainFilter remove(@NonNull String entity) {
+        return filters.remove(entity);
+    }
+
+    public List<Filter> remove(@NonNull String entity,
+                               @NonNull String path) {
+        return filters.remove(entity, path);
+    }
+
+    public Filter remove(@NonNull String entity,
+                         @NonNull String path,
+                         @NonNull String regex) {
+        return filters.remove(entity, path, regex);
     }
 }

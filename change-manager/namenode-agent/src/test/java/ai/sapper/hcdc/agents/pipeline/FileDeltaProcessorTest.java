@@ -15,7 +15,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class FileDeltaProcessorTest {
     private static final String CONFIG_FILE = "src/test/resources/configs/file-delta-agent-0.xml";

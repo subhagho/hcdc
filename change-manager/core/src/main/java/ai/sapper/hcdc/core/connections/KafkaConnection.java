@@ -129,7 +129,7 @@ public abstract class KafkaConnection implements MessageConnection {
 
         public void read() throws ConfigurationException {
             if (get() == null) {
-                throw new ConfigurationException("Kafka Configuration not drt or is NULL");
+                throw new ConfigurationException("Kafka Configuration not set or is NULL");
             }
             try {
                 name = get().getString(Constants.CONFIG_NAME);

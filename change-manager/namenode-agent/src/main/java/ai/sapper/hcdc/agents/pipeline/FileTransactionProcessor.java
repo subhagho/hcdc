@@ -3,11 +3,10 @@ package ai.sapper.hcdc.agents.pipeline;
 import ai.sapper.hcdc.agents.common.CDCDataConverter;
 import ai.sapper.hcdc.agents.common.InvalidTransactionError;
 import ai.sapper.hcdc.agents.common.TransactionProcessor;
-import ai.sapper.hcdc.agents.namenode.HDFSSnapshotProcessor;
 import ai.sapper.hcdc.agents.namenode.model.DFSBlockReplicaState;
 import ai.sapper.hcdc.agents.namenode.model.DFSFileReplicaState;
-import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
 import ai.sapper.hcdc.common.model.*;
+import ai.sapper.hcdc.common.model.services.SnapshotDoneRequest;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
 import ai.sapper.hcdc.core.io.FSBlock;
 import ai.sapper.hcdc.core.io.FSFile;
@@ -26,12 +25,14 @@ import lombok.NonNull;
 import org.apache.hadoop.hdfs.HDFSBlockReader;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.List;
 
 public class FileTransactionProcessor extends TransactionProcessor {
     private MessageSender<String, DFSChangeDelta> sender;
     private FileSystem fs;
     private HdfsConnection connection;
+    private URL snapShotServiceURL;
 
     public FileTransactionProcessor withHdfsConnection(@NonNull HdfsConnection connection) {
         this.connection = connection;
@@ -45,6 +46,11 @@ public class FileTransactionProcessor extends TransactionProcessor {
 
     public FileTransactionProcessor withFileSystem(@NonNull FileSystem fs) {
         this.fs = fs;
+        return this;
+    }
+
+    public FileTransactionProcessor withSnapShotServiceURL(@NonNull URL snapShotServiceURL) {
+        this.snapShotServiceURL = snapShotServiceURL;
         return this;
     }
 
@@ -566,6 +572,16 @@ public class FileTransactionProcessor extends TransactionProcessor {
                     String.format("File not setup for replication. [path=%s]",
                             data.getFile().getPath()));
         }
+    }
+
+    private void snapShotDone(DFSFileState fileState,
+                              DFSFileReplicaState replicaState) throws Exception {
+        SnapshotDoneRequest request
+                = new SnapshotDoneRequest(
+                replicaState.getEntity(),
+                replicaState.getSnapshotTxId(),
+                fileState.getHdfsFilePath());
+
     }
 
     private long copyBlock(DFSBlock source,

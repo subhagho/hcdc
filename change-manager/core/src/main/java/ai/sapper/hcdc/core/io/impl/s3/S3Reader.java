@@ -6,7 +6,6 @@ import ai.sapper.hcdc.core.io.impl.local.LocalReader;
 import lombok.NonNull;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
 
 public class S3Reader extends LocalReader {
     private final S3FileSystem fs;

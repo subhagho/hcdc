@@ -20,8 +20,9 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
 import javax.naming.ConfigurationException;
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -4,31 +4,86 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Getter
 @Setter
 public class DomainFilters {
     private String domain;
-    private Map<String, DomainFilter> filters = new HashMap<>();
+    private final Map<String, DomainFilter> filters = new HashMap<>();
 
-    public DomainFilter add(@NonNull String entity, @NonNull String path, @NonNull String regex) {
-        DomainFilter filter = get(path);
+    public synchronized Filter add(@NonNull String entity,
+                                   @NonNull String path,
+                                   @NonNull String regex) {
+        DomainFilter filter = filters.get(entity);
         if (filter == null) {
-            filter = new DomainFilter(domain, entity, path, regex);
-            filters.put(path, filter);
-        } else {
-            filter.setRegex(regex);
-            filter.setUpdatedTime(System.currentTimeMillis());
+            filter = new DomainFilter(domain, entity);
+            filters.put(entity, filter);
         }
-        return filter;
+        return filter.add(path, regex);
     }
 
-    public DomainFilter get(@NonNull String path) {
-        if (filters.containsKey(path)) {
-            return filters.get(path);
+    public DomainFilter getDomainFilter(@NonNull String entity) {
+        if (filters.containsKey(entity)) {
+            return filters.get(entity);
+        }
+        return null;
+    }
+
+    public List<Filter> get(@NonNull String path) {
+        if (!filters.isEmpty()) {
+            List<Filter> fs = new ArrayList<>();
+            for (String key : filters.keySet()) {
+                DomainFilter df = filters.get(key);
+                List<Filter> dfs = df.find(path);
+                if (dfs != null && !dfs.isEmpty()) {
+                    fs.addAll(dfs);
+                }
+            }
+            if (!fs.isEmpty()) return fs;
+        }
+        return null;
+    }
+
+    public List<Filter> get() {
+        if (!filters.isEmpty()) {
+            List<Filter> fs = new ArrayList<>();
+            for (String key : filters.keySet()) {
+                DomainFilter df = filters.get(key);
+                List<Filter> dfs = df.getFilters();
+                if (dfs != null && !dfs.isEmpty()) {
+                    fs.addAll(dfs);
+                }
+            }
+            if (!fs.isEmpty()) return fs;
+        }
+        return null;
+    }
+
+    public DomainFilter remove(@NonNull String entity) {
+        if (filters.containsKey(entity)) {
+            DomainFilter filter = filters.get(entity);
+            filters.remove(entity);
+            return filter;
+        }
+        return null;
+    }
+
+    public List<Filter> remove(@NonNull String entity,
+                               @NonNull String path) {
+        if (filters.containsKey(entity)) {
+            DomainFilter df = filters.get(entity);
+            return df.remove(path);
+        }
+        return null;
+    }
+
+    public Filter remove(@NonNull String entity,
+                         @NonNull String path,
+                         @NonNull String regex) {
+        if (filters.containsKey(entity)) {
+            DomainFilter df = filters.get(entity);
+            return df.remove(path, regex);
         }
         return null;
     }

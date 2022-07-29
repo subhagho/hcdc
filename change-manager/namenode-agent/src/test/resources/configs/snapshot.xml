@@ -19,7 +19,7 @@
             <manager>
                 <basePath>/hcdc/registry/files</basePath>
                 <connection>zk-state-connection</connection>
-                <hdfs>source-hdfs</hdfs>
+                <hdfs>source-hdfs-ha</hdfs>
             </manager>
         </domain>
         <useSSL>false</useSSL>

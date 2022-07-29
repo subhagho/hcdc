@@ -11,8 +11,6 @@ import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
-import org.apache.commons.configuration2.builder.combined.CombinedConfigurationBuilder;
-import org.apache.commons.configuration2.builder.fluent.CombinedBuilderParameters;
 import org.apache.commons.configuration2.builder.fluent.Parameters;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.ex.ConfigurationRuntimeException;

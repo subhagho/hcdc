@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.core.connections;
 
 import ai.sapper.hcdc.common.ConfigReader;
+import ai.sapper.hcdc.common.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.NonNull;
@@ -76,9 +77,11 @@ public class ConnectionManager {
         return connections.get(name);
     }
 
-    public <T extends Connection> T getConnection(@NonNull String name, @NonNull Class<? extends Connection> type) {
+    public <T extends Connection> T getConnection(@NonNull String name,
+                                                  @NonNull Class<? extends Connection> type) {
         Connection connection = getConnection(name);
-        if (connection != null && connection.getClass().equals(type)) {
+        if (connection != null
+                && (connection.getClass().equals(type) || ReflectionUtils.isSuperType(type, connection.getClass()))) {
             return (T) connection;
         }
         return null;

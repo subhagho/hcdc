@@ -4,7 +4,6 @@ import ai.sapper.hcdc.agents.common.DFSAgentError;
 import ai.sapper.hcdc.agents.common.DFSEditsFileFinder;
 import ai.sapper.hcdc.agents.namenode.model.DFSEditLogBatch;
 import ai.sapper.hcdc.agents.namenode.model.DFSTransactionType;
-import ai.sapper.hcdc.common.model.DFSTransaction;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -12,7 +11,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import org.apache.hadoop.hdfs.server.namenode.CustomEditsVisitor;
-import org.apache.hadoop.hdfs.server.namenode.FSEditLogOpCodes;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,7 +1,6 @@
 package ai.sapper.hcdc.core.io;
 
 import ai.sapper.hcdc.core.model.DFSBlockState;
-import ai.sapper.hcdc.core.model.DFSFileState;
 import com.google.common.base.Preconditions;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -10,7 +9,6 @@ import lombok.experimental.Accessors;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 @Getter
 @Accessors(fluent = true)

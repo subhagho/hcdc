@@ -1,11 +1,11 @@
 package ai.sapper.hcdc.core.io.impl.local;
 
 import ai.sapper.hcdc.common.model.DFSChangeData;
-import ai.sapper.hcdc.common.model.SchemaEntity;
 import ai.sapper.hcdc.common.utils.PathUtils;
-import ai.sapper.hcdc.core.io.*;
-import ai.sapper.hcdc.core.model.DFSBlockState;
-import ai.sapper.hcdc.core.model.DFSFileState;
+import ai.sapper.hcdc.core.io.FileSystem;
+import ai.sapper.hcdc.core.io.PathInfo;
+import ai.sapper.hcdc.core.io.Reader;
+import ai.sapper.hcdc.core.io.Writer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;

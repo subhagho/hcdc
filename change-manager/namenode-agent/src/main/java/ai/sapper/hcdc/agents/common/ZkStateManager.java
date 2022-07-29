@@ -1,17 +1,14 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.hcdc.agents.namenode.model.DFSFileReplicaState;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeAgentState;
 import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
-import ai.sapper.hcdc.common.model.DFSError;
-import ai.sapper.hcdc.common.model.SchemaEntity;
 import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.DistributedLock;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
 import ai.sapper.hcdc.core.filters.DomainManager;
-import ai.sapper.hcdc.core.model.*;
+import ai.sapper.hcdc.core.model.Heartbeat;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -22,8 +19,6 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.curator.framework.CuratorFramework;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Accessors(fluent = true)

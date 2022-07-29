@@ -4,7 +4,6 @@ import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
 import ai.sapper.hcdc.agents.namenode.main.NameNodeReplicator;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
-import ai.sapper.hcdc.core.model.DFSFileState;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

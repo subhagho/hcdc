@@ -2,20 +2,9 @@ package ai.sapper.hcdc.core.io.impl.s3;
 
 import ai.sapper.hcdc.core.io.PathInfo;
 import ai.sapper.hcdc.core.io.Writer;
-import ai.sapper.hcdc.core.io.impl.local.LocalPathInfo;
 import ai.sapper.hcdc.core.io.impl.local.LocalWriter;
-import com.google.common.base.Preconditions;
 import lombok.NonNull;
-import software.amazon.awssdk.core.ResponseBytes;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.core.sync.ResponseTransformer;
-import software.amazon.awssdk.core.waiters.WaiterResponse;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.*;
-import software.amazon.awssdk.services.s3.waiters.S3Waiter;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class S3Writer extends LocalWriter {

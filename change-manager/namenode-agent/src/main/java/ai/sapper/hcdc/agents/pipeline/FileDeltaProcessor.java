@@ -21,6 +21,7 @@ import org.apache.parquet.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URL;
 import java.util.List;
 
 @Getter
@@ -74,7 +75,10 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
                 fs = fileSystemMocker.create(config.config());
             }
 
+            URL snapShotURL = new URL(config.snapshotServiceUrl);
+
             processor.withFileSystem(fs)
+                    .withSnapShotServiceURL(snapShotURL)
                     .withHdfsConnection(connection)
                     .withSenderQueue(sender())
                     .withStateManager(stateManager())
@@ -142,7 +146,7 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
                     receiver().ack(message.id());
                 }
             }
-            LOG.warn(String.format("Delta Change Processor thread stopped. [env state=%s]", NameNodeEnv.get().state().state().name()));
+            LOG.warn(String.format("File Delta Processor thread stopped. [env state=%s]", NameNodeEnv.get().state().state().name()));
         } catch (Throwable t) {
             LOG.error("Delta Change Processor terminated with error", t);
             DefaultLogger.stacktrace(LOG, t);
@@ -184,10 +188,13 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
             public static final String CONFIG_PATH_FS = "filesystem";
             public static final String CONFIG_FS_TYPE = String.format("%s.type", CONFIG_PATH_FS);
             public static final String CONFIG_HDFS_CONN = "hdfs";
+            public static final String CONFIG_SNAPSHOT_URL = "serviceUrl";
         }
 
         private String fsType;
         private String hdfsConnection;
+        private String snapshotServiceUrl;
+
         private HierarchicalConfiguration<ImmutableNode> fsConfig;
 
         public FileDeltaProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
@@ -218,6 +225,12 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
                 throw new ConfigurationException(
                         String.format("File Processor Error: missing configuration. [name=%s]",
                                 Constants.CONFIG_HDFS_CONN));
+            }
+            snapshotServiceUrl = get().getString(Constants.CONFIG_SNAPSHOT_URL);
+            if (Strings.isNullOrEmpty(snapshotServiceUrl)) {
+                throw new ConfigurationException(
+                        String.format("File Processor Error: missing configuration. [name=%s]",
+                                Constants.CONFIG_SNAPSHOT_URL));
             }
         }
     }

@@ -7,10 +7,11 @@ import ai.sapper.hcdc.agents.common.ZkStateManager;
 import ai.sapper.hcdc.agents.namenode.model.DFSBlockReplicaState;
 import ai.sapper.hcdc.agents.namenode.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.ConfigReader;
-import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.common.filters.DomainFilter;
 import ai.sapper.hcdc.common.filters.DomainFilterMatcher;
 import ai.sapper.hcdc.common.filters.DomainFilters;
+import ai.sapper.hcdc.common.filters.Filter;
+import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.filters.DomainManager;
@@ -92,13 +93,33 @@ public class HDFSSnapshotProcessor {
         return count;
     }
 
-    public DomainFilters addFilter(@NonNull DomainFilter filter,
-                                   @NonNull String domain) throws Exception {
+    public DomainFilters addFilter(@NonNull String domain,
+                                   @NonNull Filter filter) throws Exception {
         DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
         return domainManager.add(domain, filter.getEntity(), filter.getPath(), filter.getRegex());
     }
 
-    public int processFilter(@NonNull DomainFilter filter, @NonNull String domain) throws Exception {
+    public DomainFilter removeFilter(@NonNull String domain,
+                                     @NonNull String entity) throws Exception {
+        DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
+        return domainManager.remove(domain, entity);
+    }
+
+    public List<Filter> removeFilter(@NonNull String domain,
+                                     @NonNull String entity,
+                                     @NonNull String path) throws Exception {
+        DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
+        return domainManager.remove(domain, entity, path);
+    }
+
+    public Filter removeFilter(@NonNull String domain,
+                               @NonNull Filter filter) throws Exception {
+        DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
+        return domainManager.remove(domain, filter.getEntity(), filter.getPath(), filter.getRegex());
+    }
+
+    public int processFilter(@NonNull Filter filter,
+                             @NonNull String domain) throws Exception {
         DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
         DomainFilterMatcher matcher = domainManager.matchers().get(domain);
         if (matcher == null) {
@@ -112,7 +133,8 @@ public class HDFSSnapshotProcessor {
         return processFilter(pf, domain);
     }
 
-    public int processFilter(@NonNull DomainFilterMatcher.PathFilter filter, String domain) throws Exception {
+    public int processFilter(@NonNull DomainFilterMatcher.PathFilter filter,
+                             String domain) throws Exception {
         DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
         FileSystem fs = domainManager.hdfsConnection().fileSystem();
         List<Path> paths = FileSystemUtils.list(filter.path(), fs);
@@ -290,6 +312,7 @@ public class HDFSSnapshotProcessor {
         private MessagingConfig senderConfig;
         private MessagingConfig tnxSenderConfig;
 
+
         public HDFSSnapshotProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);
         }
@@ -336,7 +359,9 @@ public class HDFSSnapshotProcessor {
          * @param path
          */
         @Override
-        public void process(@NonNull DomainFilterMatcher matcher, DomainFilterMatcher.PathFilter filter, @NonNull String path) {
+        public void process(@NonNull DomainFilterMatcher matcher,
+                            DomainFilterMatcher.PathFilter filter,
+                            @NonNull String path) {
             try {
                 processor.processFilter(filter, matcher.domain());
             } catch (Exception ex) {

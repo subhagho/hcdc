@@ -1,10 +1,11 @@
 package ai.sapper.hcdc.core.filters;
 
 import ai.sapper.hcdc.common.ConfigReader;
-import ai.sapper.hcdc.common.model.SchemaEntity;
 import ai.sapper.hcdc.common.filters.DomainFilter;
 import ai.sapper.hcdc.common.filters.DomainFilterMatcher;
 import ai.sapper.hcdc.common.filters.DomainFilters;
+import ai.sapper.hcdc.common.filters.Filter;
+import ai.sapper.hcdc.common.model.SchemaEntity;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.common.utils.PathUtils;
@@ -103,9 +104,6 @@ public class DomainManager {
                         }
                     }
                 }
-                if (!matchers.isEmpty()) {
-                    this.matchers = matchers;
-                }
             }
         }
     }
@@ -138,7 +136,10 @@ public class DomainManager {
         return null;
     }
 
-    public DomainFilters add(@NonNull String domain, @NonNull String entity, @NonNull String path, @NonNull String regex) throws Exception {
+    public DomainFilters add(@NonNull String domain,
+                             @NonNull String entity,
+                             @NonNull String path,
+                             @NonNull String regex) throws Exception {
         Preconditions.checkNotNull(zkConnection);
         Preconditions.checkState(zkConnection.isConnected());
 
@@ -147,11 +148,11 @@ public class DomainManager {
         if (!matchers.containsKey(domain)) {
             DomainFilters df = new DomainFilters();
             df.setDomain(domain);
-            DomainFilter d = df.add(entity, path, regex);
+            Filter f = df.add(entity, path, regex);
 
             matcher = new DomainFilterMatcher(domain, df);
             matchers.put(domain, matcher);
-            filter = matcher.find(d);
+            filter = matcher.find(f);
         } else {
             matcher = matchers.get(domain);
             filter = matcher.add(entity, path, regex);
@@ -171,6 +172,68 @@ public class DomainManager {
             }
         }
         return matcher.filters();
+    }
+
+    public DomainFilter remove(@NonNull String domain,
+                               @NonNull String entity) throws Exception {
+        Preconditions.checkNotNull(zkConnection);
+        Preconditions.checkState(zkConnection.isConnected());
+
+        if (matchers.containsKey(domain)) {
+            DomainFilterMatcher matcher = matchers.get(domain);
+            DomainFilter df = matcher.remove(entity);
+            if (df != null) {
+                saveDomainFilters(matcher.filters());
+            }
+            return df;
+        }
+        return null;
+    }
+
+    public List<Filter> remove(@NonNull String domain,
+                               @NonNull String entity,
+                               @NonNull String path) throws Exception {
+        Preconditions.checkNotNull(zkConnection);
+        Preconditions.checkState(zkConnection.isConnected());
+
+        if (matchers.containsKey(domain)) {
+            DomainFilterMatcher matcher = matchers.get(domain);
+            List<Filter> fs = matcher.remove(entity, path);
+            if (fs != null && !fs.isEmpty()) {
+                saveDomainFilters(matcher.filters());
+            }
+            return fs;
+        }
+        return null;
+    }
+
+    public Filter remove(@NonNull String domain,
+                         @NonNull String entity,
+                         @NonNull String path,
+                         @NonNull String regex) throws Exception {
+        Preconditions.checkNotNull(zkConnection);
+        Preconditions.checkState(zkConnection.isConnected());
+
+        if (matchers.containsKey(domain)) {
+            DomainFilterMatcher matcher = matchers.get(domain);
+            Filter fs = matcher.remove(entity, path, regex);
+            if (fs != null) {
+                saveDomainFilters(matcher.filters());
+            }
+            return fs;
+        }
+        return null;
+    }
+
+    private void saveDomainFilters(DomainFilters filters) throws Exception {
+        CuratorFramework client = zkConnection.client();
+        String json = JSONUtils.asString(filters, DomainFilters.class);
+        String zp = getZkPath(filters.getDomain());
+        if (client.checkExists().forPath(zp) == null) {
+            client.create().creatingParentContainersIfNeeded().forPath(zp);
+        }
+        Stat stat = client.setData().forPath(zp, json.getBytes(StandardCharsets.UTF_8));
+        DefaultLogger.LOG.debug(String.format("Removed Domain Filter: [path=%s][filter=%s]", zp, json));
     }
 
     @Getter
