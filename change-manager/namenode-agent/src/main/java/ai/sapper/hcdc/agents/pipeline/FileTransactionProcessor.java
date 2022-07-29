@@ -501,7 +501,6 @@ public class FileTransactionProcessor extends TransactionProcessor {
             }
             List<DFSBlock> blocks = data.getBlocksList();
             if (!blocks.isEmpty()) {
-                boolean detect = true;
                 CDCDataConverter converter = new CDCDataConverter().withFileSystem(fs);
                 for (DFSBlock block : blocks) {
                     DFSBlockReplicaState bs = rState.get(block.getBlockId());
@@ -518,8 +517,8 @@ public class FileTransactionProcessor extends TransactionProcessor {
                                 String.format("Block not found in FileSystem. [path=%s][block ID=%d]",
                                         data.getFile().getPath(), block.getBlockId()));
                     }
-                    long size = copyBlock(block, rState, bs, fsb, reader, converter, detect);
-                    detect = false;
+
+                    long size = copyBlock(block, rState, bs, fsb, reader, converter, bs.getPrevBlockId() < 0);
                 }
             }
             try {
@@ -619,7 +618,8 @@ public class FileTransactionProcessor extends TransactionProcessor {
                     String.format("Error reading block from HDFS. [path=%s][block ID=%d]",
                             fileState.getHdfsPath(), source.getBlockId()));
         }
-        if (detect) {
+        if (detect
+                && (fileState.getFileType() == null || fileState.getFileType() == EFileType.UNKNOWN)) {
             EFileType fileType = converter.detect(data.data().array(), (int) data.dataSize());
             if (fileType != null) {
                 fileState.setFileType(fileType);
