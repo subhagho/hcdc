@@ -54,3 +54,13 @@ dependencies {
     testImplementation 'com.google.code.gson:gson:2.9.0'
 
 }
+
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'ai.sapper.hcdc.agents.namenode.main.SnapshotRunner'
+    }
+    baseName = 'namenode-agent-ALL-jar'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
