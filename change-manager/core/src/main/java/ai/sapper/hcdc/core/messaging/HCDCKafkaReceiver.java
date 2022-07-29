@@ -76,7 +76,7 @@ public class HCDCKafkaReceiver extends MessageReceiver<String, DFSChangeDelta> {
                 for (TopicPartition partition : partitions) {
                     KafkaMessageState state = stateManager.getState(partition.partition());
                     Preconditions.checkNotNull(state);
-                    seek(partition, state.getOffset());
+                    seek(partition, state.getOffset() + 1);
                     states.put(partition.partition(), state);
                 }
             }

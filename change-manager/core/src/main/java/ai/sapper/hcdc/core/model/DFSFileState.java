@@ -5,7 +5,9 @@ import lombok.NonNull;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -21,7 +23,6 @@ public class DFSFileState {
     private long lastTnxId;
     private long timestamp;
     private EFileType fileType = EFileType.UNKNOWN;
-    private String storagePath;
 
     private EFileState state = EFileState.Unknown;
 
@@ -54,6 +55,20 @@ public class DFSFileState {
         return blocks;
     }
 
+    public Map<Long, BlockTransactionDelta> compressedChangeSet(long startTxnId, long endTxnId) {
+        if (!blocks.isEmpty()) {
+            Map<Long, BlockTransactionDelta> change = new HashMap<>();
+            for (DFSBlockState block : sortedBlocks()) {
+                BlockTransactionDelta c = block.compressedChangeSet(startTxnId, endTxnId);
+                if (c != null) {
+                    change.put(block.getBlockId(), c);
+                }
+            }
+            if (!change.isEmpty()) return change;
+        }
+        return null;
+    }
+
     public boolean checkDeleted() {
         return (state == EFileState.Deleted);
     }
@@ -64,13 +79,6 @@ public class DFSFileState {
 
     public boolean canProcess() {
         return (!hasError() && !checkDeleted());
-    }
-
-    public boolean canUpdate() {
-        if (canProcess()) {
-            return (state == EFileState.New || state == EFileState.Updating);
-        }
-        return false;
     }
 
     public boolean hasBlocks() {

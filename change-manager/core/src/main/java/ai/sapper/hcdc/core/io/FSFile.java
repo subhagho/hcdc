@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.core.io;
 
+import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.model.DFSBlockState;
 import ai.sapper.hcdc.core.model.DFSFileState;
 import lombok.AccessLevel;
@@ -10,6 +11,7 @@ import lombok.experimental.Accessors;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @Getter
@@ -23,17 +25,40 @@ public class FSFile implements Closeable {
     @Getter(AccessLevel.NONE)
     private int currentIndex = 0;
 
-    protected FSFile(@NonNull String domain, @NonNull PathInfo directory, @NonNull FileSystem fs) {
+    public FSFile(@NonNull String domain,
+                  @NonNull PathInfo directory,
+                  @NonNull FileSystem fs) {
         this.domain = domain;
         this.directory = directory;
         this.fs = fs;
     }
 
-    protected FSFile(@NonNull DFSFileState fileState, String domain, @NonNull FileSystem fs) throws IOException {
+    public FSFile(@NonNull DFSFileState fileState,
+                  String domain,
+                  @NonNull FileSystem fs,
+                  boolean create) throws IOException {
         this.domain = domain;
         this.fs = fs;
-        directory = fs.get(fileState.getHdfsFilePath(), domain);
+        String p = PathUtils.formatPath(String.format("%s/", fileState.getHdfsFilePath()));
+        directory = fs.get(p, domain);
+        setup(create, fileState);
+    }
+
+    public FSFile(@NonNull DFSFileState fileState,
+                  String domain,
+                  @NonNull FileSystem fs) throws IOException {
+        this.domain = domain;
+        this.fs = fs;
+        String p = PathUtils.formatPath(String.format("%s/", fileState.getHdfsFilePath()));
+        directory = fs.get(p, domain);
+        setup(false, fileState);
+    }
+
+    private void setup(boolean create, DFSFileState fileState) throws IOException {
         if (!directory.exists()) {
+            if (!create) {
+                throw new IOException(String.format("FS File does not exist. [path=%s]", directory.path()));
+            }
             fs.mkdirs(directory);
         } else {
             if (!directory.isDirectory()) {
@@ -43,7 +68,7 @@ public class FSFile implements Closeable {
             }
         }
         for (DFSBlockState blockState : fileState.getBlocks()) {
-            FSBlock block = new FSBlock(blockState, directory, fs, domain);
+            FSBlock block = new FSBlock(blockState, directory, fs, domain, create);
             blocks.add(block);
         }
     }
@@ -53,6 +78,14 @@ public class FSFile implements Closeable {
             if (block.blockId() == blockId) return block;
         }
         return null;
+    }
+
+    public boolean hasBlocks() {
+        return (!blocks.isEmpty());
+    }
+
+    public Collection<FSBlock> getBlocksList() {
+        return blocks;
     }
 
     public void open(boolean overwrite) throws IOException {
@@ -131,10 +164,33 @@ public class FSFile implements Closeable {
         return block;
     }
 
+    public synchronized FSBlock add(@NonNull DFSBlockState blockState) throws IOException {
+        FSBlock block = get(blockState.getBlockId());
+        if (block == null) {
+            if (blockState.getPrevBlockId() < 0) {
+                if (!blocks.isEmpty()) {
+                    throw new IOException("Invalid block chain: Blocks already added.");
+                }
+            } else {
+                if (blocks.isEmpty()) {
+                    throw new IOException("Invalid block chain: Blocks is empty.");
+                }
+                FSBlock prev = blocks.get(blocks.size() - 1);
+                if (prev.blockId() != blockState.getPrevBlockId()) {
+                    throw new IOException(
+                            String.format("Invalid block chain: Previous block ID expected = %d", prev.blockId()));
+                }
+            }
+            block = new FSBlock(blockState, directory, fs, domain, true);
+            blocks.add(block);
+        }
+        return block;
+    }
+
     public synchronized boolean remove(long blockId) throws IOException {
         FSBlock block = deleteBlock(blockId);
         if (block != null) {
-            return fs.delete(block.path());
+            return block.delete();
         }
         return false;
     }
@@ -155,6 +211,24 @@ public class FSFile implements Closeable {
             }
         }
         return null;
+    }
+
+    public boolean exists() throws IOException {
+        return directory.exists();
+    }
+
+    public synchronized int delete() throws IOException {
+        int count = 0;
+        if (hasBlocks()) {
+            for (FSBlock block : blocks) {
+                if (block.delete()) {
+                    count++;
+                }
+            }
+            blocks.clear();
+        }
+        fs.delete(directory);
+        return count;
     }
 
     /**

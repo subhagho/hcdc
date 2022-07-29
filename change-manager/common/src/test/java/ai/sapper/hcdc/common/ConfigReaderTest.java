@@ -91,4 +91,23 @@ class ConfigReaderTest {
         Configurations configs = new Configurations();
         return configs.xml(cf);
     }
+
+    @Test
+    void map() {
+        DefaultLogger.LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "map"));
+        try {
+            ConfigReader reader = new ConfigReader(readFile(), "database");
+            HierarchicalConfiguration<ImmutableNode> node = reader.get();
+            assertNotNull(node);
+            boolean ret = ConfigReader.checkIfNodeExists(node, "domains.abs");
+            assertFalse(ret);
+            ret = ConfigReader.checkIfNodeExists(node, "domains.mapping");
+            assertTrue(ret);
+            Map<String, String> map = ConfigReader.readAsMap(node, "domains.mapping");
+            assertTrue(map.size() > 0);
+        } catch (Throwable t) {
+            DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
+            fail(t);
+        }
+    }
 }

@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.core.filters;
 
-import ai.sapper.hcdc.common.model.filters.DomainFilterMatcher;
+import ai.sapper.hcdc.common.filters.DomainFilterMatcher;
 import lombok.NonNull;
 
 public interface FilterAddCallback {

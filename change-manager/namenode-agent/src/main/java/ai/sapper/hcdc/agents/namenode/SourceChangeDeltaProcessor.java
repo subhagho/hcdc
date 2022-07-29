@@ -3,9 +3,8 @@ package ai.sapper.hcdc.agents.namenode;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
-import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
+import ai.sapper.hcdc.agents.namenode.model.DFSFileReplicaState;
 import ai.sapper.hcdc.agents.namenode.model.DFSTransactionType;
-import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
 import ai.sapper.hcdc.common.model.DFSAddFile;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSCloseFile;
@@ -14,7 +13,7 @@ import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.hcdc.core.messaging.InvalidMessageError;
 import ai.sapper.hcdc.core.messaging.MessageObject;
-import ai.sapper.hcdc.core.model.BlockTnxDelta;
+import ai.sapper.hcdc.core.model.BlockTransactionDelta;
 import ai.sapper.hcdc.core.model.DFSBlockState;
 import ai.sapper.hcdc.core.model.DFSFileState;
 import com.google.common.base.Preconditions;
@@ -111,7 +110,7 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
             throw new InvalidMessageError(message.id(),
                     String.format("Invalid Message mode. [id=%s][mode=%s]", message.id(), message.mode().name()));
         }
-        txId = processor.checkMessageSequence(message);
+        txId = processor.checkMessageSequence(message, false);
 
         if (message.mode() == MessageObject.MessageMode.Backlog) {
             processBacklogMessage(message, txId);
@@ -124,12 +123,16 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
 
     private void processBacklogMessage(MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
         DFSAddFile addFile = (DFSAddFile) ChangeDeltaSerDe.parse(message.value());
-        DFSFileState fileState = stateManager().get(addFile.getFile().getPath());
+        DFSFileState fileState = stateManager()
+                .fileStateHelper()
+                .get(addFile.getFile().getPath());
         if (fileState == null) {
             throw new InvalidMessageError(message.id(),
                     String.format("HDFS File Not found. [path=%s]", addFile.getFile().getPath()));
         }
-        DFSReplicationState rState = stateManager().get(fileState.getId());
+        DFSFileReplicaState rState = stateManager()
+                .replicaStateHelper()
+                .get(fileState.getId());
         if (rState == null || !rState.isEnabled()) {
             throw new InvalidMessageError(message.id(),
                     String.format("HDFS File not registered for snapshot. [path=%s][inode=%d]",
@@ -151,9 +154,9 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
 
     private void sendBackLogMessage(MessageObject<String, DFSChangeDelta> message,
                                     DFSFileState fileState,
-                                    DFSReplicationState rState,
+                                    DFSFileReplicaState rState,
                                     long txId) throws Exception {
-        DFSTransactionType.DFSCloseFileType tnx = buildBacklogTransactions(fileState, rState, txId);
+        DFSTransactionType.DFSCloseFileType tnx = buildBacklogTransactions(fileState, rState, txId + 1);
         if (tnx != null) {
             DFSCloseFile closeFile = tnx.convertToProto();
             MessageObject<String, DFSChangeDelta> mesg = ChangeDeltaSerDe.create(message.value().getNamespace(),
@@ -163,12 +166,14 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
                     message.value().getEntityName(),
                     MessageObject.MessageMode.Backlog);
             sender().send(mesg);
-            rState = stateManager().update(rState);
+            rState = stateManager()
+                    .replicaStateHelper()
+                    .update(rState);
         }
     }
 
     private DFSTransactionType.DFSCloseFileType buildBacklogTransactions(DFSFileState fileState,
-                                                                         DFSReplicationState rState,
+                                                                         DFSFileReplicaState rState,
                                                                          long txId) throws Exception {
         DFSTransactionType.DFSFileType file = new DFSTransactionType.DFSFileType();
         file.path(fileState.getHdfsFilePath());
@@ -184,7 +189,7 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
 
         if (fileState.hasBlocks()) {
             for (DFSBlockState bs : fileState.getBlocks()) {
-                BlockTnxDelta delta = bs.compressedChangeSet(txId);
+                BlockTransactionDelta delta = bs.compressedChangeSet(txId);
                 if (delta != null) {
                     DFSTransactionType.DFSBlockType bd = new DFSTransactionType.DFSBlockType();
                     bd.blockId(bs.getBlockId());

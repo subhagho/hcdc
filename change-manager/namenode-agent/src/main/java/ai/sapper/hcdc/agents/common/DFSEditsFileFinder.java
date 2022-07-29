@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.hcdc.common.utils.DefaultLogger;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
@@ -81,7 +82,8 @@ public class DFSEditsFileFinder {
                     if (!Strings.isNullOrEmpty(s) && !Strings.isNullOrEmpty(e)) {
                         long stx = Long.parseLong(s);
                         long etx = Long.parseLong(e);
-                        if ((stx >= startTx || startTx < 0) && (etx <= endTx || endTx < 0)) {
+                        Preconditions.checkState(etx >= stx);
+                        if (validStart(startTx, endTx, stx) || validEnd(startTx, endTx, etx)) {
                             EditsLogFile ef = new EditsLogFile();
                             ef.path = file.getAbsolutePath();
                             ef.startTxId = stx;
@@ -103,6 +105,14 @@ public class DFSEditsFileFinder {
             return paths;
         }
         return null;
+    }
+
+    private static boolean validStart(long tStart, long tEnd, long fStart) {
+        return (fStart >= tStart || tStart < 0) && (fStart <= tEnd || tEnd < 0);
+    }
+
+    private static boolean validEnd(long tStart, long tEnd, long fEnd) {
+        return (fEnd >= tStart || tStart < 0) && (fEnd <= tEnd || tEnd < 0);
     }
 
     public static long findSeenTxID(@NonNull String rootPath) throws IOException {

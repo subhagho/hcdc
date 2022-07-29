@@ -29,7 +29,8 @@ import java.util.List;
 @Getter
 @Accessors(fluent = true)
 public class EditLogProcessor implements Runnable {
-    private static Logger LOG = LoggerFactory.getLogger(EditLogProcessor.class.getCanonicalName());
+    private static final Logger LOG = LoggerFactory.getLogger(EditLogProcessor.class.getCanonicalName());
+    private static final String PATH_NN_CURRENT_DIR = "current";
 
     private final ZkStateManager stateManager;
     private MessageSender<String, DFSChangeDelta> sender;
@@ -97,22 +98,21 @@ public class EditLogProcessor implements Runnable {
         }
     }
 
+
     public long doRun() throws Exception {
         NameNodeTxState state = stateManager.agentTxState();
         EditsLogReader reader = new EditsLogReader();
         long txId = state.getProcessedTxId();
-        List<DFSEditsFileFinder.EditsLogFile> files = DFSEditsFileFinder.findEditsFiles(editsDir.getAbsolutePath(), state.getProcessedTxId(), -1);
+        List<DFSEditsFileFinder.EditsLogFile> files = DFSEditsFileFinder
+                .findEditsFiles(getPathNnCurrentDir(editsDir.getAbsolutePath()),
+                        state.getProcessedTxId() + 1, -1);
         if (files != null && !files.isEmpty()) {
             for (DFSEditsFileFinder.EditsLogFile file : files) {
-                if (file.startTxId() != (txId + 1)) {
-                    throw new Exception(String.format("Missing edits log file. [expected TXID=%d][file start TXID=%d]",
-                            (txId + 1), file.startTxId()));
-                }
                 LOG.debug(String.format("Reading edits file [path=%s][startTx=%d]", file, state.getProcessedTxId()));
                 reader.run(file, state.getProcessedTxId(), file.endTxId());
                 DFSEditLogBatch batch = reader.batch();
                 if (batch.transactions() != null && !batch.transactions().isEmpty()) {
-                    long tid = processBatch(batch);
+                    long tid = processBatch(batch, txId);
                     if (tid > 0) {
                         txId = tid;
                         stateManager.update(txId);
@@ -120,21 +120,22 @@ public class EditLogProcessor implements Runnable {
                 }
             }
         }
-        String cf = DFSEditsFileFinder.getCurrentEditsFile(editsDir.getAbsolutePath());
+        String cf = DFSEditsFileFinder.getCurrentEditsFile(getPathNnCurrentDir(editsDir.getAbsolutePath()));
         if (cf == null) {
             throw new Exception(String.format("Current Edits file not found. [dir=%s]",
                     editsDir.getAbsolutePath()));
         }
-        long ltx = DFSEditsFileFinder.findSeenTxID(editsDir.getAbsolutePath());
+        long ltx = DFSEditsFileFinder.findSeenTxID(getPathNnCurrentDir(editsDir.getAbsolutePath()));
         LOG.info(String.format("Current Edits File: %s, Last Seen TXID=%d", cf, ltx));
 
         return txId;
     }
 
-    private long processBatch(DFSEditLogBatch batch) throws Exception {
+    private long processBatch(DFSEditLogBatch batch, long lastTxId) throws Exception {
         if (batch != null && batch.transactions() != null && !batch.transactions().isEmpty()) {
             long txid = -1;
             for (DFSTransactionType<?> tnx : batch.transactions()) {
+                if (tnx.id() <= lastTxId) continue;
                 Object proto = tnx.convertToProto();
                 MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
                         proto,
@@ -148,6 +149,10 @@ public class EditLogProcessor implements Runnable {
             return txid;
         }
         return -1;
+    }
+
+    private String getPathNnCurrentDir(String path) {
+        return String.format("%s/%s", path, PATH_NN_CURRENT_DIR);
     }
 
     @Getter

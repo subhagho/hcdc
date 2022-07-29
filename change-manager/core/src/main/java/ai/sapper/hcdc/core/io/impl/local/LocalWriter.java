@@ -3,12 +3,19 @@ package ai.sapper.hcdc.core.io.impl.local;
 import ai.sapper.hcdc.core.io.PathInfo;
 import ai.sapper.hcdc.core.io.Writer;
 import com.google.common.base.Preconditions;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 
+@Getter
+@Setter
+@Accessors(fluent = true)
 public class LocalWriter extends Writer {
     private FileOutputStream outputStream;
 
@@ -24,11 +31,7 @@ public class LocalWriter extends Writer {
     @Override
     public Writer open(boolean overwrite) throws IOException {
         LocalPathInfo pi = (LocalPathInfo) path();
-        if (pi.exists() && overwrite) {
-            if (!pi.file().delete()) {
-                throw new IOException(String.format("Failed to delete existing file. [path=%s]",
-                        pi.file().getAbsolutePath()));
-            }
+        if (!pi.exists() || overwrite) {
             outputStream = new FileOutputStream(pi.file());
         } else if (pi.exists()) {
             outputStream = new FileOutputStream(pi.file(), true);
@@ -45,9 +48,8 @@ public class LocalWriter extends Writer {
      */
     @Override
     public long write(byte[] data, long offset, long length) throws IOException {
-        LocalPathInfo pi = (LocalPathInfo) path();
-        if (outputStream == null) {
-            throw new IOException(String.format("File Stream not open. [path=%s]", pi.file().getAbsolutePath()));
+        if (!isOpen()) {
+            throw new IOException(String.format("Writer not open: [path=%s]", path().toString()));
         }
         outputStream.write(data, (int) offset, (int) length);
 
@@ -59,9 +61,8 @@ public class LocalWriter extends Writer {
      */
     @Override
     public void flush() throws IOException {
-        LocalPathInfo pi = (LocalPathInfo) path();
-        if (outputStream == null) {
-            throw new IOException(String.format("File Stream not open. [path=%s]", pi.file().getAbsolutePath()));
+        if (!isOpen()) {
+            throw new IOException(String.format("Writer not open: [path=%s]", path().toString()));
         }
         outputStream.flush();
     }
@@ -74,13 +75,20 @@ public class LocalWriter extends Writer {
      */
     @Override
     public long truncate(long offset, long length) throws IOException {
-        LocalPathInfo pi = (LocalPathInfo) path();
-        if (outputStream == null) {
-            throw new IOException(String.format("File Stream not open. [path=%s]", pi.file().getAbsolutePath()));
+        if (!isOpen()) {
+            throw new IOException(String.format("Writer not open: [path=%s]", path().toString()));
         }
         FileChannel channel = outputStream.getChannel();
         channel = channel.truncate(offset + length);
         return channel.size();
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public boolean isOpen() {
+        return (outputStream != null);
     }
 
     /**
@@ -99,6 +107,7 @@ public class LocalWriter extends Writer {
     @Override
     public void close() throws IOException {
         if (outputStream != null) {
+            outputStream.flush();
             outputStream.close();
             outputStream = null;
         }

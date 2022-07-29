@@ -25,4 +25,6 @@ public abstract class Reader implements Closeable {
     }
 
     public abstract void seek(int offset) throws IOException;
+
+    public abstract boolean isOpen();
 }

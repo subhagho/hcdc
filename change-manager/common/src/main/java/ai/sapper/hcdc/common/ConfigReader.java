@@ -7,9 +7,12 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
+import org.apache.commons.configuration2.builder.combined.CombinedConfigurationBuilder;
+import org.apache.commons.configuration2.builder.fluent.CombinedBuilderParameters;
 import org.apache.commons.configuration2.builder.fluent.Parameters;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.ex.ConfigurationRuntimeException;
@@ -20,9 +23,8 @@ import org.apache.commons.configuration2.io.ProvidedURLLocationStrategy;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.net.URI;
+import java.util.*;
 
 @Getter
 @Setter
@@ -111,27 +113,40 @@ public class ConfigReader {
     }
 
     public static XMLConfiguration readFromClasspath(@NonNull String path) throws ConfigurationException {
-        List<FileLocationStrategy> subs = List.of(
+        List<FileLocationStrategy> subs = Collections.singletonList(
                 new ProvidedURLLocationStrategy());
         FileLocationStrategy strategy = new CombinedLocationStrategy(subs);
         Parameters params = new Parameters();
-        FileBasedConfigurationBuilder<XMLConfiguration> builder =
-                new FileBasedConfigurationBuilder<XMLConfiguration>(XMLConfiguration.class)
-                        .configure(params.xml()
-                                .setLocationStrategy(strategy).setFileName(path));
+        FileBasedConfigurationBuilder<XMLConfiguration> builder
+                = new FileBasedConfigurationBuilder<XMLConfiguration>(XMLConfiguration.class)
+                .configure(params
+                        .xml()
+                        .setLocationStrategy(strategy)
+                        .setURL(
+                                ConfigReader.class.getClassLoader().getResource(path)
+                        ));
+
         return builder.getConfiguration();
     }
 
     public static XMLConfiguration readFromURI(@NonNull String path) throws ConfigurationException {
-        List<FileLocationStrategy> subs = List.of(
-                new ClasspathLocationStrategy());
-        FileLocationStrategy strategy = new CombinedLocationStrategy(subs);
-        Parameters params = new Parameters();
-        FileBasedConfigurationBuilder<XMLConfiguration> builder =
-                new FileBasedConfigurationBuilder<XMLConfiguration>(XMLConfiguration.class)
-                        .configure(params.xml()
-                                .setLocationStrategy(strategy).setFileName(path));
-        return builder.getConfiguration();
+        try {
+            List<FileLocationStrategy> subs = Collections.singletonList(
+                    new ClasspathLocationStrategy());
+            FileLocationStrategy strategy = new CombinedLocationStrategy(subs);
+            Parameters params = new Parameters();
+            FileBasedConfigurationBuilder<XMLConfiguration> builder
+                    = new FileBasedConfigurationBuilder<XMLConfiguration>(XMLConfiguration.class)
+                    .configure(params
+                            .xml()
+                            .setLocationStrategy(strategy)
+                            .setURL(
+                                    new URI(path).toURL()
+                            ));
+            return builder.getConfiguration();
+        } catch (Exception ex) {
+            throw new ConfigurationException(ex);
+        }
     }
 
     public static XMLConfiguration read(@NonNull String path, @NonNull EConfigFileType type) throws ConfigurationException {
@@ -156,5 +171,21 @@ public class ConfigReader {
             }
         }
         return false;
+    }
+
+    public static <T> Map<String, T> readAsMap(@NonNull HierarchicalConfiguration<ImmutableNode> config,
+                                               @NonNull String key) {
+        Map<String, T> map = new LinkedHashMap<>();
+        Configuration subset = config.subset(key);
+        if (!subset.isEmpty()) {
+            Iterator<String> it = subset.getKeys();
+            while (it.hasNext()) {
+                String k = (String) it.next();
+                //noinspection unchecked
+                T v = (T) subset.getProperty(k);
+                map.put(k, v);
+            }
+        }
+        return map;
     }
 }

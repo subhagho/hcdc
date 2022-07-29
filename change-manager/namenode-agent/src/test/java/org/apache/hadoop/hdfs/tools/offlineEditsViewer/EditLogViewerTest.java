@@ -11,7 +11,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class EditLogViewerTest {
-    private static final String EDITS_FILE_01 = "src/test/resources/edits/edits_0000000000000013861-0000000000000013903";
+    private static final String EDITS_FILE_01 = "src/test/resources/edits/logs/edits_0000000000000022789-0000000000000022790";
     private static final String EDITS_FILE_CURRENT = "src/test/resources/edits/edits_inprogress_0000000000000001594";
     private static final String SOURCE_DIR = "src/test/resources/edits";
 

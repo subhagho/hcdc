@@ -55,7 +55,7 @@ public class HDFSBlockReader extends DFSInputStream {
             throw new DFSError(String.format("Block not found. [path=%s][block id=%d]", src, blockId));
         }
         ExtendedBlock block = lb.getBlock();
-        if (generationStamp < block.getGenerationStamp()) {
+        if (generationStamp <= block.getGenerationStamp()) {
             if (length < 0) {
                 length = (int) (block.getNumBytes() - offset);
             } else {

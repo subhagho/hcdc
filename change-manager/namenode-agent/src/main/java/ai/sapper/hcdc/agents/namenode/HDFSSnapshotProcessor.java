@@ -4,12 +4,13 @@ import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ProcessorStateManager;
 import ai.sapper.hcdc.agents.common.SnapshotError;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
-import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
+import ai.sapper.hcdc.agents.namenode.model.DFSBlockReplicaState;
+import ai.sapper.hcdc.agents.namenode.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.*;
-import ai.sapper.hcdc.common.model.filters.DomainFilter;
-import ai.sapper.hcdc.common.model.filters.DomainFilterMatcher;
-import ai.sapper.hcdc.common.model.filters.DomainFilters;
+import ai.sapper.hcdc.common.filters.DomainFilter;
+import ai.sapper.hcdc.common.filters.DomainFilterMatcher;
+import ai.sapper.hcdc.common.filters.DomainFilters;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.filters.DomainManager;
@@ -17,6 +18,7 @@ import ai.sapper.hcdc.core.filters.FilterAddCallback;
 import ai.sapper.hcdc.core.messaging.*;
 import ai.sapper.hcdc.core.model.DFSBlockState;
 import ai.sapper.hcdc.core.model.DFSFileState;
+import ai.sapper.hcdc.core.model.EFileState;
 import ai.sapper.hcdc.core.utils.FileSystemUtils;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
@@ -135,23 +137,40 @@ public class HDFSSnapshotProcessor {
         Preconditions.checkState(sender != null);
         stateManager.replicationLock().lock();
         try {
-            DefaultLogger.LOG.info(String.format("Generating snapshot for file. [path=%s]", hdfsPath));
-            DFSFileState fileState = stateManager.get(hdfsPath);
+            DefaultLogger.LOG.debug(String.format("Generating snapshot for file. [path=%s]", hdfsPath));
+            DFSFileState fileState = stateManager
+                    .fileStateHelper()
+                    .get(hdfsPath);
             if (fileState == null) {
-                DefaultLogger.LOG.warn(String.format("HDFS File State not found. [path=%s]", hdfsPath));
+                DefaultLogger.LOG.info(String.format("HDFS File State not found. [path=%s]", hdfsPath));
                 return;
             }
-            DFSReplicationState rState = stateManager.get(fileState.getId());
+            DFSFileReplicaState rState = stateManager
+                    .replicaStateHelper()
+                    .get(fileState.getId());
             if (rState == null) {
-                rState = stateManager.create(fileState.getId(), fileState.getHdfsFilePath(), entity, true);
+                rState = stateManager
+                        .replicaStateHelper()
+                        .create(fileState.getId(), fileState.getHdfsFilePath(), entity, true);
             }
             if (rState.getSnapshotTxId() > 0) {
                 return;
             }
-            DFSAddFile addFile = generateSnapshot(fileState, true);
+            for (DFSBlockState bs : fileState.getBlocks()) {
+                DFSBlockReplicaState b = new DFSBlockReplicaState();
+                b.setState(EFileState.New);
+                b.setBlockId(bs.getBlockId());
+                b.setPrevBlockId(bs.getPrevBlockId());
+                b.setStartOffset(0);
+                b.setDataSize(bs.getDataSize());
+                b.setUpdateTime(System.currentTimeMillis());
+                rState.add(b);
+            }
+
+            DFSCloseFile addFile = generateSnapshot(fileState, true, fileState.getLastTnxId());
             MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
                     addFile,
-                    DFSAddFile.class,
+                    DFSCloseFile.class,
                     entity.getDomain(),
                     entity.getEntity(),
                     MessageObject.MessageMode.Snapshot);
@@ -159,7 +178,9 @@ public class HDFSSnapshotProcessor {
 
             rState.setSnapshotTxId(fileState.getLastTnxId());
             rState.setSnapshotTime(System.currentTimeMillis());
-            stateManager.update(rState);
+            stateManager
+                    .replicaStateHelper()
+                    .update(rState);
 
             DefaultLogger.LOG.info(String.format("Snapshot generated for path. [path=%s][inode=%d]", fileState.getHdfsFilePath(), fileState.getId()));
         } catch (SnapshotError se) {
@@ -171,33 +192,40 @@ public class HDFSSnapshotProcessor {
         }
     }
 
-public DFSReplicationState snapshotDone(@NonNull String hdfsPath, @NonNull SchemaEntity entity, long tnxId) throws SnapshotError {
+    public DFSFileReplicaState snapshotDone(@NonNull String hdfsPath, @NonNull SchemaEntity entity, long tnxId) throws SnapshotError {
         Preconditions.checkState(tnxSender != null);
         stateManager.replicationLock().lock();
         try {
-            DFSFileState fileState = stateManager.get(hdfsPath);
+            DFSFileState fileState = stateManager
+                    .fileStateHelper()
+                    .get(hdfsPath);
             if (fileState == null) {
                 throw new SnapshotError(String.format("HDFS File State not found. [path=%s]", hdfsPath));
             }
-            DFSReplicationState rState = stateManager.get(fileState.getId());
+            DFSFileReplicaState rState = stateManager
+                    .replicaStateHelper()
+                    .get(fileState.getId());
             if (rState == null) {
                 throw new SnapshotError(String.format("HDFS File replication record not found. [path=%s]", hdfsPath));
             }
             if (tnxId != rState.getSnapshotTxId()) {
                 throw new SnapshotError(String.format("Snapshot transaction mismatch. [expected=%d][actual=%d]", rState.getSnapshotTxId(), tnxId));
             }
-            DFSAddFile addFile = generateSnapshot(fileState, true);
+            DFSCloseFile closeFile = generateSnapshot(fileState, true, tnxId);
             MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
-                    addFile,
-                    DFSAddFile.class,
+                    closeFile,
+                    DFSCloseFile.class,
                     entity.getDomain(),
                     entity.getEntity(),
                     MessageObject.MessageMode.Backlog);
             tnxSender.send(message);
 
+            rState.clear();
             rState.setSnapshotReady(true);
             rState.setLastReplicationTime(System.currentTimeMillis());
-            stateManager.update(rState);
+            stateManager
+                    .replicaStateHelper()
+                    .update(rState);
 
             return rState;
         } catch (SnapshotError se) {
@@ -209,17 +237,19 @@ public DFSReplicationState snapshotDone(@NonNull String hdfsPath, @NonNull Schem
         }
     }
 
-    public static DFSAddFile generateSnapshot(DFSFileState state, boolean addBlocks) throws Exception {
+    public static DFSCloseFile generateSnapshot(DFSFileState state,
+                                                boolean addBlocks,
+                                                long txId) throws Exception {
         DFSTransaction tx = DFSTransaction.newBuilder()
-                .setOp(DFSTransaction.Operation.ADD_FILE)
-                .setTransactionId(state.getLastTnxId())
-                .setTimestamp(state.getUpdatedTime())
+                .setOp(DFSTransaction.Operation.CLOSE)
+                .setTransactionId(txId)
+                .setTimestamp(System.currentTimeMillis())
                 .build();
         DFSFile file = DFSFile.newBuilder()
                 .setInodeId(state.getId())
                 .setPath(state.getHdfsFilePath())
                 .build();
-        DFSAddFile.Builder builder = DFSAddFile.newBuilder();
+        DFSCloseFile.Builder builder = DFSCloseFile.newBuilder();
         builder.setOverwrite(false)
                 .setModifiedTime(state.getUpdatedTime())
                 .setBlockSize(state.getBlockSize())

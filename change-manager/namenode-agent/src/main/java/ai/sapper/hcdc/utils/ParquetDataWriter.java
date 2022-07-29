@@ -3,25 +3,32 @@ package ai.sapper.hcdc.utils;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
+import org.apache.avro.Schema;
+import org.apache.avro.SchemaBuilder;
+import org.apache.avro.generic.GenericData;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.Strings;
+import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
-import org.apache.parquet.schema.MessageType;
-import org.apache.parquet.schema.PrimitiveType;
-import org.apache.parquet.schema.Type;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class ParquetDataWriter extends OutputDataWriter<List<String>> {
 
-    protected ParquetDataWriter(@NonNull String path, @NonNull String filename, @NonNull FileSystem fs) {
+    protected ParquetDataWriter(@NonNull String path,
+                                @NonNull String filename,
+                                @NonNull FileSystem fs) {
         super(path, filename, fs, EOutputFormat.Parquet);
+
+
     }
 
     /**
@@ -30,7 +37,9 @@ public class ParquetDataWriter extends OutputDataWriter<List<String>> {
      * @throws IOException
      */
     @Override
-    public void write(String name, @NonNull Map<String, Integer> header, @NonNull List<List<String>> records) throws IOException {
+    public void write(String name,
+                      @NonNull Map<String, Integer> header,
+                      @NonNull List<List<String>> records) throws IOException {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
         String file = String.format("%s/%s", path(), filename());
         File f = new File(file);
@@ -38,34 +47,59 @@ public class ParquetDataWriter extends OutputDataWriter<List<String>> {
             f.delete();
         }
         try {
-            MessageType mt = getSchema(name, header);
+            SchemaBuilder.FieldAssembler<Schema> record = SchemaBuilder.record("record")
+                    .namespace("ai.sapper.hcdc")
+                    .fields();
+            for (String key : header.keySet()) {
+                record.nullableString(key, "");
+            }
+            Schema schema = record.endRecord();
             Path path = new Path(path());
             if (!fs().exists(path)) {
                 fs().mkdirs(path);
             }
             path = new Path(file);
 
-            try (ParquetWriter<List<String>> writer = new ParquetWriter<>(path, new CustomWriteSupport(mt),
-                    CompressionCodecName.SNAPPY, ParquetWriter.DEFAULT_BLOCK_SIZE, ParquetWriter.DEFAULT_PAGE_SIZE,
-                    true, true)) {
-                for (List<String> record : records) {
-                    writer.write(record);
-                }
-            }
+            List<GenericData.Record> data = convert(schema, records, header);
 
+            writeToParquet(schema, data, path);
         } catch (Exception ex) {
             DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
             throw new IOException(ex);
         }
     }
 
-    private MessageType getSchema(String name, Map<String, Integer> header) throws Exception {
-        List<Type> types = new ArrayList<>(header.size());
+    private List<GenericData.Record> convert(Schema schema, List<List<String>> records, Map<String, Integer> header) throws Exception {
+        Map<Integer, String> reverse = new HashMap<>(header.size());
         for (String key : header.keySet()) {
-            Type t = new PrimitiveType(Type.Repetition.OPTIONAL, PrimitiveType.PrimitiveTypeName.BINARY, key);
-            types.add(t);
+            reverse.put(header.get(key), key);
         }
-        return new MessageType(name, types);
+        List<GenericData.Record> data = new ArrayList<>();
+        for (List<String> r : records) {
+            GenericData.Record record = new GenericData.Record(schema);
+            for (int ii = 0; ii < r.size(); ii++) {
+                String name = reverse.get(ii);
+                Preconditions.checkState(!Strings.isNullOrEmpty(name));
+                record.put(name, r.get(ii));
+            }
+            data.add(record);
+        }
+        return data;
+    }
+
+
+    public void writeToParquet(Schema schema, List<GenericData.Record> recordsToWrite, Path fileToWrite) throws IOException {
+        try (ParquetWriter<GenericData.Record> writer = AvroParquetWriter
+                .<GenericData.Record>builder(fileToWrite)
+                .withSchema(schema)
+                .withConf(new Configuration())
+                .withCompressionCodec(CompressionCodecName.SNAPPY)
+                .build()) {
+
+            for (GenericData.Record record : recordsToWrite) {
+                writer.write(record);
+            }
+        }
     }
 
     /**

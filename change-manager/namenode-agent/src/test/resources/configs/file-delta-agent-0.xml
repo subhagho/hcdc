@@ -22,7 +22,15 @@
             </manager>
         </domain>
         <processor>
-            <cdc>
+            <files>
+                <filesystem>
+                    <type>ai.sapper.hcdc.core.io.impl.s3.S3FileSystem</type>
+                    <!-- root>C:\Work\temp\output\fs</root -->
+                    <root>/hcdc/replication/</root>
+                    <region>US_WEST_2</region>
+                    <defaultBucket>hcdc</defaultBucket>
+                </filesystem>
+                <hdfs>source-hdfs</hdfs>
                 <sender>
                     <connectionType>kafka</connectionType>
                     <connection>delta-kafka-queue</connection>
@@ -44,7 +52,7 @@
                     <!--partitioner></partitioner-->
                 </errorQueue>
                 <readBatchTimeout>5000</readBatchTimeout>
-            </cdc>
+            </files>
         </processor>
         <useSSL>false</useSSL>
         <locks>
@@ -112,7 +120,7 @@
                     <name>delta-kafka-queue</name>
                     <mode>Producer</mode>
                     <producer>
-                        <config>src/test/resources/producer.properties</config>
+                        <config>src/test/resources/configs/kafka/producer-files-out.properties</config>
                     </producer>
                     <topic>ha-cluster-delta-files</topic>
                 </kafka>
@@ -123,7 +131,7 @@
                     <name>errors-kafka-queue</name>
                     <mode>Producer</mode>
                     <producer>
-                        <config>src/test/resources/producer.properties</config>
+                        <config>src/test/resources/configs/kafka/producer-files-errors.properties</config>
                     </producer>
                     <topic>ha-cluster-errors-files</topic>
                 </kafka>
@@ -135,7 +143,7 @@
                     <mode>Consumer</mode>
                     <consumer>
                         <config>src/test/resources/consumer.properties</config>
-                        <partitions>0</partitions>
+                        <partitions>1</partitions>
                     </consumer>
                     <topic>ha-cluster-delta</topic>
                 </kafka>

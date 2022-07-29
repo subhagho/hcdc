@@ -102,7 +102,9 @@ public class NameNodeReplicator {
                 String output = generateFSImageSnapshot();
                 DefaultLogger.LOG.info(String.format("Generated FS Image XML. [path=%s]", output));
                 readFSImageXml(output);
-                DefaultLogger.LOG.warn(String.format("WARNING: Will delete existing file structure, if present. [path=%s]", stateManager.getFilePath(null)));
+                DefaultLogger.LOG.warn(
+                        String.format("WARNING: Will delete existing file structure, if present. [path=%s]",
+                                stateManager.fileStateHelper().getFilePath(null)));
                 stateManager.deleteAll();
                 copy();
                 NameNodeTxState txState = stateManager.initState(txnId);
@@ -125,23 +127,27 @@ public class NameNodeReplicator {
             if (inode.type == EInodeType.DIRECTORY) continue;
             DefaultLogger.LOG.debug(String.format("Copying HDFS file entry. [path=%s]", inode.path()));
 
-            DFSFileState fileState = stateManager.create(inode.path(),
-                    inode.id,
-                    inode.mTime,
-                    inode.preferredBlockSize,
-                    EFileState.Finalized,
-                    txnId);
+            DFSFileState fileState = stateManager
+                    .fileStateHelper()
+                    .create(inode.path(),
+                            inode.id,
+                            inode.mTime,
+                            inode.preferredBlockSize,
+                            EFileState.Finalized,
+                            txnId);
             if (inode.blocks != null && !inode.blocks.isEmpty()) {
                 long prevBlockId = -1;
                 for (DFSInodeBlock block : inode.blocks) {
-                    fileState = stateManager.addOrUpdateBlock(fileState.getHdfsFilePath(),
-                            block.id,
-                            prevBlockId,
-                            inode.mTime,
-                            block.numBytes,
-                            block.genStamp,
-                            EBlockState.Finalized,
-                            txnId);
+                    fileState = stateManager
+                            .fileStateHelper()
+                            .addOrUpdateBlock(fileState.getHdfsFilePath(),
+                                    block.id,
+                                    prevBlockId,
+                                    inode.mTime,
+                                    block.numBytes,
+                                    block.genStamp,
+                                    EBlockState.Finalized,
+                                    txnId);
                     prevBlockId = block.id;
                 }
             }

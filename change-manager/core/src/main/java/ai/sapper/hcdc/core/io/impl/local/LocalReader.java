@@ -3,11 +3,18 @@ package ai.sapper.hcdc.core.io.impl.local;
 import ai.sapper.hcdc.core.io.PathInfo;
 import ai.sapper.hcdc.core.io.Reader;
 import com.google.common.base.Preconditions;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+@Getter
+@Setter
+@Accessors(fluent = true)
 public class LocalReader extends Reader {
     private RandomAccessFile inputStream;
 
@@ -15,7 +22,6 @@ public class LocalReader extends Reader {
         super(path);
         Preconditions.checkArgument(path instanceof LocalPathInfo);
     }
-
 
     /**
      * @return
@@ -41,9 +47,8 @@ public class LocalReader extends Reader {
      */
     @Override
     public int read(byte[] buffer, int offset, int length) throws IOException {
-        LocalPathInfo pi = (LocalPathInfo) path();
-        if (inputStream == null) {
-            throw new IOException(String.format("File Stream not open. [path=%s]", pi.file().getAbsolutePath()));
+        if (!isOpen()) {
+            throw new IOException(String.format("Writer not open: [path=%s]", path().toString()));
         }
         return inputStream.read(buffer, offset, length);
     }
@@ -54,11 +59,18 @@ public class LocalReader extends Reader {
      */
     @Override
     public void seek(int offset) throws IOException {
-        LocalPathInfo pi = (LocalPathInfo) path();
-        if (inputStream == null) {
-            throw new IOException(String.format("File Stream not open. [path=%s]", pi.file().getAbsolutePath()));
+        if (!isOpen()) {
+            throw new IOException(String.format("Writer not open: [path=%s]", path().toString()));
         }
         inputStream.seek(offset);
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public boolean isOpen() {
+        return (inputStream != null);
     }
 
     /**

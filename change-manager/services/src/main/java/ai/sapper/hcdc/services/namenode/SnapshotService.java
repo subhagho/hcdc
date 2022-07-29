@@ -2,9 +2,9 @@ package ai.sapper.hcdc.services.namenode;
 
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.namenode.main.SnapshotRunner;
-import ai.sapper.hcdc.agents.namenode.model.DFSReplicationState;
-import ai.sapper.hcdc.common.model.filters.DomainFilter;
-import ai.sapper.hcdc.common.model.filters.DomainFilters;
+import ai.sapper.hcdc.agents.namenode.model.DFSFileReplicaState;
+import ai.sapper.hcdc.common.filters.DomainFilter;
+import ai.sapper.hcdc.common.filters.DomainFilters;
 import ai.sapper.hcdc.common.model.services.BasicResponse;
 import ai.sapper.hcdc.common.model.services.ConfigSource;
 import ai.sapper.hcdc.common.model.services.EResponseState;
@@ -71,10 +71,10 @@ public class SnapshotService {
     }
 
     @RequestMapping(value = "/snapshot/done", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<DFSReplicationState>> snapshotDone(@RequestBody SnapshotDoneRequest request) {
+    public ResponseEntity<BasicResponse<DFSFileReplicaState>> snapshotDone(@RequestBody SnapshotDoneRequest request) {
         try {
             ServiceHelper.checkService(processor);
-            DFSReplicationState rState = processor.getProcessor()
+            DFSFileReplicaState rState = processor.getProcessor()
                     .snapshotDone(request.getHdfsPath(),
                             request.getEntity(),
                             request.getTransactionId());
@@ -83,7 +83,7 @@ public class SnapshotService {
                     HttpStatus.OK);
         } catch (Throwable t) {
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
-                    (DFSReplicationState) null).withError(t),
+                    (DFSFileReplicaState) null).withError(t),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

@@ -34,44 +34,22 @@ public class EditsLogReader {
 
             DFSEditLogBatch b = visitor.getBatch();
             batch = new DFSEditLogBatch(b);
+            if (startTxId < 0) {
+                startTxId = file.startTxId();
+            }
+            if (endTxId < 0) {
+                endTxId = file.endTxId();
+            }
             long stx = Math.max(startTxId, file.startTxId());
             long etx = Math.min(endTxId, file.endTxId());
-            if (b.transactions() == null || b.transactions().isEmpty()) {
-                for (long ii = stx; ii <= etx; ii++) {
-                    DFSTransactionType<?> tx = buildIgnoreTx(ii);
-                    batch.transactions().add(tx);
-                }
-            } else {
-                long lastTx = stx;
-                for (DFSTransactionType<?> tx : b.transactions()) {
-                    if (tx.id() > lastTx) {
-                        for (long ii = lastTx + 1; ii < tx.id(); ii++) {
-                            DFSTransactionType<?> ntx = buildIgnoreTx(ii);
-                            batch.transactions().add(ntx);
-                        }
-                        batch.transactions().add(tx);
-                        lastTx = tx.id();
-                    }
-                }
-                if (lastTx < etx) {
-                    for (long ii = lastTx + 1; ii < etx; ii++) {
-                        DFSTransactionType<?> ntx = buildIgnoreTx(ii);
-                        batch.transactions().add(ntx);
-                    }
-                }
+
+            for (DFSTransactionType<?> tx : b.transactions()) {
+                batch.transactions().add(tx);
             }
         } catch (Throwable t) {
             DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
             throw new DFSAgentError(t);
         }
-    }
-
-    private DFSTransactionType<?> buildIgnoreTx(long txId) {
-        DFSTransactionType.DFSIgnoreTxType ift = new DFSTransactionType.DFSIgnoreTxType();
-        ift.id(txId).op(DFSTransaction.Operation.IGNORE);
-        ift.opCode(FSEditLogOpCodes.OP_INVALID.name());
-
-        return ift;
     }
 
     public void run(@NonNull DFSEditsFileFinder.EditsLogFile file) throws DFSAgentError {

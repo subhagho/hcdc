@@ -35,4 +35,6 @@ public abstract class Writer implements Closeable {
     public long truncate(int length) throws IOException {
         return truncate(0, length);
     }
+
+    public abstract boolean isOpen();
 }

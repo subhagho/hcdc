@@ -124,6 +124,19 @@ message DFSError {
   required string message = 3;
 }
 
+message DFSChangeData {
+  enum FileSystemCode {
+    LOCAL = 0;
+    S3 = 1;
+  }
+  required DFSTransaction transaction = 1;
+  required DFSFile file = 2;
+  required string domain = 3;
+  required string entityName = 4;
+  required FileSystemCode fileSystem = 5;
+  required string outputPath = 6;
+}
+
 message DFSChangeDelta {
   required string namespace = 1;
   required string txId = 2;
