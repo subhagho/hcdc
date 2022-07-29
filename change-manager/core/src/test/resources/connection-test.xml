@@ -24,7 +24,8 @@
             <hdfs_ha>
                 <name>test-hdfs-ha</name>
                 <nameservice>ha-cluster</nameservice>
-                <failoverProvider>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider</failoverProvider>
+                <failoverProvider>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider
+                </failoverProvider>
                 <namenodes>nn1=192.168.0.2:9000;nn2=192.168.0.3:9000</namenodes>
                 <security>
                     <enabled>false</enabled>
@@ -43,6 +44,19 @@
                 </retry>
                 <connectionTimeout>10000</connectionTimeout>
             </zookeeper>
+        </connection>
+        <connection>
+            <type>ai.sapper.hcdc.core.connections.WebServiceConnection</type>
+            <service>
+                <web>
+                    <name>test-ws</name>
+                    <endpoint>https://howtodoinjava.com/</endpoint>
+                    <paths>
+                        <jersey>jersey</jersey>
+                        <other>jersey/jersey-restful-client-examples/</other>
+                    </paths>
+                </web>
+            </service>
         </connection>
         <connection>
             <type>ai.sapper.hcdc.core.connections.impl.BasicKafkaProducer</type>

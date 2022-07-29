@@ -42,7 +42,7 @@ public class EditsLogReaderService {
         }
     }
 
-    @RequestMapping(value = "/editslog/status")
+    @RequestMapping(value = "/editslog/status", method = RequestMethod.GET)
     public ResponseEntity<BasicResponse<NameNodeEnv.ENameNEnvState>> state() {
         try {
             ServiceHelper.checkService(processor);
@@ -56,7 +56,7 @@ public class EditsLogReaderService {
         }
     }
 
-    @RequestMapping(value = "/editslog/stop")
+    @RequestMapping(value = "/editslog/stop", method = RequestMethod.POST)
     public ResponseEntity<BasicResponse<NameNodeEnv.ENameNEnvState>> stop() {
         try {
             ServiceHelper.checkService(processor);

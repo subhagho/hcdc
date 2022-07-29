@@ -38,6 +38,8 @@ public class NameNodeEnv {
 
     private final NameNEnvState state = new NameNEnvState();
 
+    private Thread heartbeatThread;
+
     private NameNEnvConfig config;
     private HierarchicalConfiguration<ImmutableNode> configNode;
     private ConnectionManager connectionManager;
@@ -104,8 +106,8 @@ public class NameNodeEnv {
             stateManager.withReplicationLock(lock);
 
             state.state(ENameNEnvState.Initialized);
-
-            stateManager.heartbeat(config.instance, agentState);
+            heartbeatThread = new Thread(new HeartbeatThread().withStateManager(stateManager));
+            heartbeatThread.start();
 
             return this;
         } catch (Throwable t) {
@@ -135,20 +137,26 @@ public class NameNodeEnv {
     }
 
     public synchronized ENameNEnvState stop() {
-        if (agentState.state() == NameNodeAgentState.EAgentState.Active
-                || agentState.state() == NameNodeAgentState.EAgentState.StandBy) {
-            agentState.state(NameNodeAgentState.EAgentState.Stopped);
-        }
-        if (state.isAvailable()) {
-            try {
-                stateManager.heartbeat(config.instance, agentState);
-            } catch (Exception ex) {
-                DefaultLogger.LOG.error(ex.getLocalizedMessage());
-                DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
+        try {
+            if (agentState.state() == NameNodeAgentState.EAgentState.Active
+                    || agentState.state() == NameNodeAgentState.EAgentState.StandBy) {
+                agentState.state(NameNodeAgentState.EAgentState.Stopped);
             }
-            state.state(ENameNEnvState.Disposed);
+            if (state.isAvailable()) {
+                try {
+                    stateManager.heartbeat(config.instance, agentState);
+                } catch (Exception ex) {
+                    DefaultLogger.LOG.error(ex.getLocalizedMessage());
+                    DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
+                }
+                state.state(ENameNEnvState.Disposed);
+            }
+            if (heartbeatThread != null) {
+                heartbeatThread.join();
+            }
+        } catch (Exception ex) {
+            DefaultLogger.LOG.error("Error disposing NameNodeEnv...", ex);
         }
-
         return state.state();
     }
 

@@ -71,6 +71,18 @@
     <config>
         <connections>
             <connection>
+                <type>ai.sapper.hcdc.core.connections.WebServiceConnection</type>
+                <service>
+                    <web>
+                        <name>test-ws</name>
+                        <endpoint>https://howtodoinjava.com/</endpoint>
+                        <paths>
+                            <snapshot>/snapshot/done</snapshot>
+                        </paths>
+                    </web>
+                </service>
+            </connection>
+            <connection>
                 <type>ai.sapper.hcdc.core.connections.HdfsConnection</type>
                 <hdfs>
                     <name>source-hdfs</name>

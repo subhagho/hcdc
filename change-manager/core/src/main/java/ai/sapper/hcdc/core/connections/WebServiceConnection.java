@@ -2,6 +2,9 @@ package ai.sapper.hcdc.core.connections;
 
 import ai.sapper.hcdc.common.ConfigReader;
 import com.google.common.base.Strings;
+import com.sun.jersey.api.client.filter.LoggingFilter;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.WebTarget;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -9,6 +12,8 @@ import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.JerseyClientBuilder;
 
 import java.io.IOException;
 import java.net.URL;
@@ -20,8 +25,8 @@ public class WebServiceConnection implements Connection {
     @Getter(AccessLevel.NONE)
     protected final ConnectionState state = new ConnectionState();
     private URL endpoint;
-    private Map<String, String> paths;
     private WebServiceConnectionConfig config;
+    private Client client;
 
     /**
      * @return
@@ -38,7 +43,19 @@ public class WebServiceConnection implements Connection {
      */
     @Override
     public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConnectionError {
-        return null;
+        try {
+            config = new WebServiceConnectionConfig(xmlConfig);
+            config.read();
+
+            endpoint = new URL(config.endpoint);
+            client = JerseyClientBuilder.newClient(
+                    new ClientConfig().register(LoggingFilter.class));
+            state.state(EConnectionState.Initialized);
+            return null;
+        } catch (Exception ex) {
+            state.error(ex);
+            throw new ConnectionError(ex);
+        }
     }
 
     /**
@@ -47,7 +64,20 @@ public class WebServiceConnection implements Connection {
      */
     @Override
     public Connection connect() throws ConnectionError {
-        return this;
+        throw new ConnectionError("Method should not be called...");
+    }
+
+    public WebTarget connect(@NonNull String serviceName) throws ConnectionError {
+        String path = config.pathMap.get(serviceName);
+        if (Strings.isNullOrEmpty(path)) {
+            throw new ConnectionError(
+                    String.format("No path registered for service. [service=%s]", serviceName));
+        }
+        try {
+            return client.target(endpoint.toURI()).path(path);
+        } catch (Exception ex) {
+            throw new ConnectionError(ex);
+        }
     }
 
     /**
@@ -71,7 +101,7 @@ public class WebServiceConnection implements Connection {
      */
     @Override
     public boolean isConnected() {
-        return false;
+        return state.state() == EConnectionState.Initialized;
     }
 
     /**
@@ -138,6 +168,13 @@ public class WebServiceConnection implements Connection {
             String s = get().getString(Constants.CONFIG_RETRIES);
             if (!Strings.isNullOrEmpty(s)) {
                 retries = Integer.parseInt(s);
+            }
+            if (ConfigReader.checkIfNodeExists(get(), Constants.CONFIG_PATH_MAP)) {
+                pathMap = ConfigReader.readAsMap(get(), Constants.CONFIG_PATH_MAP);
+            }
+            if (pathMap == null || pathMap.isEmpty()) {
+                throw new ConfigurationException(String.format("WebService client Configuration Error: missing [%s]",
+                        Constants.CONFIG_PATH_MAP));
             }
         }
     }

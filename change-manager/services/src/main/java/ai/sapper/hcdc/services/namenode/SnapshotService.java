@@ -24,24 +24,7 @@ import java.util.Map;
 public class SnapshotService {
     private static SnapshotRunner processor;
 
-    @RequestMapping(value = "/snapshot/start", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<String>> start(@RequestBody ConfigSource config) {
-        try {
-            processor = new SnapshotRunner();
-            processor.setConfigfile(config.getPath());
-            processor.setFileSource(config.getType());
-            processor.init();
-            DefaultLogger.LOG.info(String.format("EditsLog processor started. [config=%s]", config.toString()));
-            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
-                    NameNodeEnv.get().state().state().name()),
-                    HttpStatus.OK);
-        } catch (Throwable t) {
-            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error, t.getMessage()).withError(t),
-                    HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @RequestMapping(value = "/snapshot/filters/add/{domain}", method = RequestMethod.POST)
+    @RequestMapping(value = "/snapshot/filters/add/{domain}", method = RequestMethod.PUT)
     public ResponseEntity<BasicResponse<DomainFilters>> addFilter(@PathVariable("domain") String domain,
                                                                   @RequestBody Filter filter) {
         try {
@@ -56,7 +39,7 @@ public class SnapshotService {
         }
     }
 
-    @RequestMapping(value = "/snapshot/filters/add/{domain}/batch", method = RequestMethod.POST)
+    @RequestMapping(value = "/snapshot/filters/add/{domain}/batch", method = RequestMethod.PUT)
     public ResponseEntity<BasicResponse<DomainFilters>> addFilter(@PathVariable("domain") String domain,
                                                                   @RequestBody Map<String, List<Filter>> filters) {
         try {
@@ -123,7 +106,7 @@ public class SnapshotService {
         }
     }
 
-    @RequestMapping(value = "/snapshot/run")
+    @RequestMapping(value = "/snapshot/run", method = RequestMethod.POST)
     public ResponseEntity<BasicResponse<Integer>> run() {
         try {
             ServiceHelper.checkService(processor);
@@ -156,7 +139,7 @@ public class SnapshotService {
         }
     }
 
-    @RequestMapping(value = "/snapshot/status")
+    @RequestMapping(value = "/snapshot/status", method = RequestMethod.GET)
     public ResponseEntity<BasicResponse<NameNodeEnv.ENameNEnvState>> state() {
         try {
             ServiceHelper.checkService(processor);
@@ -170,7 +153,24 @@ public class SnapshotService {
         }
     }
 
-    @RequestMapping(value = "/snapshot/stop")
+    @RequestMapping(value = "/admin/snapshot/start", method = RequestMethod.POST)
+    public ResponseEntity<BasicResponse<String>> start(@RequestBody ConfigSource config) {
+        try {
+            processor = new SnapshotRunner();
+            processor.setConfigfile(config.getPath());
+            processor.setFileSource(config.getType());
+            processor.init();
+            DefaultLogger.LOG.info(String.format("EditsLog processor started. [config=%s]", config.toString()));
+            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
+                    NameNodeEnv.get().state().state().name()),
+                    HttpStatus.OK);
+        } catch (Throwable t) {
+            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error, t.getMessage()).withError(t),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @RequestMapping(value = "/admin/snapshot/stop", method = RequestMethod.POST)
     public ResponseEntity<BasicResponse<NameNodeEnv.ENameNEnvState>> stop() {
         try {
             ServiceHelper.checkService(processor);

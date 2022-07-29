@@ -112,7 +112,7 @@ public class ConfigReader {
 
     public static XMLConfiguration readFromClasspath(@NonNull String path) throws ConfigurationException {
         List<FileLocationStrategy> subs = Collections.singletonList(
-                new ProvidedURLLocationStrategy());
+                new ClasspathLocationStrategy());
         FileLocationStrategy strategy = new CombinedLocationStrategy(subs);
         Parameters params = new Parameters();
         FileBasedConfigurationBuilder<XMLConfiguration> builder
@@ -130,7 +130,7 @@ public class ConfigReader {
     public static XMLConfiguration readFromURI(@NonNull String path) throws ConfigurationException {
         try {
             List<FileLocationStrategy> subs = Collections.singletonList(
-                    new ClasspathLocationStrategy());
+                    new ProvidedURLLocationStrategy());
             FileLocationStrategy strategy = new CombinedLocationStrategy(subs);
             Parameters params = new Parameters();
             FileBasedConfigurationBuilder<XMLConfiguration> builder
