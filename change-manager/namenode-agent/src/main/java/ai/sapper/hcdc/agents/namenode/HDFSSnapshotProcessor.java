@@ -233,6 +233,10 @@ public class HDFSSnapshotProcessor {
             if (tnxId != rState.getSnapshotTxId()) {
                 throw new SnapshotError(String.format("Snapshot transaction mismatch. [expected=%d][actual=%d]", rState.getSnapshotTxId(), tnxId));
             }
+            if (rState.isSnapshotReady()) {
+                DefaultLogger.LOG.warn(String.format("Duplicate Call: Snapshot Done: [path=%s]", rState.getHdfsPath()));
+                return rState;
+            }
             DFSCloseFile closeFile = generateSnapshot(fileState, true, tnxId);
             MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
                     closeFile,
@@ -245,6 +249,8 @@ public class HDFSSnapshotProcessor {
             rState.clear();
             rState.setSnapshotReady(true);
             rState.setLastReplicationTime(System.currentTimeMillis());
+            rState.setLastReplicatedTx(tnxId);
+            rState.setState(EFileState.Finalized);
             stateManager
                     .replicaStateHelper()
                     .update(rState);

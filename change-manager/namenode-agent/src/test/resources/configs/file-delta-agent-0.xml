@@ -52,6 +52,16 @@
                     <!--partitioner></partitioner-->
                 </errorQueue>
                 <readBatchTimeout>5000</readBatchTimeout>
+                <snapshot>
+                    <client>
+                        <name>snapshot</name>
+                        <connection>snapshot</connection>
+                        <paths>
+                            <snapshotDone>/done</snapshotDone>
+                        </paths>
+                        <retryCount>2</retryCount>
+                    </client>
+                </snapshot>
             </files>
         </processor>
         <useSSL>false</useSSL>
@@ -72,15 +82,11 @@
         <connections>
             <connection>
                 <type>ai.sapper.hcdc.core.connections.WebServiceConnection</type>
-                <service>
-                    <web>
-                        <name>test-ws</name>
-                        <endpoint>https://howtodoinjava.com/</endpoint>
-                        <paths>
-                            <snapshot>/snapshot/done</snapshot>
-                        </paths>
-                    </web>
-                </service>
+                <rest>
+                    <name>snapshot</name>
+                    <endpoint>http://localhost/snapshot</endpoint>
+
+                </rest>
             </connection>
             <connection>
                 <type>ai.sapper.hcdc.core.connections.HdfsConnection</type>

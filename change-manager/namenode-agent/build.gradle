@@ -48,6 +48,13 @@ dependencies {
     implementation 'org.apache.kafka:kafka-clients:3.2.0'
     // https://mvnrepository.com/artifact/org.apache.parquet/parquet-avro
     implementation 'org.apache.parquet:parquet-avro:1.12.3'
+    // https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-client
+    implementation 'org.glassfish.jersey.core:jersey-client:3.0.5'
+    // https://mvnrepository.com/artifact/org.glassfish.jersey.inject/jersey-hk2
+    implementation 'org.glassfish.jersey.inject:jersey-hk2:3.0.5'
+    // https://mvnrepository.com/artifact/org.glassfish.jersey.media/jersey-media-json-jackson
+    implementation 'org.glassfish.jersey.media:jersey-media-json-jackson:3.0.5'
+
     // https://mvnrepository.com/artifact/com.adobe.testing/s3mock-junit5
     testImplementation 'com.adobe.testing:s3mock-junit5:2.4.13'
     // https://mvnrepository.com/artifact/com.google.code.gson/gson

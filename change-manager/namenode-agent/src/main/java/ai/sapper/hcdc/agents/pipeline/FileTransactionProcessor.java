@@ -7,6 +7,7 @@ import ai.sapper.hcdc.agents.namenode.model.DFSBlockReplicaState;
 import ai.sapper.hcdc.agents.namenode.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.common.model.services.SnapshotDoneRequest;
+import ai.sapper.hcdc.core.WebServiceClient;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
 import ai.sapper.hcdc.core.io.FSBlock;
 import ai.sapper.hcdc.core.io.FSFile;
@@ -21,17 +22,19 @@ import ai.sapper.hcdc.core.model.DFSFileState;
 import ai.sapper.hcdc.core.model.EFileState;
 import ai.sapper.hcdc.core.model.HDFSBlockData;
 import com.google.common.base.Strings;
+import jakarta.ws.rs.core.MediaType;
 import lombok.NonNull;
 import org.apache.hadoop.hdfs.HDFSBlockReader;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.List;
 
 public class FileTransactionProcessor extends TransactionProcessor {
+    public static final String SERVICE_SNAPSHOT_DONE = "snapshotDone";
     private MessageSender<String, DFSChangeDelta> sender;
     private FileSystem fs;
     private HdfsConnection connection;
+    private WebServiceClient client;
 
     public FileTransactionProcessor withHdfsConnection(@NonNull HdfsConnection connection) {
         this.connection = connection;
@@ -45,6 +48,11 @@ public class FileTransactionProcessor extends TransactionProcessor {
 
     public FileTransactionProcessor withFileSystem(@NonNull FileSystem fs) {
         this.fs = fs;
+        return this;
+    }
+
+    public FileTransactionProcessor withClient(@NonNull WebServiceClient client) {
+        this.client = client;
         return this;
     }
 
@@ -544,6 +552,8 @@ public class FileTransactionProcessor extends TransactionProcessor {
                         String.format("Error converting change delta to Avro. [path=%s]",
                                 data.getFile().getPath()));
             }
+            if (message.mode() == MessageObject.MessageMode.Snapshot)
+                rState = snapShotDone(fileState, rState);
             stateManager().replicationLock().lock();
             try {
                 rState.setState(EFileState.Finalized);
@@ -568,14 +578,18 @@ public class FileTransactionProcessor extends TransactionProcessor {
         }
     }
 
-    private void snapShotDone(DFSFileState fileState,
-                              DFSFileReplicaState replicaState) throws Exception {
+    private DFSFileReplicaState snapShotDone(DFSFileState fileState,
+                                             DFSFileReplicaState replicaState) throws Exception {
         SnapshotDoneRequest request
                 = new SnapshotDoneRequest(
                 replicaState.getEntity(),
                 replicaState.getSnapshotTxId(),
                 fileState.getHdfsFilePath());
-
+        return client.post(SERVICE_SNAPSHOT_DONE,
+                DFSFileReplicaState.class,
+                request,
+                null,
+                MediaType.APPLICATION_JSON);
     }
 
     private long copyBlock(DFSBlock source,

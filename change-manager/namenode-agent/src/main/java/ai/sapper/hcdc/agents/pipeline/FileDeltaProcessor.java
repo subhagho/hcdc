@@ -5,6 +5,7 @@ import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
+import ai.sapper.hcdc.core.WebServiceClient;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
 import ai.sapper.hcdc.core.io.FileSystem;
@@ -21,7 +22,6 @@ import org.apache.parquet.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URL;
 import java.util.List;
 
 @Getter
@@ -34,7 +34,7 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
     private FileDeltaProcessorConfig config;
     private HdfsConnection connection;
     private FileSystem.FileSystemMocker fileSystemMocker;
-
+    private WebServiceClient client;
 
     public FileDeltaProcessor(@NonNull ZkStateManager stateManager) {
         super(stateManager);
@@ -74,10 +74,14 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
             } else {
                 fs = fileSystemMocker.create(config.config());
             }
-
+            client = new WebServiceClient();
+            client.init(config.config(),
+                    FileDeltaProcessorConfig.Constants.CONFIG_WS_PATH,
+                    manger);
 
             processor.withFileSystem(fs)
                     .withHdfsConnection(connection)
+                    .withClient(client)
                     .withSenderQueue(sender())
                     .withStateManager(stateManager())
                     .withErrorQueue(errorSender());
@@ -186,10 +190,12 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
             public static final String CONFIG_PATH_FS = "filesystem";
             public static final String CONFIG_FS_TYPE = String.format("%s.type", CONFIG_PATH_FS);
             public static final String CONFIG_HDFS_CONN = "hdfs";
+            public static final String CONFIG_WS_PATH = "snapshot";
         }
 
         private String fsType;
         private String hdfsConnection;
+        private String snapshotService;
 
         private HierarchicalConfiguration<ImmutableNode> fsConfig;
 

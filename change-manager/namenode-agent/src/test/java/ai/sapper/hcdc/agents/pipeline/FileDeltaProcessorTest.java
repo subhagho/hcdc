@@ -43,7 +43,7 @@ class FileDeltaProcessorTest {
                     = new FileDeltaProcessor(NameNodeEnv.stateManager())
                     .withMockFileSystem(new S3Mocker(s3Client));
             processor.init(NameNodeEnv.get().configNode(), NameNodeEnv.connectionManager());
-            processor.run(true);
+            processor.run();
         } catch (Throwable t) {
             DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
             fail(t);

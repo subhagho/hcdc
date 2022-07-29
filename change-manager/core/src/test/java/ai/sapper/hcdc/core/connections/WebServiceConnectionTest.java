@@ -11,7 +11,8 @@ import org.apache.commons.configuration2.XMLConfiguration;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class WebServiceConnectionTest {
     private static final String __CONFIG_FILE = "src/test/resources/connection-test.xml";

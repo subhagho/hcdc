@@ -17,7 +17,6 @@ import org.glassfish.jersey.client.JerseyClientBuilder;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Map;
 
 @Getter
 @Accessors(fluent = true)
@@ -67,12 +66,7 @@ public class WebServiceConnection implements Connection {
         throw new ConnectionError("Method should not be called...");
     }
 
-    public WebTarget connect(@NonNull String serviceName) throws ConnectionError {
-        String path = config.pathMap.get(serviceName);
-        if (Strings.isNullOrEmpty(path)) {
-            throw new ConnectionError(
-                    String.format("No path registered for service. [service=%s]", serviceName));
-        }
+    public WebTarget connect(@NonNull String path) throws ConnectionError {
         try {
             return client.target(endpoint.toURI()).path(path);
         } catch (Exception ex) {
@@ -133,19 +127,15 @@ public class WebServiceConnection implements Connection {
     @Getter
     @Accessors(fluent = true)
     public static class WebServiceConnectionConfig extends ConfigReader {
-        private static final String __CONFIG_PATH = "service.web";
+        private static final String __CONFIG_PATH = "rest";
 
         public static class Constants {
             public static final String CONFIG_NAME = "name";
             public static final String CONFIG_URL = "endpoint";
-            public static final String CONFIG_PATH_MAP = "paths";
-            public static final String CONFIG_RETRIES = "retries";
         }
 
         private String name;
         private String endpoint;
-        private Map<String, String> pathMap;
-        private int retries = 0;
 
         public WebServiceConnectionConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);
@@ -153,28 +143,17 @@ public class WebServiceConnection implements Connection {
 
         public void read() throws ConfigurationException {
             if (get() == null) {
-                throw new ConfigurationException("WebService client Configuration not set or is NULL");
+                throw new ConfigurationException("WebService connection Configuration not set or is NULL");
             }
             name = get().getString(Constants.CONFIG_NAME);
             if (Strings.isNullOrEmpty(name)) {
-                throw new ConfigurationException(String.format("WebService client Configuration Error: missing [%s]",
+                throw new ConfigurationException(String.format("WebService connection Configuration Error: missing [%s]",
                         Constants.CONFIG_NAME));
             }
             endpoint = get().getString(Constants.CONFIG_URL);
             if (Strings.isNullOrEmpty(endpoint)) {
-                throw new ConfigurationException(String.format("WebService client Configuration Error: missing [%s]",
+                throw new ConfigurationException(String.format("WebService connection Configuration Error: missing [%s]",
                         Constants.CONFIG_URL));
-            }
-            String s = get().getString(Constants.CONFIG_RETRIES);
-            if (!Strings.isNullOrEmpty(s)) {
-                retries = Integer.parseInt(s);
-            }
-            if (ConfigReader.checkIfNodeExists(get(), Constants.CONFIG_PATH_MAP)) {
-                pathMap = ConfigReader.readAsMap(get(), Constants.CONFIG_PATH_MAP);
-            }
-            if (pathMap == null || pathMap.isEmpty()) {
-                throw new ConfigurationException(String.format("WebService client Configuration Error: missing [%s]",
-                        Constants.CONFIG_PATH_MAP));
             }
         }
     }

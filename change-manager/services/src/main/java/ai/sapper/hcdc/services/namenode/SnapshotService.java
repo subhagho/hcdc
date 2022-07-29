@@ -16,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -140,21 +139,21 @@ public class SnapshotService {
     }
 
     @RequestMapping(value = "/snapshot/status", method = RequestMethod.GET)
-    public ResponseEntity<BasicResponse<NameNodeEnv.ENameNEnvState>> state() {
+    public ResponseEntity<BasicResponse<NameNodeEnv.NameNEnvState>> state() {
         try {
             ServiceHelper.checkService(processor);
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
-                    NameNodeEnv.get().state().state()),
+                    NameNodeEnv.get().state()),
                     HttpStatus.OK);
         } catch (Throwable t) {
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
-                    NameNodeEnv.ENameNEnvState.Error).withError(t),
+                    (NameNodeEnv.NameNEnvState) null).withError(t),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @RequestMapping(value = "/admin/snapshot/start", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<String>> start(@RequestBody ConfigSource config) {
+    public ResponseEntity<BasicResponse<NameNodeEnv.NameNEnvState>> start(@RequestBody ConfigSource config) {
         try {
             processor = new SnapshotRunner();
             processor.setConfigfile(config.getPath());
@@ -162,10 +161,12 @@ public class SnapshotService {
             processor.init();
             DefaultLogger.LOG.info(String.format("EditsLog processor started. [config=%s]", config.toString()));
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
-                    NameNodeEnv.get().state().state().name()),
+                    NameNodeEnv.get().state()),
                     HttpStatus.OK);
         } catch (Throwable t) {
-            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error, t.getMessage()).withError(t),
+            return new ResponseEntity<>(
+                    new BasicResponse<>(EResponseState.Error,
+                            (NameNodeEnv.NameNEnvState) null).withError(t),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
