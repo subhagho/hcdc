@@ -75,10 +75,8 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
                 fs = fileSystemMocker.create(config.config());
             }
 
-            URL snapShotURL = new URL(config.snapshotServiceUrl);
 
             processor.withFileSystem(fs)
-                    .withSnapShotServiceURL(snapShotURL)
                     .withHdfsConnection(connection)
                     .withSenderQueue(sender())
                     .withStateManager(stateManager())
@@ -188,12 +186,10 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
             public static final String CONFIG_PATH_FS = "filesystem";
             public static final String CONFIG_FS_TYPE = String.format("%s.type", CONFIG_PATH_FS);
             public static final String CONFIG_HDFS_CONN = "hdfs";
-            public static final String CONFIG_SNAPSHOT_URL = "serviceUrl";
         }
 
         private String fsType;
         private String hdfsConnection;
-        private String snapshotServiceUrl;
 
         private HierarchicalConfiguration<ImmutableNode> fsConfig;
 
@@ -225,12 +221,6 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
                 throw new ConfigurationException(
                         String.format("File Processor Error: missing configuration. [name=%s]",
                                 Constants.CONFIG_HDFS_CONN));
-            }
-            snapshotServiceUrl = get().getString(Constants.CONFIG_SNAPSHOT_URL);
-            if (Strings.isNullOrEmpty(snapshotServiceUrl)) {
-                throw new ConfigurationException(
-                        String.format("File Processor Error: missing configuration. [name=%s]",
-                                Constants.CONFIG_SNAPSHOT_URL));
             }
         }
     }

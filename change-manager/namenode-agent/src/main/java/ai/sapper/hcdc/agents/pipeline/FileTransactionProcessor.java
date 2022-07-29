@@ -32,8 +32,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
     private MessageSender<String, DFSChangeDelta> sender;
     private FileSystem fs;
     private HdfsConnection connection;
-    private URL snapShotServiceURL;
-
+    
     public FileTransactionProcessor withHdfsConnection(@NonNull HdfsConnection connection) {
         this.connection = connection;
         return this;
@@ -46,11 +45,6 @@ public class FileTransactionProcessor extends TransactionProcessor {
 
     public FileTransactionProcessor withFileSystem(@NonNull FileSystem fs) {
         this.fs = fs;
-        return this;
-    }
-
-    public FileTransactionProcessor withSnapShotServiceURL(@NonNull URL snapShotServiceURL) {
-        this.snapShotServiceURL = snapShotServiceURL;
         return this;
     }
 
