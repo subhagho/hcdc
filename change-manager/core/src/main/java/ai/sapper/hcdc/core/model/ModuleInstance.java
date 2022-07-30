@@ -20,7 +20,7 @@ public class ModuleInstance {
 
     public ModuleInstance withStartTime(long startTime) {
         Date date = new Date(startTime);
-        DateFormat df = new SimpleDateFormat("yyyyMMdd-HH-mm");
+        DateFormat df = new SimpleDateFormat("yyyyMMdd:HH:mm");
         this.startTime = df.format(date);
         return this;
     }
