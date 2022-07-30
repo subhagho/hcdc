@@ -1,7 +1,7 @@
 package org.apache.hadoop.hdfs.server.namenode;
 
 import ai.sapper.hcdc.agents.common.DFSAgentError;
-import ai.sapper.hcdc.agents.namenode.model.DFSEditLogBatch;
+import ai.sapper.hcdc.agents.model.DFSEditLogBatch;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import lombok.Getter;
 import lombok.NonNull;

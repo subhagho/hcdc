@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.common.utils;
 
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.ArrayList;
@@ -19,5 +20,22 @@ public class NetUtils {
             }
         }
         return addresses;
+    }
+
+    public static InetAddress getInetAddress(List<InetAddress> addresses) {
+        for (InetAddress address : addresses) {
+            if (address instanceof Inet4Address) {
+                if (!address.isLoopbackAddress()) {
+                    try {
+                        if (NetworkInterface.getByInetAddress(address) != null) {
+                            return address;
+                        }
+                    } catch (Exception e) {
+                        // do nothing...
+                    }
+                }
+            }
+        }
+        return null;
     }
 }

@@ -2,7 +2,7 @@ package ai.sapper.hcdc.services.namenode;
 
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.namenode.main.SnapshotRunner;
-import ai.sapper.hcdc.agents.namenode.model.DFSFileReplicaState;
+import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.filters.DomainFilter;
 import ai.sapper.hcdc.common.filters.DomainFilters;
 import ai.sapper.hcdc.common.filters.Filter;

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <configuration>
     <agent>
-        <module>NameNodeAgent</module>
-        <instance>edits-reader</instance>
+        <module>edits-log-processors</module>
+        <instance>edits-log-reader</instance>
         <source>ha-cluster</source>
         <hadoop>
             <namespace>ha-cluster</namespace>

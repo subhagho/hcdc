@@ -1,7 +1,7 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.hcdc.agents.namenode.model.DFSBlockReplicaState;
-import ai.sapper.hcdc.agents.namenode.model.DFSFileReplicaState;
+import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
+import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.core.io.FileSystem;
 import ai.sapper.hcdc.core.io.PathInfo;
 import ai.sapper.hcdc.core.io.Reader;

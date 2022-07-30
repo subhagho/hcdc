@@ -1,7 +1,7 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.hcdc.agents.namenode.model.NameNodeAgentState;
-import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
+import ai.sapper.hcdc.agents.model.NameNodeAgentState;
+import ai.sapper.hcdc.agents.model.NameNodeTxState;
 import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.DistributedLock;
@@ -9,6 +9,7 @@ import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
 import ai.sapper.hcdc.core.filters.DomainManager;
 import ai.sapper.hcdc.core.model.Heartbeat;
+import ai.sapper.hcdc.core.model.ModuleInstance;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -39,8 +40,10 @@ public class ZkStateManager {
     private String zkStatePath;
     private NameNodeTxState agentTxState;
     private DistributedLock replicationLock;
+    private String source;
     private String module;
     private String instance;
+    private ModuleInstance moduleInstance;
 
     private final ReplicationStateHelper replicaStateHelper = new ReplicationStateHelper();
     private final FileStateHelper fileStateHelper = new FileStateHelper();
@@ -76,7 +79,6 @@ public class ZkStateManager {
             fileStateHelper
                     .withZkPath(zkFSPath)
                     .withZkConnection(connection);
-            checkAgentState();
             String zkPathReplication = PathUtils.formatZkPath(
                     String.format("%s/%s/%s", basePath(), module, Constants.ZK_PATH_REPLICATION));
             if (client.checkExists().forPath(zkPathReplication) == null) {
@@ -99,7 +101,12 @@ public class ZkStateManager {
         return this;
     }
 
-    private void checkAgentState() throws Exception {
+    public ZkStateManager withModuleInstance(@NonNull ModuleInstance moduleInstance) {
+        this.moduleInstance = moduleInstance;
+        return this;
+    }
+
+    public void checkAgentState() throws Exception {
         CuratorFramework client = connection().client();
         zkStatePath = PathUtils.formatZkPath(
                 String.format("%s/%s", zkPath, Constants.ZK_PATH_PROCESS_STATE));
@@ -117,6 +124,8 @@ public class ZkStateManager {
         } else {
             agentTxState = readState();
         }
+        agentTxState.setModuleInstance(moduleInstance);
+        update(agentTxState);
     }
 
     public NameNodeTxState initState(long txId) throws StateManagerError {
@@ -200,7 +209,7 @@ public class ZkStateManager {
                     heartbeat.setError(state.error());
                 }
                 heartbeat.setTimestamp(System.currentTimeMillis());
-
+                heartbeat.setModule(moduleInstance);
                 String json = JSONUtils.asString(heartbeat, Heartbeat.class);
                 client.setData().forPath(path, json.getBytes(StandardCharsets.UTF_8));
 

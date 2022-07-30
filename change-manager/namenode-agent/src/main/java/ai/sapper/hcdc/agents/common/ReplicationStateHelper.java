@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.hcdc.agents.namenode.model.DFSFileReplicaState;
+import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.model.SchemaEntity;
 import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.common.utils.PathUtils;

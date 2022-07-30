@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <configuration>
     <agent>
-        <module>ChangeProcessor</module>
-        <instance>file-delta-processor/0</instance>
+        <module>change-delta-processors</module>
+        <instance>file-delta-processor/1</instance>
         <source>ha-cluster</source>
         <needHadoop>false</needHadoop>
         <connections>
@@ -161,7 +161,7 @@
                     <mode>Consumer</mode>
                     <consumer>
                         <config>src/test/resources/consumer.properties</config>
-                        <partitions>0</partitions>
+                        <partitions>1</partitions>
                     </consumer>
                     <topic>ha-cluster-delta</topic>
                 </kafka>

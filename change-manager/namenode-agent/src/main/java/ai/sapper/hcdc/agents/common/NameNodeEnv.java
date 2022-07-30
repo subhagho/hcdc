@@ -2,8 +2,8 @@ package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.hcdc.agents.namenode.HadoopEnvConfig;
 import ai.sapper.hcdc.agents.namenode.NameNodeAdminClient;
-import ai.sapper.hcdc.agents.namenode.model.NameNodeAgentState;
-import ai.sapper.hcdc.agents.namenode.model.NameNodeStatus;
+import ai.sapper.hcdc.agents.model.NameNodeAgentState;
+import ai.sapper.hcdc.agents.model.NameNodeStatus;
 import ai.sapper.hcdc.common.AbstractState;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
@@ -12,6 +12,7 @@ import ai.sapper.hcdc.core.DistributedLock;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
+import ai.sapper.hcdc.core.model.ModuleInstance;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -48,6 +49,8 @@ public class NameNodeEnv {
     private List<InetAddress> hostIPs;
     private HadoopEnvConfig hadoopConfig;
     private NameNodeAdminClient adminClient;
+    private ModuleInstance moduleInstance;
+
     private final Map<String, DistributedLock> locks = new HashMap<>();
 
     private final NameNodeAgentState.AgentState agentState = new NameNodeAgentState.AgentState();
@@ -96,6 +99,13 @@ public class NameNodeEnv {
             stateManager = config.stateManagerClass.newInstance();
             stateManager.init(configNode, connectionManager, config.module, config.instance);
 
+            moduleInstance = new ModuleInstance()
+                    .withIp(NetUtils.getInetAddress(hostIPs))
+                    .withStartTime(System.currentTimeMillis());
+            moduleInstance.setSource(config.source);
+            moduleInstance.setModule(stateManager.module());
+            moduleInstance.setName(stateManager.instance());
+
             readLocks();
             DistributedLock lock = lock(ZkStateManager.Constants.LOCK_REPLICATION);
             if (lock == null) {
@@ -103,7 +113,11 @@ public class NameNodeEnv {
                         String.format("Replication Lock not defined. [name=%s]",
                                 ZkStateManager.Constants.LOCK_REPLICATION));
             }
-            stateManager.withReplicationLock(lock);
+            stateManager
+                    .withReplicationLock(lock)
+                    .withModuleInstance(moduleInstance);
+            moduleInstance.setInstanceId(moduleInstance.instanceId());
+            stateManager.checkAgentState();
 
             state.state(ENameNEnvState.Initialized);
             heartbeatThread = new Thread(new HeartbeatThread().withStateManager(stateManager));
@@ -144,7 +158,7 @@ public class NameNodeEnv {
             }
             if (state.isAvailable()) {
                 try {
-                    stateManager.heartbeat(config.instance, agentState);
+                    stateManager.heartbeat(moduleInstance.getInstanceId(), agentState);
                 } catch (Exception ex) {
                     DefaultLogger.LOG.error(ex.getLocalizedMessage());
                     DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));

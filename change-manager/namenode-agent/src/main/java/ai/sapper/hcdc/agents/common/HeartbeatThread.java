@@ -29,7 +29,8 @@ public class HeartbeatThread implements Runnable {
         Preconditions.checkNotNull(stateManager);
         try {
             while (NameNodeEnv.get().state().isAvailable()) {
-                stateManager.heartbeat(stateManager.module(), NameNodeEnv.get().agentState());
+                stateManager.heartbeat(stateManager.moduleInstance().getInstanceId(),
+                        NameNodeEnv.get().agentState());
                 Thread.sleep(sleepInterval);
             }
         } catch (Exception ex) {

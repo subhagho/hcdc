@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.agents.namenode.model;
+package ai.sapper.hcdc.agents.model;
 
 import ai.sapper.hcdc.agents.common.DFSAgentError;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;

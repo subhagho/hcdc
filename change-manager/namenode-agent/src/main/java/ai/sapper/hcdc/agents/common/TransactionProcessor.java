@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.hcdc.agents.namenode.model.NameNodeTxState;
+import ai.sapper.hcdc.agents.model.NameNodeTxState;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.core.filters.DomainManager;
 import ai.sapper.hcdc.core.messaging.ChangeDeltaSerDe;

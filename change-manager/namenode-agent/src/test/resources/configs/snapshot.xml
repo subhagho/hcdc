@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <configuration>
     <agent>
-        <module>NameNodeAgent</module>
-        <instance>edits-processor</instance>
+        <module>edits-log-processors</module>
+        <instance>snapshot-processor</instance>
         <source>ha-cluster</source>
         <needHadoop>false</needHadoop>
         <connections>

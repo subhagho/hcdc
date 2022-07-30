@@ -7,6 +7,7 @@ import lombok.Setter;
 @Setter
 public class Heartbeat {
     private String name;
+    private ModuleInstance module;
     private String type;
     private String state;
     private Throwable error;

@@ -8,8 +8,10 @@ import org.apache.parquet.Strings;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public class AvroConverter implements FormatConverter {
+    private static final String MAGIC_CODE = "Obj1";
     public static final String EXT = "avro";
 
     /**
@@ -51,6 +53,10 @@ public class AvroConverter implements FormatConverter {
      */
     @Override
     public boolean detect(byte[] data, int length) throws IOException {
+        if (data != null && length >= 4) {
+            String m = new String(data, 0, 4, StandardCharsets.UTF_8);
+            return m.compareTo(MAGIC_CODE) == 0;
+        }
         return false;
     }
 

@@ -2,8 +2,8 @@ package ai.sapper.hcdc.agents.namenode;
 
 import ai.sapper.hcdc.agents.common.InvalidTransactionError;
 import ai.sapper.hcdc.agents.common.TransactionProcessor;
-import ai.sapper.hcdc.agents.namenode.model.DFSBlockReplicaState;
-import ai.sapper.hcdc.agents.namenode.model.DFSFileReplicaState;
+import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
+import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.hcdc.core.messaging.InvalidMessageError;
