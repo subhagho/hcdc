@@ -23,6 +23,7 @@ public class DFSFileState {
     private long lastTnxId;
     private long timestamp;
     private Map<String, String> schemaLocation;
+    private EFileType fileType = EFileType.UNKNOWN;
     private EFileState state = EFileState.Unknown;
 
     private List<DFSBlockState> blocks;

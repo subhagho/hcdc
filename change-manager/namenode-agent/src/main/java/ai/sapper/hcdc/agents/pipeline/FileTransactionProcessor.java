@@ -7,6 +7,7 @@ import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.common.model.services.SnapshotDoneRequest;
+import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.core.WebServiceClient;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
 import ai.sapper.hcdc.core.io.FSBlock;
@@ -25,6 +26,7 @@ import org.apache.hadoop.hdfs.HDFSBlockReader;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 public class FileTransactionProcessor extends TransactionProcessor {
     public static final String SERVICE_SNAPSHOT_DONE = "snapshotDone";
@@ -487,6 +489,19 @@ public class FileTransactionProcessor extends TransactionProcessor {
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
                 .get(fileState.getId());
+        DFSFile dfsFile = data.getFile();
+        if (dfsFile.hasFileType()) {
+            rState.setFileType(EFileType.parse(dfsFile.getFileType()));
+        }
+        if (dfsFile.hasSchemaLocation()) {
+            String json = dfsFile.getSchemaLocation();
+            if (!Strings.isNullOrEmpty(json)) {
+                Map<String, String> map = JSONUtils.read(json, Map.class);
+                if (map != null && !map.isEmpty()) {
+                    rState.setSchemaLocation(map);
+                }
+            }
+        }
         long startTxId = rState.getLastReplicatedTx();
         if (message.mode() == MessageObject.MessageMode.Snapshot
                 || (!fileState.hasError() && rState != null && rState.canUpdate())) {

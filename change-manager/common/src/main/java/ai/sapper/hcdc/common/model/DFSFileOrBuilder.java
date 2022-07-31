@@ -30,4 +30,34 @@ public interface DFSFileOrBuilder
    * <code>required int64 inodeId = 3;</code>
    */
   long getInodeId();
+
+  // optional string fileType = 4;
+  /**
+   * <code>optional string fileType = 4;</code>
+   */
+  boolean hasFileType();
+  /**
+   * <code>optional string fileType = 4;</code>
+   */
+  java.lang.String getFileType();
+  /**
+   * <code>optional string fileType = 4;</code>
+   */
+  com.google.protobuf.ByteString
+      getFileTypeBytes();
+
+  // optional string schemaLocation = 5;
+  /**
+   * <code>optional string schemaLocation = 5;</code>
+   */
+  boolean hasSchemaLocation();
+  /**
+   * <code>optional string schemaLocation = 5;</code>
+   */
+  java.lang.String getSchemaLocation();
+  /**
+   * <code>optional string schemaLocation = 5;</code>
+   */
+  com.google.protobuf.ByteString
+      getSchemaLocationBytes();
 }

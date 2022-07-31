@@ -51,6 +51,16 @@ public class FileStateHelper {
                                long blockSize,
                                @NonNull EFileState state,
                                long txId) throws StateManagerError {
+        return create(path, inodeId, createdTime, blockSize, state, txId, false);
+    }
+
+    public DFSFileState create(@NonNull String path,
+                               long inodeId,
+                               long createdTime,
+                               long blockSize,
+                               @NonNull EFileState state,
+                               long txId,
+                               boolean updateIfExists) throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
         synchronized (this) {
@@ -61,16 +71,19 @@ public class FileStateHelper {
                 DFSFileState fs = null;
                 if (client.checkExists().forPath(zp) != null) {
                     fs = get(path);
-                    if (!fs.checkDeleted()) {
-                        throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                                path,
-                                String.format("Valid File already exists. [path=%s]", path));
-                    } else {
-                        client.delete().forPath(zp);
+                    if (!updateIfExists) {
+                        if (!fs.checkDeleted()) {
+                            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                                    path,
+                                    String.format("Valid File already exists. [path=%s]", path));
+                        } else {
+                            client.delete().forPath(zp);
+                        }
                     }
                 }
-                fs = new DFSFileState();
-
+                if (fs == null) {
+                    fs = new DFSFileState();
+                }
                 fs.setId(inodeId);
                 fs.setZkPath(zp);
                 fs.setHdfsFilePath(path);

@@ -5,6 +5,7 @@ import ai.sapper.hcdc.agents.common.TransactionProcessor;
 import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.model.*;
+import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.hcdc.core.messaging.InvalidMessageError;
 import ai.sapper.hcdc.core.messaging.MessageObject;
@@ -14,6 +15,7 @@ import com.google.common.base.Strings;
 import lombok.NonNull;
 
 import java.util.List;
+import java.util.Map;
 
 public class SourceTransactionProcessor extends TransactionProcessor {
     private MessageSender<String, DFSChangeDelta> sender;
@@ -462,8 +464,19 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 .replicaStateHelper()
                 .get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
+            String schemaf = null;
+            if (fileState.getSchemaLocation() != null) {
+                schemaf = JSONUtils.asString(fileState.getSchemaLocation(), Map.class);
+            }
             DFSFile df = data.getFile();
-            df = df.toBuilder().setInodeId(fileState.getId()).build();
+            df = df.toBuilder()
+                    .setInodeId(fileState.getId())
+                    .setFileType(fileState.getFileType().name())
+                    .setSchemaLocation(schemaf)
+                    .build();
+            rState.setFileType(fileState.getFileType());
+            rState.setSchemaLocation(fileState.getSchemaLocation());
+
             DFSCloseFile.Builder builder = data.toBuilder();
             builder.clearBlocks();
 

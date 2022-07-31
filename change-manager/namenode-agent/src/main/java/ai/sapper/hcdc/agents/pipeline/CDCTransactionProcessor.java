@@ -2,19 +2,19 @@ package ai.sapper.hcdc.agents.pipeline;
 
 import ai.sapper.hcdc.agents.common.InvalidTransactionError;
 import ai.sapper.hcdc.agents.common.TransactionProcessor;
+import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.model.*;
+import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.hcdc.core.messaging.InvalidMessageError;
 import ai.sapper.hcdc.core.messaging.MessageObject;
 import ai.sapper.hcdc.core.messaging.MessageSender;
-import ai.sapper.hcdc.core.model.DFSBlockState;
-import ai.sapper.hcdc.core.model.DFSFileState;
-import ai.sapper.hcdc.core.model.EBlockState;
-import ai.sapper.hcdc.core.model.EFileState;
+import ai.sapper.hcdc.core.model.*;
 import com.google.common.base.Strings;
 import lombok.NonNull;
 
 import java.util.List;
+import java.util.Map;
 
 public class CDCTransactionProcessor extends TransactionProcessor {
     private MessageSender<String, DFSChangeDelta> sender;
@@ -359,7 +359,22 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                 }
             }
         }
-
+        DFSFileReplicaState rState = stateManager()
+                .replicaStateHelper()
+                .get(fileState.getId());
+        DFSFile dfsFile = data.getFile();
+        if (dfsFile.hasFileType()) {
+            fileState.setFileType(EFileType.parse(dfsFile.getFileType()));
+        }
+        if (dfsFile.hasSchemaLocation()) {
+            String json = dfsFile.getSchemaLocation();
+            if (!Strings.isNullOrEmpty(json)) {
+                Map<String, String> map = JSONUtils.read(json, Map.class);
+                if (map != null && !map.isEmpty()) {
+                    fileState.setSchemaLocation(map);
+                }
+            }
+        }
         fileState = stateManager()
                 .fileStateHelper()
                 .updateState(fileState.getHdfsFilePath(), EFileState.Finalized);

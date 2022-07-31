@@ -28,6 +28,8 @@ message DFSTransaction {
 message DFSFile {
   required string path = 2;
   required int64 inodeId = 3;
+  optional string fileType = 4;
+  optional string schemaLocation = 5;
 }
 
 message DFSBlock {

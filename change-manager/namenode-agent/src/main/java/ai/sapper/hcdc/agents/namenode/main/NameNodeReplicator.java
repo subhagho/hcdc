@@ -134,7 +134,8 @@ public class NameNodeReplicator {
                             inode.mTime,
                             inode.preferredBlockSize,
                             EFileState.Finalized,
-                            txnId);
+                            txnId,
+                            true);
             if (inode.blocks != null && !inode.blocks.isEmpty()) {
                 long prevBlockId = -1;
                 for (DFSInodeBlock block : inode.blocks) {

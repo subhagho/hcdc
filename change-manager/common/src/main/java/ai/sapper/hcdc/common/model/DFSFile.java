@@ -64,6 +64,16 @@ public  final class DFSFile extends
             inodeId_ = input.readInt64();
             break;
           }
+          case 34: {
+            bitField0_ |= 0x00000004;
+            fileType_ = input.readBytes();
+            break;
+          }
+          case 42: {
+            bitField0_ |= 0x00000008;
+            schemaLocation_ = input.readBytes();
+            break;
+          }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -163,9 +173,97 @@ public  final class DFSFile extends
     return inodeId_;
   }
 
+  // optional string fileType = 4;
+  public static final int FILETYPE_FIELD_NUMBER = 4;
+  private java.lang.Object fileType_;
+  /**
+   * <code>optional string fileType = 4;</code>
+   */
+  public boolean hasFileType() {
+    return ((bitField0_ & 0x00000004) == 0x00000004);
+  }
+  /**
+   * <code>optional string fileType = 4;</code>
+   */
+  public java.lang.String getFileType() {
+    java.lang.Object ref = fileType_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      if (bs.isValidUtf8()) {
+        fileType_ = s;
+      }
+      return s;
+    }
+  }
+  /**
+   * <code>optional string fileType = 4;</code>
+   */
+  public com.google.protobuf.ByteString
+      getFileTypeBytes() {
+    java.lang.Object ref = fileType_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      fileType_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  // optional string schemaLocation = 5;
+  public static final int SCHEMALOCATION_FIELD_NUMBER = 5;
+  private java.lang.Object schemaLocation_;
+  /**
+   * <code>optional string schemaLocation = 5;</code>
+   */
+  public boolean hasSchemaLocation() {
+    return ((bitField0_ & 0x00000008) == 0x00000008);
+  }
+  /**
+   * <code>optional string schemaLocation = 5;</code>
+   */
+  public java.lang.String getSchemaLocation() {
+    java.lang.Object ref = schemaLocation_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      if (bs.isValidUtf8()) {
+        schemaLocation_ = s;
+      }
+      return s;
+    }
+  }
+  /**
+   * <code>optional string schemaLocation = 5;</code>
+   */
+  public com.google.protobuf.ByteString
+      getSchemaLocationBytes() {
+    java.lang.Object ref = schemaLocation_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      schemaLocation_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
   private void initFields() {
     path_ = "";
     inodeId_ = 0L;
+    fileType_ = "";
+    schemaLocation_ = "";
   }
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
@@ -193,6 +291,12 @@ public  final class DFSFile extends
     if (((bitField0_ & 0x00000002) == 0x00000002)) {
       output.writeInt64(3, inodeId_);
     }
+    if (((bitField0_ & 0x00000004) == 0x00000004)) {
+      output.writeBytes(4, getFileTypeBytes());
+    }
+    if (((bitField0_ & 0x00000008) == 0x00000008)) {
+      output.writeBytes(5, getSchemaLocationBytes());
+    }
     getUnknownFields().writeTo(output);
   }
 
@@ -209,6 +313,14 @@ public  final class DFSFile extends
     if (((bitField0_ & 0x00000002) == 0x00000002)) {
       size += com.google.protobuf.CodedOutputStream
         .computeInt64Size(3, inodeId_);
+    }
+    if (((bitField0_ & 0x00000004) == 0x00000004)) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBytesSize(4, getFileTypeBytes());
+    }
+    if (((bitField0_ & 0x00000008) == 0x00000008)) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBytesSize(5, getSchemaLocationBytes());
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSerializedSize = size;
@@ -330,6 +442,10 @@ public  final class DFSFile extends
       bitField0_ = (bitField0_ & ~0x00000001);
       inodeId_ = 0L;
       bitField0_ = (bitField0_ & ~0x00000002);
+      fileType_ = "";
+      bitField0_ = (bitField0_ & ~0x00000004);
+      schemaLocation_ = "";
+      bitField0_ = (bitField0_ & ~0x00000008);
       return this;
     }
 
@@ -366,6 +482,14 @@ public  final class DFSFile extends
         to_bitField0_ |= 0x00000002;
       }
       result.inodeId_ = inodeId_;
+      if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+        to_bitField0_ |= 0x00000004;
+      }
+      result.fileType_ = fileType_;
+      if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+        to_bitField0_ |= 0x00000008;
+      }
+      result.schemaLocation_ = schemaLocation_;
       result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
@@ -389,6 +513,16 @@ public  final class DFSFile extends
       }
       if (other.hasInodeId()) {
         setInodeId(other.getInodeId());
+      }
+      if (other.hasFileType()) {
+        bitField0_ |= 0x00000004;
+        fileType_ = other.fileType_;
+        onChanged();
+      }
+      if (other.hasSchemaLocation()) {
+        bitField0_ |= 0x00000008;
+        schemaLocation_ = other.schemaLocation_;
+        onChanged();
       }
       this.mergeUnknownFields(other.getUnknownFields());
       return this;
@@ -528,6 +662,154 @@ public  final class DFSFile extends
     public Builder clearInodeId() {
       bitField0_ = (bitField0_ & ~0x00000002);
       inodeId_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    // optional string fileType = 4;
+    private java.lang.Object fileType_ = "";
+    /**
+     * <code>optional string fileType = 4;</code>
+     */
+    public boolean hasFileType() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>optional string fileType = 4;</code>
+     */
+    public java.lang.String getFileType() {
+      java.lang.Object ref = fileType_;
+      if (!(ref instanceof java.lang.String)) {
+        java.lang.String s = ((com.google.protobuf.ByteString) ref)
+            .toStringUtf8();
+        fileType_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>optional string fileType = 4;</code>
+     */
+    public com.google.protobuf.ByteString
+        getFileTypeBytes() {
+      java.lang.Object ref = fileType_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        fileType_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>optional string fileType = 4;</code>
+     */
+    public Builder setFileType(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+      fileType_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional string fileType = 4;</code>
+     */
+    public Builder clearFileType() {
+      bitField0_ = (bitField0_ & ~0x00000004);
+      fileType_ = getDefaultInstance().getFileType();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional string fileType = 4;</code>
+     */
+    public Builder setFileTypeBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+      fileType_ = value;
+      onChanged();
+      return this;
+    }
+
+    // optional string schemaLocation = 5;
+    private java.lang.Object schemaLocation_ = "";
+    /**
+     * <code>optional string schemaLocation = 5;</code>
+     */
+    public boolean hasSchemaLocation() {
+      return ((bitField0_ & 0x00000008) == 0x00000008);
+    }
+    /**
+     * <code>optional string schemaLocation = 5;</code>
+     */
+    public java.lang.String getSchemaLocation() {
+      java.lang.Object ref = schemaLocation_;
+      if (!(ref instanceof java.lang.String)) {
+        java.lang.String s = ((com.google.protobuf.ByteString) ref)
+            .toStringUtf8();
+        schemaLocation_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>optional string schemaLocation = 5;</code>
+     */
+    public com.google.protobuf.ByteString
+        getSchemaLocationBytes() {
+      java.lang.Object ref = schemaLocation_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        schemaLocation_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>optional string schemaLocation = 5;</code>
+     */
+    public Builder setSchemaLocation(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000008;
+      schemaLocation_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional string schemaLocation = 5;</code>
+     */
+    public Builder clearSchemaLocation() {
+      bitField0_ = (bitField0_ & ~0x00000008);
+      schemaLocation_ = getDefaultInstance().getSchemaLocation();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional string schemaLocation = 5;</code>
+     */
+    public Builder setSchemaLocationBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000008;
+      schemaLocation_ = value;
       onChanged();
       return this;
     }
