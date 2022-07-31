@@ -20,7 +20,7 @@ import java.io.FileInputStream;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ParquetConverterTest {
-    private static final String CONFIG_FILE = "src/test/resources/configs/file-delta-agent-0.xml";
+    private static final String CONFIG_FILE = "src/test/resources/parquet-test.xml";
     private static final String FILE = "src/test/resources/data/links_1.parquet";
     private static final String OUTDIR = "C:\\Work\\temp\\output";
     private static final String HDFS_PARQUET_FILE = "/test/hcdc/loader/parquet/data/train.parquet";
