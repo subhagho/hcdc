@@ -13,7 +13,7 @@
         <needHadoop>true</needHadoop>
         <connections>
             <path>config</path>
-            <hdfs-admin>source-hdfs</hdfs-admin>
+            <hdfs-admin>source-hdfs-ha</hdfs-admin>
         </connections>
         <state>
             <manager>

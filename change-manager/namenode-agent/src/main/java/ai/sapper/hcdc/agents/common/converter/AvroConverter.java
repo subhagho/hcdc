@@ -1,12 +1,23 @@
 package ai.sapper.hcdc.agents.common.converter;
 
 import ai.sapper.hcdc.agents.common.FormatConverter;
+import ai.sapper.hcdc.common.utils.PathUtils;
+import ai.sapper.hcdc.core.model.DFSBlockState;
+import ai.sapper.hcdc.core.model.DFSFileState;
 import ai.sapper.hcdc.core.model.EFileType;
+import ai.sapper.hcdc.core.model.HDFSBlockData;
 import lombok.NonNull;
+import org.apache.avro.Schema;
+import org.apache.avro.file.DataFileReader;
+import org.apache.avro.generic.GenericDatumReader;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.io.DatumReader;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.hadoop.hdfs.HDFSBlockReader;
 import org.apache.parquet.Strings;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
@@ -66,5 +77,50 @@ public class AvroConverter implements FormatConverter {
     @Override
     public EFileType fileType() {
         return EFileType.AVRO;
+    }
+
+    /**
+     * @param reader
+     * @param outdir
+     * @return
+     * @throws IOException
+     */
+    @Override
+    public File extractSchema(@NonNull HDFSBlockReader reader,
+                              @NonNull File outdir,
+                              @NonNull DFSFileState fileState) throws IOException {
+        try {
+            DFSBlockState firstBlock = fileState.findFirstBlock();
+            if (firstBlock != null) {
+                HDFSBlockData data = reader.read(firstBlock.getBlockId(),
+                        firstBlock.getGenerationStamp(),
+                        0L,
+                        -1);
+
+                if (data == null) {
+                    throw new IOException(String.format("Error reading block from HDFS. [path=%s][block ID=%d]",
+                            fileState.getHdfsFilePath(), firstBlock.getBlockId()));
+                }
+                File tempf = PathUtils.getTempFileWithExt("parquet");
+                try (FileOutputStream fos = new FileOutputStream(tempf)) {
+                    fos.write(data.data().array());
+                    fos.flush();
+                }
+                DatumReader<GenericRecord> datumReader = new GenericDatumReader<>();
+                try (DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(tempf, datumReader)) {
+                    Schema schema = dataFileReader.getSchema();
+                    String json = schema.toString(true);
+                    File file = new File(String.format("%s/%d.avsc", outdir.getAbsolutePath(), fileState.getId()));
+                    try (FileOutputStream fos = new FileOutputStream(file)) {
+                        fos.write(json.getBytes(StandardCharsets.UTF_8));
+                        fos.flush();
+                    }
+                    return file;
+                }
+            }
+            return null;
+        } catch (Exception ex) {
+            throw new IOException(ex);
+        }
     }
 }

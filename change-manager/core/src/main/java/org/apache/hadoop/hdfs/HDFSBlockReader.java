@@ -1,5 +1,6 @@
 package org.apache.hadoop.hdfs;
 
+import ai.sapper.hcdc.common.cache.LRUCache;
 import ai.sapper.hcdc.core.model.HDFSBlockData;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
@@ -11,13 +12,17 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 @Getter
 @Accessors(fluent = true)
 public class HDFSBlockReader extends DFSInputStream {
+    private static final int DEFAULT_CACHE_SIZE = 32;
+
     private HdfsFileStatus fileInfo;
     private LocatedBlocks locatedBlocks = null;
+    private final LRUCache<Long, HDFSBlockData> cache = new LRUCache<>(DEFAULT_CACHE_SIZE);
 
     public HDFSBlockReader(@NonNull DFSClient client, @NonNull String path) throws IOException {
         super(client, path, true, null);
@@ -50,6 +55,10 @@ public class HDFSBlockReader extends DFSInputStream {
 
     public HDFSBlockData read(long blockId, long generationStamp, long offset, int length) throws DFSError {
         checkOpen();
+
+        if (cache.containsKey(blockId)) {
+            return cache.get(blockId).get();
+        }
         LocatedBlock lb = findBlock(blockId);
         if (lb == null) {
             throw new DFSError(String.format("Block not found. [path=%s][block id=%d]", src, blockId));
@@ -85,7 +94,7 @@ public class HDFSBlockReader extends DFSInputStream {
             } finally {
                 reportCheckSumFailure(corruptedBlockMap, lb.getLocations().length);
             }
-
+            cache.put(blockId, data);
             return data;
         }
         return null;
@@ -95,5 +104,14 @@ public class HDFSBlockReader extends DFSInputStream {
         if (!dfsClient.isClientRunning()) {
             throw new DFSError("Client is not running.");
         }
+    }
+
+    /**
+     * Close it down!
+     */
+    @Override
+    public synchronized void close() throws IOException {
+        cache.clear();
+        super.close();
     }
 }

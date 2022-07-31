@@ -1,7 +1,11 @@
 package ai.sapper.hcdc.agents.common.converter;
 
 import ai.sapper.hcdc.agents.common.FormatConverter;
+import ai.sapper.hcdc.common.utils.PathUtils;
+import ai.sapper.hcdc.core.model.DFSBlockState;
+import ai.sapper.hcdc.core.model.DFSFileState;
 import ai.sapper.hcdc.core.model.EFileType;
+import ai.sapper.hcdc.core.model.HDFSBlockData;
 import lombok.NonNull;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
@@ -11,6 +15,7 @@ import org.apache.avro.io.DatumWriter;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.HDFSBlockReader;
 import org.apache.parquet.Strings;
 import org.apache.parquet.avro.AvroParquetReader;
 import org.apache.parquet.avro.AvroReadSupport;
@@ -21,6 +26,7 @@ import org.apache.parquet.hadoop.util.HadoopInputFile;
 import org.apache.parquet.schema.MessageType;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
@@ -107,5 +113,47 @@ public class ParquetConverter implements FormatConverter {
     @Override
     public EFileType fileType() {
         return EFileType.PARQUET;
+    }
+
+    /**
+     * @param reader
+     * @param outdir
+     * @return
+     * @throws IOException
+     */
+    @Override
+    public File extractSchema(@NonNull HDFSBlockReader reader,
+                              @NonNull File outdir,
+                              @NonNull DFSFileState fileState) throws IOException {
+        try {
+            DFSBlockState lastBlock = fileState.findLastBlock();
+            if (lastBlock != null) {
+                HDFSBlockData data = reader.read(lastBlock.getBlockId(),
+                        lastBlock.getGenerationStamp(),
+                        0L,
+                        -1);
+
+                if (data == null) {
+                    throw new IOException(String.format("Error reading block from HDFS. [path=%s][block ID=%d]",
+                            fileState.getHdfsFilePath(), lastBlock.getBlockId()));
+                }
+                File tempf = PathUtils.getTempFileWithExt("parquet");
+                try (FileOutputStream fos = new FileOutputStream(tempf)) {
+                    fos.write(data.data().array());
+                    fos.flush();
+                }
+                Schema schema = getSchema(tempf);
+                String json = schema.toString(true);
+                File file = new File(String.format("%s/%d.avsc", outdir.getAbsolutePath(), fileState.getId()));
+                try (FileOutputStream fos = new FileOutputStream(file)) {
+                    fos.write(json.getBytes(StandardCharsets.UTF_8));
+                    fos.flush();
+                }
+                return file;
+            }
+            return null;
+        } catch (Exception ex) {
+            throw new IOException(ex);
+        }
     }
 }

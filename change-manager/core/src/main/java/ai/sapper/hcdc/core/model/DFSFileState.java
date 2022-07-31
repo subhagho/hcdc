@@ -22,7 +22,7 @@ public class DFSFileState {
     private long dataSize;
     private long lastTnxId;
     private long timestamp;
-
+    private Map<String, String> schemaLocation;
     private EFileState state = EFileState.Unknown;
 
     private List<DFSBlockState> blocks;
@@ -64,6 +64,20 @@ public class DFSFileState {
                 }
             }
             if (!change.isEmpty()) return change;
+        }
+        return null;
+    }
+
+    public DFSBlockState findFirstBlock() {
+        if (blocks != null && !blocks.isEmpty()) {
+            return blocks.get(0);
+        }
+        return null;
+    }
+
+    public DFSBlockState findLastBlock() {
+        if (blocks != null && !blocks.isEmpty()) {
+            return blocks.get(blocks.size() - 1);
         }
         return null;
     }
