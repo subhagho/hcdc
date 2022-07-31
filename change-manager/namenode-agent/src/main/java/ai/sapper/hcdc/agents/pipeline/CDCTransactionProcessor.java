@@ -364,7 +364,9 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                 .get(fileState.getId());
         DFSFile dfsFile = data.getFile();
         if (dfsFile.hasFileType()) {
-            fileState.setFileType(EFileType.parse(dfsFile.getFileType()));
+            EFileType ft = EFileType.parse(dfsFile.getFileType());
+            if (ft != EFileType.UNKNOWN)
+                fileState.setFileType(ft);
         }
         if (dfsFile.hasSchemaLocation()) {
             String json = dfsFile.getSchemaLocation();

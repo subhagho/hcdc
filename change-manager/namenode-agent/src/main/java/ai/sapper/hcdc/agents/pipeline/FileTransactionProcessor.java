@@ -491,7 +491,9 @@ public class FileTransactionProcessor extends TransactionProcessor {
                 .get(fileState.getId());
         DFSFile dfsFile = data.getFile();
         if (dfsFile.hasFileType()) {
-            rState.setFileType(EFileType.parse(dfsFile.getFileType()));
+            EFileType ft = EFileType.parse(dfsFile.getFileType());
+            if (ft != EFileType.UNKNOWN)
+                rState.setFileType(ft);
         }
         if (dfsFile.hasSchemaLocation()) {
             String json = dfsFile.getSchemaLocation();

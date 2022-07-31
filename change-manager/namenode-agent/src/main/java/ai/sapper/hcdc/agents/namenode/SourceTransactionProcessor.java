@@ -474,9 +474,10 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                     .setFileType(fileState.getFileType().name())
                     .setSchemaLocation(schemaf)
                     .build();
-            rState.setFileType(fileState.getFileType());
-            rState.setSchemaLocation(fileState.getSchemaLocation());
-
+            if (fileState.getFileType() != EFileType.UNKNOWN) {
+                rState.setFileType(fileState.getFileType());
+                rState.setSchemaLocation(fileState.getSchemaLocation());
+            }
             DFSCloseFile.Builder builder = data.toBuilder();
             builder.clearBlocks();
 

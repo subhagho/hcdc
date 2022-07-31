@@ -196,7 +196,6 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
         private String fsType;
         private String hdfsConnection;
         private String snapshotService;
-
         private HierarchicalConfiguration<ImmutableNode> fsConfig;
 
         public FileDeltaProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
