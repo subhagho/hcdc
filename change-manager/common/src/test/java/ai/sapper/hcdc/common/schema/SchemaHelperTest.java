@@ -1,14 +1,14 @@
 package ai.sapper.hcdc.common.schema;
 
 import ai.sapper.hcdc.common.utils.DefaultLogger;
+import ai.sapper.hcdc.common.utils.JSONUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.avro.Schema;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -85,12 +85,49 @@ class SchemaHelperTest {
             profile.contact.residence.country = "Israel";
             profile.contact.residence.zipCode = "990104";
 
-            String schema = SchemaHelper.POJOToAvroSchema.convert(profile);
+            Schema schema = SchemaHelper.POJOToAvroSchema.convert(profile);
+            DefaultLogger.LOG.info(String.format("\nSCHEMA: [%s]\n", schema.toString()));
+        } catch (Exception ex) {
+            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
+            fail(ex);
+        }
+    }
+
+    @Test
+    void testMap() {
+        try {
+            Random rnd = new Random(System.currentTimeMillis());
+            MapTest mt = new MapTest();
+            mt.id = "4c48ca61-b44f-490a-8409-eac4704358f3";
+            mt.date = "1975-12-18 18:38:52";
+            for (int ii = 0; ii < 10; ii++) {
+                mt.values.add(UUID.randomUUID().toString());
+            }
+            for (int ii = 0; ii < 10; ii++) {
+                mt.map.put(UUID.randomUUID().toString(), rnd.nextDouble());
+            }
+            String json = JSONUtils.asString(mt, MapTest.class);
+            DefaultLogger.LOG.debug(json);
+
+            Map<String, Object> jsonMap = JSONUtils.read(json, Map.class);
+            SchemaHelper.Field field = SchemaHelper.ObjectField.parse("", jsonMap);
+            assertNotNull(field);
+
+            String schema = field.avroSchema();
             DefaultLogger.LOG.info(String.format("\nSCHEMA: [%s]\n", schema));
         } catch (Exception ex) {
             DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
             fail(ex);
         }
+    }
+
+    @Getter
+    @Setter
+    private static class MapTest {
+        private String id;
+        private String date;
+        private List<String> values = new ArrayList<>();
+        private Map<String, Double> map = new HashMap<>();
     }
 
     @Getter

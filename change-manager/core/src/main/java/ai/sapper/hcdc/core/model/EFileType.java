@@ -7,6 +7,7 @@ public enum EFileType {
     CSV,
     PARQUET,
     AVRO,
+    JSON,
     ORC;
 
     public static EFileType parse(@NonNull String value) {

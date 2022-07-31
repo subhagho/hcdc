@@ -787,6 +787,24 @@ public class ReflectionUtils {
         return (Class<?>) ptype.getActualTypeArguments()[0];
     }
 
+    public static Class<?> getGenericMapKeyType(@NonNull Map<?, ?> mapObject) {
+        if (!mapObject.isEmpty()) {
+            for (Object key : mapObject.keySet()) {
+                return key.getClass();
+            }
+        }
+        return null;
+    }
+
+    public static Class<?> getGenericMapValueType(@NonNull Map<?, ?> mapObject) {
+        if (!mapObject.isEmpty()) {
+            for (Object value : mapObject.values()) {
+                return value.getClass();
+            }
+        }
+        return null;
+    }
+
     /**
      * Get the Parameterized type of the Map value field specified.
      *

@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.avro.Schema;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +19,7 @@ import java.util.regex.Pattern;
 
 public class SchemaHelper {
     public enum EDataType {
-        NULL, String, Number, Object, Array, Boolean, Enum;
+        NULL, String, Number, Object, Array, Boolean, Enum, Map;
 
         public static EDataType parse(String value) {
             for (EDataType dt : EDataType.values()) {
@@ -103,7 +104,58 @@ public class SchemaHelper {
                 List<?> values = (List<?>) value;
                 return ArrayField.parse(name, values);
             } else if (value instanceof Map) {
+                MapField mf = Field.isMapObject(name, (Map<String, ?>) value);
+                if (mf != null) return mf;
                 return ObjectField.parse(name, (Map<String, Object>) value);
+            }
+            return null;
+        }
+
+        private static MapField isMapObject(String name, Map<String, ?> values) {
+            Class<?> vtype = null;
+            for (Object value : values.values()) {
+                if (value != null) {
+                    Class<?> vt = value.getClass();
+                    if (!ReflectionUtils.isPrimitiveTypeOrString(vt)) {
+                        return null;
+                    }
+                    if (vtype == null) {
+                        vtype = vt;
+                    } else if (vt.equals(Strings.class) && !vtype.equals(String.class)) {
+                        return null;
+                    } else if (ReflectionUtils.isNumericType(vt) && !ReflectionUtils.isNumericType(vtype)) {
+                        return null;
+                    } else if (!vt.equals(vtype)) {
+                        if (vtype.equals(Double.class)) continue;
+                        else if (vtype.equals(Float.class)) {
+                            if (vt.equals(Double.class)) {
+                                vtype = vt;
+                            }
+                        } else if (vtype.equals(Long.class)) {
+                            if (vt.equals(Float.class)
+                                    || vt.equals(Double.class)) {
+                                vtype = vt;
+                            }
+                        } else if (vtype.equals(Integer.class)) {
+                            if (vt.equals(Long.class)
+                                    || vt.equals(Float.class)
+                                    || vt.equals(Double.class)) {
+                                vtype = vt;
+                            }
+                        } else if (vtype.equals(Short.class)) {
+                            if (vt.equals(Long.class)
+                                    || vt.equals(Float.class)
+                                    || vt.equals(Double.class)
+                                    || vt.equals(Integer.class)) {
+                                vtype = vt;
+                            }
+                        }
+                    }
+                }
+            }
+            if (vtype != null) {
+                Field inner = parseField("value", vtype);
+                return new MapField(name).innerType(inner);
             }
             return null;
         }
@@ -436,7 +488,9 @@ public class SchemaHelper {
                     else {
                         builder.append(",\n");
                     }
-                    if (field instanceof ObjectField || field instanceof ArrayField) {
+                    if (field instanceof ObjectField
+                            || field instanceof ArrayField
+                            || field instanceof MapField) {
                         builder.append(String.format("{\"name\": \"%s\",\n\"type\": %s\n}",
                                 field.name, field.avroSchema()));
                     } else
@@ -531,7 +585,7 @@ public class SchemaHelper {
          */
         @Override
         public String avroSchema() {
-            return String.format("{ \"type\": \"%s\", \"items\": %s }", avroType(), innerType.avroSchema());
+            return String.format("{ \"type\": \"%s\", \"items\": \"%s\" }", avroType(), innerType.avroType());
         }
 
         public static ArrayField parse(String name, @NonNull List<?> values) {
@@ -552,8 +606,91 @@ public class SchemaHelper {
         }
     }
 
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    public static class MapField extends Field {
+        private Field innerType;
+
+        private MapField(@NonNull String name) {
+            super(name, EDataType.Map);
+        }
+
+        /**
+         * @param value
+         * @return
+         */
+        @Override
+        public boolean check(String value) {
+            return false;
+        }
+
+        /**
+         * @return
+         */
+        @Override
+        public String avroType() {
+            return type().name().toLowerCase();
+        }
+
+        /**
+         * @return
+         */
+        @Override
+        public String avroSchema() {
+            return String.format("{ \"type\": \"%s\", \"values\": \"%s\" }", avroType(), innerType.avroType());
+        }
+
+        /**
+         * @param target
+         * @return
+         */
+        @Override
+        public boolean matches(@NonNull Field target) {
+            if (target instanceof MapField) {
+                if (name().compareTo(target.name()) == 0) {
+                    if (innerType != null && ((MapField) target).innerType != null) {
+                        return innerType.matches(((MapField) target).innerType);
+                    }
+                }
+            }
+            return false;
+        }
+
+        public static MapField parse(String name, @NonNull Map<?, ?> values) {
+            MapField map = new MapField(name);
+            if (values.isEmpty()) {
+                map.innerType = new NullField("");
+            } else {
+                Field type = null;
+                for (Object value : values.values()) {
+                    type = Field.parseField("", value);
+                    if (type != null && !(type instanceof NullField)) {
+                        break;
+                    }
+                }
+                map.innerType = type;
+            }
+            return map;
+        }
+    }
+
     public static class JsonToAvroSchema {
-        public static String convert(@NonNull String json,
+        public static Schema convert(@NonNull Map<String, Object> map,
+                                     String namespace,
+                                     @NonNull String name,
+                                     @NonNull ObjectMapper mapper) throws Exception {
+            Preconditions.checkArgument(!map.isEmpty());
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
+
+            SchemaHelper.ObjectField field = SchemaHelper.ObjectField.parse(name, map);
+            if (!Strings.isNullOrEmpty(namespace))
+                field.namespace(namespace);
+            String avroSchema = field.avroSchema();
+            return new Schema.Parser().parse(avroSchema);
+        }
+
+        public static Schema convert(@NonNull String json,
                                      String namespace,
                                      @NonNull String name) throws Exception {
             Preconditions.checkArgument(!Strings.isNullOrEmpty(json));
@@ -565,12 +702,13 @@ public class SchemaHelper {
             SchemaHelper.ObjectField field = SchemaHelper.ObjectField.parse(name, map);
             if (!Strings.isNullOrEmpty(namespace))
                 field.namespace(namespace);
-            return field.avroSchema();
+            String avroSchema = field.avroSchema();
+            return new Schema.Parser().parse(avroSchema);
         }
     }
 
     public static class POJOToAvroSchema {
-        public static String convert(@NonNull Object data) throws Exception {
+        public static Schema convert(@NonNull Object data) throws Exception {
             ObjectMapper mapper = new ObjectMapper();
             String json = mapper.writeValueAsString(data);
             Map<String, Object> map = mapper.readValue(json, Map.class);
@@ -578,7 +716,8 @@ public class SchemaHelper {
             SchemaHelper.ObjectField field =
                     SchemaHelper.ObjectField.parse(data.getClass().getSimpleName(), map);
             field.namespace(data.getClass().getCanonicalName());
-            return field.avroSchema();
+            String avroSchema = field.avroSchema();
+            return new Schema.Parser().parse(avroSchema);
         }
     }
 }
