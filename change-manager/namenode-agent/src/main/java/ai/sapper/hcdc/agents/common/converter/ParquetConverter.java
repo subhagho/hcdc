@@ -99,7 +99,8 @@ public class ParquetConverter implements FormatConverter {
      * @throws IOException
      */
     @Override
-    public boolean detect(byte[] data, int length) throws IOException {
+    public boolean detect(@NonNull String path, byte[] data, int length) throws IOException {
+        if (canParse(path, null)) return true;
         if (data != null && length >= 4) {
             String m = new String(data, 0, 4, StandardCharsets.UTF_8);
             return m.compareTo(MAGIC_CODE) == 0;

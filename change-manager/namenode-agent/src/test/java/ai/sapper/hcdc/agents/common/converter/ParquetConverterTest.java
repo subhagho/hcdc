@@ -34,7 +34,7 @@ class ParquetConverterTest {
             try (FileInputStream fos = new FileInputStream(inf)) {
                 byte[] array = new byte[32];
                 int r = fos.read(array);
-                boolean valid = converter.detect(array, r);
+                boolean valid = converter.detect(inf.getAbsolutePath(), array, r);
                 assertTrue(valid);
             }
             String name = FilenameUtils.getName(inf.getAbsolutePath());

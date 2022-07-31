@@ -4,15 +4,20 @@ import ai.sapper.hcdc.agents.common.converter.AvroConverter;
 import ai.sapper.hcdc.agents.common.converter.ParquetConverter;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.utils.PathUtils;
+import ai.sapper.hcdc.core.connections.HdfsConnection;
 import ai.sapper.hcdc.core.io.FileSystem;
 import ai.sapper.hcdc.core.io.PathInfo;
+import ai.sapper.hcdc.core.model.DFSBlockState;
 import ai.sapper.hcdc.core.model.DFSFileState;
 import ai.sapper.hcdc.core.model.EFileType;
+import ai.sapper.hcdc.core.model.HDFSBlockData;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.hadoop.hdfs.HDFSBlockReader;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,16 +28,22 @@ public class CDCDataConverter {
     private static final FormatConverter[] CONVERTERS = {new ParquetConverter(), new AvroConverter()};
 
     private FileSystem fs;
+    private HdfsConnection hdfsConnection;
 
     public CDCDataConverter withFileSystem(@NonNull FileSystem fs) {
         this.fs = fs;
         return this;
     }
 
-    public EFileType detect(byte[] data, int length) throws IOException {
+    public CDCDataConverter withHdfsConnection(@NonNull HdfsConnection hdfsConnection) {
+        this.hdfsConnection = hdfsConnection;
+        return this;
+    }
+
+    public EFileType detect(@NonNull String path, byte[] data, int length) throws IOException {
         try {
             for (FormatConverter converter : CONVERTERS) {
-                if (converter.detect(data, length)) return converter.fileType();
+                if (converter.detect(path, data, length)) return converter.fileType();
             }
             return null;
         } catch (Exception ex) {
@@ -58,6 +69,49 @@ public class CDCDataConverter {
         } catch (Exception ex) {
             throw new IOException(ex);
         }
+    }
+
+    public ExtractSchemaResponse extractSchema(@NonNull DFSFileState fileState,
+                                               @NonNull PathInfo schemaDir) throws IOException {
+        Preconditions.checkNotNull(fs);
+        Preconditions.checkNotNull(hdfsConnection);
+        try {
+            try (HDFSBlockReader reader = new HDFSBlockReader(hdfsConnection.dfsClient(), fileState.getHdfsFilePath())) {
+                reader.init();
+                DFSBlockState blockState = fileState.findFirstBlock();
+                HDFSBlockData data = reader.read(blockState.getBlockId(),
+                        blockState.getGenerationStamp(),
+                        0L,
+                        -1);
+                if (data != null) {
+                    for (FormatConverter converter : CONVERTERS) {
+                        if (converter.detect(fileState.getHdfsFilePath(),
+                                data.data().array(),
+                                (int) data.dataSize())) {
+                            EFileType fileType = converter.fileType();
+                            File outf = converter.extractSchema(reader,
+                                    PathUtils.getTempDir(),
+                                    fileState);
+                            if (outf != null) {
+                                PathInfo pi = fs.upload(outf, schemaDir);
+                                ExtractSchemaResponse response = new ExtractSchemaResponse();
+                                return response.fileType(fileType).schemaPath(pi);
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        } catch (Exception ex) {
+            throw new IOException(ex);
+        }
+    }
+
+    public FormatConverter getConverter(@NonNull EFileType fileType) {
+        for (FormatConverter converter : CONVERTERS) {
+            if (converter.fileType() == fileType) return converter;
+        }
+        return null;
     }
 
     private PathInfo upload(File source,
@@ -134,5 +188,13 @@ public class CDCDataConverter {
             return null;
         }
         return file;
+    }
+
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    public static class ExtractSchemaResponse {
+        private EFileType fileType;
+        private PathInfo schemaPath;
     }
 }

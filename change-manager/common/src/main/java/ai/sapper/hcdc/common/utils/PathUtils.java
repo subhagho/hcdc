@@ -19,6 +19,14 @@ public class PathUtils {
         return path;
     }
 
+    public static File getTempDir() {
+        File dir = new File(TEMP_PATH);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        return dir;
+    }
+
     public static File getTempFile(@NonNull String name, @NonNull String ext) {
         File dir = new File(TEMP_PATH);
         if (!dir.exists()) {

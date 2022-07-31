@@ -507,94 +507,95 @@ public class FileTransactionProcessor extends TransactionProcessor {
         long startTxId = rState.getLastReplicatedTx();
         if (message.mode() == MessageObject.MessageMode.Snapshot
                 || (!fileState.hasError() && rState != null && rState.canUpdate())) {
-            HDFSBlockReader reader = new HDFSBlockReader(connection.dfsClient(), rState.getHdfsPath());
-            reader.init();
-            FSFile file = fs.get(fileState, schemaEntity);
-            if (file == null) {
-                throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                        data.getFile().getPath(),
-                        String.format("FileSystem file not found. [path=%s]",
-                                data.getFile().getPath()));
-            }
-            List<DFSBlock> blocks = data.getBlocksList();
-            if (!blocks.isEmpty()) {
-                CDCDataConverter converter = new CDCDataConverter().withFileSystem(fs);
-                for (DFSBlock block : blocks) {
-                    DFSBlockReplicaState bs = rState.get(block.getBlockId());
-                    if (bs == null || !bs.canUpdate()) {
-                        throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                                data.getFile().getPath(),
-                                String.format("Block not registered for update. [path=%s][block ID=%d]",
-                                        data.getFile().getPath(), block.getBlockId()));
-                    }
-                    FSBlock fsb = file.get(block.getBlockId());
-                    if (fsb == null) {
-                        throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                                data.getFile().getPath(),
-                                String.format("Block not found in FileSystem. [path=%s][block ID=%d]",
-                                        data.getFile().getPath(), block.getBlockId()));
-                    }
-
-                    long size = copyBlock(block, rState, bs, fsb, reader, converter, bs.getPrevBlockId() < 0);
-                }
-            }
-            try {
-                CDCDataConverter converter = new CDCDataConverter()
-                        .withFileSystem(fs);
-                PathInfo outPath = converter.convert(fileState, rState, startTxId, txId);
-                if (outPath == null) {
-                    throw new IOException(String.format("Error converting source file. [TXID=%d]", txId));
-                }
-                rState.setLastDeltaPath(outPath.pathConfig());
-                DFSChangeData delta = DFSChangeData.newBuilder()
-                        .setTransaction(data.getTransaction())
-                        .setFile(data.getFile())
-                        .setDomain(schemaEntity.getDomain())
-                        .setEntityName(schemaEntity.getEntity())
-                        .setFileSystem(fs.fileSystemCode())
-                        .setOutputPath(outPath.path())
-                        .build();
-                MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(
-                        message.value().getNamespace(),
-                        delta,
-                        DFSChangeData.class,
-                        schemaEntity.getDomain(),
-                        schemaEntity.getEntity(),
-                        message.mode());
-                sender.send(m);
-            } catch (IOException ex) {
-                throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                        data.getFile().getPath(),
-                        String.format("Error converting change delta to Avro. [path=%s]",
-                                data.getFile().getPath()));
-            }
-            if (message.mode() == MessageObject.MessageMode.Snapshot) {
-                DFSFileReplicaState nState = snapShotDone(fileState, rState);
-                if (!nState.isSnapshotReady()) {
+            try (HDFSBlockReader reader = new HDFSBlockReader(connection.dfsClient(), rState.getHdfsPath())) {
+                reader.init();
+                FSFile file = fs.get(fileState, schemaEntity);
+                if (file == null) {
                     throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                            fileState.getHdfsFilePath(),
-                            String.format("Error marking Snapshot Done. [TXID=%d]", txId));
+                            data.getFile().getPath(),
+                            String.format("FileSystem file not found. [path=%s]",
+                                    data.getFile().getPath()));
                 }
-            }
-            stateManager().replicationLock().lock();
-            try {
-                rState.setSnapshotReady(true);
-                rState.setSnapshotTime(System.currentTimeMillis());
-                rState.setState(EFileState.Finalized);
-                rState.setLastReplicatedTx(txId);
-                rState.setLastReplicationTime(System.currentTimeMillis());
+                List<DFSBlock> blocks = data.getBlocksList();
+                if (!blocks.isEmpty()) {
+                    CDCDataConverter converter = new CDCDataConverter().withFileSystem(fs);
+                    for (DFSBlock block : blocks) {
+                        DFSBlockReplicaState bs = rState.get(block.getBlockId());
+                        if (bs == null || !bs.canUpdate()) {
+                            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                                    data.getFile().getPath(),
+                                    String.format("Block not registered for update. [path=%s][block ID=%d]",
+                                            data.getFile().getPath(), block.getBlockId()));
+                        }
+                        FSBlock fsb = file.get(block.getBlockId());
+                        if (fsb == null) {
+                            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                                    data.getFile().getPath(),
+                                    String.format("Block not found in FileSystem. [path=%s][block ID=%d]",
+                                            data.getFile().getPath(), block.getBlockId()));
+                        }
 
-                rState = stateManager()
-                        .replicaStateHelper()
-                        .update(rState);
-            } finally {
-                stateManager().replicationLock().unlock();
+                        long size = copyBlock(block, rState, bs, fsb, reader, converter, bs.getPrevBlockId() < 0);
+                    }
+                }
+                try {
+                    CDCDataConverter converter = new CDCDataConverter()
+                            .withFileSystem(fs);
+                    PathInfo outPath = converter.convert(fileState, rState, startTxId, txId);
+                    if (outPath == null) {
+                        throw new IOException(String.format("Error converting source file. [TXID=%d]", txId));
+                    }
+                    rState.setLastDeltaPath(outPath.pathConfig());
+                    DFSChangeData delta = DFSChangeData.newBuilder()
+                            .setTransaction(data.getTransaction())
+                            .setFile(data.getFile())
+                            .setDomain(schemaEntity.getDomain())
+                            .setEntityName(schemaEntity.getEntity())
+                            .setFileSystem(fs.fileSystemCode())
+                            .setOutputPath(outPath.path())
+                            .build();
+                    MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(
+                            message.value().getNamespace(),
+                            delta,
+                            DFSChangeData.class,
+                            schemaEntity.getDomain(),
+                            schemaEntity.getEntity(),
+                            message.mode());
+                    sender.send(m);
+                } catch (IOException ex) {
+                    throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                            data.getFile().getPath(),
+                            String.format("Error converting change delta to Avro. [path=%s]",
+                                    data.getFile().getPath()));
+                }
+                if (message.mode() == MessageObject.MessageMode.Snapshot) {
+                    DFSFileReplicaState nState = snapShotDone(fileState, rState);
+                    if (!nState.isSnapshotReady()) {
+                        throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                                fileState.getHdfsFilePath(),
+                                String.format("Error marking Snapshot Done. [TXID=%d]", txId));
+                    }
+                }
+                stateManager().replicationLock().lock();
+                try {
+                    rState.setSnapshotReady(true);
+                    rState.setSnapshotTime(System.currentTimeMillis());
+                    rState.setState(EFileState.Finalized);
+                    rState.setLastReplicatedTx(txId);
+                    rState.setLastReplicationTime(System.currentTimeMillis());
+
+                    rState = stateManager()
+                            .replicaStateHelper()
+                            .update(rState);
+                } finally {
+                    stateManager().replicationLock().unlock();
+                }
             }
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getHdfsFilePath(),
                     String.format("FileSystem sync error. [path=%s]", fileState.getHdfsFilePath()));
-        } else if (rState == null || !rState.canUpdate()) {
+        } else if (!rState.canUpdate()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
                     String.format("File not setup for replication. [path=%s]",
@@ -637,8 +638,10 @@ public class FileTransactionProcessor extends TransactionProcessor {
         }
         if (detect
                 && (fileState.getFileType() == null || fileState.getFileType() == EFileType.UNKNOWN)) {
-            EFileType fileType = converter.detect(data.data().array(), (int) data.dataSize());
-            if (fileType != null) {
+            EFileType fileType = converter.detect(fileState.getHdfsPath(),
+                    data.data().array(),
+                    (int) data.dataSize());
+            if (fileType != null && fileType != EFileType.UNKNOWN) {
                 fileState.setFileType(fileType);
             }
         }

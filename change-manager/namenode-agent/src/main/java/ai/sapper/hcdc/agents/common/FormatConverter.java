@@ -15,7 +15,7 @@ public interface FormatConverter {
 
     boolean supportsPartial();
 
-    boolean detect(byte[] data, int length) throws IOException;
+    boolean detect(@NonNull String path, byte[] data, int length) throws IOException;
 
     EFileType fileType();
 
