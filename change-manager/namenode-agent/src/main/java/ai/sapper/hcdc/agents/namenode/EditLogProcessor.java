@@ -5,6 +5,7 @@ import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
 import ai.sapper.hcdc.agents.model.DFSEditLogBatch;
 import ai.sapper.hcdc.agents.model.DFSTransactionType;
+import ai.sapper.hcdc.agents.model.NameNodeAgentState;
 import ai.sapper.hcdc.agents.model.NameNodeTxState;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
@@ -86,15 +87,17 @@ public class EditLogProcessor implements Runnable {
     public void run() {
         Preconditions.checkState(sender != null);
         try {
+            NameNodeEnv.get().agentState().state(NameNodeAgentState.EAgentState.Active);
             while (NameNodeEnv.get().state().isAvailable()) {
                 long txid = doRun();
                 LOG.info(String.format("Last Processed TXID = %d", txid));
                 Thread.sleep(processorConfig.pollingInterval);
             }
+            NameNodeEnv.get().agentState().state(NameNodeAgentState.EAgentState.Stopped);
         } catch (Throwable t) {
             LOG.error("Edits Log Processor terminated with error", t);
             DefaultLogger.stacktrace(LOG, t);
-            NameNodeEnv.get().error(t);
+            NameNodeEnv.get().agentState().error(t);
         }
     }
 

@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.agents.namenode;
 
 import ai.sapper.hcdc.agents.common.InvalidTransactionError;
+import ai.sapper.hcdc.agents.common.ProtoBufUtils;
 import ai.sapper.hcdc.agents.common.TransactionProcessor;
 import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
@@ -102,9 +103,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 b.setUpdateTime(System.currentTimeMillis());
                 rState.add(b);
             }
-            stateManager()
-                    .replicaStateHelper()
-                    .update(rState);
+            rState = updateWithLock(rState, fileState);
             sender.send(message);
         } else {
             sendIgnoreTx(message, data);
@@ -141,8 +140,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 .replicaStateHelper()
                 .get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
-            DFSFile df = data.getFile();
-            df = df.toBuilder().setInodeId(fileState.getId()).build();
+            DFSFile df = ProtoBufUtils.build(fileState);
             data = data.toBuilder().setFile(df).build();
             message = ChangeDeltaSerDe.create(message.value().getNamespace(),
                     data,
@@ -194,8 +192,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                     .replicaStateHelper()
                     .delete(fileState.getId());
 
-            DFSFile df = data.getFile();
-            df = df.toBuilder().setInodeId(fileState.getId()).build();
+            DFSFile df = ProtoBufUtils.build(fileState);
             data = data.toBuilder().setFile(df).build();
 
             message = ChangeDeltaSerDe.create(message.value().getNamespace(),
@@ -266,11 +263,8 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 b.setUpdateTime(System.currentTimeMillis());
                 rState.add(b);
             }
-            stateManager()
-                    .replicaStateHelper()
-                    .update(rState);
-            DFSFile df = data.getFile();
-            df = df.toBuilder().setInodeId(fileState.getId()).build();
+            rState = updateWithLock(rState, fileState);
+            DFSFile df = ProtoBufUtils.build(fileState);
             data = data.toBuilder().setFile(df).build();
 
             message = ChangeDeltaSerDe.create(message.value().getNamespace(),
@@ -354,11 +348,8 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 b.setUpdateTime(System.currentTimeMillis());
                 rState.add(b);
             }
-            stateManager()
-                    .replicaStateHelper()
-                    .update(rState);
-            DFSFile df = data.getFile();
-            df = df.toBuilder().setInodeId(fileState.getId()).build();
+            rState = updateWithLock(rState, fileState);
+            DFSFile df = ProtoBufUtils.build(fileState);
             data = data.toBuilder().setFile(df).build();
 
             message = ChangeDeltaSerDe.create(message.value().getNamespace(),
@@ -464,16 +455,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 .replicaStateHelper()
                 .get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
-            String schemaf = null;
-            if (fileState.getSchemaLocation() != null) {
-                schemaf = JSONUtils.asString(fileState.getSchemaLocation(), Map.class);
-            }
-            DFSFile df = data.getFile();
-            df = df.toBuilder()
-                    .setInodeId(fileState.getId())
-                    .setFileType(fileState.getFileType().name())
-                    .setSchemaLocation(schemaf)
-                    .build();
+            DFSFile df = ProtoBufUtils.build(fileState);
             if (fileState.getFileType() != EFileType.UNKNOWN) {
                 rState.setFileType(fileState.getFileType());
                 rState.setSchemaLocation(fileState.getSchemaLocation());
@@ -502,9 +484,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 builder.addBlocks(bb.build());
             }
             data = builder.build();
-            stateManager()
-                    .replicaStateHelper()
-                    .update(rState);
+            rState = updateWithLock(rState, fileState);
             message = ChangeDeltaSerDe.create(message.value().getNamespace(),
                     data,
                     DFSCloseFile.class,
@@ -551,10 +531,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                     .setTimestamp(System.currentTimeMillis())
                     .setOp(DFSTransaction.Operation.DELETE)
                     .build();
-            DFSFile f = DFSFile.newBuilder()
-                    .setPath(data.getSrcFile().getPath())
-                    .setInodeId(fileState.getId())
-                    .build();
+            DFSFile f = ProtoBufUtils.build(fileState);
             builder.setTransaction(txb)
                     .setFile(f)
                     .setTimestamp(System.currentTimeMillis());
@@ -601,9 +578,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
             rState.setSnapshotTime(System.currentTimeMillis());
             rState.setSnapshotReady(true);
 
-            stateManager()
-                    .replicaStateHelper()
-                    .update(rState);
+            rState = updateWithLock(rState, fileState);
             DFSCloseFile closeFile = HDFSSnapshotProcessor.generateSnapshot(nfs, true, txId);
             MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
                     closeFile,

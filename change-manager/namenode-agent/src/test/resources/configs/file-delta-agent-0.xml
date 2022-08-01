@@ -4,6 +4,7 @@
         <module>change-delta-processors</module>
         <instance>file-delta-processor/1</instance>
         <source>ha-cluster</source>
+        <enableHeartbeat>true</enableHeartbeat>
         <needHadoop>false</needHadoop>
         <connections>
             <path>config</path>

@@ -114,6 +114,7 @@ public class NameNodeReplicator {
             } finally {
                 NameNodeEnv.globalLock().unlock();
             }
+            NameNodeEnv.dispose();
         } catch (Throwable t) {
             DefaultLogger.LOG.error(t.getLocalizedMessage());
             DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));

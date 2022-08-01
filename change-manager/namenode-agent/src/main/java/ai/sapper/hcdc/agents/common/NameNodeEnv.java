@@ -120,9 +120,10 @@ public class NameNodeEnv {
             stateManager.checkAgentState();
 
             state.state(ENameNEnvState.Initialized);
-            heartbeatThread = new Thread(new HeartbeatThread().withStateManager(stateManager));
-            heartbeatThread.start();
-
+            if (config.enableHeartbeat) {
+                heartbeatThread = new Thread(new HeartbeatThread().withStateManager(stateManager));
+                heartbeatThread.start();
+            }
             return this;
         } catch (Throwable t) {
             state.error(t);
@@ -261,6 +262,7 @@ public class NameNodeEnv {
             private static final String __CONFIG_PATH = "agent";
             private static final String CONFIG_MODULE = "module";
             private static final String CONFIG_INSTANCE = "instance";
+            private static final String CONFIG_HEARTBEAT = "enableHeartbeat";
             private static final String CONFIG_SOURCE_NAME = "source";
             private static final String CONFIG_STATE_MANAGER_TYPE = "stateManagerClass";
             private static final String CONFIG_CONNECTIONS = "connections.path";
@@ -293,6 +295,8 @@ public class NameNodeEnv {
         private String hadoopConfFile;
         private boolean hadoopUseSSL = true;
         private boolean readHadoopConfig = true;
+        private boolean enableHeartbeat = false;
+
         private Class<? extends ZkStateManager> stateManagerClass = ZkStateManager.class;
 
         public NameNEnvConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
@@ -331,6 +335,9 @@ public class NameNodeEnv {
                 if (Strings.isNullOrEmpty(connectionConfigPath)) {
                     throw new ConfigurationException(
                             String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_CONNECTIONS));
+                }
+                if (get().containsKey(Constants.CONFIG_HEARTBEAT)) {
+                    enableHeartbeat = get().getBoolean(Constants.CONFIG_HEARTBEAT);
                 }
                 if (readHadoopConfig)
                     readHadoopConfigs();

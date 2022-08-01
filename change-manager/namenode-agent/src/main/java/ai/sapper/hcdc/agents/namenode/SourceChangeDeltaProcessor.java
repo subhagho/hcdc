@@ -64,7 +64,7 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
      * @see Thread#run()
      */
     @Override
-    public void run() {
+    public void doRun() throws Exception {
         Preconditions.checkState(sender() != null);
         Preconditions.checkState(receiver() != null);
         Preconditions.checkState(errorSender() != null);
@@ -100,6 +100,7 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
         } catch (Throwable t) {
             LOG.error("Delta Change Processor terminated with error", t);
             DefaultLogger.stacktrace(LOG, t);
+            throw t;
         }
     }
 
@@ -166,9 +167,7 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
                     message.value().getEntityName(),
                     MessageObject.MessageMode.Backlog);
             sender().send(mesg);
-            rState = stateManager()
-                    .replicaStateHelper()
-                    .update(rState);
+
         }
     }
 

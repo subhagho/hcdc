@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.agents.common;
 
+import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.agents.model.NameNodeTxState;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.core.filters.DomainManager;
@@ -7,6 +8,7 @@ import ai.sapper.hcdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.hcdc.core.messaging.InvalidMessageError;
 import ai.sapper.hcdc.core.messaging.MessageObject;
 import ai.sapper.hcdc.core.messaging.MessageSender;
+import ai.sapper.hcdc.core.model.DFSFileState;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -138,5 +140,16 @@ public abstract class TransactionProcessor {
             }
         }
         return txId;
+    }
+
+    public DFSFileReplicaState updateWithLock(@NonNull DFSFileReplicaState replicaState,
+                                              @NonNull DFSFileState fileState) throws Exception {
+        stateManager.replicationLock().lock();
+        try {
+            ProtoBufUtils.update(fileState, replicaState);
+            return stateManager.replicaStateHelper().update(replicaState);
+        } finally {
+            stateManager.replicationLock().unlock();
+        }
     }
 }

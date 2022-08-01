@@ -4,6 +4,7 @@
         <module>edits-log-processors</module>
         <instance>edits-log-processor</instance>
         <source>ha-cluster</source>
+        <enableHeartbeat>true</enableHeartbeat>
         <needHadoop>false</needHadoop>
         <connections>
             <path>config</path>

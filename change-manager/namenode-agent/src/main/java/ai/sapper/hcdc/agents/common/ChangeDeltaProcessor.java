@@ -1,8 +1,10 @@
 package ai.sapper.hcdc.agents.common;
 
+import ai.sapper.hcdc.agents.model.NameNodeAgentState;
 import ai.sapper.hcdc.agents.model.NameNodeTxState;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
+import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.messaging.HCDCMessagingBuilders;
 import ai.sapper.hcdc.core.messaging.MessageReceiver;
@@ -77,6 +79,31 @@ public abstract class ChangeDeltaProcessor implements Runnable {
             throw new ConfigurationException(ex);
         }
     }
+
+    /**
+     * When an object implementing interface <code>Runnable</code> is used
+     * to create a thread, starting the thread causes the object's
+     * <code>run</code> method to be called in that separately executing
+     * thread.
+     * <p>
+     * The general contract of the method <code>run</code> is that it may
+     * take any action whatsoever.
+     *
+     * @see Thread#run()
+     */
+    @Override
+    public void run() {
+        try {
+            NameNodeEnv.get().agentState().state(NameNodeAgentState.EAgentState.Active);
+            doRun();
+            NameNodeEnv.get().agentState().state(NameNodeAgentState.EAgentState.Stopped);
+        } catch (Throwable t) {
+            NameNodeEnv.get().agentState().error(t);
+            DefaultLogger.LOG.error(t.getLocalizedMessage(), t);
+        }
+    }
+
+    public abstract void doRun() throws Exception;
 
     public abstract ChangeDeltaProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                                               @NonNull ConnectionManager manger) throws ConfigurationException;

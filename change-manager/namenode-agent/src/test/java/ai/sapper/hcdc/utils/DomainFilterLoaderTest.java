@@ -36,6 +36,7 @@ class DomainFilterLoaderTest {
             assertNotNull(domainManager);
 
             new DomainFilterLoader().read(TEST_DOMAIN_FILE, domainManager);
+            NameNodeEnv.dispose();
         } catch (Throwable t) {
             DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
             fail(t);

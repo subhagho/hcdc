@@ -104,11 +104,12 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
      * @see Thread#run()
      */
     @Override
-    public void run() {
+    public void doRun() throws Exception {
         try {
             run(false);
         } catch (Exception ex) {
             LOG.error(ex.getLocalizedMessage(), ex);
+            throw ex;
         }
     }
 

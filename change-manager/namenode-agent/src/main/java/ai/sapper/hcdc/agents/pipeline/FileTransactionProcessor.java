@@ -112,9 +112,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
             rState.setStoragePath(file.directory().pathConfig());
             rState.setLastReplicatedTx(txId);
             rState.setLastReplicationTime(System.currentTimeMillis());
-            stateManager()
-                    .replicaStateHelper()
-                    .update(rState);
+            rState = updateWithLock(rState, fileState);
 
             return rState;
         } catch (Exception ex) {
@@ -162,20 +160,13 @@ public class FileTransactionProcessor extends TransactionProcessor {
                         String.format("FileSystem file not found. [path=%s]",
                                 data.getFile().getPath()));
             }
-            stateManager().replicationLock().lock();
-            try {
-                rState = stateManager()
-                        .replicaStateHelper()
-                        .get(fileState.getId());
-                rState.setState(EFileState.Updating);
-                rState.setLastReplicatedTx(txId);
-                rState.setLastReplicationTime(System.currentTimeMillis());
-                rState = stateManager()
-                        .replicaStateHelper()
-                        .update(rState);
-            } finally {
-                stateManager().replicationLock().unlock();
-            }
+            rState = stateManager()
+                    .replicaStateHelper()
+                    .get(fileState.getId());
+            rState.setState(EFileState.Updating);
+            rState.setLastReplicatedTx(txId);
+            rState.setLastReplicationTime(System.currentTimeMillis());
+            rState = updateWithLock(rState, fileState);
             LOG.debug(String.format("Updating file. [path=%s]", fileState.getHdfsFilePath()));
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
@@ -303,25 +294,18 @@ public class FileTransactionProcessor extends TransactionProcessor {
             if (bb == null) {
                 file.add(block);
             }
-            stateManager().replicationLock().lock();
-            try {
-                DFSBlockReplicaState b = new DFSBlockReplicaState();
-                b.setState(EFileState.New);
-                b.setBlockId(block.getBlockId());
-                b.setPrevBlockId(block.getPrevBlockId());
-                b.setStartOffset(0);
-                b.setDataSize(block.getDataSize());
-                b.setUpdateTime(System.currentTimeMillis());
-                rState.add(b);
+            DFSBlockReplicaState b = new DFSBlockReplicaState();
+            b.setState(EFileState.New);
+            b.setBlockId(block.getBlockId());
+            b.setPrevBlockId(block.getPrevBlockId());
+            b.setStartOffset(0);
+            b.setDataSize(block.getDataSize());
+            b.setUpdateTime(System.currentTimeMillis());
+            rState.add(b);
 
-                rState.setLastReplicatedTx(txId);
-                rState.setLastReplicationTime(System.currentTimeMillis());
-                stateManager()
-                        .replicaStateHelper()
-                        .update(rState);
-            } finally {
-                stateManager().replicationLock().unlock();
-            }
+            rState.setLastReplicatedTx(txId);
+            rState.setLastReplicationTime(System.currentTimeMillis());
+            rState = updateWithLock(rState, fileState);
             LOG.debug(String.format("Updating file. [path=%s]", fileState.getHdfsFilePath()));
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
@@ -400,25 +384,18 @@ public class FileTransactionProcessor extends TransactionProcessor {
                             String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
                                     fileState.getHdfsFilePath(), block.getBlockId()));
                 }
-                stateManager().replicationLock().lock();
-                try {
-                    DFSBlockReplicaState b = new DFSBlockReplicaState();
-                    b.setState(EFileState.New);
-                    b.setBlockId(bs.getBlockId());
-                    b.setPrevBlockId(bs.getPrevBlockId());
-                    b.setStartOffset(0);
-                    b.setDataSize(bs.getDataSize());
-                    b.setUpdateTime(System.currentTimeMillis());
-                    rState.add(b);
-                    rState.setLastReplicatedTx(txId);
-                    rState.setLastReplicationTime(System.currentTimeMillis());
+                DFSBlockReplicaState b = new DFSBlockReplicaState();
+                b.setState(EFileState.New);
+                b.setBlockId(bs.getBlockId());
+                b.setPrevBlockId(bs.getPrevBlockId());
+                b.setStartOffset(0);
+                b.setDataSize(bs.getDataSize());
+                b.setUpdateTime(System.currentTimeMillis());
+                rState.add(b);
+                rState.setLastReplicatedTx(txId);
+                rState.setLastReplicationTime(System.currentTimeMillis());
 
-                    stateManager()
-                            .replicaStateHelper()
-                            .update(rState);
-                } finally {
-                    stateManager().replicationLock().unlock();
-                }
+                rState = updateWithLock(rState, fileState);
             }
             LOG.debug(String.format("Updating file. [path=%s]", fileState.getHdfsFilePath()));
         } else if (fileState.hasError()) {
@@ -576,20 +553,13 @@ public class FileTransactionProcessor extends TransactionProcessor {
                                 String.format("Error marking Snapshot Done. [TXID=%d]", txId));
                     }
                 }
-                stateManager().replicationLock().lock();
-                try {
-                    rState.setSnapshotReady(true);
-                    rState.setSnapshotTime(System.currentTimeMillis());
-                    rState.setState(EFileState.Finalized);
-                    rState.setLastReplicatedTx(txId);
-                    rState.setLastReplicationTime(System.currentTimeMillis());
+                rState.setSnapshotReady(true);
+                rState.setSnapshotTime(System.currentTimeMillis());
+                rState.setState(EFileState.Finalized);
+                rState.setLastReplicatedTx(txId);
+                rState.setLastReplicationTime(System.currentTimeMillis());
 
-                    rState = stateManager()
-                            .replicaStateHelper()
-                            .update(rState);
-                } finally {
-                    stateManager().replicationLock().unlock();
-                }
+                rState = updateWithLock(rState, fileState);
             }
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,

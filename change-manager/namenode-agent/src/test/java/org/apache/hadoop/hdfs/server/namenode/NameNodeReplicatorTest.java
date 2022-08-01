@@ -24,11 +24,6 @@ class NameNodeReplicatorTest {
                     "/Work/temp/output/test"};
             NameNodeReplicator.main(args);
 
-            ZkStateManager stateManager = NameNodeEnv.stateManager();
-            assertNotNull(stateManager);
-
-            NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose();
-            assertEquals(NameNodeEnv.ENameNEnvState.Disposed, state);
         } catch (Throwable t) {
             DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
             fail(t);

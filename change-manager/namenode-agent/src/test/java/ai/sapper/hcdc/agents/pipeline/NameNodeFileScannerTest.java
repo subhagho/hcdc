@@ -22,6 +22,8 @@ class NameNodeFileScannerTest {
             NameNodeFileScanner scanner = new NameNodeFileScanner(NameNodeEnv.stateManager());
             scanner.init(NameNodeEnv.get().configNode(), NameNodeEnv.connectionManager());
             scanner.run();
+
+            NameNodeEnv.dispose();
         } catch (Throwable t) {
             DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
             fail(t);

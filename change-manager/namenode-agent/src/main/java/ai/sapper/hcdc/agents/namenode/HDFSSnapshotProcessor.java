@@ -1,9 +1,6 @@
 package ai.sapper.hcdc.agents.namenode;
 
-import ai.sapper.hcdc.agents.common.NameNodeEnv;
-import ai.sapper.hcdc.agents.common.ProcessorStateManager;
-import ai.sapper.hcdc.agents.common.SnapshotError;
-import ai.sapper.hcdc.agents.common.ZkStateManager;
+import ai.sapper.hcdc.agents.common.*;
 import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.ConfigReader;
@@ -13,6 +10,7 @@ import ai.sapper.hcdc.common.filters.DomainFilters;
 import ai.sapper.hcdc.common.filters.Filter;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
+import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.filters.DomainManager;
 import ai.sapper.hcdc.core.filters.FilterAddCallback;
@@ -20,6 +18,7 @@ import ai.sapper.hcdc.core.messaging.*;
 import ai.sapper.hcdc.core.model.DFSBlockState;
 import ai.sapper.hcdc.core.model.DFSFileState;
 import ai.sapper.hcdc.core.model.EFileState;
+import ai.sapper.hcdc.core.model.EFileType;
 import ai.sapper.hcdc.core.utils.FileSystemUtils;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
@@ -34,6 +33,7 @@ import org.apache.hadoop.fs.Path;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Accessors(fluent = true)
@@ -178,6 +178,11 @@ public class HDFSSnapshotProcessor {
             if (rState.getSnapshotTxId() > 0) {
                 return;
             }
+            if (fileState.getFileType() != null
+                    && fileState.getFileType() != EFileType.UNKNOWN) {
+                rState.setFileType(fileState.getFileType());
+                rState.setSchemaLocation(fileState.getSchemaLocation());
+            }
             for (DFSBlockState bs : fileState.getBlocks()) {
                 DFSBlockReplicaState b = new DFSBlockReplicaState();
                 b.setState(EFileState.New);
@@ -189,9 +194,9 @@ public class HDFSSnapshotProcessor {
                 rState.add(b);
             }
 
-            DFSCloseFile addFile = generateSnapshot(fileState, true, fileState.getLastTnxId());
+            DFSCloseFile closeFile = generateSnapshot(fileState, true, fileState.getLastTnxId());
             MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
-                    addFile,
+                    closeFile,
                     DFSCloseFile.class,
                     entity.getDomain(),
                     entity.getEntity(),
@@ -200,10 +205,10 @@ public class HDFSSnapshotProcessor {
 
             rState.setSnapshotTxId(fileState.getLastTnxId());
             rState.setSnapshotTime(System.currentTimeMillis());
+            ProtoBufUtils.update(fileState, rState);
             stateManager
                     .replicaStateHelper()
                     .update(rState);
-
             DefaultLogger.LOG.info(String.format("Snapshot generated for path. [path=%s][inode=%d]", fileState.getHdfsFilePath(), fileState.getId()));
         } catch (SnapshotError se) {
             throw se;
@@ -246,16 +251,15 @@ public class HDFSSnapshotProcessor {
                     MessageObject.MessageMode.Backlog);
             tnxSender.send(message);
 
-            rState.clear();
             rState.setSnapshotReady(true);
             rState.setSnapshotTime(System.currentTimeMillis());
             rState.setLastReplicationTime(System.currentTimeMillis());
             rState.setLastReplicatedTx(tnxId);
             rState.setState(EFileState.Finalized);
+            ProtoBufUtils.update(fileState, rState);
             stateManager
                     .replicaStateHelper()
                     .update(rState);
-
             return rState;
         } catch (SnapshotError se) {
             throw se;
@@ -274,10 +278,8 @@ public class HDFSSnapshotProcessor {
                 .setTransactionId(txId)
                 .setTimestamp(System.currentTimeMillis())
                 .build();
-        DFSFile file = DFSFile.newBuilder()
-                .setInodeId(state.getId())
-                .setPath(state.getHdfsFilePath())
-                .build();
+
+        DFSFile file = ProtoBufUtils.build(state);
         DFSCloseFile.Builder builder = DFSCloseFile.newBuilder();
         builder.setOverwrite(false)
                 .setModifiedTime(state.getUpdatedTime())

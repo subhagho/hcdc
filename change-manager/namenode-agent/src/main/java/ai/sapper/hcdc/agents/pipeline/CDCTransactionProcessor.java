@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.agents.pipeline;
 
 import ai.sapper.hcdc.agents.common.InvalidTransactionError;
+import ai.sapper.hcdc.agents.common.ProtoBufUtils;
 import ai.sapper.hcdc.agents.common.TransactionProcessor;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.model.*;
@@ -66,6 +67,7 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                         data.getBlockSize(),
                         EFileState.New,
                         data.getTransaction().getTransactionId());
+        ProtoBufUtils.update(fileState, data.getFile());
         List<DFSBlock> blocks = data.getBlocksList();
         if (!blocks.isEmpty()) {
             long prevBlockId = -1;
@@ -110,6 +112,7 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                         data.getBlockSize(),
                         EFileState.New,
                         data.getTransaction().getTransactionId());
+        ProtoBufUtils.update(fileState, data.getFile());
         List<DFSBlock> blocks = data.getBlocksList();
         if (!blocks.isEmpty()) {
             long prevBlockId = -1;
@@ -154,6 +157,7 @@ public class CDCTransactionProcessor extends TransactionProcessor {
         fileState = stateManager()
                 .fileStateHelper()
                 .updateState(fileState.getHdfsFilePath(), EFileState.Updating);
+        ProtoBufUtils.update(fileState, data.getFile());
         sender.send(message);
     }
 
@@ -207,6 +211,7 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                     message.id(), message.mode().name()));
             return;
         }
+        ProtoBufUtils.update(fileState, data.getFile());
         long lastBlockId = -1;
         if (data.hasPenultimateBlock()) {
             lastBlockId = data.getPenultimateBlock().getBlockId();
@@ -246,6 +251,7 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                     message.id(), message.mode().name()));
             return;
         }
+        ProtoBufUtils.update(fileState, data.getFile());
         List<DFSBlock> blocks = data.getBlocksList();
         if (blocks.isEmpty()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
@@ -326,6 +332,7 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                     message.id(), message.mode().name()));
             return;
         }
+        ProtoBufUtils.update(fileState, data.getFile());
         List<DFSBlock> blocks = data.getBlocksList();
         if (!blocks.isEmpty()) {
             for (DFSBlock block : blocks) {
@@ -362,21 +369,7 @@ public class CDCTransactionProcessor extends TransactionProcessor {
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
                 .get(fileState.getId());
-        DFSFile dfsFile = data.getFile();
-        if (dfsFile.hasFileType()) {
-            EFileType ft = EFileType.parse(dfsFile.getFileType());
-            if (ft != EFileType.UNKNOWN)
-                fileState.setFileType(ft);
-        }
-        if (dfsFile.hasSchemaLocation()) {
-            String json = dfsFile.getSchemaLocation();
-            if (!Strings.isNullOrEmpty(json)) {
-                Map<String, String> map = JSONUtils.read(json, Map.class);
-                if (map != null && !map.isEmpty()) {
-                    fileState.setSchemaLocation(map);
-                }
-            }
-        }
+
         fileState = stateManager()
                 .fileStateHelper()
                 .updateState(fileState.getHdfsFilePath(), EFileState.Finalized);
