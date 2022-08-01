@@ -123,13 +123,13 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
     }
 
     private void processBacklogMessage(MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
-        DFSAddFile addFile = (DFSAddFile) ChangeDeltaSerDe.parse(message.value());
+        DFSCloseFile closeFile = (DFSCloseFile) ChangeDeltaSerDe.parse(message.value());
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
-                .get(addFile.getFile().getPath());
+                .get(closeFile.getFile().getPath());
         if (fileState == null) {
             throw new InvalidMessageError(message.id(),
-                    String.format("HDFS File Not found. [path=%s]", addFile.getFile().getPath()));
+                    String.format("HDFS File Not found. [path=%s]", closeFile.getFile().getPath()));
         }
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
@@ -137,17 +137,17 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
         if (rState == null || !rState.isEnabled()) {
             throw new InvalidMessageError(message.id(),
                     String.format("HDFS File not registered for snapshot. [path=%s][inode=%d]",
-                            addFile.getFile().getPath(), fileState.getId()));
+                            closeFile.getFile().getPath(), fileState.getId()));
         }
         if (rState.isSnapshotReady()) {
             throw new InvalidMessageError(message.id(),
                     String.format("Snapshot already completed for file. [path=%s][inode=%d]",
-                            addFile.getFile().getPath(), fileState.getId()));
+                            closeFile.getFile().getPath(), fileState.getId()));
         }
         if (rState.getSnapshotTxId() != txId) {
             throw new InvalidMessageError(message.id(),
                     String.format("Snapshot transaction mismatch. [path=%s][inode=%d] [expected=%d][actual=%d]",
-                            addFile.getFile().getPath(), fileState.getId(), rState.getSnapshotTxId(), txId));
+                            closeFile.getFile().getPath(), fileState.getId(), rState.getSnapshotTxId(), txId));
         }
         if (fileState.getLastTnxId() > txId)
             sendBackLogMessage(message, fileState, rState, txId);
