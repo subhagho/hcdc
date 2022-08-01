@@ -242,19 +242,22 @@ public class HDFSSnapshotProcessor {
                 DefaultLogger.LOG.warn(String.format("Duplicate Call: Snapshot Done: [path=%s]", rState.getHdfsPath()));
                 return rState;
             }
-            DFSCloseFile closeFile = generateSnapshot(fileState, true, tnxId);
-            MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
-                    closeFile,
-                    DFSCloseFile.class,
-                    entity.getDomain(),
-                    entity.getEntity(),
-                    MessageObject.MessageMode.Backlog);
-            tnxSender.send(message);
-
+            long lastTxId = tnxId;
+            if (fileState.getLastTnxId() > rState.getSnapshotTxId()) {
+                DFSCloseFile closeFile = generateSnapshot(fileState, true, tnxId);
+                MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
+                        closeFile,
+                        DFSCloseFile.class,
+                        entity.getDomain(),
+                        entity.getEntity(),
+                        MessageObject.MessageMode.Backlog);
+                tnxSender.send(message);
+                lastTxId = fileState.getLastTnxId();
+            }
             rState.setSnapshotReady(true);
             rState.setSnapshotTime(System.currentTimeMillis());
             rState.setLastReplicationTime(System.currentTimeMillis());
-            rState.setLastReplicatedTx(tnxId);
+            rState.setLastReplicatedTx(lastTxId);
             rState.setState(EFileState.Finalized);
             ProtoBufUtils.update(fileState, rState);
             stateManager
