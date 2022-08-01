@@ -103,7 +103,8 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 b.setUpdateTime(System.currentTimeMillis());
                 rState.add(b);
             }
-            rState = updateWithLock(rState, fileState);
+            rState = stateManager().replicaStateHelper().update(rState);
+
             sender.send(message);
         } else {
             sendIgnoreTx(message, data);
@@ -263,7 +264,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 b.setUpdateTime(System.currentTimeMillis());
                 rState.add(b);
             }
-            rState = updateWithLock(rState, fileState);
+            rState = stateManager().replicaStateHelper().update(rState);
             DFSFile df = ProtoBufUtils.build(fileState);
             data = data.toBuilder().setFile(df).build();
 
@@ -348,7 +349,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 b.setUpdateTime(System.currentTimeMillis());
                 rState.add(b);
             }
-            rState = updateWithLock(rState, fileState);
+            rState = stateManager().replicaStateHelper().update(rState);
             DFSFile df = ProtoBufUtils.build(fileState);
             data = data.toBuilder().setFile(df).build();
 
@@ -484,7 +485,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 builder.addBlocks(bb.build());
             }
             data = builder.build();
-            rState = updateWithLock(rState, fileState);
+            rState = stateManager().replicaStateHelper().update(rState);
             message = ChangeDeltaSerDe.create(message.value().getNamespace(),
                     data,
                     DFSCloseFile.class,
@@ -578,7 +579,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
             rState.setSnapshotTime(System.currentTimeMillis());
             rState.setSnapshotReady(true);
 
-            rState = updateWithLock(rState, fileState);
+            rState = stateManager().replicaStateHelper().update(rState);
             DFSCloseFile closeFile = HDFSSnapshotProcessor.generateSnapshot(nfs, true, txId);
             MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
                     closeFile,

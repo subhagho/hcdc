@@ -112,7 +112,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
             rState.setStoragePath(file.directory().pathConfig());
             rState.setLastReplicatedTx(txId);
             rState.setLastReplicationTime(System.currentTimeMillis());
-            rState = updateWithLock(rState, fileState);
+            rState = stateManager().replicaStateHelper().update(rState);
 
             return rState;
         } catch (Exception ex) {
@@ -166,7 +166,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
             rState.setState(EFileState.Updating);
             rState.setLastReplicatedTx(txId);
             rState.setLastReplicationTime(System.currentTimeMillis());
-            rState = updateWithLock(rState, fileState);
+            rState = stateManager().replicaStateHelper().update(rState);
             LOG.debug(String.format("Updating file. [path=%s]", fileState.getHdfsFilePath()));
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
@@ -305,7 +305,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
 
             rState.setLastReplicatedTx(txId);
             rState.setLastReplicationTime(System.currentTimeMillis());
-            rState = updateWithLock(rState, fileState);
+            rState = stateManager().replicaStateHelper().update(rState);
             LOG.debug(String.format("Updating file. [path=%s]", fileState.getHdfsFilePath()));
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
@@ -395,7 +395,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
                 rState.setLastReplicatedTx(txId);
                 rState.setLastReplicationTime(System.currentTimeMillis());
 
-                rState = updateWithLock(rState, fileState);
+                rState = stateManager().replicaStateHelper().update(rState);
             }
             LOG.debug(String.format("Updating file. [path=%s]", fileState.getHdfsFilePath()));
         } else if (fileState.hasError()) {
@@ -559,7 +559,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
                 rState.setLastReplicatedTx(txId);
                 rState.setLastReplicationTime(System.currentTimeMillis());
 
-                rState = updateWithLock(rState, fileState);
+                rState = stateManager().replicaStateHelper().update(rState);
             }
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,

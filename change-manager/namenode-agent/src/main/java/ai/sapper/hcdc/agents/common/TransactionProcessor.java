@@ -141,15 +141,4 @@ public abstract class TransactionProcessor {
         }
         return txId;
     }
-
-    public DFSFileReplicaState updateWithLock(@NonNull DFSFileReplicaState replicaState,
-                                              @NonNull DFSFileState fileState) throws Exception {
-        stateManager.replicationLock().lock();
-        try {
-            ProtoBufUtils.update(fileState, replicaState);
-            return stateManager.replicaStateHelper().update(replicaState);
-        } finally {
-            stateManager.replicationLock().unlock();
-        }
-    }
 }
