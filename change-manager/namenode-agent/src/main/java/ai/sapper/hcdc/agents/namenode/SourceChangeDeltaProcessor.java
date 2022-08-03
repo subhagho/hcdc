@@ -31,7 +31,7 @@ import java.util.List;
 @Getter
 @Accessors(fluent = true)
 public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
-    private static Logger LOG = LoggerFactory.getLogger(SourceChangeDeltaProcessor.class.getCanonicalName());
+    private static final Logger LOG = LoggerFactory.getLogger(SourceChangeDeltaProcessor.class.getCanonicalName());
 
     private SourceTransactionProcessor processor;
 
@@ -96,7 +96,7 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
                     }
                 }
             }
-            LOG.warn(String.format("Delta Change Processor thread stopped. [env state=%s]", NameNodeEnv.get().state().state().name()));
+            LOG.warn("Delta Change Processor thread stopped.");
         } catch (Throwable t) {
             LOG.error("Delta Change Processor terminated with error", t);
             DefaultLogger.stacktrace(LOG, t);
