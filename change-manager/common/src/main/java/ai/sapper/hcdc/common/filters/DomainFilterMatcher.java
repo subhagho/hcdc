@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 @Getter
 @Accessors(fluent = true)
 public class DomainFilterMatcher {
-    private static final String IGNORE_REGEX = ".*\\._COPYING_";
+    private static final String IGNORE_REGEX = "\\[.*\\._COPYING_|/tmp/.*]";
     private static final Pattern IGNORE_PATTERN = Pattern.compile(IGNORE_REGEX);
 
     @Getter
@@ -40,9 +40,14 @@ public class DomainFilterMatcher {
         List<Filter> fs = filters.get();
         if (fs != null && !fs.isEmpty()) {
             for (Filter f : fs) {
+                String path = f.getPath();
+                path = path.trim();
+                if (path.endsWith("/")) {
+                    path = path.substring(0, path.length() - 2);
+                }
                 PathFilter pf = new PathFilter();
                 pf.filter = f;
-                pf.path = f.getPath();
+                pf.path = path;
                 pf.pattern = Pattern.compile(f.getRegex());
                 patterns.add(pf);
             }

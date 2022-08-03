@@ -45,7 +45,9 @@ public class SourceTransactionProcessor extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processAddFileTxMessage(DFSAddFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+    public void processAddFileTxMessage(DFSAddFile data,
+                                        MessageObject<String, DFSChangeDelta> message,
+                                        long txId) throws Exception {
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(data.getFile().getPath());
@@ -107,6 +109,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
 
             sender.send(message);
         } else {
+            LOG.debug(String.format("No match found. [path=%s]", fileState.getHdfsFilePath()));
             sendIgnoreTx(message, data);
         }
     }
@@ -118,7 +121,9 @@ public class SourceTransactionProcessor extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processAppendFileTxMessage(DFSAppendFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+    public void processAppendFileTxMessage(DFSAppendFile data,
+                                           MessageObject<String, DFSChangeDelta> message,
+                                           long txId) throws Exception {
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(data.getFile().getPath());
@@ -166,7 +171,9 @@ public class SourceTransactionProcessor extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processDeleteFileTxMessage(DFSDeleteFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+    public void processDeleteFileTxMessage(DFSDeleteFile data,
+                                           MessageObject<String, DFSChangeDelta> message,
+                                           long txId) throws Exception {
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(data.getFile().getPath());
@@ -223,7 +230,9 @@ public class SourceTransactionProcessor extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processAddBlockTxMessage(DFSAddBlock data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+    public void processAddBlockTxMessage(DFSAddBlock data,
+                                         MessageObject<String, DFSChangeDelta> message,
+                                         long txId) throws Exception {
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(data.getFile().getPath());
@@ -295,7 +304,9 @@ public class SourceTransactionProcessor extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processUpdateBlocksTxMessage(DFSUpdateBlocks data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+    public void processUpdateBlocksTxMessage(DFSUpdateBlocks data,
+                                             MessageObject<String, DFSChangeDelta> message,
+                                             long txId) throws Exception {
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(data.getFile().getPath());
@@ -380,7 +391,9 @@ public class SourceTransactionProcessor extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processTruncateBlockTxMessage(DFSTruncateBlock data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+    public void processTruncateBlockTxMessage(DFSTruncateBlock data,
+                                              MessageObject<String, DFSChangeDelta> message,
+                                              long txId) throws Exception {
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(data.getFile().getPath());
@@ -404,7 +417,9 @@ public class SourceTransactionProcessor extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processCloseFileTxMessage(DFSCloseFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+    public void processCloseFileTxMessage(DFSCloseFile data,
+                                          MessageObject<String, DFSChangeDelta> message,
+                                          long txId) throws Exception {
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(data.getFile().getPath());
@@ -608,7 +623,9 @@ public class SourceTransactionProcessor extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processIgnoreTxMessage(DFSIgnoreTx data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+    public void processIgnoreTxMessage(DFSIgnoreTx data,
+                                       MessageObject<String, DFSChangeDelta> message,
+                                       long txId) throws Exception {
         //sender.send(message);
     }
 
@@ -619,7 +636,9 @@ public class SourceTransactionProcessor extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processErrorTxMessage(DFSError data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+    public void processErrorTxMessage(DFSError data,
+                                      MessageObject<String, DFSChangeDelta> message,
+                                      long txId) throws Exception {
         throw new InvalidMessageError(message.id(), data.getMessage());
     }
 
@@ -630,7 +649,9 @@ public class SourceTransactionProcessor extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processErrorMessage(MessageObject<String, DFSChangeDelta> message, Object data, InvalidTransactionError te) throws Exception {
+    public void processErrorMessage(MessageObject<String, DFSChangeDelta> message,
+                                    Object data,
+                                    InvalidTransactionError te) throws Exception {
         if (!Strings.isNullOrEmpty(te.getHdfsPath())) {
             DFSFileState fileState = stateManager()
                     .fileStateHelper()
