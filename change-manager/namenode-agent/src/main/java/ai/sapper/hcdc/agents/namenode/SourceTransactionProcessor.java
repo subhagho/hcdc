@@ -170,11 +170,15 @@ public class SourceTransactionProcessor extends TransactionProcessor {
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(data.getFile().getPath());
-        if (fileState == null || fileState.checkDeleted()) {
+        if (fileState == null) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()));
+        }
+        if (fileState.checkDeleted()) {
+            LOG.warn(String.format("File already deleted. [path=%s]", fileState.getHdfsFilePath()));
+            return;
         }
         if (fileState.getLastTnxId() >= txId) {
             LOG.warn(String.format("Duplicate transaction message: [message ID=%s][mode=%s]",

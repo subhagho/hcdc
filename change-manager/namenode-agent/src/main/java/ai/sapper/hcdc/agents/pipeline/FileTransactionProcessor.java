@@ -326,7 +326,9 @@ public class FileTransactionProcessor extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processUpdateBlocksTxMessage(DFSUpdateBlocks data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+    public void processUpdateBlocksTxMessage(DFSUpdateBlocks data,
+                                             MessageObject<String, DFSChangeDelta> message,
+                                             long txId) throws Exception {
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(data.getFile().getPath());
@@ -417,7 +419,9 @@ public class FileTransactionProcessor extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processTruncateBlockTxMessage(DFSTruncateBlock data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+    public void processTruncateBlockTxMessage(DFSTruncateBlock data,
+                                              MessageObject<String, DFSChangeDelta> message,
+                                              long txId) throws Exception {
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(data.getFile().getPath());
@@ -441,7 +445,9 @@ public class FileTransactionProcessor extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processCloseFileTxMessage(DFSCloseFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+    public void processCloseFileTxMessage(DFSCloseFile data,
+                                          MessageObject<String, DFSChangeDelta> message,
+                                          long txId) throws Exception {
         SchemaEntity schemaEntity = new SchemaEntity();
         schemaEntity.setDomain(message.value().getDomain());
         schemaEntity.setEntity(message.value().getEntityName());
@@ -630,7 +636,9 @@ public class FileTransactionProcessor extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processRenameFileTxMessage(DFSRenameFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+    public void processRenameFileTxMessage(DFSRenameFile data,
+                                           MessageObject<String, DFSChangeDelta> message,
+                                           long txId) throws Exception {
         throw new InvalidMessageError(message.id(), "Rename transaction should not come...");
     }
 
@@ -641,7 +649,9 @@ public class FileTransactionProcessor extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processIgnoreTxMessage(DFSIgnoreTx data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+    public void processIgnoreTxMessage(DFSIgnoreTx data,
+                                       MessageObject<String, DFSChangeDelta> message,
+                                       long txId) throws Exception {
         LOG.debug(String.format("Received Ignore Transaction: [ID=%d]", txId));
     }
 
@@ -652,7 +662,9 @@ public class FileTransactionProcessor extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processErrorTxMessage(DFSError data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+    public void processErrorTxMessage(DFSError data,
+                                      MessageObject<String, DFSChangeDelta> message,
+                                      long txId) throws Exception {
         LOG.error(String.format("Received Error Message: %s. [TX=%d][ERROR CODE=%s]", data.getMessage(), txId, data.getCode().name()));
     }
 
@@ -663,7 +675,9 @@ public class FileTransactionProcessor extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processErrorMessage(MessageObject<String, DFSChangeDelta> message, Object data, InvalidTransactionError te) throws Exception {
+    public void processErrorMessage(MessageObject<String, DFSChangeDelta> message,
+                                    Object data,
+                                    InvalidTransactionError te) throws Exception {
         if (!Strings.isNullOrEmpty(te.getHdfsPath())) {
             DFSFileState fileState = stateManager()
                     .fileStateHelper()
