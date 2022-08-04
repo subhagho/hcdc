@@ -12,6 +12,7 @@ import lombok.NonNull;
 import lombok.experimental.Accessors;
 import org.apache.curator.framework.CuratorFramework;
 
+import javax.swing.plaf.nimbus.State;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -404,6 +405,27 @@ public class FileStateHelper {
             }
         } else {
             paths.add(zpath);
+        }
+    }
+
+    public boolean checkIsDirectoryPath(String hdfsPath) throws StateManagerError {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(hdfsPath));
+
+        try {
+            CuratorFramework client = connection().client();
+            String path = getFilePath(hdfsPath);
+            if (client.checkExists().forPath(path) != null) {
+                byte[] data = client.getData().forPath(path);
+                if (data != null && data.length > 0) {
+                    return false;
+                }
+                return true;
+            }
+            return false;
+        } catch (Exception ex) {
+            throw new StateManagerError(ex);
         }
     }
 }

@@ -164,6 +164,9 @@ public class SourceTransactionProcessor extends TransactionProcessor {
         }
     }
 
+    private void checkDirectoryDelete(DFSDeleteFile data) throws Exception {
+
+    }
     /**
      * @param data
      * @param message
@@ -178,10 +181,14 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 .fileStateHelper()
                 .get(data.getFile().getPath());
         if (fileState == null) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                    data.getFile().getPath(),
-                    String.format("NameNode Replica out of sync, missing file state. [path=%s]",
-                            data.getFile().getPath()));
+            if (!stateManager().fileStateHelper().checkIsDirectoryPath(data.getFile().getPath())) {
+                throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                        data.getFile().getPath(),
+                        String.format("NameNode Replica out of sync, missing file state. [path=%s]",
+                                data.getFile().getPath()));
+            }
+            sendIgnoreTx(message, data);
+            return;
         }
         if (fileState.checkDeleted()) {
             LOG.warn(String.format("File already deleted. [path=%s]", fileState.getHdfsFilePath()));
