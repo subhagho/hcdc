@@ -335,13 +335,17 @@ public class FileStateHelper {
     }
 
     public List<DFSFileState> listFiles(String base) throws StateManagerError {
+        return listFiles(base, null);
+    }
+
+    public List<DFSFileState> listFiles(String base, EFileState fileState) throws StateManagerError {
         checkState();
         try {
             CuratorFramework client = connection().client();
             String path = getFilePath(base);
             if (client.checkExists().forPath(path) != null) {
                 List<DFSFileState> files = new ArrayList<>();
-                listFiles(path, files, client);
+                listFiles(path, files, client, fileState);
                 if (!files.isEmpty()) return files;
             }
             return null;
@@ -352,18 +356,20 @@ public class FileStateHelper {
 
     private void listFiles(String path,
                            List<DFSFileState> files,
-                           CuratorFramework client) throws Exception {
+                           CuratorFramework client,
+                           EFileState fileState) throws Exception {
         List<String> children = client.getChildren().forPath(path);
         if (children == null || children.isEmpty()) {
             byte[] data = client.getData().forPath(path);
             if (data != null && data.length > 0) {
                 DFSFileState fs = JSONUtils.read(data, DFSFileState.class);
-                files.add(fs);
+                if (fileState == null || fs.getState() == fileState)
+                    files.add(fs);
             }
         } else {
             for (String child : children) {
                 String cpath = PathUtils.formatZkPath(String.format("%s/%s", path, child));
-                listFiles(cpath, files, client);
+                listFiles(cpath, files, client, fileState);
             }
         }
     }

@@ -8,6 +8,8 @@ import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.messaging.InvalidMessageError;
 import ai.sapper.hcdc.core.messaging.MessageObject;
+import ai.sapper.hcdc.core.model.DFSFileState;
+import ai.sapper.hcdc.core.model.EFileState;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -56,7 +58,7 @@ public class CDCChangeDeltaProcessor extends ChangeDeltaProcessor {
      * @see Thread#run()
      */
     @Override
-    public void doRun() throws Exception{
+    public void doRun() throws Exception {
         Preconditions.checkState(sender() != null);
         Preconditions.checkState(receiver() != null);
         Preconditions.checkState(errorSender() != null);
@@ -77,7 +79,7 @@ public class CDCChangeDeltaProcessor extends ChangeDeltaProcessor {
                                 if (message.mode() == MessageObject.MessageMode.New) {
                                     stateManager().update(txId);
                                     LOG.debug(String.format("Processed transaction delta. [TXID=%d]", txId));
-                                } else if (message.mode() == MessageObject.MessageMode.Snapshot){
+                                } else if (message.mode() == MessageObject.MessageMode.Snapshot) {
                                     if (stateManager().agentTxState().getProcessedTxId() < txId) {
                                         stateManager().update(txId);
                                         LOG.debug(String.format("Processed transaction delta. [TXID=%d]", txId));
@@ -115,6 +117,24 @@ public class CDCChangeDeltaProcessor extends ChangeDeltaProcessor {
         processor.processTxMessage(message, txId);
 
         return txId;
+    }
+
+    public void cleanFileState() throws Exception {
+        Preconditions.checkState(sender() != null);
+        Preconditions.checkState(receiver() != null);
+        Preconditions.checkState(errorSender() != null);
+
+        List<DFSFileState> files = stateManager().fileStateHelper().listFiles(null, EFileState.Deleted);
+        if (files != null && !files.isEmpty()) {
+            for(DFSFileState file : files) {
+                DFSFileState f = stateManager().fileStateHelper().delete(file.getHdfsFilePath());
+                if (f != null) {
+                    LOG.debug(String.format("File node deleted. [path=%s]", f.getHdfsFilePath()));
+                } else {
+                    LOG.error(String.format("Failed to delete file node. [path=%s]", file.getHdfsFilePath()));
+                }
+            }
+        }
     }
 
     private boolean isValidMessage(MessageObject<String, DFSChangeDelta> message) {

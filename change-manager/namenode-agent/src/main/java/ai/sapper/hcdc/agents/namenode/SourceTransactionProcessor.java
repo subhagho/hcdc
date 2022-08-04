@@ -435,8 +435,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
         if (fileState.getLastTnxId() >= txId) {
             LOG.warn(String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
                     message.id(), message.mode().name()));
-            return;
-        }
+       }
     }
 
     /**
@@ -655,7 +654,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
     public void processIgnoreTxMessage(DFSIgnoreTx data,
                                        MessageObject<String, DFSChangeDelta> message,
                                        long txId) throws Exception {
-        //sender.send(message);
+        sender.send(message);
     }
 
     /**
