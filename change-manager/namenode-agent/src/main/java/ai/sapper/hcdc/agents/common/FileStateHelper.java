@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.hcdc.common.model.DFSError;
+import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
@@ -419,8 +420,12 @@ public class FileStateHelper {
             if (client.checkExists().forPath(path) != null) {
                 byte[] data = client.getData().forPath(path);
                 if (data != null && data.length > 0) {
+                    DefaultLogger.LOG.debug(
+                            String.format("Specified path is a file. [path=%s]", hdfsPath));
                     return false;
                 }
+                DefaultLogger.LOG.debug(
+                        String.format("Specified path not found. [path=%s]", hdfsPath));
                 return true;
             }
             return false;

@@ -32,7 +32,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
             MessageObject<String, DFSChangeDelta> im = ChangeDeltaSerDe.createIgnoreTx(message.value().getNamespace(),
                     tnx,
                     message.mode());
-            // sender.send(im);
+            sender.send(im);
         } else {
             throw new InvalidMessageError(message.id(), "Transaction data not found in message.");
         }
@@ -164,14 +164,31 @@ public class SourceTransactionProcessor extends TransactionProcessor {
         }
     }
 
-    private void checkDirectoryDelete(DFSDeleteFile data) throws Exception {
-
+    private void checkDirectoryDelete(DFSDeleteFile data,
+                                      MessageObject<String, DFSChangeDelta> message,
+                                      long txId) throws Exception {
+        List<DFSFileState> files = stateManager()
+                .fileStateHelper()
+                .listFiles(data.getFile().getPath());
+        if (files != null && !files.isEmpty()) {
+            for (DFSFileState file : files) {
+                if (!file.checkDeleted()) {
+                    throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                            data.getFile().getPath(),
+                            String.format("NameNode Replica out of sync, file not deleted. [path=%s]",
+                                    file.getHdfsFilePath()));
+                }
+            }
+        }
+        stateManager().fileStateHelper().delete(data.getFile().getPath());
+        sendIgnoreTx(message, data);
     }
+
     /**
      * @param data
      * @param message
      * @param txId
-     * @throws Exception
+     * @throws Exception TODO: Handle deletion of directories.
      */
     @Override
     public void processDeleteFileTxMessage(DFSDeleteFile data,
@@ -181,13 +198,15 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 .fileStateHelper()
                 .get(data.getFile().getPath());
         if (fileState == null) {
-            if (!stateManager().fileStateHelper().checkIsDirectoryPath(data.getFile().getPath())) {
+            if (!stateManager()
+                    .fileStateHelper()
+                    .checkIsDirectoryPath(data.getFile().getPath())) {
                 throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                         data.getFile().getPath(),
                         String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                                 data.getFile().getPath()));
             }
-            sendIgnoreTx(message, data);
+            checkDirectoryDelete(data, message, txId);
             return;
         }
         if (fileState.checkDeleted()) {
@@ -220,6 +239,9 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                     rState.getEntity().getDomain(),
                     rState.getEntity().getEntity(),
                     message.mode());
+
+            stateManager().replicaStateHelper().delete(rState.getInode());
+
             sender.send(message);
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
