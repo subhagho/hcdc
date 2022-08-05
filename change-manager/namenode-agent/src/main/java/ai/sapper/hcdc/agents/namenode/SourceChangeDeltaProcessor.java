@@ -77,14 +77,12 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
                 }
                 LOG.debug(String.format("Received messages. [count=%d]", batch.size()));
                 for (MessageObject<String, DFSChangeDelta> message : batch) {
+                    long txId = -1;
                     stateManager().replicationLock().lock();
                     try {
                         try {
-                            long txId = process(message);
-                            if (txId > 0) {
-                                stateManager().update(txId);
-                                LOG.debug(String.format("Processed transaction delta. [TXID=%d]", txId));
-                            }
+                            txId = process(message);
+                            processor.updateTransaction(txId, message);
                         } catch (InvalidMessageError ie) {
                             LOG.error("Error processing message.", ie);
                             DefaultLogger.stacktrace(LOG, ie);

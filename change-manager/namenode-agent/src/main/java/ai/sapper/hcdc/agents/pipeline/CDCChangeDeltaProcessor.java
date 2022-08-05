@@ -77,7 +77,7 @@ public class CDCChangeDeltaProcessor extends ChangeDeltaProcessor {
                             long txId = process(message);
                             if (txId > 0) {
                                 if (message.mode() == MessageObject.MessageMode.New) {
-                                    stateManager().update(txId);
+                                    processor.updateTransaction(txId, message);
                                     LOG.debug(String.format("Processed transaction delta. [TXID=%d]", txId));
                                 } else if (message.mode() == MessageObject.MessageMode.Snapshot) {
                                     if (stateManager().agentTxState().getProcessedTxId() < txId) {

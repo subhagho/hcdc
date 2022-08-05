@@ -64,6 +64,14 @@ public abstract class TransactionProcessor {
 
     public abstract void processErrorMessage(MessageObject<String, DFSChangeDelta> message, Object data, InvalidTransactionError te) throws Exception;
 
+    public void updateTransaction(long txId,
+                                  @NonNull MessageObject<String, DFSChangeDelta> message) throws Exception {
+        if (message.mode() == MessageObject.MessageMode.New && txId > 0) {
+            stateManager().update(txId);
+            LOG.debug(String.format("Processed transaction delta. [TXID=%d]", txId));
+        }
+    }
+
     public DFSTransaction extractTransaction(Object data) {
         if (data instanceof DFSAddFile) {
             return ((DFSAddFile) data).getTransaction();
@@ -118,11 +126,13 @@ public abstract class TransactionProcessor {
             }
         } catch (InvalidTransactionError te) {
             processErrorMessage(message, data, te);
+            updateTransaction(txId, message);
             throw new InvalidMessageError(message.id(), te);
         }
     }
 
-    public long checkMessageSequence(MessageObject<String, DFSChangeDelta> message, boolean ignoreMissing) throws Exception {
+    public long checkMessageSequence(MessageObject<String, DFSChangeDelta> message,
+                                     boolean ignoreMissing) throws Exception {
         long txId = Long.parseLong(message.value().getTxId());
         if (message.mode() == MessageObject.MessageMode.New) {
             NameNodeTxState txState = stateManager().agentTxState();

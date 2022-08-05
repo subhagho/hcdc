@@ -640,6 +640,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                     nfs.getHdfsFilePath(),
                     String.format("FileSystem sync error. [path=%s]", nfs.getHdfsFilePath()));
         } else {
+            LOG.debug(String.format("No match found. [path=%s]", fileState.getHdfsFilePath()));
             sendIgnoreTx(message, data);
         }
     }
