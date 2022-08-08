@@ -173,14 +173,17 @@ public class SourceTransactionProcessor extends TransactionProcessor {
         if (files != null && !files.isEmpty()) {
             for (DFSFileState file : files) {
                 if (!file.checkDeleted()) {
-                    throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                            data.getFile().getPath(),
-                            String.format("NameNode Replica out of sync, file not deleted. [path=%s]",
-                                    file.getHdfsFilePath()));
+                    LOG.warn(
+                            String.format("File not marked for delete. [path=%s]", file.getHdfsFilePath()));
                 }
             }
         }
-        stateManager().fileStateHelper().delete(data.getFile().getPath());
+        DFSFileState fs = stateManager()
+                .fileStateHelper()
+                .delete(data.getFile().getPath());
+        if (fs == null) {
+            LOG.error(String.format("Failed to delete path. [path=%s]", data.getFile().getPath()));
+        }
         sendIgnoreTx(message, data);
     }
 
@@ -435,7 +438,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
         if (fileState.getLastTnxId() >= txId) {
             LOG.warn(String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
                     message.id(), message.mode().name()));
-       }
+        }
     }
 
     /**
@@ -608,7 +611,8 @@ public class SourceTransactionProcessor extends TransactionProcessor {
         nfs = stateManager()
                 .fileStateHelper()
                 .update(nfs);
-
+        LOG.debug(String.format("Renaming file: [src=%s][dest=%s]",
+                fileState.getHdfsFilePath(), nfs.getHdfsFilePath()));
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
                 .get(fileState.getId());
@@ -619,6 +623,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
         }
         schemaEntity = isRegistered(nfs.getHdfsFilePath());
         if (schemaEntity != null) {
+            LOG.debug(String.format("Match found. [path=%s]", nfs.getHdfsFilePath()));
             rState = stateManager()
                     .replicaStateHelper()
                     .create(nfs.getId(), nfs.getHdfsFilePath(), schemaEntity, true);
@@ -640,7 +645,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                     nfs.getHdfsFilePath(),
                     String.format("FileSystem sync error. [path=%s]", nfs.getHdfsFilePath()));
         } else {
-            LOG.debug(String.format("No match found. [path=%s]", fileState.getHdfsFilePath()));
+            LOG.debug(String.format("No match found. [path=%s]", nfs.getHdfsFilePath()));
             sendIgnoreTx(message, data);
         }
     }

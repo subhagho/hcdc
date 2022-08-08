@@ -281,10 +281,9 @@ public class FileStateHelper {
             try {
                 CuratorFramework client = connection().client();
                 DFSFileState fileState = get(hdfsPath);
-                if (fileState == null) {
-                    throw new StateManagerError(String.format("File state not found. [path=%s]", hdfsPath));
+                if (fileState != null) {
+                    client.delete().deletingChildrenIfNeeded().forPath(fileState.getZkPath());
                 }
-                client.delete().deletingChildrenIfNeeded().forPath(fileState.getZkPath());
 
                 return fileState;
             } catch (Exception ex) {
@@ -431,7 +430,7 @@ public class FileStateHelper {
                     return false;
                 }
                 DefaultLogger.LOG.debug(
-                        String.format("Specified path not found. [path=%s]", hdfsPath));
+                        String.format("Specified path found. [path=%s]", hdfsPath));
                 return true;
             }
             return false;
