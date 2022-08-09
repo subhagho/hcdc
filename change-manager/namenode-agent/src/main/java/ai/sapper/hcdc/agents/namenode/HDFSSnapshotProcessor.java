@@ -30,6 +30,7 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.parquet.Strings;
 
 import java.net.URI;
 import java.util.List;
@@ -68,6 +69,11 @@ public class HDFSSnapshotProcessor {
                     .type(processorConfig().tnxSenderConfig.type())
                     .partitioner(processorConfig().tnxSenderConfig.partitionerClass())
                     .build();
+            if (stateManager instanceof ProcessorStateManager) {
+                ((ProcessorStateManager) stateManager)
+                        .domainManager()
+                        .withFilterAddCallback(new SnapshotCallBack(this));
+            }
             return this;
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
