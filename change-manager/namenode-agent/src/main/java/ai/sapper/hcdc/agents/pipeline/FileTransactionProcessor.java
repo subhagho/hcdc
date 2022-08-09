@@ -460,7 +460,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()));
         }
-        if (fileState.getLastTnxId() >= txId && message.mode() != MessageObject.MessageMode.Snapshot) {
+        if (!checkCloseTxState(fileState, message.mode(), txId)) {
             LOG.warn(String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
                     message.id(), message.mode().name()));
             return;

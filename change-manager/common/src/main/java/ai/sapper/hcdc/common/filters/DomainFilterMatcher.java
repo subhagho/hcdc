@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.common.filters;
 
+import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.common.utils.PathUtils;
 import lombok.Getter;
 import lombok.NonNull;
@@ -72,10 +73,13 @@ public class DomainFilterMatcher {
                 if (part.startsWith("/")) {
                     part = part.substring(1);
                 }
+                DefaultLogger.LOG.debug(String.format("[dir=%s][part=%s]", pf.path, part));
                 if (pf.matches(part)) {
                     Matcher ignore = IGNORE_PATTERN.matcher(source);
                     if (!ignore.matches())
                         return pf;
+                } else {
+                    DefaultLogger.LOG.debug(String.format("Match failed: [dir=%s][part=%s]", pf.path, part));
                 }
             }
         }

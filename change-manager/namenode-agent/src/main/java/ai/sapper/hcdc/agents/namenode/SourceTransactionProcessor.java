@@ -475,7 +475,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()));
         }
-        if (fileState.getLastTnxId() >= txId) {
+        if (!checkCloseTxState(fileState, message.mode(), txId)) {
             LOG.warn(String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
                     message.id(), message.mode().name()));
             return;
@@ -643,7 +643,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 DFSCloseFile.class,
                 message.value().getDomain(),
                 null,
-                MessageObject.MessageMode.Snapshot);
+                MessageObject.MessageMode.Backlog);
         processCloseFileTxMessage(cms, cm, txId);
     }
 

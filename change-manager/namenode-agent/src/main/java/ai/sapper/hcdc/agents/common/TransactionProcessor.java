@@ -72,6 +72,16 @@ public abstract class TransactionProcessor {
         }
     }
 
+    public boolean checkCloseTxState(@NonNull DFSFileState fileState,
+                                @NonNull MessageObject.MessageMode mode,
+                                long txId) {
+        if (mode == MessageObject.MessageMode.Snapshot
+                || mode == MessageObject.MessageMode.Backlog) {
+            return (txId == fileState.getLastTnxId());
+        }
+        return txId > fileState.getLastTnxId();
+    }
+
     public DFSTransaction extractTransaction(Object data) {
         if (data instanceof DFSAddFile) {
             return ((DFSAddFile) data).getTransaction();
