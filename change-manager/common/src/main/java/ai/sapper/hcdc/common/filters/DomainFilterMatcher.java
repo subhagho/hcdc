@@ -15,8 +15,6 @@ import java.util.regex.Pattern;
 @Getter
 @Accessors(fluent = true)
 public class DomainFilterMatcher {
-    private static final String IGNORE_REGEX = "(.*)\\.(_*)COPYING(_*)|/tmp/(.*)";
-    private static final Pattern IGNORE_PATTERN = Pattern.compile(IGNORE_REGEX);
 
     @Getter
     @Setter
@@ -35,6 +33,7 @@ public class DomainFilterMatcher {
     private final String domain;
     private final DomainFilters filters;
     private final List<PathFilter> patterns = new ArrayList<>();
+    private Pattern ignoreRegex;
 
     public DomainFilterMatcher(@NonNull String domain, @NonNull DomainFilters filters) {
         this.domain = domain;
@@ -56,6 +55,11 @@ public class DomainFilterMatcher {
         }
     }
 
+    public DomainFilterMatcher withIgnoreRegex(@NonNull Pattern regex) {
+        ignoreRegex = regex;
+        return this;
+    }
+
     public PathFilter find(@NonNull Filter filter) {
         for (PathFilter pf : patterns) {
             if (pf.filter.equals(filter)) {
@@ -75,9 +79,13 @@ public class DomainFilterMatcher {
                 }
                 DefaultLogger.LOG.debug(String.format("[dir=%s][part=%s]", pf.path, part));
                 if (pf.matches(part)) {
-                    Matcher ignore = IGNORE_PATTERN.matcher(source);
-                    if (!ignore.matches())
+                    if (ignoreRegex != null) {
+                        Matcher ignore = ignoreRegex.matcher(source);
+                        if (!ignore.matches())
+                            return pf;
+                    } else {
                         return pf;
+                    }
                 } else {
                     DefaultLogger.LOG.debug(String.format("Match failed: [dir=%s][part=%s]", pf.path, part));
                 }

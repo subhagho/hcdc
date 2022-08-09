@@ -28,18 +28,21 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @Getter
 @Accessors(fluent = true)
 public class DomainManager {
     private static final String CONFIG_PATH = "domain";
 
+    private static final String IGNORE_REGEX = "(.*)\\.(_*)COPYING(_*)|/tmp/(.*)";
     private ZookeeperConnection zkConnection;
     private HdfsConnection hdfsConnection;
 
     private DomainManagerConfig config;
     private Map<String, DomainFilterMatcher> matchers = new HashMap<>();
     private final List<FilterAddCallback> callbacks = new ArrayList<>();
+    private Pattern ignorePattern = Pattern.compile(IGNORE_REGEX);
 
     public DomainManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                               @NonNull ConnectionManager manger) throws ConfigurationException {
@@ -63,6 +66,9 @@ public class DomainManager {
                 if (!hdfsConnection.isConnected()) {
                     hdfsConnection.connect();
                 }
+            }
+            if (!Strings.isNullOrEmpty(config.ignoreRegex)) {
+                ignorePattern = Pattern.compile(config.ignoreRegex);
             }
             String path = getZkPath();
             CuratorFramework client = zkConnection.client();
@@ -95,7 +101,8 @@ public class DomainManager {
                     if (data != null && data.length > 0) {
                         String json = new String(data, StandardCharsets.UTF_8);
                         DomainFilters df = JSONUtils.read(json, DomainFilters.class);
-                        DomainFilterMatcher m = new DomainFilterMatcher(df.getDomain(), df);
+                        DomainFilterMatcher m = new DomainFilterMatcher(df.getDomain(), df)
+                                .withIgnoreRegex(ignorePattern);
                         matchers.put(df.getDomain(), m);
                         if (!callbacks.isEmpty()) {
                             for (FilterAddCallback callback : callbacks) {
@@ -150,7 +157,8 @@ public class DomainManager {
             df.setDomain(domain);
             Filter f = df.add(entity, path, regex);
 
-            matcher = new DomainFilterMatcher(domain, df);
+            matcher = new DomainFilterMatcher(domain, df)
+                    .withIgnoreRegex(ignorePattern);
             matchers.put(domain, matcher);
             filter = matcher.find(f);
         } else {
@@ -243,6 +251,7 @@ public class DomainManager {
             public static final String CONFIG_ZK_BASE = "basePath";
             public static final String CONFIG_ZK_CONNECTION = "connection";
             public static final String CONFIG_HDFS_CONNECTION = "hdfs";
+            public static final String CONFIG_IGNORE_REGEX = "ignoreRegex";
         }
 
         private static final String __CONFIG_PATH = "domain.manager";
@@ -250,6 +259,7 @@ public class DomainManager {
         private String basePath;
         private String zkConnection;
         private String hdfsConnection;
+        private String ignoreRegex;
 
         public DomainManagerConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);
@@ -278,6 +288,9 @@ public class DomainManager {
                 }
                 if (get().containsKey(Constants.CONFIG_HDFS_CONNECTION)) {
                     hdfsConnection = get().getString(Constants.CONFIG_HDFS_CONNECTION);
+                }
+                if (get().containsKey(Constants.CONFIG_IGNORE_REGEX)) {
+                    ignoreRegex = get().getString(Constants.CONFIG_IGNORE_REGEX);
                 }
             } catch (Throwable t) {
                 throw new ConfigurationException("Error processing State Manager configuration.", t);
