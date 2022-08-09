@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.common.filters;
 
+import ai.sapper.hcdc.common.utils.PathUtils;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -64,7 +65,7 @@ public class DomainFilterMatcher {
     }
 
     public PathFilter matches(@NonNull String source) {
-        source = source.trim();
+        source = PathUtils.formatPath(source.trim());
         for (PathFilter pf : patterns) {
             if (source.startsWith(pf.path)) {
                 String part = source.replace(pf.path, "");

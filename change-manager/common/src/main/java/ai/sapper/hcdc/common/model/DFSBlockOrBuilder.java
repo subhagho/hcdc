@@ -66,13 +66,13 @@ public interface DFSBlockOrBuilder
    */
   long getEndOffset();
 
-  // required int64 deltaSize = 7;
+  // optional int64 deltaSize = 7;
   /**
-   * <code>required int64 deltaSize = 7;</code>
+   * <code>optional int64 deltaSize = 7;</code>
    */
   boolean hasDeltaSize();
   /**
-   * <code>required int64 deltaSize = 7;</code>
+   * <code>optional int64 deltaSize = 7;</code>
    */
   long getDeltaSize();
 

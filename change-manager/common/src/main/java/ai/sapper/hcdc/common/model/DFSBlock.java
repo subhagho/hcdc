@@ -230,17 +230,17 @@ public  final class DFSBlock extends
     return endOffset_;
   }
 
-  // required int64 deltaSize = 7;
+  // optional int64 deltaSize = 7;
   public static final int DELTASIZE_FIELD_NUMBER = 7;
   private long deltaSize_;
   /**
-   * <code>required int64 deltaSize = 7;</code>
+   * <code>optional int64 deltaSize = 7;</code>
    */
   public boolean hasDeltaSize() {
     return ((bitField0_ & 0x00000040) == 0x00000040);
   }
   /**
-   * <code>required int64 deltaSize = 7;</code>
+   * <code>optional int64 deltaSize = 7;</code>
    */
   public long getDeltaSize() {
     return deltaSize_;
@@ -298,10 +298,6 @@ public  final class DFSBlock extends
       return false;
     }
     if (!hasEndOffset()) {
-      memoizedIsInitialized = 0;
-      return false;
-    }
-    if (!hasDeltaSize()) {
       memoizedIsInitialized = 0;
       return false;
     }
@@ -638,10 +634,6 @@ public  final class DFSBlock extends
         
         return false;
       }
-      if (!hasDeltaSize()) {
-        
-        return false;
-      }
       return true;
     }
 
@@ -862,22 +854,22 @@ public  final class DFSBlock extends
       return this;
     }
 
-    // required int64 deltaSize = 7;
+    // optional int64 deltaSize = 7;
     private long deltaSize_ ;
     /**
-     * <code>required int64 deltaSize = 7;</code>
+     * <code>optional int64 deltaSize = 7;</code>
      */
     public boolean hasDeltaSize() {
       return ((bitField0_ & 0x00000040) == 0x00000040);
     }
     /**
-     * <code>required int64 deltaSize = 7;</code>
+     * <code>optional int64 deltaSize = 7;</code>
      */
     public long getDeltaSize() {
       return deltaSize_;
     }
     /**
-     * <code>required int64 deltaSize = 7;</code>
+     * <code>optional int64 deltaSize = 7;</code>
      */
     public Builder setDeltaSize(long value) {
       bitField0_ |= 0x00000040;
@@ -886,7 +878,7 @@ public  final class DFSBlock extends
       return this;
     }
     /**
-     * <code>required int64 deltaSize = 7;</code>
+     * <code>optional int64 deltaSize = 7;</code>
      */
     public Builder clearDeltaSize() {
       bitField0_ = (bitField0_ & ~0x00000040);

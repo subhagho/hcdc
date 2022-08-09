@@ -223,7 +223,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
         }
         fileState = stateManager()
                 .fileStateHelper()
-                .markDeleted(fileState.getHdfsFilePath());
+                .delete(fileState.getHdfsFilePath());
 
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
@@ -552,12 +552,91 @@ public class SourceTransactionProcessor extends TransactionProcessor {
         }
     }
 
+    @Override
+    public void processRenameFileTxMessage(DFSRenameFile data,
+                                           MessageObject<String, DFSChangeDelta> message,
+                                           long txId) throws Exception {
+        DFSFileState fileState = stateManager()
+                .fileStateHelper()
+                .get(data.getSrcFile().getPath());
+        if (fileState == null || !fileState.canProcess()) {
+            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    data.getSrcFile().getPath(),
+                    String.format("NameNode Replica out of sync, missing file state. [path=%s]",
+                            data.getSrcFile().getPath()));
+        }
+        // Delete Existing file section
+        DFSDeleteFile dms = DFSDeleteFile.newBuilder()
+                .setTransaction(data.getTransaction())
+                .setFile(data.getSrcFile())
+                .setTimestamp(data.getTransaction().getTimestamp())
+                .build();
+        MessageObject<String, DFSChangeDelta> dm = ChangeDeltaSerDe.create(message.value().getNamespace(),
+                dms,
+                DFSDeleteFile.class,
+                message.value().getDomain(),
+                message.value().getEntityName(),
+                MessageObject.MessageMode.New);
+        processDeleteFileTxMessage(dms, dm, txId);
+
+        // Add new file section
+        DFSTransaction tx = DFSTransaction.newBuilder()
+                .setOp(DFSTransaction.Operation.CLOSE)
+                .setTransactionId(txId)
+                .setTimestamp(System.currentTimeMillis())
+                .build();
+        DFSFile fa = DFSFile.newBuilder()
+                .setPath(data.getDestFile().getPath())
+                .setInodeId(fileState.getId())
+                .setFileType(EFileType.UNKNOWN.name())
+                .build();
+        DFSAddFile.Builder builder = DFSAddFile.newBuilder();
+        builder.setTransaction(tx)
+                .setFile(fa)
+                .setLength(0)
+                .setBlockSize(fileState.getBlockSize())
+                .setModifiedTime(data.getTransaction().getTimestamp())
+                .setAccessedTime(data.getTransaction().getTimestamp())
+                .setOverwrite(false);
+        for (DFSBlockState bs : fileState.getBlocks()) {
+            DFSBlock b = DFSBlock.newBuilder()
+                    .setBlockId(bs.getBlockId())
+                    .setBlockSize(bs.getBlockSize())
+                    .setStartOffset(0)
+                    .setSize(bs.getDataSize())
+                    .setGenerationStamp(bs.getGenerationStamp())
+                    .setEndOffset(bs.getDataSize())
+                    .setDeleted(false)
+                    .build();
+            builder.addBlocks(b);
+        }
+        DFSAddFile ams = builder.build();
+        MessageObject<String, DFSChangeDelta> am = ChangeDeltaSerDe.create(message.value().getNamespace(),
+                ams,
+                DFSAddFile.class,
+                message.value().getDomain(),
+                null,
+                MessageObject.MessageMode.Snapshot);
+        processAddFileTxMessage(ams, am, txId);
+
+        // Close new file section
+        DFSCloseFile cms = HDFSSnapshotProcessor.generateSnapshot(fileState, fa, txId);
+        MessageObject<String, DFSChangeDelta> cm = ChangeDeltaSerDe.create(message.value().getNamespace(),
+                cms,
+                DFSCloseFile.class,
+                message.value().getDomain(),
+                null,
+                MessageObject.MessageMode.Snapshot);
+        processCloseFileTxMessage(cms, cm, txId);
+    }
+
     /**
      * @param data
      * @param message
      * @param txId
      * @throws Exception
      */
+    /*
     @Override
     public void processRenameFileTxMessage(DFSRenameFile data,
                                            MessageObject<String, DFSChangeDelta> message,
@@ -649,6 +728,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
             sendIgnoreTx(message, data);
         }
     }
+    */
 
     /**
      * @param data

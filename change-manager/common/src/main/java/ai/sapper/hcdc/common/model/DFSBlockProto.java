@@ -106,7 +106,7 @@ public final class DFSBlockProto {
       "\007blockId\030\001 \002(\003\022\014\n\004size\030\002 \002(\003\022\021\n\tblockSiz" +
       "e\030\003 \002(\003\022\027\n\017generationStamp\030\004 \002(\003\022\023\n\013star" +
       "tOffset\030\005 \002(\003\022\021\n\tendOffset\030\006 \002(\003\022\021\n\tdelt" +
-      "aSize\030\007 \002(\003\022\017\n\007deleted\030\010 \001(\010\"\233\002\n\nDFSAddF" +
+      "aSize\030\007 \001(\003\022\017\n\007deleted\030\010 \001(\010\"\233\002\n\nDFSAddF" +
       "ile\022@\n\013transaction\030\001 \002(\0132+.ai_sapper_hcd" +
       "c_common_model.DFSTransaction\0222\n\004file\030\002 " +
       "\002(\0132$.ai_sapper_hcdc_common_model.DFSFil" +

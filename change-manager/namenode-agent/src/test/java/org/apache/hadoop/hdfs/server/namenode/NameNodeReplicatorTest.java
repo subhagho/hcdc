@@ -17,7 +17,7 @@ class NameNodeReplicatorTest {
             System.setProperty("hadoop.home.dir", "C:/tools/hadoop");
 
             String[] args = {"--image",
-                    "src/test/resources/edits/logs/current/fsimage_0000000000000026172",
+                    "src/test/resources/edits/logs/current/fsimage_0000000000000028091",
                     "--config",
                     __CONFIG_FILE,
                     "--tmp",

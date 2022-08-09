@@ -273,7 +273,31 @@ public class HDFSSnapshotProcessor {
         }
     }
 
-    public static DFSCloseFile generateSnapshot(DFSFileState state,
+    public static DFSCloseFile generateSnapshot(@NonNull DFSFileState state,
+                                                @NonNull DFSFile file,
+                                                long txId) throws Exception {
+        DFSTransaction tx = DFSTransaction.newBuilder()
+                .setOp(DFSTransaction.Operation.CLOSE)
+                .setTransactionId(txId)
+                .setTimestamp(System.currentTimeMillis())
+                .build();
+
+        DFSCloseFile.Builder builder = DFSCloseFile.newBuilder();
+        builder.setOverwrite(false)
+                .setModifiedTime(state.getUpdatedTime())
+                .setBlockSize(state.getBlockSize())
+                .setFile(file)
+                .setTransaction(tx)
+                .setLength(state.getDataSize())
+                .setAccessedTime(state.getUpdatedTime());
+        for (DFSBlockState block : state.sortedBlocks()) {
+            DFSBlock b = generateBlockSnapshot(block);
+            builder.addBlocks(b);
+        }
+        return builder.build();
+    }
+
+    public static DFSCloseFile generateSnapshot(@NonNull DFSFileState state,
                                                 boolean addBlocks,
                                                 long txId) throws Exception {
         DFSTransaction tx = DFSTransaction.newBuilder()

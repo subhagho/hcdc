@@ -39,7 +39,7 @@ message DFSBlock {
   required int64 generationStamp = 4;
   required int64 startOffset = 5;
   required int64 endOffset = 6;
-  required int64 deltaSize = 7;
+  optional int64 deltaSize = 7;
   optional bool  deleted = 8;
 }
 
