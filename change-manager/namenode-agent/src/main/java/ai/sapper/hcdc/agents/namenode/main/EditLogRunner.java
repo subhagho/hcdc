@@ -63,7 +63,12 @@ public class EditLogRunner {
         try {
             this.configfile = configfile;
             init();
-            return processor.doRun();
+            NameNodeEnv.globalLock().lock();
+            try {
+                return processor.doRun();
+            } finally {
+                NameNodeEnv.globalLock().unlock();
+            }
         } finally {
             NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose();
             DefaultLogger.LOG.warn(String.format("Edit Log Processor Shutdown...[state=%s]", state.name()));

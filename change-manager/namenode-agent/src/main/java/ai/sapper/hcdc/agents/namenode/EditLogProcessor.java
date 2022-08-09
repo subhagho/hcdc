@@ -89,8 +89,13 @@ public class EditLogProcessor implements Runnable {
         try {
             NameNodeEnv.get().agentState().state(NameNodeAgentState.EAgentState.Active);
             while (NameNodeEnv.get().state().isAvailable()) {
-                long txid = doRun();
-                LOG.info(String.format("Last Processed TXID = %d", txid));
+                NameNodeEnv.globalLock().lock();
+                try {
+                    long txid = doRun();
+                    LOG.info(String.format("Last Processed TXID = %d", txid));
+                } finally {
+                    NameNodeEnv.globalLock().unlock();
+                }
                 Thread.sleep(processorConfig.pollingInterval);
             }
             NameNodeEnv.get().agentState().state(NameNodeAgentState.EAgentState.Stopped);

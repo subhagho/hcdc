@@ -172,19 +172,49 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 .listFiles(data.getFile().getPath());
         if (files != null && !files.isEmpty()) {
             for (DFSFileState file : files) {
-                if (!file.checkDeleted()) {
-                    LOG.warn(
-                            String.format("File not marked for delete. [path=%s]", file.getHdfsFilePath()));
+                if (!file.checkDeleted()
+                        && !file.getHdfsFilePath().startsWith("/tmp")) {
+                    updateFileRecursiveDelete(file, message, data, txId);
                 }
             }
         }
         DFSFileState fs = stateManager()
                 .fileStateHelper()
                 .delete(data.getFile().getPath());
-        if (fs == null) {
-            LOG.error(String.format("Failed to delete path. [path=%s]", data.getFile().getPath()));
-        }
         sendIgnoreTx(message, data);
+    }
+
+    private void updateFileRecursiveDelete(DFSFileState fileState,
+                                           MessageObject<String, DFSChangeDelta> message,
+                                           DFSDeleteFile deleteFile,
+                                           long txId) throws Exception {
+        if (fileState.checkDeleted()) return;
+        DFSFileReplicaState rState = stateManager()
+                .replicaStateHelper()
+                .get(fileState.getId());
+        if (!fileState.hasError() && rState != null && rState.isEnabled()) {
+            stateManager()
+                    .replicaStateHelper()
+                    .delete(fileState.getId());
+
+            DFSFile df = ProtoBufUtils.build(fileState);
+            DFSDeleteFile data = DFSDeleteFile.newBuilder()
+                    .setTransaction(deleteFile.getTransaction())
+                    .setFile(df)
+                    .setTimestamp(deleteFile.getTimestamp())
+                    .build();
+
+            MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
+                    data,
+                    DFSDeleteFile.class,
+                    rState.getEntity().getDomain(),
+                    rState.getEntity().getEntity(),
+                    MessageObject.MessageMode.Backlog);
+
+            stateManager().replicaStateHelper().delete(rState.getInode());
+
+            sender.send(m);
+        }
     }
 
     /**

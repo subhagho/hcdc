@@ -282,9 +282,13 @@ public class FileStateHelper {
                 CuratorFramework client = connection().client();
                 DFSFileState fileState = get(hdfsPath);
                 if (fileState != null) {
-                    client.delete().deletingChildrenIfNeeded().forPath(fileState.getZkPath());
+                    client.delete().forPath(fileState.getZkPath());
+                    DefaultLogger.LOG.debug(String.format("Deleted file: [path=%s]", hdfsPath));
+                } else if (checkIsDirectoryPath(hdfsPath)) {
+                    String path = getFilePath(hdfsPath);
+                    client.delete().deletingChildrenIfNeeded().forPath(path);
+                    DefaultLogger.LOG.debug(String.format("Deleted directory: [path=%s]", hdfsPath));
                 }
-
                 return fileState;
             } catch (Exception ex) {
                 throw new StateManagerError(ex);

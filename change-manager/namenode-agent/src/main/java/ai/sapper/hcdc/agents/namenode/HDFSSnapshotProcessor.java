@@ -79,18 +79,23 @@ public class HDFSSnapshotProcessor {
         DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
         Preconditions.checkNotNull(domainManager.hdfsConnection());
         int count = 0;
-        for (String domain : domainManager.matchers().keySet()) {
-            DomainFilterMatcher matcher = domainManager.matchers().get(domain);
-            if (matcher != null) {
-                List<DomainFilterMatcher.PathFilter> filters = matcher.patterns();
-                if (filters != null && !filters.isEmpty()) {
-                    for (DomainFilterMatcher.PathFilter filter : filters) {
-                        count += processFilter(filter, domain);
+        NameNodeEnv.globalLock().lock();
+        try {
+            for (String domain : domainManager.matchers().keySet()) {
+                DomainFilterMatcher matcher = domainManager.matchers().get(domain);
+                if (matcher != null) {
+                    List<DomainFilterMatcher.PathFilter> filters = matcher.patterns();
+                    if (filters != null && !filters.isEmpty()) {
+                        for (DomainFilterMatcher.PathFilter filter : filters) {
+                            count += processFilter(filter, domain);
+                        }
                     }
                 }
             }
+            return count;
+        } finally {
+            NameNodeEnv.globalLock().unlock();
         }
-        return count;
     }
 
     public DomainFilters addFilter(@NonNull String domain,
@@ -153,6 +158,16 @@ public class HDFSSnapshotProcessor {
             }
         }
         return count;
+    }
+
+    public int processFilterWithLock(@NonNull DomainFilterMatcher.PathFilter filter,
+                                     String domain) throws Exception {
+        NameNodeEnv.globalLock().lock();
+        try {
+            return processFilter(filter, domain);
+        } finally {
+            NameNodeEnv.globalLock().unlock();
+        }
     }
 
     public void snapshot(@NonNull String hdfsPath, @NonNull SchemaEntity entity) throws SnapshotError {
@@ -399,7 +414,7 @@ public class HDFSSnapshotProcessor {
                             DomainFilterMatcher.PathFilter filter,
                             @NonNull String path) {
             try {
-                processor.processFilter(filter, matcher.domain());
+                processor.processFilterWithLock(filter, matcher.domain());
             } catch (Exception ex) {
                 DefaultLogger.LOG.error(String.format("Error processing filter: %s", filter.filter().toString()), ex);
                 DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
