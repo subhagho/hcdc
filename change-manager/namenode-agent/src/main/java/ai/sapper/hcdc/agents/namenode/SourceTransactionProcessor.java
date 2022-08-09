@@ -91,20 +91,15 @@ public class SourceTransactionProcessor extends TransactionProcessor {
         if (schemaEntity != null) {
             DFSFileReplicaState rState = stateManager()
                     .replicaStateHelper()
-                    .create(fileState.getId(), fileState.getHdfsFilePath(), schemaEntity, true);
+                    .create(fileState.getId(),
+                            fileState.getHdfsFilePath(),
+                            schemaEntity,
+                            true);
             rState.setSnapshotTxId(fileState.getLastTnxId());
             rState.setSnapshotTime(System.currentTimeMillis());
             rState.setSnapshotReady(true);
-            for (DFSBlockState bs : fileState.getBlocks()) {
-                DFSBlockReplicaState b = new DFSBlockReplicaState();
-                b.setState(EFileState.New);
-                b.setBlockId(bs.getBlockId());
-                b.setPrevBlockId(bs.getPrevBlockId());
-                b.setStartOffset(0);
-                b.setDataSize(bs.getDataSize());
-                b.setUpdateTime(System.currentTimeMillis());
-                rState.add(b);
-            }
+            rState.copyBlocks(fileState);
+
             rState = stateManager().replicaStateHelper().update(rState);
 
             sender.send(message);
@@ -328,16 +323,11 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 .replicaStateHelper()
                 .get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
-            for (DFSBlockState bs : fileState.getBlocks()) {
-                if (bs.getState() != EBlockState.New) continue;
-                DFSBlockReplicaState b = new DFSBlockReplicaState();
-                b.setState(EFileState.New);
-                b.setBlockId(bs.getBlockId());
-                b.setPrevBlockId(bs.getPrevBlockId());
-                b.setStartOffset(0);
-                b.setDataSize(bs.getDataSize());
-                b.setUpdateTime(System.currentTimeMillis());
-                rState.add(b);
+            if (fileState.hasBlocks()) {
+                for (DFSBlockState bs : fileState.getBlocks()) {
+                    if (bs.getState() != EBlockState.New) continue;
+                    rState.copyBlock(bs);
+                }
             }
             rState = stateManager().replicaStateHelper().update(rState);
             DFSFile df = ProtoBufUtils.build(fileState);
@@ -415,16 +405,11 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 .replicaStateHelper()
                 .get(fileState.getId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
-            for (DFSBlockState bs : fileState.getBlocks()) {
-                if (bs.getState() != EBlockState.Updating) continue;
-                DFSBlockReplicaState b = new DFSBlockReplicaState();
-                b.setState(EFileState.New);
-                b.setBlockId(bs.getBlockId());
-                b.setPrevBlockId(bs.getPrevBlockId());
-                b.setStartOffset(0);
-                b.setDataSize(bs.getDataSize());
-                b.setUpdateTime(System.currentTimeMillis());
-                rState.add(b);
+            if (fileState.hasBlocks()) {
+                for (DFSBlockState bs : fileState.getBlocks()) {
+                    if (bs.getState() != EBlockState.Updating) continue;
+                    rState.copyBlock(bs);
+                }
             }
             rState = stateManager().replicaStateHelper().update(rState);
             DFSFile df = ProtoBufUtils.build(fileState);
@@ -628,17 +613,19 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 .setModifiedTime(data.getTransaction().getTimestamp())
                 .setAccessedTime(data.getTransaction().getTimestamp())
                 .setOverwrite(false);
-        for (DFSBlockState bs : fileState.getBlocks()) {
-            DFSBlock b = DFSBlock.newBuilder()
-                    .setBlockId(bs.getBlockId())
-                    .setBlockSize(bs.getBlockSize())
-                    .setStartOffset(0)
-                    .setSize(bs.getDataSize())
-                    .setGenerationStamp(bs.getGenerationStamp())
-                    .setEndOffset(bs.getDataSize())
-                    .setDeleted(false)
-                    .build();
-            builder.addBlocks(b);
+        if (fileState.hasBlocks()) {
+            for (DFSBlockState bs : fileState.getBlocks()) {
+                DFSBlock b = DFSBlock.newBuilder()
+                        .setBlockId(bs.getBlockId())
+                        .setBlockSize(bs.getBlockSize())
+                        .setStartOffset(0)
+                        .setSize(bs.getDataSize())
+                        .setGenerationStamp(bs.getGenerationStamp())
+                        .setEndOffset(bs.getDataSize())
+                        .setDeleted(false)
+                        .build();
+                builder.addBlocks(b);
+            }
         }
         DFSAddFile ams = builder.build();
         MessageObject<String, DFSChangeDelta> am = ChangeDeltaSerDe.create(message.value().getNamespace(),

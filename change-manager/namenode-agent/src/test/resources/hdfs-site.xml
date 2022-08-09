@@ -19,7 +19,7 @@
 <configuration>
     <property>
         <name>dfs.namenode.name.dir</name>
-        <value>src/test/resources/edits/logs/delete</value>
+        <value>src/test/resources/edits/logs/</value>
     </property>
     <property>
         <name>dfs.replication</name>

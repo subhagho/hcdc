@@ -198,16 +198,7 @@ public class HDFSSnapshotProcessor {
                 rState.setFileType(fileState.getFileType());
                 rState.setSchemaLocation(fileState.getSchemaLocation());
             }
-            for (DFSBlockState bs : fileState.getBlocks()) {
-                DFSBlockReplicaState b = new DFSBlockReplicaState();
-                b.setState(EFileState.New);
-                b.setBlockId(bs.getBlockId());
-                b.setPrevBlockId(bs.getPrevBlockId());
-                b.setStartOffset(0);
-                b.setDataSize(bs.getDataSize());
-                b.setUpdateTime(System.currentTimeMillis());
-                rState.add(b);
-            }
+            rState.copyBlocks(fileState);
 
             DFSCloseFile closeFile = generateSnapshot(fileState, true, fileState.getLastTnxId());
             MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),

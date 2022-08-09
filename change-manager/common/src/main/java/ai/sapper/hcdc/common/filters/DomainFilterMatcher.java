@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 @Getter
 @Accessors(fluent = true)
 public class DomainFilterMatcher {
-    private static final String IGNORE_REGEX = "\\[.*\\._COPYING_|/tmp/.*]";
+    private static final String IGNORE_REGEX = "(.*)\\.(_*)COPYING(_*)|/tmp/(.*)";
     private static final Pattern IGNORE_PATTERN = Pattern.compile(IGNORE_REGEX);
 
     @Getter

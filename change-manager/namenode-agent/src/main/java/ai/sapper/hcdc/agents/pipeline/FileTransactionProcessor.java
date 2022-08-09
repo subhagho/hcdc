@@ -99,16 +99,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
             rState.setSnapshotTime(System.currentTimeMillis());
             rState.setSnapshotReady(mode != MessageObject.MessageMode.Snapshot);
             rState.setState(EFileState.New);
-            for (DFSBlockState bs : fileState.getBlocks()) {
-                DFSBlockReplicaState b = new DFSBlockReplicaState();
-                b.setState(EFileState.New);
-                b.setBlockId(bs.getBlockId());
-                b.setPrevBlockId(bs.getPrevBlockId());
-                b.setStartOffset(0);
-                b.setDataSize(bs.getDataSize());
-                b.setUpdateTime(System.currentTimeMillis());
-                rState.add(b);
-            }
+            rState.copyBlocks(fileState);
             rState.setStoragePath(file.directory().pathConfig());
             rState.setLastReplicatedTx(txId);
             rState.setLastReplicationTime(System.currentTimeMillis());
@@ -199,7 +190,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()));
         }
-        if (fileState.checkDeleted()){
+        if (fileState.checkDeleted()) {
             LOG.warn(String.format("File already deleted. [path=%s]", fileState.getHdfsFilePath()));
             return;
         }

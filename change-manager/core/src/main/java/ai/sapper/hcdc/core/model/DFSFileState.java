@@ -56,7 +56,7 @@ public class DFSFileState {
     }
 
     public Map<Long, BlockTransactionDelta> compressedChangeSet(long startTxnId, long endTxnId) {
-        if (!blocks.isEmpty()) {
+        if (blocks != null && !blocks.isEmpty()) {
             Map<Long, BlockTransactionDelta> change = new HashMap<>();
             for (DFSBlockState block : sortedBlocks()) {
                 BlockTransactionDelta c = block.compressedChangeSet(startTxnId, endTxnId);

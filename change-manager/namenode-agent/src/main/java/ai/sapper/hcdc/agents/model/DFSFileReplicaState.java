@@ -1,6 +1,8 @@
 package ai.sapper.hcdc.agents.model;
 
 import ai.sapper.hcdc.common.model.SchemaEntity;
+import ai.sapper.hcdc.core.model.DFSBlockState;
+import ai.sapper.hcdc.core.model.DFSFileState;
 import ai.sapper.hcdc.core.model.EFileState;
 import ai.sapper.hcdc.core.model.EFileType;
 import lombok.Getter;
@@ -50,6 +52,34 @@ public class DFSFileReplicaState {
         return null;
     }
 
+    public DFSFileReplicaState copyBlocks(@NonNull DFSFileState fileState) throws Exception {
+        if (fileState.hasBlocks()) {
+            for (DFSBlockState bs : fileState.getBlocks()) {
+                DFSBlockReplicaState b = new DFSBlockReplicaState();
+                b.setState(EFileState.New);
+                b.setBlockId(bs.getBlockId());
+                b.setPrevBlockId(bs.getPrevBlockId());
+                b.setStartOffset(0);
+                b.setDataSize(bs.getDataSize());
+                b.setUpdateTime(System.currentTimeMillis());
+                add(b);
+            }
+        }
+        return this;
+    }
+
+    public DFSFileReplicaState copyBlock(@NonNull DFSBlockState bs) throws Exception {
+        DFSBlockReplicaState b = new DFSBlockReplicaState();
+        b.setState(EFileState.New);
+        b.setBlockId(bs.getBlockId());
+        b.setPrevBlockId(bs.getPrevBlockId());
+        b.setStartOffset(0);
+        b.setDataSize(bs.getDataSize());
+        b.setUpdateTime(System.currentTimeMillis());
+        add(b);
+
+        return this;
+    }
     public boolean hasBlocks() {
         return !blocks.isEmpty();
     }
