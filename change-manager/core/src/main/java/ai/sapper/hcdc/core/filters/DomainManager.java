@@ -75,7 +75,7 @@ public class DomainManager {
             if (client.checkExists().forPath(path) == null) {
                 client.create().creatingParentContainersIfNeeded().forPath(path);
             }
-            readFilters();
+            readFilters(true);
 
             return this;
         } catch (Exception ex) {
@@ -88,7 +88,9 @@ public class DomainManager {
         return this;
     }
 
-    private void readFilters() throws Exception {
+    private void readFilters(boolean useCallbacks) throws Exception {
+        matchers.clear();
+
         String path = getZkPath();
         CuratorFramework client = zkConnection.client();
 
@@ -104,7 +106,7 @@ public class DomainManager {
                         DomainFilterMatcher m = new DomainFilterMatcher(df.getDomain(), df)
                                 .withIgnoreRegex(ignorePattern);
                         matchers.put(df.getDomain(), m);
-                        if (!callbacks.isEmpty()) {
+                        if (useCallbacks && !callbacks.isEmpty()) {
                             for (FilterAddCallback callback : callbacks) {
                                 callback.onStart(m);
                             }
@@ -113,6 +115,10 @@ public class DomainManager {
                 }
             }
         }
+    }
+
+    public synchronized void refresh() throws Exception {
+        readFilters(false);
     }
 
     private String getZkPath() {

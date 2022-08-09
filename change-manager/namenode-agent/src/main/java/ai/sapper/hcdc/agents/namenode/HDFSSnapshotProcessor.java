@@ -411,7 +411,9 @@ public class HDFSSnapshotProcessor {
                             DomainFilterMatcher.PathFilter filter,
                             @NonNull String path) {
             try {
-                processor.processFilterWithLock(filter, matcher.domain());
+                int count = processor.processFilterWithLock(filter, matcher.domain());
+                DefaultLogger.LOG.info(String.format("Processed filer: [filter=%s][files=%d]",
+                        JSONUtils.asString(filter.filter(), Filter.class), count));
             } catch (Exception ex) {
                 DefaultLogger.LOG.error(String.format("Error processing filter: %s", filter.filter().toString()), ex);
                 DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));

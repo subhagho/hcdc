@@ -2,6 +2,7 @@ package ai.sapper.hcdc.agents.namenode;
 
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
+import ai.sapper.hcdc.agents.common.ProcessorStateManager;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.agents.model.DFSTransactionType;
@@ -10,6 +11,7 @@ import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSCloseFile;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
+import ai.sapper.hcdc.core.filters.DomainManager;
 import ai.sapper.hcdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.hcdc.core.messaging.InvalidMessageError;
 import ai.sapper.hcdc.core.messaging.MessageObject;
@@ -68,6 +70,7 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
         Preconditions.checkState(sender() != null);
         Preconditions.checkState(receiver() != null);
         Preconditions.checkState(errorSender() != null);
+        Preconditions.checkState(stateManager() instanceof ProcessorStateManager);
         try {
             while (NameNodeEnv.get().state().isAvailable()) {
                 List<MessageObject<String, DFSChangeDelta>> batch = receiver().nextBatch(receiveBatchTimeout);
@@ -75,6 +78,9 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
                     Thread.sleep(receiveBatchTimeout);
                     continue;
                 }
+                DomainManager dm = ((ProcessorStateManager) stateManager()).domainManager();
+                dm.refresh();
+
                 LOG.debug(String.format("Received messages. [count=%d]", batch.size()));
                 for (MessageObject<String, DFSChangeDelta> message : batch) {
                     long txId = -1;
