@@ -18,6 +18,7 @@
             <domain>
                 <basePath>/hcdc/registry/files</basePath>
                 <connection>zk-state-connection</connection>
+                <hdfs>source-hdfs-ha</hdfs>
             </domain>
         </managers>
         <processor>

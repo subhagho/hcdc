@@ -87,7 +87,10 @@ public class ParquetConverter extends FormatConverter {
     private Schema getSchema(File file,
                              DFSFileState fileState,
                              SchemaEntity schemaEntity) throws Exception {
-        Schema schema = schemaManager().get(fileState.getSchemaLocation());
+        Schema schema = null;
+        if (!Strings.isNullOrEmpty(fileState.getSchemaLocation())) {
+            schema = schemaManager().get(fileState.getSchemaLocation());
+        }
         if (schema == null) {
             Configuration conf = new Configuration();
             conf.set(AvroReadSupport.READ_INT96_AS_FIXED, "true");

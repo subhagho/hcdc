@@ -2,6 +2,7 @@ package ai.sapper.hcdc.agents.pipeline;
 
 import ai.sapper.hcdc.agents.common.CDCDataConverter;
 import ai.sapper.hcdc.agents.common.InvalidTransactionError;
+import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.TransactionProcessor;
 import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
@@ -19,9 +20,11 @@ import ai.sapper.hcdc.core.messaging.InvalidMessageError;
 import ai.sapper.hcdc.core.messaging.MessageObject;
 import ai.sapper.hcdc.core.messaging.MessageSender;
 import ai.sapper.hcdc.core.model.*;
+import ai.sapper.hcdc.core.schema.SchemaManager;
 import com.google.common.base.Strings;
 import jakarta.ws.rs.core.MediaType;
 import lombok.NonNull;
+import org.apache.avro.Schema;
 import org.apache.hadoop.hdfs.HDFSBlockReader;
 
 import java.io.IOException;
@@ -475,12 +478,8 @@ public class FileTransactionProcessor extends TransactionProcessor {
             if (ft != EFileType.UNKNOWN)
                 rState.setFileType(ft);
         }
-        if (dfsFile.hasSchemaLocation()) {
-            rState.setSchemaLocation(dfsFile.getSchemaLocation());
-        }
         long startTxId = rState.getLastReplicatedTx();
-        if (message.mode() == MessageObject.MessageMode.Snapshot
-                || (!fileState.hasError() && rState != null && rState.canUpdate())) {
+        if (!fileState.hasError() && rState.canUpdate()) {
             try (HDFSBlockReader reader = new HDFSBlockReader(connection.dfsClient(), rState.getHdfsPath())) {
                 reader.init();
                 FSFile file = fs.get(fileState, schemaEntity);
@@ -490,9 +489,19 @@ public class FileTransactionProcessor extends TransactionProcessor {
                             String.format("FileSystem file not found. [path=%s]",
                                     data.getFile().getPath()));
                 }
+                SchemaManager schemaManager = NameNodeEnv.get().schemaManager();
+                CDCDataConverter converter = new CDCDataConverter()
+                        .withFileSystem(fs)
+                        .withSchemaManager(schemaManager);
+                Schema schema = schemaManager.get(dfsFile.getSchemaLocation());
+                if (schema != null) {
+                    String path = schemaManager.checkAndSave(schema, rState.getEntity());
+                    if (!Strings.isNullOrEmpty(path)) {
+                        rState.setSchemaLocation(path);
+                    }
+                }
                 List<DFSBlock> blocks = data.getBlocksList();
                 if (!blocks.isEmpty()) {
-                    CDCDataConverter converter = new CDCDataConverter().withFileSystem(fs);
                     for (DFSBlock block : blocks) {
                         DFSBlockReplicaState bs = rState.get(block.getBlockId());
                         if (bs == null || !bs.canUpdate()) {
@@ -513,8 +522,6 @@ public class FileTransactionProcessor extends TransactionProcessor {
                     }
                 }
                 try {
-                    CDCDataConverter converter = new CDCDataConverter()
-                            .withFileSystem(fs);
                     PathInfo outPath = converter.convert(fileState, rState, startTxId, txId);
                     if (outPath == null) {
                         throw new IOException(String.format("Error converting source file. [TXID=%d]", txId));
@@ -548,6 +555,13 @@ public class FileTransactionProcessor extends TransactionProcessor {
                         throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                                 fileState.getHdfsFilePath(),
                                 String.format("Error marking Snapshot Done. [TXID=%d]", txId));
+                    }
+                }
+                schema = schemaManager.get(rState.getEntity());
+                if (schema != null) {
+                    String path = schemaManager.schemaPath(rState.getEntity());
+                    if (!Strings.isNullOrEmpty(path)) {
+                        rState.setSchemaLocation(path);
                     }
                 }
                 rState.setSnapshotReady(true);

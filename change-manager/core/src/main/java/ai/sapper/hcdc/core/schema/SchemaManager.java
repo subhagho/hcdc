@@ -156,7 +156,7 @@ public class SchemaManager {
     }
 
     public String schemaPath(@NonNull SchemaEntity schemaEntity) throws Exception {
-        return getZkPath(schemaEntity);
+        return getZkPath(schemaEntity, currentVersion(schemaEntity));
     }
 
     public Schema get(@NonNull String path) throws Exception {
