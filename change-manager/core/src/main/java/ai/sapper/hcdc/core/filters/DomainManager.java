@@ -277,12 +277,12 @@ public class DomainManager {
 
         public void read() throws ConfigurationException {
             if (get() == null) {
-                throw new ConfigurationException("Kafka Configuration not drt or is NULL");
+                throw new ConfigurationException("Domain Manager Configuration not set or is NULL");
             }
             try {
                 basePath = get().getString(Constants.CONFIG_ZK_BASE);
                 if (Strings.isNullOrEmpty(basePath)) {
-                    throw new ConfigurationException(String.format("State Manager Configuration Error: missing [%s]", Constants.CONFIG_ZK_BASE));
+                    throw new ConfigurationException(String.format("Domain Manager Configuration Error: missing [%s]", Constants.CONFIG_ZK_BASE));
                 }
                 basePath = basePath.trim();
                 if (basePath.endsWith("/")) {
@@ -290,7 +290,7 @@ public class DomainManager {
                 }
                 zkConnection = get().getString(Constants.CONFIG_ZK_CONNECTION);
                 if (Strings.isNullOrEmpty(zkConnection)) {
-                    throw new ConfigurationException(String.format("State Manager Configuration Error: missing [%s]", Constants.CONFIG_ZK_CONNECTION));
+                    throw new ConfigurationException(String.format("Domain Manager Configuration Error: missing [%s]", Constants.CONFIG_ZK_CONNECTION));
                 }
                 if (get().containsKey(Constants.CONFIG_HDFS_CONNECTION)) {
                     hdfsConnection = get().getString(Constants.CONFIG_HDFS_CONNECTION);
@@ -299,7 +299,7 @@ public class DomainManager {
                     ignoreRegex = get().getString(Constants.CONFIG_IGNORE_REGEX);
                 }
             } catch (Throwable t) {
-                throw new ConfigurationException("Error processing State Manager configuration.", t);
+                throw new ConfigurationException("Error processing Domain Manager configuration.", t);
             }
         }
     }
