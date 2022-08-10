@@ -20,10 +20,8 @@ public class ProtoBufUtils {
                 && fileState.getFileType() != EFileType.UNKNOWN) {
             builder.setFileType(fileState.getFileType().name());
         }
-        if (fileState.getSchemaLocation() != null
-                && !fileState.getSchemaLocation().isEmpty()) {
-            String json = JSONUtils.asString(fileState.getSchemaLocation(), Map.class);
-            builder.setSchemaLocation(json);
+        if (!Strings.isNullOrEmpty(fileState.getSchemaLocation())) {
+            builder.setSchemaLocation(fileState.getSchemaLocation());
         }
         return builder.build();
     }
@@ -59,9 +57,6 @@ public class ProtoBufUtils {
                 && fileState.getFileType() != EFileType.UNKNOWN) {
             replicaState.setFileType(fileState.getFileType());
         }
-        if (fileState.getSchemaLocation() != null
-                && !fileState.getSchemaLocation().isEmpty()) {
-            replicaState.setSchemaLocation(fileState.getSchemaLocation());
-        }
+        replicaState.setSchemaLocation(fileState.getSchemaLocation());
     }
 }

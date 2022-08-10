@@ -99,7 +99,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
             rState.setSnapshotTime(System.currentTimeMillis());
             rState.setSnapshotReady(true);
             rState.copyBlocks(fileState);
-
+            rState.setSchemaLocation(fileState.getSchemaLocation());
             rState = stateManager().replicaStateHelper().update(rState);
 
             sender.send(message);
