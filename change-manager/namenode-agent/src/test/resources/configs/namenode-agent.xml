@@ -15,12 +15,12 @@
             <path>config</path>
             <hdfs-admin>source-hdfs-ha</hdfs-admin>
         </connections>
-        <state>
-            <manager>
+        <managers>
+            <state>
                 <basePath>/hcdc/state</basePath>
                 <connection>zk-state-connection</connection>
-            </manager>
-        </state>
+            </state>
+        </managers>
         <useSSL>false</useSSL>
         <processor>
             <edits>

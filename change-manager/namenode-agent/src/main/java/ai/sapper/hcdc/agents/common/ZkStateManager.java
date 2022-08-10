@@ -308,9 +308,7 @@ public class ZkStateManager {
     @Getter
     @Accessors(fluent = true)
     public static class ZkStateManagerConfig extends DomainManager.DomainManagerConfig {
-
-        private static final String __CONFIG_PATH = "state.manager";
-        private static final String CONFIG_MODULE_NAME = "module";
+        public static final String __CONFIG_PATH = "managers.state";
 
         public ZkStateManagerConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);

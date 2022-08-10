@@ -9,19 +9,17 @@
         <connections>
             <path>config</path>
         </connections>
-        <stateManagerClass>ai.sapper.hcdc.agents.common.ProcessorStateManager</stateManagerClass>
-        <state>
-            <manager>
+        <managers>
+            <state>
+                <stateManagerClass>ai.sapper.hcdc.agents.common.ProcessorStateManager</stateManagerClass>
                 <basePath>/hcdc/state</basePath>
                 <connection>zk-state-connection</connection>
-            </manager>
-        </state>
-        <domain>
-            <manager>
+            </state>
+            <domain>
                 <basePath>/hcdc/registry/files</basePath>
                 <connection>zk-state-connection</connection>
-            </manager>
-        </domain>
+            </domain>
+        </managers>
         <processor>
             <files>
                 <filesystem>

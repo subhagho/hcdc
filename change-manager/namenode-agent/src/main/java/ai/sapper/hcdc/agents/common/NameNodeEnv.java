@@ -264,7 +264,8 @@ public class NameNodeEnv {
             private static final String CONFIG_INSTANCE = "instance";
             private static final String CONFIG_HEARTBEAT = "enableHeartbeat";
             private static final String CONFIG_SOURCE_NAME = "source";
-            private static final String CONFIG_STATE_MANAGER_TYPE = "stateManagerClass";
+            private static final String CONFIG_STATE_MANAGER_TYPE =
+                    String.format("%s.stateManagerClass", ZkStateManager.ZkStateManagerConfig.__CONFIG_PATH);
             private static final String CONFIG_CONNECTIONS = "connections.path";
             private static final String CONFIG_CONNECTION_HDFS = "connections.hdfs-admin";
 

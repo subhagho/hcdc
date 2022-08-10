@@ -260,7 +260,7 @@ public class DomainManager {
             public static final String CONFIG_IGNORE_REGEX = "ignoreRegex";
         }
 
-        private static final String __CONFIG_PATH = "domain.manager";
+        private static final String __CONFIG_PATH = "managers.domain";
 
         private String basePath;
         private String zkConnection;
