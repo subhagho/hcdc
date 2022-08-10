@@ -101,8 +101,8 @@ public class SourceTransactionProcessor extends TransactionProcessor {
             rState.copyBlocks(fileState);
 
             rState = stateManager().replicaStateHelper().update(rState);
-
-            sender.send(message);
+            MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.update(message, schemaEntity, message.mode());
+            sender.send(m);
         } else {
             LOG.debug(String.format("No match found. [path=%s]", fileState.getHdfsFilePath()));
             sendIgnoreTx(message, data);

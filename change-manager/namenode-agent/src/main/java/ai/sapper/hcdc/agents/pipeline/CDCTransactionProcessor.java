@@ -59,6 +59,7 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                         String.format("Valid File already exists. [path=%s]", fileState.getHdfsFilePath()));
             }
         }
+
         fileState = stateManager()
                 .fileStateHelper()
                 .create(data.getFile().getPath(),
