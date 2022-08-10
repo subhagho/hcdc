@@ -31,7 +31,7 @@ public class DFSFileReplicaState {
     private Map<String, String> storagePath;
     private Map<String, String> lastDeltaPath;
     private EFileType fileType = EFileType.UNKNOWN;
-    private Map<String, String> schemaLocation;
+    private String schemaLocation;
 
     private List<DFSBlockReplicaState> blocks = new ArrayList<>();
 

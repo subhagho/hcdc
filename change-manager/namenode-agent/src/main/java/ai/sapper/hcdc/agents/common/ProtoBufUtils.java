@@ -37,13 +37,7 @@ public class ProtoBufUtils {
             }
         }
         if (file.hasSchemaLocation()) {
-            String json = file.getSchemaLocation();
-            if (!Strings.isNullOrEmpty(json)) {
-                Map<String, String> map = JSONUtils.read(json, Map.class);
-                if (map != null && !map.isEmpty()) {
-                    fileState.setSchemaLocation(map);
-                }
-            }
+            fileState.setSchemaLocation(file.getSchemaLocation());
         }
     }
 
@@ -56,13 +50,7 @@ public class ProtoBufUtils {
             }
         }
         if (file.hasSchemaLocation()) {
-            String json = file.getSchemaLocation();
-            if (!Strings.isNullOrEmpty(json)) {
-                Map<String, String> map = JSONUtils.read(json, Map.class);
-                if (map != null && !map.isEmpty()) {
-                    replicaState.setSchemaLocation(map);
-                }
-            }
+            replicaState.setSchemaLocation(file.getSchemaLocation());
         }
     }
 

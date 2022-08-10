@@ -22,7 +22,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @Getter
 @Accessors(fluent = true)
 public class DistributedLock extends ReentrantLock implements Closeable {
-    private static final int DEFAULT_LOCK_TIMEOUT = 500;
+    private static final int DEFAULT_LOCK_TIMEOUT = 5000;
 
     private final LockId id;
     private int lockTimeout = DEFAULT_LOCK_TIMEOUT;

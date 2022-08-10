@@ -476,13 +476,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
                 rState.setFileType(ft);
         }
         if (dfsFile.hasSchemaLocation()) {
-            String json = dfsFile.getSchemaLocation();
-            if (!Strings.isNullOrEmpty(json)) {
-                Map<String, String> map = JSONUtils.read(json, Map.class);
-                if (map != null && !map.isEmpty()) {
-                    rState.setSchemaLocation(map);
-                }
-            }
+            rState.setSchemaLocation(dfsFile.getSchemaLocation());
         }
         long startTxId = rState.getLastReplicatedTx();
         if (message.mode() == MessageObject.MessageMode.Snapshot

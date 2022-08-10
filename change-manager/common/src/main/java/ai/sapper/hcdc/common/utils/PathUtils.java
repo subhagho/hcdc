@@ -10,7 +10,11 @@ public class PathUtils {
     public static final String TEMP_PATH = String.format("%s/hcdc/tmp", System.getProperty("java.io.tmpdir"));
 
     public static String formatZkPath(@NonNull String path) {
-        return path.replaceAll("/\\s*/", "/");
+        path = path.replaceAll("/\\s*/", "/");
+        if (path.endsWith("/")) {
+            path = path.substring(0, path.length() - 2);
+        }
+        return path;
     }
 
     public static String formatPath(@NonNull String path) {

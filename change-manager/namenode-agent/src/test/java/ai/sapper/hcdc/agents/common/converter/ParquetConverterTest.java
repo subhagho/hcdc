@@ -7,6 +7,7 @@ import ai.sapper.hcdc.common.model.services.EConfigFileType;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.connections.HdfsHAConnection;
 import ai.sapper.hcdc.core.model.DFSFileState;
+import org.apache.avro.Schema;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.commons.io.FilenameUtils;
@@ -68,8 +69,8 @@ class ParquetConverterTest {
             try (HDFSBlockReader reader = new HDFSBlockReader(connection.dfsClient(), HDFS_PARQUET_FILE)) {
                 reader.init();
                 ParquetConverter converter = new ParquetConverter();
-                File outf = converter.extractSchema(reader, new File(OUTDIR), fileState);
-                DefaultLogger.LOG.info(String.format("Generated schema file: [path=%s]", outf.getAbsolutePath()));
+                Schema schema = converter.extractSchema(reader, fileState);
+                DefaultLogger.LOG.info(String.format("Generated schema : [schema=%s]", schema.toString(true)));
             }
         } catch (Exception t) {
             DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));

@@ -16,6 +16,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.avro.Schema;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.hdfs.HDFSBlockReader;
 
@@ -71,9 +72,7 @@ public class CDCDataConverter {
         }
     }
 
-    public ExtractSchemaResponse extractSchema(@NonNull DFSFileState fileState,
-                                               @NonNull PathInfo schemaDir) throws IOException {
-        Preconditions.checkNotNull(fs);
+    public ExtractSchemaResponse extractSchema(@NonNull DFSFileState fileState) throws IOException {
         Preconditions.checkNotNull(hdfsConnection);
         try {
             try (HDFSBlockReader reader = new HDFSBlockReader(hdfsConnection.dfsClient(), fileState.getHdfsFilePath())) {
@@ -89,13 +88,11 @@ public class CDCDataConverter {
                                 data.data().array(),
                                 (int) data.dataSize())) {
                             EFileType fileType = converter.fileType();
-                            File outf = converter.extractSchema(reader,
-                                    PathUtils.getTempDir(),
+                            Schema schema = converter.extractSchema(reader,
                                     fileState);
-                            if (outf != null) {
-                                PathInfo pi = fs.upload(outf, schemaDir);
+                            if (schema != null) {
                                 ExtractSchemaResponse response = new ExtractSchemaResponse();
-                                return response.fileType(fileType).schemaPath(pi);
+                                return response.fileType(fileType).schema(schema);
                             }
                         }
                     }
@@ -195,6 +192,6 @@ public class CDCDataConverter {
     @Accessors(fluent = true)
     public static class ExtractSchemaResponse {
         private EFileType fileType;
-        private PathInfo schemaPath;
+        private Schema schema;
     }
 }

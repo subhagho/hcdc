@@ -3,6 +3,7 @@ package ai.sapper.hcdc.agents.common;
 import ai.sapper.hcdc.core.model.DFSFileState;
 import ai.sapper.hcdc.core.model.EFileType;
 import lombok.NonNull;
+import org.apache.avro.Schema;
 import org.apache.hadoop.hdfs.HDFSBlockReader;
 
 import java.io.File;
@@ -19,7 +20,6 @@ public interface FormatConverter {
 
     EFileType fileType();
 
-    File extractSchema(@NonNull HDFSBlockReader reader,
-                       @NonNull File outdir,
-                       @NonNull DFSFileState fileState) throws IOException;
+    Schema extractSchema(@NonNull HDFSBlockReader reader,
+                         @NonNull DFSFileState fileState) throws IOException;
 }

@@ -18,6 +18,10 @@
                 <basePath>/hcdc/registry/files</basePath>
                 <connection>zk-state-connection</connection>
             </domain>
+            <schema>
+                <basePath>/hcdc/registry/schemas</basePath>
+                <connection>zk-state-connection</connection>
+            </schema>
         </managers>
         <scanner>
             <files>
@@ -28,10 +32,6 @@
                 </filesystem>
                 <hdfs>source-hdfs-ha</hdfs>
                 <threads>4</threads>
-                <schemaDir>
-                    <domain>SCHEMAS</domain>
-                    <path>C:\Work\temp\output/hcdc/registry/schemas</path>
-                </schemaDir>
             </files>
         </scanner>
         <useSSL>false</useSSL>

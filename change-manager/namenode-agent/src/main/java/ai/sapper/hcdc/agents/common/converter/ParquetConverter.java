@@ -118,14 +118,12 @@ public class ParquetConverter implements FormatConverter {
 
     /**
      * @param reader
-     * @param outdir
      * @return
      * @throws IOException
      */
     @Override
-    public File extractSchema(@NonNull HDFSBlockReader reader,
-                              @NonNull File outdir,
-                              @NonNull DFSFileState fileState) throws IOException {
+    public Schema extractSchema(@NonNull HDFSBlockReader reader,
+                                @NonNull DFSFileState fileState) throws IOException {
         try {
             DFSBlockState lastBlock = fileState.findLastBlock();
             if (lastBlock != null) {
@@ -143,14 +141,7 @@ public class ParquetConverter implements FormatConverter {
                     fos.write(data.data().array());
                     fos.flush();
                 }
-                Schema schema = getSchema(tempf);
-                String json = schema.toString(true);
-                File file = new File(String.format("%s/%d.avsc", outdir.getAbsolutePath(), fileState.getId()));
-                try (FileOutputStream fos = new FileOutputStream(file)) {
-                    fos.write(json.getBytes(StandardCharsets.UTF_8));
-                    fos.flush();
-                }
-                return file;
+                return getSchema(tempf);
             }
             return null;
         } catch (Exception ex) {

@@ -13,6 +13,7 @@ import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
 import ai.sapper.hcdc.core.model.ModuleInstance;
+import ai.sapper.hcdc.core.schema.SchemaManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -46,6 +47,7 @@ public class NameNodeEnv {
     private ConnectionManager connectionManager;
     private HdfsConnection hdfsConnection;
     private ZkStateManager stateManager;
+    private SchemaManager schemaManager;
     private List<InetAddress> hostIPs;
     private HadoopEnvConfig hadoopConfig;
     private NameNodeAdminClient adminClient;
@@ -118,6 +120,12 @@ public class NameNodeEnv {
                     .withModuleInstance(moduleInstance);
             moduleInstance.setInstanceId(moduleInstance.instanceId());
             stateManager.checkAgentState();
+
+            if (ConfigReader.checkIfNodeExists(configNode,
+                    SchemaManager.SchemaManagerConfig.Constants.__CONFIG_PATH)) {
+                schemaManager = new SchemaManager();
+                schemaManager.init(configNode, connectionManager);
+            }
 
             state.state(ENameNEnvState.Initialized);
             if (config.enableHeartbeat) {

@@ -4,12 +4,14 @@ import ai.sapper.hcdc.agents.common.CDCDataConverter;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
 import ai.sapper.hcdc.common.ConfigReader;
+import ai.sapper.hcdc.common.model.SchemaEntity;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
 import ai.sapper.hcdc.core.io.FileSystem;
 import ai.sapper.hcdc.core.io.PathInfo;
 import ai.sapper.hcdc.core.model.DFSFileState;
+import ai.sapper.hcdc.core.schema.SchemaManager;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -17,6 +19,7 @@ import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.parquet.Strings;
 
 import java.util.List;
@@ -28,21 +31,15 @@ import java.util.concurrent.TimeUnit;
 public class NameNodeFileScanner {
     private static final int MAX_EXECUTOR_QUEUE_SIZE = 32;
     private static final int THREAD_SLEEP_INTERVAL = 5000; // 5 secs.
-    private FileSystem fs;
     private NameNodeFileScannerConfig config;
     private HdfsConnection connection;
-    private FileSystem.FileSystemMocker fileSystemMocker;
     private ZkStateManager stateManager;
+    private SchemaManager schemaManager;
+
     private ThreadPoolExecutor executorService;
-    private PathInfo schemaDir;
 
     public NameNodeFileScanner(@NonNull ZkStateManager stateManager) {
         this.stateManager = stateManager;
-    }
-
-    public NameNodeFileScanner withMockFileSystem(@NonNull FileSystem.FileSystemMocker fileSystemMocker) {
-        this.fileSystemMocker = fileSystemMocker;
-        return this;
     }
 
     public NameNodeFileScanner init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
@@ -58,19 +55,7 @@ public class NameNodeFileScanner {
             }
             if (!connection.isConnected()) connection.connect();
 
-            if (fileSystemMocker == null) {
-                Class<? extends FileSystem> fsc = (Class<? extends FileSystem>) Class.forName(config.fsType);
-                fs = fsc.newInstance();
-                fs.init(config.config(), FileDeltaProcessor.FileDeltaProcessorConfig.Constants.CONFIG_PATH_FS);
-            } else {
-                fs = fileSystemMocker.create(config.config());
-            }
-            schemaDir = fs.get(config.schemaDir);
-            if (!schemaDir.exists()) {
-                fs.mkdirs(schemaDir);
-            }
-
-            executorService = new ThreadPoolExecutor(1,
+            executorService = new ThreadPoolExecutor(config.threads,
                     config.threads,
                     1000,
                     TimeUnit.SECONDS,
@@ -79,6 +64,11 @@ public class NameNodeFileScanner {
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
         }
+    }
+
+    public NameNodeFileScanner withSchemaManager(@NonNull SchemaManager schemaManager) {
+        this.schemaManager = schemaManager;
+        return this;
     }
 
     public void run() throws Exception {
@@ -90,16 +80,20 @@ public class NameNodeFileScanner {
                     if (inode % config.shardCount == config.shardId) {
                         FileScannerTask task = new FileScannerTask()
                                 .fileState(fs)
-                                .schemaPath(schemaDir)
-                                .fs(this.fs)
+                                .schemaManager(schemaManager)
                                 .hdfsConnection(connection)
                                 .stateManager(stateManager);
                         executorService.submit(task);
                         while (executorService.getQueue().size() > MAX_EXECUTOR_QUEUE_SIZE) {
                             Thread.sleep(THREAD_SLEEP_INTERVAL);
                         }
+                    } else {
+                        DefaultLogger.LOG.debug(String.format("Skipped file: [%s]", fs.getHdfsFilePath()));
                     }
                 }
+            }
+            while (executorService.getQueue().size() > 0) {
+                Thread.sleep(THREAD_SLEEP_INTERVAL);
             }
         } catch (Exception ex) {
             DefaultLogger.LOG.error(ex.getLocalizedMessage());
@@ -114,10 +108,9 @@ public class NameNodeFileScanner {
     @Accessors(fluent = true)
     private static class FileScannerTask implements Runnable {
         private DFSFileState fileState;
-        private PathInfo schemaPath;
-        private FileSystem fs;
         private HdfsConnection hdfsConnection;
         private ZkStateManager stateManager;
+        private SchemaManager schemaManager;
 
         /**
          * When an object implementing interface <code>Runnable</code> is used
@@ -134,18 +127,23 @@ public class NameNodeFileScanner {
         public void run() {
             try {
                 CDCDataConverter converter = new CDCDataConverter()
-                        .withHdfsConnection(hdfsConnection)
-                        .withFileSystem(fs);
-                CDCDataConverter.ExtractSchemaResponse response = converter.extractSchema(fileState, schemaPath);
+                        .withHdfsConnection(hdfsConnection);
+                CDCDataConverter.ExtractSchemaResponse response = converter.extractSchema(fileState);
                 if (response != null) {
+                    if (response.schema() != null) {
+                        SchemaEntity schemaEntity = new SchemaEntity("default", fileState.getHdfsFilePath());
+                        String path = schemaManager.checkAndSave(response.schema(), schemaEntity);
+                        if (!Strings.isNullOrEmpty(path)) {
+                            fileState.setSchemaLocation(path);
+                        }
+                    }
                     fileState.setFileType(response.fileType());
-                    fileState.setSchemaLocation(response.schemaPath().pathConfig());
-                }
-                NameNodeEnv.globalLock().lock();
-                try {
-                    stateManager.fileStateHelper().update(fileState);
-                } finally {
-                    NameNodeEnv.globalLock().unlock();
+                    NameNodeEnv.globalLock().lock();
+                    try {
+                        stateManager.fileStateHelper().update(fileState);
+                    } finally {
+                        NameNodeEnv.globalLock().unlock();
+                    }
                 }
             } catch (Exception ex) {
                 DefaultLogger.LOG.error(ex.getLocalizedMessage());
@@ -167,7 +165,6 @@ public class NameNodeFileScanner {
             public static final String CONFIG_SHARD_COUNT = String.format("%s.count", CONFIG_SHARD_PATH);
             public static final String CONFIG_SHARD_ID = String.format("%s.id", CONFIG_SHARD_PATH);
             public static final String CONFIG_THREAD_COUNT = "threads";
-            public static final String CONFIG_SCHEMA_PATH = "schemaDir";
         }
 
         private String fsType;
@@ -175,7 +172,6 @@ public class NameNodeFileScanner {
         private HierarchicalConfiguration<ImmutableNode> fsConfig;
         private int shardCount = 1;
         private int shardId = 0;
-        private Map<String, String> schemaDir;
         private int threads = 1;
         private String basePath;
 
@@ -202,12 +198,7 @@ public class NameNodeFileScanner {
                         String.format("File Scanner Error: missing configuration. [name=%s]",
                                 Constants.CONFIG_HDFS_CONN));
             }
-            schemaDir = ConfigReader.readAsMap(get(), Constants.CONFIG_SCHEMA_PATH);
-            if (schemaDir.isEmpty()) {
-                throw new ConfigurationException(
-                        String.format("File Scanner Error: missing configuration. [name=%s]",
-                                Constants.CONFIG_SCHEMA_PATH));
-            }
+
             if (get().containsKey(Constants.CONFIG_SHARD_PATH)) {
                 shardCount = get().getInt(Constants.CONFIG_SHARD_COUNT);
                 if (shardCount < 0) {

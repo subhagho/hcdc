@@ -74,14 +74,12 @@ public class JsonConverter implements FormatConverter {
 
     /**
      * @param reader
-     * @param outdir
      * @param fileState
      * @return
      * @throws IOException
      */
     @Override
-    public File extractSchema(@NonNull HDFSBlockReader reader,
-                              @NonNull File outdir,
+    public Schema extractSchema(@NonNull HDFSBlockReader reader,
                               @NonNull DFSFileState fileState) throws IOException {
         try {
             DFSBlockState firstBlock = fileState.findFirstBlock();
@@ -113,15 +111,7 @@ public class JsonConverter implements FormatConverter {
                         }
                     }
                 }
-                if (schema != null) {
-                    String json = schema.toString(true);
-                    File file = new File(String.format("%s/%d.avsc", outdir.getAbsolutePath(), fileState.getId()));
-                    try (FileOutputStream fos = new FileOutputStream(file)) {
-                        fos.write(json.getBytes(StandardCharsets.UTF_8));
-                        fos.flush();
-                    }
-                    return file;
-                }
+                return schema;
             }
 
             return null;
