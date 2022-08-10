@@ -5,6 +5,7 @@ import ai.sapper.hcdc.agents.namenode.EditLogProcessor;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.services.EConfigFileType;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
+import ai.sapper.hcdc.core.DistributedLock;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.base.Preconditions;
@@ -63,11 +64,13 @@ public class EditLogRunner {
         try {
             this.configfile = configfile;
             init();
-            NameNodeEnv.globalLock().lock();
-            try {
-                return processor.doRun();
-            } finally {
-                NameNodeEnv.globalLock().unlock();
+            try (DistributedLock lock = NameNodeEnv.globalLock()) {
+                lock.lock();
+                try {
+                    return processor.doRun();
+                } finally {
+                    lock.unlock();
+                }
             }
         } finally {
             NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose();

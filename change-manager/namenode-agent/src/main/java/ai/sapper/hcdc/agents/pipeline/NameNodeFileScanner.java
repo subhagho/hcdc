@@ -6,6 +6,7 @@ import ai.sapper.hcdc.agents.common.ZkStateManager;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.SchemaEntity;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
+import ai.sapper.hcdc.core.DistributedLock;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
 import ai.sapper.hcdc.core.io.FileSystem;
@@ -139,11 +140,13 @@ public class NameNodeFileScanner {
                        }
                     }
                     fileState.setFileType(response.fileType());
-                    NameNodeEnv.globalLock().lock();
-                    try {
-                        stateManager.fileStateHelper().update(fileState);
-                    } finally {
-                        NameNodeEnv.globalLock().unlock();
+                    try (DistributedLock lock = NameNodeEnv.globalLock()) {
+                        lock.lock();
+                        try {
+                            stateManager.fileStateHelper().update(fileState);
+                        } finally {
+                            lock.unlock();
+                        }
                     }
                 }
             } catch (Exception ex) {

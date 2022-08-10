@@ -8,6 +8,7 @@ import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.services.EConfigFileType;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.common.utils.JSONUtils;
+import ai.sapper.hcdc.core.DistributedLock;
 import ai.sapper.hcdc.core.connections.HdfsConnection;
 import ai.sapper.hcdc.core.connections.ZookeeperConnection;
 import ai.sapper.hcdc.core.model.DFSFileState;
@@ -97,22 +98,24 @@ public class NameNodeReplicator {
 
     public void run() throws NameNodeError {
         try {
-            NameNodeEnv.globalLock().lock();
-            try {
-                String output = generateFSImageSnapshot();
-                DefaultLogger.LOG.info(String.format("Generated FS Image XML. [path=%s]", output));
-                readFSImageXml(output);
-                DefaultLogger.LOG.warn(
-                        String.format("WARNING: Will delete existing file structure, if present. [path=%s]",
-                                stateManager.fileStateHelper().getFilePath(null)));
-                stateManager.deleteAll();
-                copy();
-                NameNodeTxState txState = stateManager.initState(txnId);
-                String tp = stateManager.updateSnapshotTxId(txnId);
+            try (DistributedLock lock = NameNodeEnv.globalLock()) {
+                lock.lock();
+                try {
+                    String output = generateFSImageSnapshot();
+                    DefaultLogger.LOG.info(String.format("Generated FS Image XML. [path=%s]", output));
+                    readFSImageXml(output);
+                    DefaultLogger.LOG.warn(
+                            String.format("WARNING: Will delete existing file structure, if present. [path=%s]",
+                                    stateManager.fileStateHelper().getFilePath(null)));
+                    stateManager.deleteAll();
+                    copy();
+                    NameNodeTxState txState = stateManager.initState(txnId);
+                    String tp = stateManager.updateSnapshotTxId(txnId);
 
-                DefaultLogger.LOG.info(String.format("NameNode replication done. [state=%s][TXID PATH=%s]", txState, tp));
-            } finally {
-                NameNodeEnv.globalLock().unlock();
+                    DefaultLogger.LOG.info(String.format("NameNode replication done. [state=%s][TXID PATH=%s]", txState, tp));
+                } finally {
+                    lock.unlock();
+                }
             }
             NameNodeEnv.dispose();
         } catch (Throwable t) {

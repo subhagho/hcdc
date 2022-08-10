@@ -25,7 +25,7 @@ public class DistributedLock extends ReentrantLock implements Closeable {
     private static final int DEFAULT_LOCK_TIMEOUT = 5000;
 
     private final LockId id;
-    private int lockTimeout = DEFAULT_LOCK_TIMEOUT;
+    private long lockTimeout = DEFAULT_LOCK_TIMEOUT;
 
     @Getter(AccessLevel.NONE)
     private InterProcessMutex mutex = null;
@@ -51,7 +51,7 @@ public class DistributedLock extends ReentrantLock implements Closeable {
         return this;
     }
 
-    public DistributedLock withLockTimeout(int lockTimeout) {
+    public DistributedLock withLockTimeout(long lockTimeout) {
         Preconditions.checkArgument(lockTimeout > 0);
         this.lockTimeout = lockTimeout;
 
@@ -123,7 +123,7 @@ public class DistributedLock extends ReentrantLock implements Closeable {
                 if (mutex.isAcquiredInThisProcess()) {
                     return true;
                 }
-                return mutex.acquire(DEFAULT_LOCK_TIMEOUT, TimeUnit.MILLISECONDS);
+                return mutex.acquire(lockTimeout, TimeUnit.MILLISECONDS);
             } catch (Throwable t) {
                 super.unlock();
                 throw new LockError(t);

@@ -36,6 +36,15 @@ import java.util.Map;
 public class NameNodeEnv {
     public static Logger LOG = LoggerFactory.getLogger(NameNodeEnv.class);
 
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    public static class LockDef {
+        private String module;
+        private String path;
+        private ZookeeperConnection connection;
+    }
+
     private static final String NN_IGNORE_TNX = "%s.IGNORE";
 
     private final NameNEnvState state = new NameNEnvState();
@@ -53,7 +62,7 @@ public class NameNodeEnv {
     private NameNodeAdminClient adminClient;
     private ModuleInstance moduleInstance;
 
-    private final Map<String, DistributedLock> locks = new HashMap<>();
+    private final Map<String, LockDef> lockDefs = new HashMap<>();
 
     private final NameNodeAgentState.AgentState agentState = new NameNodeAgentState.AgentState();
 
@@ -109,7 +118,7 @@ public class NameNodeEnv {
             moduleInstance.setName(stateManager.instance());
 
             readLocks();
-            DistributedLock lock = lock(ZkStateManager.Constants.LOCK_REPLICATION);
+            DistributedLock lock = createLock(ZkStateManager.Constants.LOCK_REPLICATION);
             if (lock == null) {
                 throw new ConfigurationException(
                         String.format("Replication Lock not defined. [name=%s]",
@@ -149,8 +158,12 @@ public class NameNodeEnv {
                 path = node.getString(NameNEnvConfig.Constants.CONFIG_LOCK_NODE);
             }
             ZookeeperConnection connection = connectionManager.getConnection(conn, ZookeeperConnection.class);
-            DistributedLock lock = new DistributedLock(config.module, path, stateManager.basePath()).withConnection(connection);
-            locks.put(name, lock);
+            LockDef def = new LockDef()
+                    .module(config.module)
+                    .path(path)
+                    .connection(connection);
+
+            lockDefs.put(name, def);
         }
     }
 
@@ -207,8 +220,13 @@ public class NameNodeEnv {
         return config.hadoopConfFile;
     }
 
-    public DistributedLock lock(String name) {
-        if (locks.containsKey(name)) return locks.get(name);
+    public DistributedLock createLock(String name) {
+        if (lockDefs.containsKey(name)) {
+            LockDef def = lockDefs.get(name);
+            DistributedLock lock = new DistributedLock(def.module, def.path, stateManager.basePath())
+                    .withConnection(def.connection);
+            return lock;
+        }
         return null;
     }
 
@@ -240,7 +258,7 @@ public class NameNodeEnv {
     }
 
     public static DistributedLock globalLock() {
-        return get().lock(NameNEnvConfig.Constants.LOCK_GLOBAL);
+        return get().createLock(NameNEnvConfig.Constants.LOCK_GLOBAL);
     }
 
     public enum ENameNEnvState {

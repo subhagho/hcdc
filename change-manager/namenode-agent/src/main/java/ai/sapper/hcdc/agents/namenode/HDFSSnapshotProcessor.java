@@ -11,6 +11,7 @@ import ai.sapper.hcdc.common.filters.Filter;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.common.utils.JSONUtils;
+import ai.sapper.hcdc.core.DistributedLock;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.filters.DomainManager;
 import ai.sapper.hcdc.core.filters.FilterAddCallback;
@@ -85,22 +86,25 @@ public class HDFSSnapshotProcessor {
         DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
         Preconditions.checkNotNull(domainManager.hdfsConnection());
         int count = 0;
-        NameNodeEnv.globalLock().lock();
-        try {
-            for (String domain : domainManager.matchers().keySet()) {
-                DomainFilterMatcher matcher = domainManager.matchers().get(domain);
-                if (matcher != null) {
-                    List<DomainFilterMatcher.PathFilter> filters = matcher.patterns();
-                    if (filters != null && !filters.isEmpty()) {
-                        for (DomainFilterMatcher.PathFilter filter : filters) {
-                            count += processFilter(filter, domain);
+        try (DistributedLock lock = NameNodeEnv.globalLock()
+                .withLockTimeout(processorConfig.defaultLockTimeout)) {
+            lock.lock();
+            try {
+                for (String domain : domainManager.matchers().keySet()) {
+                    DomainFilterMatcher matcher = domainManager.matchers().get(domain);
+                    if (matcher != null) {
+                        List<DomainFilterMatcher.PathFilter> filters = matcher.patterns();
+                        if (filters != null && !filters.isEmpty()) {
+                            for (DomainFilterMatcher.PathFilter filter : filters) {
+                                count += processFilter(filter, domain);
+                            }
                         }
                     }
                 }
+                return count;
+            } finally {
+                lock.unlock();
             }
-            return count;
-        } finally {
-            NameNodeEnv.globalLock().unlock();
         }
     }
 
@@ -168,11 +172,14 @@ public class HDFSSnapshotProcessor {
 
     public int processFilterWithLock(@NonNull DomainFilterMatcher.PathFilter filter,
                                      String domain) throws Exception {
-        NameNodeEnv.globalLock().lock();
-        try {
-            return processFilter(filter, domain);
-        } finally {
-            NameNodeEnv.globalLock().unlock();
+        try (DistributedLock lock = NameNodeEnv.globalLock()
+                .withLockTimeout(processorConfig().defaultLockTimeout())) {
+            lock.lock();
+            try {
+                return processFilter(filter, domain);
+            } finally {
+                lock.unlock();
+            }
         }
     }
 
@@ -356,10 +363,11 @@ public class HDFSSnapshotProcessor {
         private static final String __CONFIG_PATH = "processor.snapshot";
         private static final String __CONFIG_PATH_SENDER = "sender";
         private static final String __CONFIG_PATH_TNX_SENDER = "tnxSender";
+        private static final String CONFIG_LOCK_TIMEOUT = "lockTimeout";
 
         private MessagingConfig senderConfig;
         private MessagingConfig tnxSenderConfig;
-
+        private long defaultLockTimeout = 5 * 60 * 1000;
 
         public HDFSSnapshotProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);
@@ -387,6 +395,13 @@ public class HDFSSnapshotProcessor {
                 }
                 tnxSenderConfig = new MessagingConfig();
                 tnxSenderConfig.read(config);
+
+                if (get().containsKey(CONFIG_LOCK_TIMEOUT)) {
+                    String s = get().getString(CONFIG_LOCK_TIMEOUT);
+                    if (!Strings.isNullOrEmpty(s)) {
+                        defaultLockTimeout = Long.parseLong(s);
+                    }
+                }
             } catch (Exception ex) {
                 throw new ConfigurationException(ex);
             }

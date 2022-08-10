@@ -10,6 +10,7 @@ import ai.sapper.hcdc.agents.model.NameNodeTxState;
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
+import ai.sapper.hcdc.core.DistributedLock;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.core.messaging.*;
 import com.google.common.base.Preconditions;
@@ -89,12 +90,15 @@ public class EditLogProcessor implements Runnable {
         try {
             NameNodeEnv.get().agentState().state(NameNodeAgentState.EAgentState.Active);
             while (NameNodeEnv.get().state().isAvailable()) {
-                NameNodeEnv.globalLock().lock();
-                try {
-                    long txid = doRun();
-                    LOG.info(String.format("Last Processed TXID = %d", txid));
-                } finally {
-                    NameNodeEnv.globalLock().unlock();
+                try (DistributedLock lock = NameNodeEnv.globalLock()
+                        .withLockTimeout(processorConfig.defaultLockTimeout())) {
+                    lock.lock();
+                    try {
+                        long txid = doRun();
+                        LOG.info(String.format("Last Processed TXID = %d", txid));
+                    } finally {
+                        lock.unlock();
+                    }
                 }
                 Thread.sleep(processorConfig.pollingInterval);
             }
@@ -170,10 +174,12 @@ public class EditLogProcessor implements Runnable {
             public static final String __CONFIG_PATH = "processor.edits";
             public static final String CONFIG_Q_CONNECTION = "sender";
             public static final String CONFIG_POLL_INTERVAL = "pollingInterval";
+            public static final String CONFIG_LOCK_TIMEOUT = "lockTimeout";
         }
 
         private MessagingConfig senderConfig;
         private long pollingInterval = 60000; // By default, run every minute
+        private long defaultLockTimeout = 5 * 60 * 1000; // 5 mins.
 
         public EditLogProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, Constants.__CONFIG_PATH);
@@ -190,9 +196,17 @@ public class EditLogProcessor implements Runnable {
                 }
                 senderConfig = new MessagingConfig();
                 senderConfig.read(config);
-                String s = get().getString(Constants.CONFIG_POLL_INTERVAL);
-                if (!Strings.isNullOrEmpty(s)) {
-                    pollingInterval = Long.parseLong(s);
+                if (get().containsKey(Constants.CONFIG_POLL_INTERVAL)) {
+                    String s = get().getString(Constants.CONFIG_POLL_INTERVAL);
+                    if (!Strings.isNullOrEmpty(s)) {
+                        pollingInterval = Long.parseLong(s);
+                    }
+                }
+                if (get().containsKey(Constants.CONFIG_LOCK_TIMEOUT)) {
+                    String s = get().getString(Constants.CONFIG_LOCK_TIMEOUT);
+                    if (!Strings.isNullOrEmpty(s)) {
+                        defaultLockTimeout = Long.parseLong(s);
+                    }
                 }
             } catch (Exception ex) {
                 throw new ConfigurationException(ex);
