@@ -1,11 +1,14 @@
 package ai.sapper.hcdc.agents.common.converter;
 
 import ai.sapper.hcdc.agents.common.FormatConverter;
+import ai.sapper.hcdc.common.model.SchemaEntity;
 import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.model.DFSBlockState;
 import ai.sapper.hcdc.core.model.DFSFileState;
 import ai.sapper.hcdc.core.model.EFileType;
 import ai.sapper.hcdc.core.model.HDFSBlockData;
+import ai.sapper.hcdc.core.schema.SchemaManager;
+import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
@@ -30,10 +33,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class ParquetConverter implements FormatConverter {
+public class ParquetConverter extends FormatConverter {
     private static final String MAGIC_CODE = "PAR1";
-
     public static final String EXT = "parquet";
+
+    public ParquetConverter() {
+        super(EFileType.PARQUET);
+    }
 
     /**
      * @param path
@@ -53,12 +59,16 @@ public class ParquetConverter implements FormatConverter {
      * @throws IOException
      */
     @Override
-    public File convert(@NonNull File source, @NonNull File output) throws IOException {
+    public File convert(@NonNull File source,
+                        @NonNull File output,
+                        @NonNull DFSFileState fileState,
+                        @NonNull SchemaEntity schemaEntity) throws IOException {
+        Preconditions.checkNotNull(schemaManager());
         Configuration conf = new Configuration();
         conf.set(AvroReadSupport.READ_INT96_AS_FIXED, "true");
         ParquetReader<GenericRecord> reader = new AvroParquetReader(conf, new Path(source.toURI()));
         try {
-            Schema schema = getSchema(source);
+            Schema schema = getSchema(source, fileState, schemaEntity);
             final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema);
             try (DataFileWriter<GenericRecord> fos = new DataFileWriter<>(writer)) {
                 fos.create(schema, output);
@@ -74,14 +84,21 @@ public class ParquetConverter implements FormatConverter {
         }
     }
 
-    private Schema getSchema(File file) throws Exception {
-        Configuration conf = new Configuration();
-        conf.set(AvroReadSupport.READ_INT96_AS_FIXED, "true");
-        try (ParquetFileReader reader =
-                     ParquetFileReader.open(HadoopInputFile.fromPath(new Path(file.toURI()), conf))) {
-            MessageType pschema = reader.getFooter().getFileMetaData().getSchema();
-            return new AvroSchemaConverter(conf).convert(pschema);
+    private Schema getSchema(File file,
+                             DFSFileState fileState,
+                             SchemaEntity schemaEntity) throws Exception {
+        Schema schema = schemaManager().get(fileState.getSchemaLocation());
+        if (schema == null) {
+            Configuration conf = new Configuration();
+            conf.set(AvroReadSupport.READ_INT96_AS_FIXED, "true");
+            try (ParquetFileReader reader =
+                         ParquetFileReader.open(HadoopInputFile.fromPath(new Path(file.toURI()), conf))) {
+                MessageType pschema = reader.getFooter().getFileMetaData().getSchema();
+                schema = new AvroSchemaConverter(conf).convert(pschema);
+                schemaManager().checkAndSave(schema, schemaEntity);
+            }
         }
+        return schema;
     }
 
     /**
@@ -109,21 +126,15 @@ public class ParquetConverter implements FormatConverter {
     }
 
     /**
-     * @return
-     */
-    @Override
-    public EFileType fileType() {
-        return EFileType.PARQUET;
-    }
-
-    /**
      * @param reader
      * @return
      * @throws IOException
      */
     @Override
     public Schema extractSchema(@NonNull HDFSBlockReader reader,
-                                @NonNull DFSFileState fileState) throws IOException {
+                                @NonNull DFSFileState fileState,
+                                @NonNull SchemaEntity schemaEntity) throws IOException {
+        Preconditions.checkNotNull(schemaManager());
         try {
             DFSBlockState lastBlock = fileState.findLastBlock();
             if (lastBlock != null) {
@@ -141,7 +152,7 @@ public class ParquetConverter implements FormatConverter {
                     fos.write(data.data().array());
                     fos.flush();
                 }
-                return getSchema(tempf);
+                return getSchema(tempf, fileState, schemaEntity);
             }
             return null;
         } catch (Exception ex) {

@@ -127,15 +127,16 @@ public class NameNodeFileScanner {
         public void run() {
             try {
                 CDCDataConverter converter = new CDCDataConverter()
-                        .withHdfsConnection(hdfsConnection);
-                CDCDataConverter.ExtractSchemaResponse response = converter.extractSchema(fileState);
+                        .withHdfsConnection(hdfsConnection)
+                        .withSchemaManager(schemaManager);
+                SchemaEntity schemaEntity = new SchemaEntity("default", fileState.getHdfsFilePath());
+                CDCDataConverter.ExtractSchemaResponse response = converter.extractSchema(fileState, schemaEntity);
                 if (response != null) {
                     if (response.schema() != null) {
-                        SchemaEntity schemaEntity = new SchemaEntity("default", fileState.getHdfsFilePath());
-                        String path = schemaManager.checkAndSave(response.schema(), schemaEntity);
-                        if (!Strings.isNullOrEmpty(path)) {
-                            fileState.setSchemaLocation(path);
-                        }
+                       String path = schemaManager().schemaPath(schemaEntity);
+                       if (!Strings.isNullOrEmpty(path)) {
+                           fileState.setSchemaLocation(path);
+                       }
                     }
                     fileState.setFileType(response.fileType());
                     NameNodeEnv.globalLock().lock();

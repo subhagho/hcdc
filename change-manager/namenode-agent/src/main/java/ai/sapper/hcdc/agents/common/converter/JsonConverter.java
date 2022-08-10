@@ -1,11 +1,13 @@
 package ai.sapper.hcdc.agents.common.converter;
 
 import ai.sapper.hcdc.agents.common.FormatConverter;
+import ai.sapper.hcdc.common.model.SchemaEntity;
 import ai.sapper.hcdc.common.schema.SchemaHelper;
 import ai.sapper.hcdc.core.model.DFSBlockState;
 import ai.sapper.hcdc.core.model.DFSFileState;
 import ai.sapper.hcdc.core.model.EFileType;
 import ai.sapper.hcdc.core.model.HDFSBlockData;
+import ai.sapper.hcdc.core.schema.SchemaManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.NonNull;
 import org.apache.avro.Schema;
@@ -17,8 +19,12 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-public class JsonConverter implements FormatConverter {
+public class JsonConverter extends FormatConverter {
     public static final String EXT = "json";
+
+    public JsonConverter() {
+        super(EFileType.JSON);
+    }
 
     /**
      * @param path
@@ -40,7 +46,10 @@ public class JsonConverter implements FormatConverter {
      * @throws IOException
      */
     @Override
-    public File convert(@NonNull File source, @NonNull File output) throws IOException {
+    public File convert(@NonNull File source,
+                        @NonNull File output,
+                        @NonNull DFSFileState fileState,
+                        @NonNull SchemaEntity schemaEntity) throws IOException {
         return null;
     }
 
@@ -65,14 +74,6 @@ public class JsonConverter implements FormatConverter {
     }
 
     /**
-     * @return
-     */
-    @Override
-    public EFileType fileType() {
-        return EFileType.JSON;
-    }
-
-    /**
      * @param reader
      * @param fileState
      * @return
@@ -80,7 +81,8 @@ public class JsonConverter implements FormatConverter {
      */
     @Override
     public Schema extractSchema(@NonNull HDFSBlockReader reader,
-                              @NonNull DFSFileState fileState) throws IOException {
+                                @NonNull DFSFileState fileState,
+                                @NonNull SchemaEntity schemaEntity) throws IOException {
         try {
             DFSBlockState firstBlock = fileState.findFirstBlock();
             if (firstBlock != null) {

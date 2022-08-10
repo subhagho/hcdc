@@ -152,6 +152,14 @@ public class SchemaManager {
 
     public Schema get(@NonNull SchemaEntity schemaEntity, @NonNull SchemaVersion version) throws Exception {
         String path = getZkPath(schemaEntity, version);
+        return get(path);
+    }
+
+    public String schemaPath(@NonNull SchemaEntity schemaEntity) throws Exception {
+        return getZkPath(schemaEntity);
+    }
+
+    public Schema get(@NonNull String path) throws Exception {
         CuratorFramework client = zkConnection().client();
         if (client.checkExists().forPath(path) != null) {
             byte[] data = client.getData().forPath(path);
