@@ -459,10 +459,16 @@ public class FileTransactionProcessor extends TransactionProcessor {
     public void processCloseFileTxMessage(DFSCloseFile data,
                                           MessageObject<String, DFSChangeDelta> message,
                                           long txId) throws Exception {
-        SchemaEntity schemaEntity = new SchemaEntity();
-        schemaEntity.setDomain(message.value().getDomain());
-        schemaEntity.setEntity(message.value().getEntityName());
+
         if (message.mode() == MessageObject.MessageMode.Snapshot) {
+            SchemaEntity schemaEntity = new SchemaEntity();
+            schemaEntity.setDomain(message.value().getDomain());
+            schemaEntity.setEntity(message.value().getEntityName());
+            if (Strings.isNullOrEmpty(schemaEntity.getDomain()) || Strings.isNullOrEmpty(schemaEntity.getEntity())) {
+                throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                        data.getFile().getPath(),
+                        String.format("Invalid Schema Entity: domain or entity is NULL. [path=%s]", data.getFile().getPath()));
+            }
             registerFile(data.getFile().getPath(), schemaEntity, message.mode(), txId);
         }
         DFSFileState fileState = stateManager()
@@ -483,7 +489,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
                 .get(fileState.getId());
-
+        SchemaEntity schemaEntity = rState.getEntity();
         long startTxId = rState.getLastReplicatedTx();
         if (!fileState.hasError() && rState.canUpdate()) {
             try (HDFSBlockReader reader = new HDFSBlockReader(connection.dfsClient(), rState.getHdfsPath())) {
