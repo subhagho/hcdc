@@ -26,37 +26,51 @@ public class ProtoBufUtils {
         return builder.build();
     }
 
-    public static void update(@NonNull DFSFileState fileState, @NonNull DFSFile file) throws Exception {
+    public static boolean update(@NonNull DFSFileState fileState, @NonNull DFSFile file) throws Exception {
         Preconditions.checkArgument(fileState.getId() == file.getInodeId());
+        boolean updated = false;
         if (file.hasFileType()) {
             EFileType fileType = EFileType.parse(file.getFileType());
             if (fileType != null && fileType != EFileType.UNKNOWN) {
                 fileState.setFileType(fileType);
+                updated = true;
             }
         }
         if (file.hasSchemaLocation()) {
             fileState.setSchemaLocation(file.getSchemaLocation());
+            updated = true;
         }
+        return updated;
     }
 
-    public static void update(@NonNull DFSFileReplicaState replicaState, @NonNull DFSFile file) throws Exception {
+    public static boolean update(@NonNull DFSFileReplicaState replicaState, @NonNull DFSFile file) throws Exception {
+        boolean updated = false;
         Preconditions.checkArgument(replicaState.getInode() == file.getInodeId());
         if (file.hasFileType()) {
             EFileType fileType = EFileType.parse(file.getFileType());
             if (fileType != null && fileType != EFileType.UNKNOWN) {
                 replicaState.setFileType(fileType);
+                updated = true;
             }
         }
         if (file.hasSchemaLocation()) {
             replicaState.setSchemaLocation(file.getSchemaLocation());
+            updated = true;
         }
+        return updated;
     }
 
-    public static void update(@NonNull DFSFileState fileState, @NonNull DFSFileReplicaState replicaState) {
+    public static boolean update(@NonNull DFSFileState fileState, @NonNull DFSFileReplicaState replicaState) {
+        boolean updated = false;
         if (fileState.getFileType() != null
                 && fileState.getFileType() != EFileType.UNKNOWN) {
             replicaState.setFileType(fileState.getFileType());
+            updated = true;
         }
-        replicaState.setSchemaLocation(fileState.getSchemaLocation());
+        if (!Strings.isNullOrEmpty(fileState.getSchemaLocation())) {
+            replicaState.setSchemaLocation(fileState.getSchemaLocation());
+            updated = true;
+        }
+        return updated;
     }
 }

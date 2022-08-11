@@ -1,9 +1,6 @@
 package ai.sapper.hcdc.agents.pipeline;
 
-import ai.sapper.hcdc.agents.common.CDCDataConverter;
-import ai.sapper.hcdc.agents.common.InvalidTransactionError;
-import ai.sapper.hcdc.agents.common.NameNodeEnv;
-import ai.sapper.hcdc.agents.common.TransactionProcessor;
+import ai.sapper.hcdc.agents.common.*;
 import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.model.*;
@@ -73,7 +70,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
         SchemaEntity schemaEntity = new SchemaEntity();
         schemaEntity.setDomain(message.value().getDomain());
         schemaEntity.setEntity(message.value().getEntityName());
-        registerFile(data.getFile().getPath(), schemaEntity, message.mode(), txId);
+        DFSFileReplicaState rState = registerFile(data.getFile().getPath(), schemaEntity, message.mode(), txId);
     }
 
     private DFSFileReplicaState registerFile(String hdfsPath,
@@ -106,8 +103,17 @@ public class FileTransactionProcessor extends TransactionProcessor {
             rState.setStoragePath(file.directory().pathConfig());
             rState.setLastReplicatedTx(txId);
             rState.setLastReplicationTime(System.currentTimeMillis());
+            if (ProtoBufUtils.update(fileState, rState)) {
+                String path = rState.getSchemaLocation();
+                if (!Strings.isNullOrEmpty(path)) {
+                    SchemaManager schemaManager = NameNodeEnv.get().schemaManager();
+                    path = schemaManager.copySchema(rState.getSchemaLocation(), rState.getEntity());
+                    if (!Strings.isNullOrEmpty(path)) {
+                        rState.setSchemaLocation(path);
+                    }
+                }
+            }
             rState = stateManager().replicaStateHelper().update(rState);
-
             return rState;
         } catch (Exception ex) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
@@ -472,12 +478,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
                 .get(fileState.getId());
-        DFSFile dfsFile = data.getFile();
-        if (dfsFile.hasFileType()) {
-            EFileType ft = EFileType.parse(dfsFile.getFileType());
-            if (ft != EFileType.UNKNOWN)
-                rState.setFileType(ft);
-        }
+
         long startTxId = rState.getLastReplicatedTx();
         if (!fileState.hasError() && rState.canUpdate()) {
             try (HDFSBlockReader reader = new HDFSBlockReader(connection.dfsClient(), rState.getHdfsPath())) {
@@ -493,13 +494,6 @@ public class FileTransactionProcessor extends TransactionProcessor {
                 CDCDataConverter converter = new CDCDataConverter()
                         .withFileSystem(fs)
                         .withSchemaManager(schemaManager);
-                Schema schema = schemaManager.get(dfsFile.getSchemaLocation());
-                if (schema != null) {
-                    String path = schemaManager.checkAndSave(schema, rState.getEntity());
-                    if (!Strings.isNullOrEmpty(path)) {
-                        rState.setSchemaLocation(path);
-                    }
-                }
                 List<DFSBlock> blocks = data.getBlocksList();
                 if (!blocks.isEmpty()) {
                     for (DFSBlock block : blocks) {
@@ -557,7 +551,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
                                 String.format("Error marking Snapshot Done. [TXID=%d]", txId));
                     }
                 }
-                schema = schemaManager.get(rState.getEntity());
+                Schema schema = schemaManager.get(rState.getEntity());
                 if (schema != null) {
                     String path = schemaManager.schemaPath(rState.getEntity());
                     if (!Strings.isNullOrEmpty(path)) {

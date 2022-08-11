@@ -67,7 +67,11 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                         data.getBlockSize(),
                         EFileState.New,
                         data.getTransaction().getTransactionId());
-        ProtoBufUtils.update(fileState, data.getFile());
+        if (ProtoBufUtils.update(fileState, data.getFile())) {
+            fileState = stateManager()
+                    .fileStateHelper()
+                    .update(fileState);
+        }
         List<DFSBlock> blocks = data.getBlocksList();
         if (!blocks.isEmpty()) {
             long prevBlockId = -1;
@@ -85,7 +89,10 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                 prevBlockId = block.getBlockId();
             }
         }
-
+        fileState.setState(EFileState.Updating);
+        fileState = stateManager()
+                .fileStateHelper()
+                .update(fileState);
         sender.send(message);
     }
 
@@ -114,7 +121,11 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                         data.getBlockSize(),
                         EFileState.New,
                         data.getTransaction().getTransactionId());
-        ProtoBufUtils.update(fileState, data.getFile());
+        if (ProtoBufUtils.update(fileState, data.getFile())) {
+            fileState = stateManager()
+                    .fileStateHelper()
+                    .update(fileState);
+        }
         List<DFSBlock> blocks = data.getBlocksList();
         if (!blocks.isEmpty()) {
             long prevBlockId = -1;
@@ -158,10 +169,12 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                     message.id(), message.mode().name()));
             return;
         }
+
+        ProtoBufUtils.update(fileState, data.getFile());
+        fileState.setState(EFileState.Updating);
         fileState = stateManager()
                 .fileStateHelper()
-                .updateState(fileState.getHdfsFilePath(), EFileState.Updating);
-        ProtoBufUtils.update(fileState, data.getFile());
+                .update(fileState);
         sender.send(message);
     }
 
@@ -219,7 +232,6 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                     message.id(), message.mode().name()));
             return;
         }
-        ProtoBufUtils.update(fileState, data.getFile());
         long lastBlockId = -1;
         if (data.hasPenultimateBlock()) {
             lastBlockId = data.getPenultimateBlock().getBlockId();
@@ -261,7 +273,6 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                     message.id(), message.mode().name()));
             return;
         }
-        ProtoBufUtils.update(fileState, data.getFile());
         List<DFSBlock> blocks = data.getBlocksList();
         if (blocks.isEmpty()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
@@ -346,7 +357,7 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                     message.id(), message.mode().name()));
             return;
         }
-        ProtoBufUtils.update(fileState, data.getFile());
+
         List<DFSBlock> blocks = data.getBlocksList();
         if (!blocks.isEmpty()) {
             for (DFSBlock block : blocks) {
@@ -380,13 +391,10 @@ public class CDCTransactionProcessor extends TransactionProcessor {
                 }
             }
         }
-        DFSFileReplicaState rState = stateManager()
-                .replicaStateHelper()
-                .get(fileState.getId());
-
+        fileState.setState(EFileState.Finalized);
         fileState = stateManager()
                 .fileStateHelper()
-                .updateState(fileState.getHdfsFilePath(), EFileState.Finalized);
+                .update(fileState);
         sender.send(message);
     }
 

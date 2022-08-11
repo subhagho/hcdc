@@ -92,6 +92,14 @@ public class SchemaManager {
         }
     }
 
+    public String copySchema(@NonNull String source, @NonNull SchemaEntity schemaEntity) throws Exception {
+        Schema schema = get(source);
+        if (schema != null) {
+            return checkAndSave(schema, schemaEntity);
+        }
+        return null;
+    }
+
     private SchemaVersion nextVersion(Schema schema, Schema current, SchemaVersion version) throws Exception {
         SchemaVersion next = new SchemaVersion(version);
         if (current != null) {
