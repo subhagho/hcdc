@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.common.schema;
 
+import lombok.NonNull;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -9,6 +10,18 @@ import org.apache.avro.io.*;
 import java.io.*;
 
 public class AvroUtils {
+    public static GenericRecord jsonToAvroRecord(@NonNull String json, @NonNull Schema schema) throws IOException {
+        try {
+            DatumReader<GenericRecord> reader = new GenericDatumReader<>(schema);
+            InputStream stream = new ByteArrayInputStream(json.getBytes());
+            DataInputStream din = new DataInputStream(stream);
+            Decoder decoder = DecoderFactory.get().jsonDecoder(schema, din);
+            return reader.read(null, decoder);
+        } catch (Exception ex) {
+            throw new IOException(ex);
+        }
+    }
+
     public static byte[] jsonToAvro(String json, String schemaStr) throws IOException {
         Schema schema = new Schema.Parser().parse(schemaStr);
         return jsonToAvro(json, schema);
