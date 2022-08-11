@@ -89,6 +89,24 @@ public class ChangeDeltaSerDe {
         return message;
     }
 
+    public static MessageObject<String, DFSChangeDelta> update(@NonNull MessageObject<String, DFSChangeDelta> message,
+                                                               @NonNull SchemaEntity schemaEntity,
+                                                               @NonNull MessageObject.MessageMode mode) throws Exception {
+        DFSChangeDelta delta = message.value();
+        delta = delta.toBuilder()
+                .setEntityName(schemaEntity.getEntity())
+                .setDomain(schemaEntity.getDomain())
+                .build();
+        MessageObject<String, DFSChangeDelta> m = new KafkaMessage<>();
+        m.id(message.id());
+        m.correlationId(message.correlationId());
+        m.mode(mode);
+        m.key(message.key());
+        m.value(delta);
+
+        return m;
+    }
+
     public static String create(@NonNull String namespace,
                                 @NonNull DFSChangeData data,
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {

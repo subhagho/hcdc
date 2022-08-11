@@ -70,7 +70,12 @@ public class FileTransactionProcessor extends TransactionProcessor {
         SchemaEntity schemaEntity = new SchemaEntity();
         schemaEntity.setDomain(message.value().getDomain());
         schemaEntity.setEntity(message.value().getEntityName());
-        DFSFileReplicaState rState = registerFile(data.getFile().getPath(), schemaEntity, message.mode(), txId);
+        if (Strings.isNullOrEmpty(schemaEntity.getDomain()) || Strings.isNullOrEmpty(schemaEntity.getEntity())) {
+            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    data.getFile().getPath(),
+                    String.format("Invalid Schema Entity: domain or entity is NULL. [path=%s]", data.getFile().getPath()));
+        }
+        registerFile(data.getFile().getPath(), schemaEntity, message.mode(), txId);
     }
 
     private DFSFileReplicaState registerFile(String hdfsPath,
