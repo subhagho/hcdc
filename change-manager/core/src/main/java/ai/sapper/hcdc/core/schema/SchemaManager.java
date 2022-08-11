@@ -5,6 +5,7 @@ import ai.sapper.hcdc.common.model.SchemaEntity;
 import ai.sapper.hcdc.common.model.services.PathOrSchema;
 import ai.sapper.hcdc.common.model.services.PathWithSchema;
 import ai.sapper.hcdc.common.schema.SchemaVersion;
+import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.DistributedLock;
 import ai.sapper.hcdc.core.connections.ConnectionManager;
@@ -90,6 +91,11 @@ public class SchemaManager {
             }
             String schemaStr = schema.toString(false);
             client.setData().forPath(path, schemaStr.getBytes(StandardCharsets.UTF_8));
+
+            String p = getZkPath(schemaEntity);
+            String json = JSONUtils.asString(version, SchemaVersion.class);
+            client.setData().forPath(p, json.getBytes(StandardCharsets.UTF_8));
+
             return path;
         } finally {
             lock.unlock();
@@ -183,38 +189,41 @@ public class SchemaManager {
         return null;
     }
 
+    private Schema get(@NonNull String path, SchemaVersion version) throws Exception {
+        CuratorFramework client = zkConnection().client();
+        path = PathUtils.formatZkPath(String.format("%s/%s", path, version.path()));
+        if (client.checkExists().forPath(path) != null) {
+            byte[] data = client.getData().forPath(path);
+            if (data != null && data.length > 0) {
+                String schemaStr = new String(data, StandardCharsets.UTF_8);
+                return new Schema.Parser().parse(schemaStr);
+            }
+        }
+        return null;
+    }
+
     private SchemaVersion currentVersion(SchemaEntity schemaEntity) throws Exception {
         CuratorFramework client = zkConnection().client();
         SchemaVersion version = new SchemaVersion();
         String path = getZkPath(schemaEntity);
         if (client.checkExists().forPath(path) != null) {
-            int majV = 0;
-            int minV = 1;
-            List<String> mjC = client.getChildren().forPath(path);
-            if (mjC != null && !mjC.isEmpty()) {
-                for (String v : mjC) {
-                    int ii = Integer.parseInt(v);
-                    if (ii > majV) {
-                        majV = ii;
-                    }
-                }
-                path = String.format("%s/%d", path, majV);
-                if (client.checkExists().forPath(path) != null) {
-                    List<String> mnC = client.getChildren().forPath(path);
-                    if (mnC != null && !mnC.isEmpty()) {
-                        for (String v : mnC) {
-                            int ii = Integer.parseInt(v);
-                            if (ii > minV) {
-                                minV = ii;
-                            }
-                        }
-                    }
-                }
+            byte[] data = client.getData().forPath(path);
+            if (data != null && data.length > 0) {
+                version = JSONUtils.read(data, SchemaVersion.class);
             }
-            version.setMajorVersion(majV);
-            version.setMinorVersion(minV);
         }
         return version;
+    }
+
+    private SchemaVersion currentVersion(String path) throws Exception {
+        CuratorFramework client = zkConnection().client();
+        if (client.checkExists().forPath(path) != null) {
+            byte[] data = client.getData().forPath(path);
+            if (data != null && data.length > 0) {
+                return JSONUtils.read(data, SchemaVersion.class);
+            }
+        }
+        return null;
     }
 
     private String getZkPath(SchemaEntity schema) {
@@ -239,16 +248,23 @@ public class SchemaManager {
             List<String> cPaths = client.getChildren().forPath(path);
             if (cPaths != null && !cPaths.isEmpty()) {
                 for (String cp : cPaths) {
+                    boolean added = false;
                     String zkPath = String.format("%s/%s", path, cp);
-                    Schema schema = get(zkPath);
-                    if (schema != null) {
-                        PathWithSchema ws = new PathWithSchema();
-                        ws.setDomain(domain);
-                        ws.setNode(cp);
-                        ws.setZkPath(zkPath);
-                        ws.setSchemaStr(schema.toString(true));
-                        paths.add(ws);
-                    } else {
+                    SchemaVersion version = currentVersion(zkPath);
+                    if (version != null) {
+                        Schema schema = get(zkPath, version);
+                        if (schema != null) {
+                            PathWithSchema ws = new PathWithSchema();
+                            ws.setDomain(domain);
+                            ws.setNode(cp);
+                            ws.setZkPath(zkPath);
+                            ws.setSchemaStr(schema.toString(false));
+                            ws.setVersion(JSONUtils.asString(version, SchemaVersion.class));
+                            paths.add(ws);
+                            added = true;
+                        }
+                    }
+                    if (!added) {
                         PathOrSchema ps = new PathOrSchema();
                         ps.setDomain(domain);
                         ps.setNode(cp);
@@ -269,16 +285,23 @@ public class SchemaManager {
             List<String> cPaths = client.getChildren().forPath(path);
             if (cPaths != null && !cPaths.isEmpty()) {
                 for (String cp : cPaths) {
+                    boolean added = false;
                     String zkPath = String.format("%s/%s", path, cp);
-                    Schema schema = get(zkPath);
-                    if (schema != null) {
-                        PathWithSchema ws = new PathWithSchema();
-                        ws.setDomain(domain);
-                        ws.setNode(cp);
-                        ws.setZkPath(zkPath);
-                        ws.setSchemaStr(schema.toString(true));
-                        paths.add(ws);
-                    } else {
+                    SchemaVersion version = currentVersion(zkPath);
+                    if (version != null) {
+                        Schema schema = get(zkPath, version);
+                        if (schema != null) {
+                            PathWithSchema ws = new PathWithSchema();
+                            ws.setDomain(domain);
+                            ws.setNode(cp);
+                            ws.setZkPath(zkPath);
+                            ws.setSchemaStr(schema.toString(false));
+                            ws.setVersion(JSONUtils.asString(version, SchemaVersion.class));
+                            paths.add(ws);
+                            added = true;
+                        }
+                    }
+                    if (!added) {
                         PathOrSchema ps = new PathOrSchema();
                         ps.setDomain(domain);
                         ps.setNode(cp);
