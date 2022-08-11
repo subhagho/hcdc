@@ -20,6 +20,10 @@
                 <connection>zk-state-connection</connection>
                 <hdfs>source-hdfs-ha</hdfs>
             </domain>
+            <schema>
+                <basePath>/hcdc/registry/schemas</basePath>
+                <connection>zk-state-connection</connection>
+            </schema>
         </managers>
         <useSSL>false</useSSL>
         <locks>

@@ -7,7 +7,6 @@ import ai.sapper.hcdc.core.model.DFSBlockState;
 import ai.sapper.hcdc.core.model.DFSFileState;
 import ai.sapper.hcdc.core.model.EFileType;
 import ai.sapper.hcdc.core.model.HDFSBlockData;
-import ai.sapper.hcdc.core.schema.SchemaManager;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import org.apache.avro.Schema;
@@ -68,7 +67,10 @@ public class ParquetConverter extends FormatConverter {
         conf.set(AvroReadSupport.READ_INT96_AS_FIXED, "true");
         ParquetReader<GenericRecord> reader = new AvroParquetReader(conf, new Path(source.toURI()));
         try {
-            Schema schema = getSchema(source, fileState, schemaEntity);
+            Schema schema = hasSchema(fileState, schemaEntity);
+            if (schema == null) {
+                schema = parseSchema(source, fileState, schemaEntity);
+            }
             final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema);
             try (DataFileWriter<GenericRecord> fos = new DataFileWriter<>(writer)) {
                 fos.create(schema, output);
@@ -84,24 +86,19 @@ public class ParquetConverter extends FormatConverter {
         }
     }
 
-    private Schema getSchema(File file,
-                             DFSFileState fileState,
-                             SchemaEntity schemaEntity) throws Exception {
-        Schema schema = null;
-        if (!Strings.isNullOrEmpty(fileState.getSchemaLocation())) {
-            schema = schemaManager().get(fileState.getSchemaLocation());
+    private Schema parseSchema(File file,
+                               DFSFileState fileState,
+                               SchemaEntity schemaEntity) throws Exception {
+
+        Configuration conf = new Configuration();
+        conf.set(AvroReadSupport.READ_INT96_AS_FIXED, "true");
+        try (ParquetFileReader reader =
+                     ParquetFileReader.open(HadoopInputFile.fromPath(new Path(file.toURI()), conf))) {
+            MessageType pschema = reader.getFooter().getFileMetaData().getSchema();
+            Schema schema = new AvroSchemaConverter(conf).convert(pschema);
+            schemaManager().checkAndSave(schema, schemaEntity);
+            return schema;
         }
-        if (schema == null) {
-            Configuration conf = new Configuration();
-            conf.set(AvroReadSupport.READ_INT96_AS_FIXED, "true");
-            try (ParquetFileReader reader =
-                         ParquetFileReader.open(HadoopInputFile.fromPath(new Path(file.toURI()), conf))) {
-                MessageType pschema = reader.getFooter().getFileMetaData().getSchema();
-                schema = new AvroSchemaConverter(conf).convert(pschema);
-                schemaManager().checkAndSave(schema, schemaEntity);
-            }
-        }
-        return schema;
     }
 
     /**
@@ -139,6 +136,10 @@ public class ParquetConverter extends FormatConverter {
                                 @NonNull SchemaEntity schemaEntity) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
+            Schema schema = hasSchema(fileState, schemaEntity);
+            if (schema != null) {
+                return schema;
+            }
             DFSBlockState lastBlock = fileState.findLastBlock();
             if (lastBlock != null) {
                 HDFSBlockData data = reader.read(lastBlock.getBlockId(),
@@ -155,7 +156,7 @@ public class ParquetConverter extends FormatConverter {
                     fos.write(data.data().array());
                     fos.flush();
                 }
-                return getSchema(tempf, fileState, schemaEntity);
+                return parseSchema(tempf, fileState, schemaEntity);
             }
             return null;
         } catch (Exception ex) {

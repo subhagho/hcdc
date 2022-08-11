@@ -6,12 +6,11 @@ import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.filters.DomainFilter;
 import ai.sapper.hcdc.common.filters.DomainFilters;
 import ai.sapper.hcdc.common.filters.Filter;
-import ai.sapper.hcdc.common.model.services.BasicResponse;
-import ai.sapper.hcdc.common.model.services.ConfigSource;
-import ai.sapper.hcdc.common.model.services.EResponseState;
-import ai.sapper.hcdc.common.model.services.SnapshotDoneRequest;
+import ai.sapper.hcdc.common.model.services.*;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
+import ai.sapper.hcdc.core.schema.SchemaManager;
 import ai.sapper.hcdc.services.ServiceHelper;
+import com.google.common.base.Strings;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -171,6 +170,41 @@ public class SnapshotService {
         } catch (Throwable t) {
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
                     NameNodeEnv.ENameNEnvState.Error).withError(t),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @RequestMapping(value = "/schema/expand/domain/{domain}", method = RequestMethod.GET)
+    public ResponseEntity<List<PathOrSchema>> expandDomain(@PathVariable("domain") String domain) {
+        try {
+            SchemaManager schemaManager = NameNodeEnv.get().schemaManager();
+            if (schemaManager == null) {
+                throw new Exception("SchemaManager not initialized...");
+            }
+            if (Strings.isNullOrEmpty(domain)
+                    || domain.compareToIgnoreCase("null") == 0) {
+                domain = null;
+            }
+            List<PathOrSchema> paths = schemaManager.domainNodes(domain);
+            return new ResponseEntity<>(paths, HttpStatus.OK);
+        } catch (Throwable t) {
+            return new ResponseEntity<>((List<PathOrSchema>) null,
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @RequestMapping(value = "/schema/expand/path/{domain}", method = RequestMethod.GET)
+    public ResponseEntity<List<PathOrSchema>> expandPath(@PathVariable("domain") String domain,
+                                                         @RequestBody String path) {
+        try {
+            SchemaManager schemaManager = NameNodeEnv.get().schemaManager();
+            if (schemaManager == null) {
+                throw new Exception("SchemaManager not initialized...");
+            }
+            List<PathOrSchema> paths = schemaManager.pathNodes(domain, path);
+            return new ResponseEntity<>(paths, HttpStatus.OK);
+        } catch (Throwable t) {
+            return new ResponseEntity<>((List<PathOrSchema>) null,
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

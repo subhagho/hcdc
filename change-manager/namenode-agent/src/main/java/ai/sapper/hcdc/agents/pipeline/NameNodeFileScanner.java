@@ -130,7 +130,7 @@ public class NameNodeFileScanner {
                 CDCDataConverter converter = new CDCDataConverter()
                         .withHdfsConnection(hdfsConnection)
                         .withSchemaManager(schemaManager);
-                SchemaEntity schemaEntity = new SchemaEntity("default", fileState.getHdfsFilePath());
+                SchemaEntity schemaEntity = new SchemaEntity(SchemaManager.DEFAULT_DOMAIN, fileState.getHdfsFilePath());
                 CDCDataConverter.ExtractSchemaResponse response = converter.extractSchema(fileState, schemaEntity);
                 if (response != null) {
                     if (response.schema() != null) {

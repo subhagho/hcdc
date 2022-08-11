@@ -9,6 +9,7 @@ import lombok.NonNull;
 import lombok.experimental.Accessors;
 import org.apache.avro.Schema;
 import org.apache.hadoop.hdfs.HDFSBlockReader;
+import org.apache.parquet.Strings;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,6 +27,16 @@ public abstract class FormatConverter {
     public FormatConverter withSchemaManager(@NonNull SchemaManager schemaManager) {
         this.schemaManager = schemaManager;
         return this;
+    }
+
+    public Schema hasSchema(DFSFileState fileState, SchemaEntity schemaEntity) throws Exception {
+        Schema schema = schemaManager().get(schemaEntity);
+        if (schema == null) {
+            if (!Strings.isNullOrEmpty(fileState.getSchemaLocation())) {
+                schema = schemaManager().get(fileState.getSchemaLocation());
+            }
+        }
+        return schema;
     }
 
     public abstract boolean canParse(@NonNull String path, EFileType fileType) throws IOException;

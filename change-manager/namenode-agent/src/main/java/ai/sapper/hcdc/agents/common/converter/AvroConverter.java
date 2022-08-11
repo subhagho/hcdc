@@ -8,15 +8,20 @@ import ai.sapper.hcdc.core.model.DFSFileState;
 import ai.sapper.hcdc.core.model.EFileType;
 import ai.sapper.hcdc.core.model.HDFSBlockData;
 import ai.sapper.hcdc.core.schema.SchemaManager;
+import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileReader;
+import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericDatumReader;
+import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumReader;
+import org.apache.avro.io.DatumWriter;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.hdfs.HDFSBlockReader;
 import org.apache.parquet.Strings;
+import org.apache.parquet.avro.AvroSchemaConverter;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -54,7 +59,28 @@ public class AvroConverter extends FormatConverter {
                         @NonNull File output,
                         @NonNull DFSFileState fileState,
                         @NonNull SchemaEntity schemaEntity) throws IOException {
-        return source;
+        Preconditions.checkNotNull(schemaManager());
+        try {
+            Schema schema = hasSchema(fileState, schemaEntity);
+            if (schema == null) {
+                schema = parseSchema(source, fileState, schemaEntity);
+            }
+            final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema);
+            try (DataFileWriter<GenericRecord> fos = new DataFileWriter<>(writer)) {
+                fos.create(schema, output);
+                GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema);
+                try (DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(source, reader)) {
+                    while (dataFileReader.hasNext()) {
+                        GenericRecord record = dataFileReader.next();
+                        if (record == null) break;
+                        fos.append(record);
+                    }
+                }
+            }
+            return output;
+        } catch (Exception ex) {
+            throw new IOException(ex);
+        }
     }
 
     /**
@@ -81,6 +107,17 @@ public class AvroConverter extends FormatConverter {
         return false;
     }
 
+    private Schema parseSchema(File file,
+                               DFSFileState fileState,
+                               SchemaEntity schemaEntity) throws Exception {
+        DatumReader<GenericRecord> datumReader = new GenericDatumReader<>();
+        try (DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(file, datumReader)) {
+            Schema schema = dataFileReader.getSchema();
+            schemaManager().checkAndSave(schema, schemaEntity);
+            return schema;
+        }
+    }
+
     /**
      * @param reader
      * @return
@@ -90,7 +127,12 @@ public class AvroConverter extends FormatConverter {
     public Schema extractSchema(@NonNull HDFSBlockReader reader,
                                 @NonNull DFSFileState fileState,
                                 @NonNull SchemaEntity schemaEntity) throws IOException {
+        Preconditions.checkNotNull(schemaManager());
         try {
+            Schema schema = hasSchema(fileState, schemaEntity);
+            if (schema != null) {
+                return schema;
+            }
             DFSBlockState firstBlock = fileState.findFirstBlock();
             if (firstBlock != null) {
                 HDFSBlockData data = reader.read(firstBlock.getBlockId(),
@@ -102,15 +144,12 @@ public class AvroConverter extends FormatConverter {
                     throw new IOException(String.format("Error reading block from HDFS. [path=%s][block ID=%d]",
                             fileState.getHdfsFilePath(), firstBlock.getBlockId()));
                 }
-                File tempf = PathUtils.getTempFileWithExt("parquet");
+                File tempf = PathUtils.getTempFileWithExt("avro");
                 try (FileOutputStream fos = new FileOutputStream(tempf)) {
                     fos.write(data.data().array());
                     fos.flush();
                 }
-                DatumReader<GenericRecord> datumReader = new GenericDatumReader<>();
-                try (DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(tempf, datumReader)) {
-                    return dataFileReader.getSchema();
-                }
+                return parseSchema(tempf, fileState, schemaEntity);
             }
             return null;
         } catch (Exception ex) {

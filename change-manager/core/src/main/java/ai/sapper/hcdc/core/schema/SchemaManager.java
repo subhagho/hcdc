@@ -2,6 +2,8 @@ package ai.sapper.hcdc.core.schema;
 
 import ai.sapper.hcdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.SchemaEntity;
+import ai.sapper.hcdc.common.model.services.PathOrSchema;
+import ai.sapper.hcdc.common.model.services.PathWithSchema;
 import ai.sapper.hcdc.common.schema.SchemaVersion;
 import ai.sapper.hcdc.common.utils.PathUtils;
 import ai.sapper.hcdc.core.DistributedLock;
@@ -19,11 +21,13 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.log4j.Level;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
 @Accessors(fluent = true)
 public class SchemaManager {
+    public static final String DEFAULT_DOMAIN = "default";
     private SchemaManagerConfig config;
     private ZookeeperConnection zkConnection;
     private DistributedLock lock;
@@ -222,6 +226,70 @@ public class SchemaManager {
         String path = String.format("%s/%s/%s/%s",
                 config.basePath, schema.getDomain(), schema.getEntity(), version.path());
         return PathUtils.formatZkPath(path);
+    }
+
+    public List<PathOrSchema> domainNodes(String domain) throws Exception {
+        if (Strings.isNullOrEmpty(domain)) {
+            domain = DEFAULT_DOMAIN;
+        }
+        String path = String.format("%s/%s", config.basePath, domain);
+        CuratorFramework client = zkConnection().client();
+        if (client.checkExists().forPath(path) != null) {
+            List<PathOrSchema> paths = new ArrayList<>();
+            List<String> cPaths = client.getChildren().forPath(path);
+            if (cPaths != null && !cPaths.isEmpty()) {
+                for (String cp : cPaths) {
+                    String zkPath = String.format("%s/%s", path, cp);
+                    Schema schema = get(zkPath);
+                    if (schema != null) {
+                        PathWithSchema ws = new PathWithSchema();
+                        ws.setDomain(domain);
+                        ws.setNode(cp);
+                        ws.setZkPath(zkPath);
+                        ws.setSchemaStr(schema.toString(true));
+                        paths.add(ws);
+                    } else {
+                        PathOrSchema ps = new PathOrSchema();
+                        ps.setDomain(domain);
+                        ps.setNode(cp);
+                        ps.setZkPath(zkPath);
+                        paths.add(ps);
+                    }
+                }
+            }
+            if (!paths.isEmpty()) return paths;
+        }
+        return null;
+    }
+
+    public List<PathOrSchema> pathNodes(@NonNull String domain, @NonNull String path) throws Exception {
+        CuratorFramework client = zkConnection().client();
+        if (client.checkExists().forPath(path) != null) {
+            List<PathOrSchema> paths = new ArrayList<>();
+            List<String> cPaths = client.getChildren().forPath(path);
+            if (cPaths != null && !cPaths.isEmpty()) {
+                for (String cp : cPaths) {
+                    String zkPath = String.format("%s/%s", path, cp);
+                    Schema schema = get(zkPath);
+                    if (schema != null) {
+                        PathWithSchema ws = new PathWithSchema();
+                        ws.setDomain(domain);
+                        ws.setNode(cp);
+                        ws.setZkPath(zkPath);
+                        ws.setSchemaStr(schema.toString(true));
+                        paths.add(ws);
+                    } else {
+                        PathOrSchema ps = new PathOrSchema();
+                        ps.setDomain(domain);
+                        ps.setNode(cp);
+                        ps.setZkPath(zkPath);
+                        paths.add(ps);
+                    }
+                }
+            }
+            if (!paths.isEmpty()) return paths;
+        }
+        return null;
     }
 
     @Getter
