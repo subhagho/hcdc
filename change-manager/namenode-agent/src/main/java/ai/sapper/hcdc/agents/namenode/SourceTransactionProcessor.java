@@ -200,6 +200,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                     .setTransaction(renameFile.getTransaction())
                     .setSrcFile(srcF)
                     .setDestFile(destF)
+                    .setLength(fileState.getDataSize())
                     .build();
 
             MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
