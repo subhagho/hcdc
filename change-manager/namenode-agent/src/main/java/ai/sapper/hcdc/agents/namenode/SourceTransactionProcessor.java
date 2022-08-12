@@ -159,6 +159,59 @@ public class SourceTransactionProcessor extends TransactionProcessor {
         }
     }
 
+    private void checkDirectoryRename(DFSRenameFile data,
+                                      MessageObject<String, DFSChangeDelta> message,
+                                      long txId) throws Exception {
+        List<DFSFileState> files = stateManager()
+                .fileStateHelper()
+                .listFiles(data.getSrcFile().getPath());
+        if (files != null && !files.isEmpty()) {
+            for (DFSFileState file : files) {
+                if (!file.checkDeleted()) {
+                    updateFileRecursiveRename(file,
+                            data.getSrcFile().getPath(),
+                            data.getDestFile().getPath(),
+                            message, data, txId);
+                }
+            }
+        }
+        DFSFileState fs = stateManager()
+                .fileStateHelper()
+                .delete(data.getSrcFile().getPath());
+        sendIgnoreTx(message, data);
+    }
+
+    private void updateFileRecursiveRename(DFSFileState fileState,
+                                           String srcDir,
+                                           String destDir,
+                                           MessageObject<String, DFSChangeDelta> message,
+                                           DFSRenameFile renameFile,
+                                           long txId) throws Exception {
+        if (fileState.checkDeleted()) return;
+        if (!fileState.hasError()) {
+            String destFile = fileState.getHdfsFilePath().replace(srcDir, destDir);
+            DFSFile destF = DFSFile.newBuilder()
+                    .setFileType(fileState.getFileType().name())
+                    .setPath(destFile)
+                    .setInodeId(fileState.getId())
+                    .build();
+            DFSFile srcF = ProtoBufUtils.build(fileState);
+            DFSRenameFile data = DFSRenameFile.newBuilder()
+                    .setTransaction(renameFile.getTransaction())
+                    .setSrcFile(srcF)
+                    .setDestFile(destF)
+                    .build();
+
+            MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
+                    data,
+                    DFSRenameFile.class,
+                    null,
+                    null,
+                    MessageObject.MessageMode.Backlog);
+            processRenameFileTxMessage(data, m, txId);
+        }
+    }
+
     private void checkDirectoryDelete(DFSDeleteFile data,
                                       MessageObject<String, DFSChangeDelta> message,
                                       long txId) throws Exception {
@@ -574,11 +627,23 @@ public class SourceTransactionProcessor extends TransactionProcessor {
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(data.getSrcFile().getPath());
-        if (fileState == null || !fileState.canProcess()) {
+        if (fileState == null) {
+            if (!stateManager()
+                    .fileStateHelper()
+                    .checkIsDirectoryPath(data.getSrcFile().getPath())) {
+                throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                        data.getSrcFile().getPath(),
+                        String.format("NameNode Replica out of sync, missing file state. [path=%s]",
+                                data.getSrcFile().getPath()));
+            }
+            checkDirectoryRename(data, message, txId);
+            return;
+        }
+        if (!fileState.canProcess()) {
             throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
                     data.getSrcFile().getPath(),
-                    String.format("NameNode Replica out of sync, missing file state. [path=%s]",
-                            data.getSrcFile().getPath()));
+                    String.format("NameNode Replica: File state is invalid. [path=%s][state=%s]",
+                            data.getSrcFile().getPath(), fileState.getState().name()));
         }
         // Delete Existing file section
         DFSDeleteFile dms = DFSDeleteFile.newBuilder()
@@ -646,106 +711,6 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 MessageObject.MessageMode.Backlog);
         processCloseFileTxMessage(cms, cm, txId);
     }
-
-    /**
-     * @param data
-     * @param message
-     * @param txId
-     * @throws Exception
-     */
-    /*
-    @Override
-    public void processRenameFileTxMessage(DFSRenameFile data,
-                                           MessageObject<String, DFSChangeDelta> message,
-                                           long txId) throws Exception {
-        DFSFileState fileState = stateManager()
-                .fileStateHelper()
-                .get(data.getSrcFile().getPath());
-        if (fileState == null || !fileState.canProcess()) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                    data.getSrcFile().getPath(),
-                    String.format("NameNode Replica out of sync, missing file state. [path=%s]",
-                            data.getSrcFile().getPath()));
-        }
-        fileState = stateManager()
-                .fileStateHelper()
-                .markDeleted(data.getSrcFile().getPath());
-        SchemaEntity schemaEntity = isRegistered(fileState.getHdfsFilePath());
-        if (schemaEntity != null) {
-            DFSDeleteFile.Builder builder = DFSDeleteFile.newBuilder();
-            DFSTransaction txb = DFSTransaction.newBuilder()
-                    .setTransactionId(txId)
-                    .setTimestamp(System.currentTimeMillis())
-                    .setOp(DFSTransaction.Operation.DELETE)
-                    .build();
-            DFSFile f = ProtoBufUtils.build(fileState);
-            builder.setTransaction(txb)
-                    .setFile(f)
-                    .setTimestamp(System.currentTimeMillis());
-            MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
-                    builder.build(),
-                    DFSDeleteFile.class,
-                    schemaEntity.getDomain(),
-                    schemaEntity.getEntity(),
-                    MessageObject.MessageMode.New);
-            sender.send(m);
-        }
-        EFileState state = (fileState.getState() == EFileState.Error ? fileState.getState() : EFileState.New);
-        DFSFileState nfs = stateManager()
-                .fileStateHelper()
-                .create(data.getDestFile().getPath(),
-                        fileState.getId(),
-                        fileState.getCreatedTime(),
-                        fileState.getBlockSize(),
-                        state,
-                        txId);
-        nfs.setBlocks(fileState.getBlocks());
-        nfs.setNumBlocks(fileState.getNumBlocks());
-        nfs.setDataSize(fileState.getDataSize());
-        nfs.setUpdatedTime(data.getTransaction().getTimestamp());
-
-        nfs = stateManager()
-                .fileStateHelper()
-                .update(nfs);
-        LOG.debug(String.format("Renaming file: [src=%s][dest=%s]",
-                fileState.getHdfsFilePath(), nfs.getHdfsFilePath()));
-        DFSFileReplicaState rState = stateManager()
-                .replicaStateHelper()
-                .get(fileState.getId());
-        if (rState != null) {
-            stateManager()
-                    .replicaStateHelper()
-                    .delete(rState.getInode());
-        }
-        schemaEntity = isRegistered(nfs.getHdfsFilePath());
-        if (schemaEntity != null) {
-            LOG.debug(String.format("Match found. [path=%s]", nfs.getHdfsFilePath()));
-            rState = stateManager()
-                    .replicaStateHelper()
-                    .create(nfs.getId(), nfs.getHdfsFilePath(), schemaEntity, true);
-            rState.setSnapshotTxId(nfs.getLastTnxId());
-            rState.setSnapshotTime(System.currentTimeMillis());
-            rState.setSnapshotReady(true);
-
-            rState = stateManager().replicaStateHelper().update(rState);
-            DFSCloseFile closeFile = HDFSSnapshotProcessor.generateSnapshot(nfs, true, txId);
-            MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
-                    closeFile,
-                    DFSCloseFile.class,
-                    rState.getEntity().getDomain(),
-                    rState.getEntity().getEntity(),
-                    MessageObject.MessageMode.Snapshot);
-            sender.send(m);
-        } else if (nfs.hasError()) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
-                    nfs.getHdfsFilePath(),
-                    String.format("FileSystem sync error. [path=%s]", nfs.getHdfsFilePath()));
-        } else {
-            LOG.debug(String.format("No match found. [path=%s]", nfs.getHdfsFilePath()));
-            sendIgnoreTx(message, data);
-        }
-    }
-    */
 
     /**
      * @param data
