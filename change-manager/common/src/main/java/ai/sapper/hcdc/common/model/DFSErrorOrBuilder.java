@@ -44,4 +44,18 @@ public interface DFSErrorOrBuilder
    */
   com.google.protobuf.ByteString
       getMessageBytes();
+
+  // optional .ai_sapper_hcdc_common_model.DFSFile file = 4;
+  /**
+   * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 4;</code>
+   */
+  boolean hasFile();
+  /**
+   * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 4;</code>
+   */
+  ai.sapper.hcdc.common.model.DFSFile getFile();
+  /**
+   * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 4;</code>
+   */
+  ai.sapper.hcdc.common.model.DFSFileOrBuilder getFileOrBuilder();
 }

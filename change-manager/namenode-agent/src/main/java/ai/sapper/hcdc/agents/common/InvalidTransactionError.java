@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.hcdc.common.model.DFSError;
+import ai.sapper.hcdc.common.model.DFSFile;
 import lombok.Getter;
 
 import java.security.PrivilegedActionException;
@@ -10,6 +11,12 @@ public class InvalidTransactionError extends Exception {
     private static final String __PREFIX = "Invalid DFS Transaction: %s";
     private final String hdfsPath;
     private final DFSError.ErrorCode errorCode;
+    private DFSFile file;
+
+    public InvalidTransactionError withFile(DFSFile file) {
+        this.file = file;
+        return this;
+    }
 
     /**
      * Constructs a new exception with the specified detail message.  The
@@ -20,7 +27,7 @@ public class InvalidTransactionError extends Exception {
      *                later retrieval by the {@link #getMessage()} method.
      */
     public InvalidTransactionError(DFSError.ErrorCode errorCode, String hdfsPath, String message) {
-        super( String.format(__PREFIX, message));
+        super(String.format(__PREFIX, message));
         this.hdfsPath = hdfsPath;
         this.errorCode = errorCode;
     }

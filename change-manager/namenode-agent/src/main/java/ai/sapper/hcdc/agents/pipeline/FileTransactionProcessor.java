@@ -667,6 +667,26 @@ public class FileTransactionProcessor extends TransactionProcessor {
     public void processErrorTxMessage(DFSError data,
                                       MessageObject<String, DFSChangeDelta> message,
                                       long txId) throws Exception {
+        DFSTransaction tnx = extractTransaction(data);
+        if (data.hasFile()) {
+            DFSFile df = data.getFile();
+            DFSFileState fileState = stateManager()
+                    .fileStateHelper()
+                    .get(df.getPath());
+            if (fileState != null) {
+                DFSFileReplicaState rState = stateManager()
+                        .replicaStateHelper()
+                        .get(fileState.getId());
+                if (rState != null) {
+                    rState.setState(EFileState.Error);
+                    if (tnx != null)
+                        rState.setLastReplicatedTx(tnx.getTransactionId());
+                    rState.setLastReplicationTime(System.currentTimeMillis());
+
+                    stateManager().replicaStateHelper().update(rState);
+                }
+            }
+        }
         LOG.error(String.format("Received Error Message: %s. [TX=%d][ERROR CODE=%s]", data.getMessage(), txId, data.getCode().name()));
     }
 
@@ -677,9 +697,9 @@ public class FileTransactionProcessor extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processErrorMessage(MessageObject<String, DFSChangeDelta> message,
-                                    Object data,
-                                    InvalidTransactionError te) throws Exception {
+    public void handleError(MessageObject<String, DFSChangeDelta> message,
+                            Object data,
+                            InvalidTransactionError te) throws Exception {
         if (!Strings.isNullOrEmpty(te.getHdfsPath())) {
             DFSFileState fileState = stateManager()
                     .fileStateHelper()
@@ -696,7 +716,8 @@ public class FileTransactionProcessor extends TransactionProcessor {
                     message.id(),
                     tnx,
                     te.getErrorCode(),
-                    te.getMessage());
+                    te.getMessage(),
+                    te.getFile());
             sender.send(m);
         }
     }
