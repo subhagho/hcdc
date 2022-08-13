@@ -51,7 +51,27 @@ public class SourceTransactionProcessor extends TransactionProcessor {
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(data.getFile().getPath());
-        if (fileState != null) {
+        if (data.getOverwrite()) {
+            if (fileState == null) {
+                throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                        data.getFile().getPath(),
+                        String.format("NameNode out of sync. Overwrite called, but file not present. [path=%s]",
+                                data.getFile().getPath()))
+                        .withFile(data.getFile());
+            }
+            DFSDeleteFile delF = DFSDeleteFile.newBuilder()
+                    .setTransaction(data.getTransaction())
+                    .setFile(data.getFile())
+                    .setTimestamp(System.currentTimeMillis())
+                    .build();
+            MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
+                    delF,
+                    DFSDeleteFile.class,
+                    message.value().getDomain(),
+                    message.value().getEntity(),
+                    MessageObject.MessageMode.Backlog);
+            processDeleteFileTxMessage(delF, m, txId);
+        } else if (fileState != null) {
             if (fileState.getLastTnxId() >= txId) {
                 LOG.warn(String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
                         message.id(), message.mode().name()));
@@ -449,7 +469,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                     fileState.getHdfsFilePath(),
                     String.format("File State out of sync, no block to update. [path=%s]",
                             fileState.getHdfsFilePath()))
-                    .withFile(data.getFile()) ;
+                    .withFile(data.getFile());
         }
         for (DFSBlock block : blocks) {
             DFSBlockState bs = fileState.get(block.getBlockId());

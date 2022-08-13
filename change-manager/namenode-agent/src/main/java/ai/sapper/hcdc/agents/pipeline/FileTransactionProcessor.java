@@ -700,17 +700,25 @@ public class FileTransactionProcessor extends TransactionProcessor {
     public void handleError(MessageObject<String, DFSChangeDelta> message,
                             Object data,
                             InvalidTransactionError te) throws Exception {
+        DFSTransaction tnx = extractTransaction(data);
         if (!Strings.isNullOrEmpty(te.getHdfsPath())) {
             DFSFileState fileState = stateManager()
                     .fileStateHelper()
                     .get(te.getHdfsPath());
             if (fileState != null) {
-                stateManager()
-                        .fileStateHelper()
-                        .updateState(fileState.getHdfsFilePath(), EFileState.Error);
+                DFSFileReplicaState rState = stateManager()
+                        .replicaStateHelper()
+                        .get(fileState.getId());
+                if (rState != null) {
+                    rState.setState(EFileState.Error);
+                    if (tnx != null)
+                        rState.setLastReplicatedTx(tnx.getTransactionId());
+                    rState.setLastReplicationTime(System.currentTimeMillis());
+
+                    stateManager().replicaStateHelper().update(rState);
+                }
             }
         }
-        DFSTransaction tnx = extractTransaction(data);
         if (tnx != null) {
             MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.createErrorTx(message.value().getNamespace(),
                     message.id(),
