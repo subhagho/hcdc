@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <configuration>
     <connections>
-        <connection>
+        <!--connection>
             <type>ai.sapper.hcdc.core.connections.HdfsConnection</type>
             <hdfs>
                 <name>test-hdfs</name>
@@ -32,12 +32,13 @@
                 </security>
                 <enableAdmin>true</enableAdmin>
             </hdfs_ha>
-        </connection>
+        </connection -->
         <connection>
             <type>ai.sapper.hcdc.core.connections.ZookeeperConnection</type>
             <zookeeper>
                 <name>test-zk</name>
-                <connectionString>192.168.0.5:2181,192.168.0.4:2181</connectionString>
+                <!--connectionString>192.168.0.5:2181,192.168.0.4:2181</connectionString -->
+                <connectionString>localhost:2181</connectionString>
                 <retry>
                     <interval>1500</interval>
                     <retries>5</retries>
@@ -45,7 +46,7 @@
                 <connectionTimeout>10000</connectionTimeout>
             </zookeeper>
         </connection>
-        <connection>
+        <!--connection>
             <type>ai.sapper.hcdc.core.connections.WebServiceConnection</type>
             <service>
                 <web>
@@ -57,7 +58,7 @@
                     </paths>
                 </web>
             </service>
-        </connection>
+        </connection-->
         <connection>
             <type>ai.sapper.hcdc.core.connections.impl.BasicKafkaProducer</type>
             <kafka>

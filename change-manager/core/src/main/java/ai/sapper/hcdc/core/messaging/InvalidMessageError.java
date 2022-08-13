@@ -1,5 +1,7 @@
 package ai.sapper.hcdc.core.messaging;
 
+import ai.sapper.hcdc.common.model.DFSFile;
+
 import java.security.PrivilegedActionException;
 
 public class InvalidMessageError extends Exception{

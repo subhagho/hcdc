@@ -83,6 +83,19 @@ public  final class DFSError extends
             message_ = input.readBytes();
             break;
           }
+          case 34: {
+            ai.sapper.hcdc.common.model.DFSFile.Builder subBuilder = null;
+            if (((bitField0_ & 0x00000008) == 0x00000008)) {
+              subBuilder = file_.toBuilder();
+            }
+            file_ = input.readMessage(ai.sapper.hcdc.common.model.DFSFile.PARSER, extensionRegistry);
+            if (subBuilder != null) {
+              subBuilder.mergeFrom(file_);
+              file_ = subBuilder.buildPartial();
+            }
+            bitField0_ |= 0x00000008;
+            break;
+          }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -286,10 +299,33 @@ public  final class DFSError extends
     }
   }
 
+  // optional .ai_sapper_hcdc_common_model.DFSFile file = 4;
+  public static final int FILE_FIELD_NUMBER = 4;
+  private ai.sapper.hcdc.common.model.DFSFile file_;
+  /**
+   * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 4;</code>
+   */
+  public boolean hasFile() {
+    return ((bitField0_ & 0x00000008) == 0x00000008);
+  }
+  /**
+   * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 4;</code>
+   */
+  public ai.sapper.hcdc.common.model.DFSFile getFile() {
+    return file_;
+  }
+  /**
+   * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 4;</code>
+   */
+  public ai.sapper.hcdc.common.model.DFSFileOrBuilder getFileOrBuilder() {
+    return file_;
+  }
+
   private void initFields() {
     transaction_ = ai.sapper.hcdc.common.model.DFSTransaction.getDefaultInstance();
     code_ = ai.sapper.hcdc.common.model.DFSError.ErrorCode.SYNC_STOPPED;
     message_ = "";
+    file_ = ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance();
   }
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
@@ -312,6 +348,12 @@ public  final class DFSError extends
       memoizedIsInitialized = 0;
       return false;
     }
+    if (hasFile()) {
+      if (!getFile().isInitialized()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+    }
     memoizedIsInitialized = 1;
     return true;
   }
@@ -327,6 +369,9 @@ public  final class DFSError extends
     }
     if (((bitField0_ & 0x00000004) == 0x00000004)) {
       output.writeBytes(3, getMessageBytes());
+    }
+    if (((bitField0_ & 0x00000008) == 0x00000008)) {
+      output.writeMessage(4, file_);
     }
     getUnknownFields().writeTo(output);
   }
@@ -348,6 +393,10 @@ public  final class DFSError extends
     if (((bitField0_ & 0x00000004) == 0x00000004)) {
       size += com.google.protobuf.CodedOutputStream
         .computeBytesSize(3, getMessageBytes());
+    }
+    if (((bitField0_ & 0x00000008) == 0x00000008)) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(4, file_);
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSerializedSize = size;
@@ -458,6 +507,7 @@ public  final class DFSError extends
     private void maybeForceBuilderInitialization() {
       if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
         getTransactionFieldBuilder();
+        getFileFieldBuilder();
       }
     }
     private static Builder create() {
@@ -476,6 +526,12 @@ public  final class DFSError extends
       bitField0_ = (bitField0_ & ~0x00000002);
       message_ = "";
       bitField0_ = (bitField0_ & ~0x00000004);
+      if (fileBuilder_ == null) {
+        file_ = ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance();
+      } else {
+        fileBuilder_.clear();
+      }
+      bitField0_ = (bitField0_ & ~0x00000008);
       return this;
     }
 
@@ -520,6 +576,14 @@ public  final class DFSError extends
         to_bitField0_ |= 0x00000004;
       }
       result.message_ = message_;
+      if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+        to_bitField0_ |= 0x00000008;
+      }
+      if (fileBuilder_ == null) {
+        result.file_ = file_;
+      } else {
+        result.file_ = fileBuilder_.build();
+      }
       result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
@@ -547,6 +611,9 @@ public  final class DFSError extends
         message_ = other.message_;
         onChanged();
       }
+      if (other.hasFile()) {
+        mergeFile(other.getFile());
+      }
       this.mergeUnknownFields(other.getUnknownFields());
       return this;
     }
@@ -567,6 +634,12 @@ public  final class DFSError extends
       if (!getTransaction().isInitialized()) {
         
         return false;
+      }
+      if (hasFile()) {
+        if (!getFile().isInitialized()) {
+          
+          return false;
+        }
       }
       return true;
     }
@@ -815,6 +888,123 @@ public  final class DFSError extends
       message_ = value;
       onChanged();
       return this;
+    }
+
+    // optional .ai_sapper_hcdc_common_model.DFSFile file = 4;
+    private ai.sapper.hcdc.common.model.DFSFile file_ = ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance();
+    private com.google.protobuf.SingleFieldBuilder<
+        ai.sapper.hcdc.common.model.DFSFile, ai.sapper.hcdc.common.model.DFSFile.Builder, ai.sapper.hcdc.common.model.DFSFileOrBuilder> fileBuilder_;
+    /**
+     * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 4;</code>
+     */
+    public boolean hasFile() {
+      return ((bitField0_ & 0x00000008) == 0x00000008);
+    }
+    /**
+     * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 4;</code>
+     */
+    public ai.sapper.hcdc.common.model.DFSFile getFile() {
+      if (fileBuilder_ == null) {
+        return file_;
+      } else {
+        return fileBuilder_.getMessage();
+      }
+    }
+    /**
+     * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 4;</code>
+     */
+    public Builder setFile(ai.sapper.hcdc.common.model.DFSFile value) {
+      if (fileBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        file_ = value;
+        onChanged();
+      } else {
+        fileBuilder_.setMessage(value);
+      }
+      bitField0_ |= 0x00000008;
+      return this;
+    }
+    /**
+     * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 4;</code>
+     */
+    public Builder setFile(
+        ai.sapper.hcdc.common.model.DFSFile.Builder builderForValue) {
+      if (fileBuilder_ == null) {
+        file_ = builderForValue.build();
+        onChanged();
+      } else {
+        fileBuilder_.setMessage(builderForValue.build());
+      }
+      bitField0_ |= 0x00000008;
+      return this;
+    }
+    /**
+     * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 4;</code>
+     */
+    public Builder mergeFile(ai.sapper.hcdc.common.model.DFSFile value) {
+      if (fileBuilder_ == null) {
+        if (((bitField0_ & 0x00000008) == 0x00000008) &&
+            file_ != ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance()) {
+          file_ =
+            ai.sapper.hcdc.common.model.DFSFile.newBuilder(file_).mergeFrom(value).buildPartial();
+        } else {
+          file_ = value;
+        }
+        onChanged();
+      } else {
+        fileBuilder_.mergeFrom(value);
+      }
+      bitField0_ |= 0x00000008;
+      return this;
+    }
+    /**
+     * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 4;</code>
+     */
+    public Builder clearFile() {
+      if (fileBuilder_ == null) {
+        file_ = ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance();
+        onChanged();
+      } else {
+        fileBuilder_.clear();
+      }
+      bitField0_ = (bitField0_ & ~0x00000008);
+      return this;
+    }
+    /**
+     * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 4;</code>
+     */
+    public ai.sapper.hcdc.common.model.DFSFile.Builder getFileBuilder() {
+      bitField0_ |= 0x00000008;
+      onChanged();
+      return getFileFieldBuilder().getBuilder();
+    }
+    /**
+     * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 4;</code>
+     */
+    public ai.sapper.hcdc.common.model.DFSFileOrBuilder getFileOrBuilder() {
+      if (fileBuilder_ != null) {
+        return fileBuilder_.getMessageOrBuilder();
+      } else {
+        return file_;
+      }
+    }
+    /**
+     * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 4;</code>
+     */
+    private com.google.protobuf.SingleFieldBuilder<
+        ai.sapper.hcdc.common.model.DFSFile, ai.sapper.hcdc.common.model.DFSFile.Builder, ai.sapper.hcdc.common.model.DFSFileOrBuilder> 
+        getFileFieldBuilder() {
+      if (fileBuilder_ == null) {
+        fileBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+            ai.sapper.hcdc.common.model.DFSFile, ai.sapper.hcdc.common.model.DFSFile.Builder, ai.sapper.hcdc.common.model.DFSFileOrBuilder>(
+                file_,
+                getParentForChildren(),
+                isClean());
+        file_ = null;
+      }
+      return fileBuilder_;
     }
 
     // @@protoc_insertion_point(builder_scope:ai_sapper_hcdc_common_model.DFSError)

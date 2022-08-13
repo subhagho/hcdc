@@ -12,11 +12,13 @@ public class ChangeDeltaSerDe {
                                                                           @NonNull String messageId,
                                                                           @NonNull DFSTransaction tnx,
                                                                           @NonNull DFSError.ErrorCode code,
-                                                                          @NonNull String message) throws Exception {
+                                                                          @NonNull String message,
+                                                                          DFSFile file) throws Exception {
         DFSError error = DFSError.newBuilder()
                 .setCode(code)
                 .setMessage(message)
                 .setTransaction(tnx)
+                .setFile(file)
                 .build();
         MessageObject<String, DFSChangeDelta> m = create(namespace, error, DFSError.class, null, null, MessageObject.MessageMode.Error);
         m.correlationId(messageId);

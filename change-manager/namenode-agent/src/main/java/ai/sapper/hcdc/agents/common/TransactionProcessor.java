@@ -1,6 +1,5 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.agents.model.NameNodeTxState;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.core.filters.DomainManager;
@@ -62,7 +61,9 @@ public abstract class TransactionProcessor {
 
     public abstract void processErrorTxMessage(DFSError data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception;
 
-    public abstract void processErrorMessage(MessageObject<String, DFSChangeDelta> message, Object data, InvalidTransactionError te) throws Exception;
+    public abstract void handleError(MessageObject<String, DFSChangeDelta> message,
+                                     Object data,
+                                     InvalidTransactionError te) throws Exception;
 
     public void updateTransaction(long txId,
                                   @NonNull MessageObject<String, DFSChangeDelta> message) throws Exception {
@@ -73,8 +74,8 @@ public abstract class TransactionProcessor {
     }
 
     public boolean checkCloseTxState(@NonNull DFSFileState fileState,
-                                @NonNull MessageObject.MessageMode mode,
-                                long txId) {
+                                     @NonNull MessageObject.MessageMode mode,
+                                     long txId) {
         if (mode == MessageObject.MessageMode.Snapshot
                 || mode == MessageObject.MessageMode.Backlog) {
             return (txId == fileState.getLastTnxId());
@@ -131,11 +132,13 @@ public abstract class TransactionProcessor {
                 processRenameFileTxMessage((DFSRenameFile) data, message, txId);
             } else if (data instanceof DFSIgnoreTx) {
                 processIgnoreTxMessage((DFSIgnoreTx) data, message, txId);
+            } else if (data instanceof DFSError) {
+                processErrorTxMessage((DFSError) data, message, txId);
             } else {
                 throw new InvalidMessageError(message.id(), String.format("Message Body type not supported. [type=%s]", data.getClass().getCanonicalName()));
             }
         } catch (InvalidTransactionError te) {
-            processErrorMessage(message, data, te);
+            handleError(message, data, te);
             updateTransaction(txId, message);
             throw new InvalidMessageError(message.id(), te);
         }

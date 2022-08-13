@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 public class DomainManager {
     private static final String CONFIG_PATH = "domain";
 
-    private static final String IGNORE_REGEX = "(.*)\\.(_*)COPYING(_*)|/tmp/(.*)";
+    private static final String IGNORE_REGEX = "(.*)\\.(_*)COPYING(_*)|/tmp/(.*)|(.*)\\.hive-staging(.*)";
     private ZookeeperConnection zkConnection;
     private HdfsConnection hdfsConnection;
 
