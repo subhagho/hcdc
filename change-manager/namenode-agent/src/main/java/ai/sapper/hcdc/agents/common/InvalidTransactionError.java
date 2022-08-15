@@ -1,7 +1,7 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.hcdc.common.model.DFSError;
-import ai.sapper.hcdc.common.model.DFSFile;
+import ai.sapper.cdc.common.model.DFSError;
+import ai.sapper.cdc.common.model.DFSFile;
 import lombok.Getter;
 
 import java.security.PrivilegedActionException;

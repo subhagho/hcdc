@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.agents.namenode.main;
 
-import ai.sapper.hcdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.fail;

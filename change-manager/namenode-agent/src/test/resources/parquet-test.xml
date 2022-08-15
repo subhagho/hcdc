@@ -24,7 +24,7 @@
         <processor>
             <files>
                 <filesystem>
-                    <type>ai.sapper.hcdc.core.io.impl.s3.S3FileSystem</type>
+                    <type>ai.sapper.cdc.core.io.impl.s3.S3FileSystem</type>
                     <!-- root>C:\Work\temp\output\fs</root -->
                     <root>/hcdc/replication/</root>
                     <region>US_WEST_2</region>
@@ -81,7 +81,7 @@
     <config>
         <connections>
             <connection>
-                <type>ai.sapper.hcdc.core.connections.WebServiceConnection</type>
+                <type>ai.sapper.cdc.core.connections.WebServiceConnection</type>
                 <rest>
                     <name>snapshot</name>
                     <endpoint>http://localhost/snapshot</endpoint>
@@ -89,7 +89,7 @@
                 </rest>
             </connection>
             <connection>
-                <type>ai.sapper.hcdc.core.connections.HdfsConnection</type>
+                <type>ai.sapper.cdc.core.connections.HdfsConnection</type>
                 <hdfs>
                     <name>source-hdfs</name>
                     <namenode>
@@ -107,7 +107,7 @@
                 </hdfs>
             </connection>
             <connection>
-                <type>ai.sapper.hcdc.core.connections.HdfsHAConnection</type>
+                <type>ai.sapper.cdc.core.connections.HdfsHAConnection</type>
                 <hdfs_ha>
                     <name>source-hdfs-ha</name>
                     <nameservice>ha-cluster</nameservice>
@@ -121,7 +121,7 @@
                 </hdfs_ha>
             </connection>
             <connection>
-                <type>ai.sapper.hcdc.core.connections.ZookeeperConnection</type>
+                <type>ai.sapper.cdc.core.connections.ZookeeperConnection</type>
                 <zookeeper>
                     <name>zk-state-connection</name>
                     <connectionString>192.168.0.5:2181,192.168.0.4:2181</connectionString>
@@ -133,7 +133,7 @@
                 </zookeeper>
             </connection>
             <connection>
-                <type>ai.sapper.hcdc.core.connections.impl.BasicKafkaProducer</type>
+                <type>ai.sapper.cdc.core.connections.impl.BasicKafkaProducer</type>
                 <kafka>
                     <name>delta-kafka-queue</name>
                     <mode>Producer</mode>
@@ -144,7 +144,7 @@
                 </kafka>
             </connection>
             <connection>
-                <type>ai.sapper.hcdc.core.connections.impl.BasicKafkaProducer</type>
+                <type>ai.sapper.cdc.core.connections.impl.BasicKafkaProducer</type>
                 <kafka>
                     <name>errors-kafka-queue</name>
                     <mode>Producer</mode>
@@ -155,7 +155,7 @@
                 </kafka>
             </connection>
             <connection>
-                <type>ai.sapper.hcdc.core.connections.impl.BasicKafkaConsumer</type>
+                <type>ai.sapper.cdc.core.connections.impl.BasicKafkaConsumer</type>
                 <kafka>
                     <name>cdc-kafka-queue</name>
                     <mode>Consumer</mode>

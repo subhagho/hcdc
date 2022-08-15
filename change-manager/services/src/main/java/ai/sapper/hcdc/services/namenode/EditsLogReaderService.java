@@ -2,10 +2,10 @@ package ai.sapper.hcdc.services.namenode;
 
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.namenode.main.EditLogRunner;
-import ai.sapper.hcdc.common.model.services.BasicResponse;
-import ai.sapper.hcdc.common.model.services.ConfigSource;
-import ai.sapper.hcdc.common.model.services.EResponseState;
-import ai.sapper.hcdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.common.model.services.BasicResponse;
+import ai.sapper.cdc.common.model.services.ConfigSource;
+import ai.sapper.cdc.common.model.services.EResponseState;
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.services.ServiceHelper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

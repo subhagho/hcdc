@@ -2,9 +2,9 @@ package ai.sapper.hcdc.agents.namenode.main;
 
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.namenode.SourceChangeDeltaProcessor;
-import ai.sapper.hcdc.common.ConfigReader;
-import ai.sapper.hcdc.common.model.services.EConfigFileType;
-import ai.sapper.hcdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.model.services.EConfigFileType;
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.base.Preconditions;

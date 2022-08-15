@@ -1,13 +1,13 @@
 package ai.sapper.hcdc.agents.common;
 
+import ai.sapper.cdc.common.model.*;
 import ai.sapper.hcdc.agents.model.NameNodeTxState;
-import ai.sapper.hcdc.common.model.*;
-import ai.sapper.hcdc.core.filters.DomainManager;
-import ai.sapper.hcdc.core.messaging.ChangeDeltaSerDe;
-import ai.sapper.hcdc.core.messaging.InvalidMessageError;
-import ai.sapper.hcdc.core.messaging.MessageObject;
-import ai.sapper.hcdc.core.messaging.MessageSender;
-import ai.sapper.hcdc.core.model.DFSFileState;
+import ai.sapper.cdc.core.filters.DomainManager;
+import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
+import ai.sapper.cdc.core.messaging.InvalidMessageError;
+import ai.sapper.cdc.core.messaging.MessageObject;
+import ai.sapper.cdc.core.messaging.MessageSender;
+import ai.sapper.cdc.core.model.DFSFileState;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;

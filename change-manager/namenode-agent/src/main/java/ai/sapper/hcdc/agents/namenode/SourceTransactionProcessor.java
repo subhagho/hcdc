@@ -1,22 +1,20 @@
 package ai.sapper.hcdc.agents.namenode;
 
+import ai.sapper.cdc.common.model.*;
+import ai.sapper.cdc.core.model.*;
 import ai.sapper.hcdc.agents.common.InvalidTransactionError;
 import ai.sapper.hcdc.agents.common.ProtoBufUtils;
 import ai.sapper.hcdc.agents.common.TransactionProcessor;
 import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
-import ai.sapper.hcdc.common.model.*;
-import ai.sapper.hcdc.common.utils.JSONUtils;
-import ai.sapper.hcdc.core.messaging.ChangeDeltaSerDe;
-import ai.sapper.hcdc.core.messaging.InvalidMessageError;
-import ai.sapper.hcdc.core.messaging.MessageObject;
-import ai.sapper.hcdc.core.messaging.MessageSender;
-import ai.sapper.hcdc.core.model.*;
+import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
+import ai.sapper.cdc.core.messaging.InvalidMessageError;
+import ai.sapper.cdc.core.messaging.MessageObject;
+import ai.sapper.cdc.core.messaging.MessageSender;
 import com.google.common.base.Strings;
 import lombok.NonNull;
 
 import java.util.List;
-import java.util.Map;
 
 public class SourceTransactionProcessor extends TransactionProcessor {
     private MessageSender<String, DFSChangeDelta> sender;

@@ -1,10 +1,10 @@
 package ai.sapper.hcdc.agents.namenode;
 
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
-import ai.sapper.hcdc.common.ConfigReader;
-import ai.sapper.hcdc.common.model.services.EConfigFileType;
-import ai.sapper.hcdc.common.utils.DefaultLogger;
-import ai.sapper.hcdc.core.model.Heartbeat;
+import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.model.services.EConfigFileType;
+import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.core.model.Heartbeat;
 import com.google.common.base.Preconditions;
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.junit.jupiter.api.BeforeAll;

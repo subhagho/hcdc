@@ -1,13 +1,12 @@
 package ai.sapper.hcdc.agents.common.converter;
 
 import ai.sapper.hcdc.agents.common.FormatConverter;
-import ai.sapper.hcdc.common.model.SchemaEntity;
-import ai.sapper.hcdc.common.utils.PathUtils;
-import ai.sapper.hcdc.core.model.DFSBlockState;
-import ai.sapper.hcdc.core.model.DFSFileState;
-import ai.sapper.hcdc.core.model.EFileType;
-import ai.sapper.hcdc.core.model.HDFSBlockData;
-import ai.sapper.hcdc.core.schema.SchemaManager;
+import ai.sapper.cdc.common.model.SchemaEntity;
+import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.model.DFSBlockState;
+import ai.sapper.cdc.core.model.DFSFileState;
+import ai.sapper.cdc.core.model.EFileType;
+import ai.sapper.cdc.core.model.HDFSBlockData;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import org.apache.avro.Schema;
@@ -21,7 +20,6 @@ import org.apache.avro.io.DatumWriter;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.hdfs.HDFSBlockReader;
 import org.apache.parquet.Strings;
-import org.apache.parquet.avro.AvroSchemaConverter;
 
 import java.io.File;
 import java.io.FileOutputStream;

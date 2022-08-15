@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.utils;
 
-import ai.sapper.hcdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReaderHeaderAware;

@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.agents.model;
 
-import ai.sapper.hcdc.common.AbstractState;
+import ai.sapper.cdc.common.AbstractState;
 import lombok.NonNull;
 
 public class NameNodeAgentState {

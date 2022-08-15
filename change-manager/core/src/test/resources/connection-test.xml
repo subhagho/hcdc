@@ -2,7 +2,7 @@
 <configuration>
     <connections>
         <!--connection>
-            <type>ai.sapper.hcdc.core.connections.HdfsConnection</type>
+            <type>connections.ai.sapper.cdc.core.HdfsConnection</type>
             <hdfs>
                 <name>test-hdfs</name>
                 <namenode>
@@ -20,7 +20,7 @@
             </hdfs>
         </connection>
         <connection>
-            <type>ai.sapper.hcdc.core.connections.HdfsHAConnection</type>
+            <type>connections.ai.sapper.cdc.core.HdfsHAConnection</type>
             <hdfs_ha>
                 <name>test-hdfs-ha</name>
                 <nameservice>ha-cluster</nameservice>
@@ -34,7 +34,7 @@
             </hdfs_ha>
         </connection -->
         <connection>
-            <type>ai.sapper.hcdc.core.connections.ZookeeperConnection</type>
+            <type>connections.ai.sapper.cdc.core.ZookeeperConnection</type>
             <zookeeper>
                 <name>test-zk</name>
                 <!--connectionString>192.168.0.5:2181,192.168.0.4:2181</connectionString -->
@@ -47,7 +47,7 @@
             </zookeeper>
         </connection>
         <!--connection>
-            <type>ai.sapper.hcdc.core.connections.WebServiceConnection</type>
+            <type>connections.ai.sapper.cdc.core.WebServiceConnection</type>
             <service>
                 <web>
                     <name>test-ws</name>
@@ -60,7 +60,7 @@
             </service>
         </connection-->
         <connection>
-            <type>ai.sapper.hcdc.core.connections.impl.BasicKafkaProducer</type>
+            <type>impl.connections.ai.sapper.cdc.core.BasicKafkaProducer</type>
             <kafka>
                 <name>test-kafka-producer</name>
                 <mode>Producer</mode>
@@ -71,7 +71,7 @@
             </kafka>
         </connection>
         <connection>
-            <type>ai.sapper.hcdc.core.connections.impl.BasicKafkaConsumer</type>
+            <type>impl.connections.ai.sapper.cdc.core.BasicKafkaConsumer</type>
             <kafka>
                 <name>test-kafka-consumer</name>
                 <mode>Consumer</mode>

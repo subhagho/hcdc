@@ -1,26 +1,25 @@
 package ai.sapper.hcdc.agents.namenode;
 
+import ai.sapper.cdc.common.model.*;
+import ai.sapper.cdc.core.messaging.*;
 import ai.sapper.hcdc.agents.common.*;
-import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
-import ai.sapper.hcdc.common.ConfigReader;
-import ai.sapper.hcdc.common.filters.DomainFilter;
-import ai.sapper.hcdc.common.filters.DomainFilterMatcher;
-import ai.sapper.hcdc.common.filters.DomainFilters;
-import ai.sapper.hcdc.common.filters.Filter;
-import ai.sapper.hcdc.common.model.*;
-import ai.sapper.hcdc.common.utils.DefaultLogger;
-import ai.sapper.hcdc.common.utils.JSONUtils;
-import ai.sapper.hcdc.core.DistributedLock;
-import ai.sapper.hcdc.core.connections.ConnectionManager;
-import ai.sapper.hcdc.core.filters.DomainManager;
-import ai.sapper.hcdc.core.filters.FilterAddCallback;
-import ai.sapper.hcdc.core.messaging.*;
-import ai.sapper.hcdc.core.model.DFSBlockState;
-import ai.sapper.hcdc.core.model.DFSFileState;
-import ai.sapper.hcdc.core.model.EFileState;
-import ai.sapper.hcdc.core.model.EFileType;
-import ai.sapper.hcdc.core.utils.FileSystemUtils;
+import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.filters.DomainFilter;
+import ai.sapper.cdc.common.filters.DomainFilterMatcher;
+import ai.sapper.cdc.common.filters.DomainFilters;
+import ai.sapper.cdc.common.filters.Filter;
+import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.common.utils.JSONUtils;
+import ai.sapper.cdc.core.DistributedLock;
+import ai.sapper.cdc.core.connections.ConnectionManager;
+import ai.sapper.cdc.core.filters.DomainManager;
+import ai.sapper.cdc.core.filters.FilterAddCallback;
+import ai.sapper.cdc.core.model.DFSBlockState;
+import ai.sapper.cdc.core.model.DFSFileState;
+import ai.sapper.cdc.core.model.EFileState;
+import ai.sapper.cdc.core.model.EFileType;
+import ai.sapper.cdc.core.utils.FileSystemUtils;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -35,7 +34,6 @@ import org.apache.parquet.Strings;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 
 @Getter
 @Accessors(fluent = true)

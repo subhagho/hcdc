@@ -1,7 +1,7 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.hcdc.core.connections.ConnectionManager;
-import ai.sapper.hcdc.core.filters.DomainManager;
+import ai.sapper.cdc.core.connections.ConnectionManager;
+import ai.sapper.cdc.core.filters.DomainManager;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;

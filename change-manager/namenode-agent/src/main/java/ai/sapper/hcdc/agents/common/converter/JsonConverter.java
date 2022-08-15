@@ -1,24 +1,21 @@
 package ai.sapper.hcdc.agents.common.converter;
 
 import ai.sapper.hcdc.agents.common.FormatConverter;
-import ai.sapper.hcdc.common.model.SchemaEntity;
-import ai.sapper.hcdc.common.schema.AvroUtils;
-import ai.sapper.hcdc.common.schema.SchemaHelper;
-import ai.sapper.hcdc.common.utils.DefaultLogger;
-import ai.sapper.hcdc.common.utils.PathUtils;
-import ai.sapper.hcdc.core.model.DFSBlockState;
-import ai.sapper.hcdc.core.model.DFSFileState;
-import ai.sapper.hcdc.core.model.EFileType;
-import ai.sapper.hcdc.core.model.HDFSBlockData;
-import ai.sapper.hcdc.core.schema.SchemaEvolutionValidator;
-import ai.sapper.hcdc.core.schema.SchemaManager;
+import ai.sapper.cdc.common.model.SchemaEntity;
+import ai.sapper.cdc.common.schema.AvroUtils;
+import ai.sapper.cdc.common.schema.SchemaHelper;
+import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.model.DFSBlockState;
+import ai.sapper.cdc.core.model.DFSFileState;
+import ai.sapper.cdc.core.model.EFileType;
+import ai.sapper.cdc.core.model.HDFSBlockData;
+import ai.sapper.cdc.core.schema.SchemaEvolutionValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import org.apache.avro.Schema;
-import org.apache.avro.file.DataFileReader;
 import org.apache.avro.file.DataFileWriter;
-import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumWriter;
@@ -28,7 +25,6 @@ import org.apache.log4j.Level;
 import org.apache.parquet.Strings;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 

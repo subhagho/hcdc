@@ -1,12 +1,12 @@
 package ai.sapper.hcdc.agents.pipeline;
 
-import ai.sapper.hcdc.common.model.SchemaEntity;
-import ai.sapper.hcdc.core.io.FSBlock;
-import ai.sapper.hcdc.core.io.FSFile;
-import ai.sapper.hcdc.core.io.FileSystem;
-import ai.sapper.hcdc.core.io.PathInfo;
-import ai.sapper.hcdc.core.model.DFSBlockState;
-import ai.sapper.hcdc.core.model.DFSFileState;
+import ai.sapper.cdc.common.model.SchemaEntity;
+import ai.sapper.cdc.core.io.FSBlock;
+import ai.sapper.cdc.core.io.FSFile;
+import ai.sapper.cdc.core.io.FileSystem;
+import ai.sapper.cdc.core.io.PathInfo;
+import ai.sapper.cdc.core.model.DFSBlockState;
+import ai.sapper.cdc.core.model.DFSFileState;
 import lombok.NonNull;
 
 import java.io.IOException;

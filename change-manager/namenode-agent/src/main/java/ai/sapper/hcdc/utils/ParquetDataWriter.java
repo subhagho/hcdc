@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.utils;
 
-import ai.sapper.hcdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import org.apache.avro.Schema;

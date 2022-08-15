@@ -1,12 +1,12 @@
 package ai.sapper.hcdc.agents.common.converter;
 
 import ai.sapper.hcdc.agents.common.FormatConverter;
-import ai.sapper.hcdc.common.model.SchemaEntity;
-import ai.sapper.hcdc.common.utils.PathUtils;
-import ai.sapper.hcdc.core.model.DFSBlockState;
-import ai.sapper.hcdc.core.model.DFSFileState;
-import ai.sapper.hcdc.core.model.EFileType;
-import ai.sapper.hcdc.core.model.HDFSBlockData;
+import ai.sapper.cdc.common.model.SchemaEntity;
+import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.model.DFSBlockState;
+import ai.sapper.cdc.core.model.DFSFileState;
+import ai.sapper.cdc.core.model.EFileType;
+import ai.sapper.cdc.core.model.HDFSBlockData;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import org.apache.avro.Schema;

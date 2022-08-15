@@ -1,14 +1,14 @@
 package ai.sapper.hcdc.services.namenode;
 
+import ai.sapper.cdc.common.model.services.*;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.namenode.main.SnapshotRunner;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
-import ai.sapper.hcdc.common.filters.DomainFilter;
-import ai.sapper.hcdc.common.filters.DomainFilters;
-import ai.sapper.hcdc.common.filters.Filter;
-import ai.sapper.hcdc.common.model.services.*;
-import ai.sapper.hcdc.common.utils.DefaultLogger;
-import ai.sapper.hcdc.core.schema.SchemaManager;
+import ai.sapper.cdc.common.filters.DomainFilter;
+import ai.sapper.cdc.common.filters.DomainFilters;
+import ai.sapper.cdc.common.filters.Filter;
+import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.core.schema.SchemaManager;
 import ai.sapper.hcdc.services.ServiceHelper;
 import com.google.common.base.Strings;
 import org.springframework.http.HttpStatus;

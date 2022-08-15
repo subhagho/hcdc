@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.agents.namenode;
 
-import ai.sapper.hcdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;

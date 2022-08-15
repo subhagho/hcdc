@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.agents.model;
 
-import ai.sapper.hcdc.core.model.EFileState;
+import ai.sapper.cdc.core.model.EFileState;
 import lombok.Getter;
 import lombok.Setter;
 

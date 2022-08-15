@@ -1,7 +1,7 @@
 package ai.sapper.hcdc.agents.pipeline;
 
-import ai.sapper.hcdc.common.model.DFSChangeDelta;
-import ai.sapper.hcdc.core.messaging.KafkaPartitioner;
+import ai.sapper.cdc.common.model.DFSChangeDelta;
+import ai.sapper.cdc.core.messaging.KafkaPartitioner;
 import lombok.NonNull;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;

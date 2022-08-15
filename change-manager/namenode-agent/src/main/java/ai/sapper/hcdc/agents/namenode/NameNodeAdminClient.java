@@ -2,8 +2,8 @@ package ai.sapper.hcdc.agents.namenode;
 
 import ai.sapper.hcdc.agents.common.NameNodeError;
 import ai.sapper.hcdc.agents.model.NameNodeStatus;
-import ai.sapper.hcdc.common.utils.DefaultLogger;
-import ai.sapper.hcdc.core.model.JMXResponse;
+import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.core.model.JMXResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
