@@ -1,7 +1,6 @@
 
 dependencies {
     implementation project(':common')
-    implementation project(':common-model')
 
     implementation 'org.apache.hadoop:hadoop-client:2.10.2'
     implementation 'org.apache.curator:curator-recipes:2.13.0'
