@@ -20,6 +20,7 @@ import ai.sapper.cdc.core.model.DFSFileState;
 import ai.sapper.cdc.core.model.EFileState;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.utils.FileSystemUtils;
+import ai.sapper.hcdc.common.model.*;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;

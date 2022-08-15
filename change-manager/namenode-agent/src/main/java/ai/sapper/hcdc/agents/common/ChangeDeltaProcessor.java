@@ -3,7 +3,7 @@ package ai.sapper.hcdc.agents.common;
 import ai.sapper.hcdc.agents.model.NameNodeAgentState;
 import ai.sapper.hcdc.agents.model.NameNodeTxState;
 import ai.sapper.cdc.common.ConfigReader;
-import ai.sapper.cdc.common.model.DFSChangeDelta;
+import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.messaging.HCDCMessagingBuilders;

@@ -1,7 +1,7 @@
 package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
-import ai.sapper.cdc.common.model.DFSFile;
+import ai.sapper.hcdc.common.model.DFSFile;
 import ai.sapper.cdc.core.model.DFSFileState;
 import ai.sapper.cdc.core.model.EFileType;
 import com.google.common.base.Preconditions;

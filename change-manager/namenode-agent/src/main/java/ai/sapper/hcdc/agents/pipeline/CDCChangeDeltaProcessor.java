@@ -3,7 +3,7 @@ package ai.sapper.hcdc.agents.pipeline;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
-import ai.sapper.cdc.common.model.DFSChangeDelta;
+import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;

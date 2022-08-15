@@ -1,7 +1,7 @@
 package ai.sapper.cdc.core.io.impl.s3;
 
 import ai.sapper.cdc.common.ConfigReader;
-import ai.sapper.cdc.common.model.DFSChangeData;
+import ai.sapper.hcdc.common.model.DFSChangeData;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.io.FileSystem;

@@ -1,6 +1,6 @@
 package ai.sapper.cdc.core.io.impl.local;
 
-import ai.sapper.cdc.common.model.DFSChangeData;
+import ai.sapper.hcdc.common.model.DFSChangeData;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.io.FileSystem;
 import ai.sapper.cdc.core.io.PathInfo;

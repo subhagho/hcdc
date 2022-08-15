@@ -1,6 +1,6 @@
 package ai.sapper.cdc.common.messaging;
 
-import ai.sapper.cdc.common.model.DFSChangeDelta;
+import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import lombok.Getter;
 import lombok.NonNull;
 

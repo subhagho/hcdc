@@ -1,6 +1,6 @@
 package ai.sapper.cdc.core.messaging;
 
-import ai.sapper.cdc.common.model.DFSChangeDelta;
+import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.cdc.core.connections.impl.BasicKafkaProducer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
