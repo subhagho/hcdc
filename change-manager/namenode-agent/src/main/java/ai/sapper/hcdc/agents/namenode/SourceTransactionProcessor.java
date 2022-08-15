@@ -299,7 +299,7 @@ public class SourceTransactionProcessor extends TransactionProcessor {
      * @param data
      * @param message
      * @param txId
-     * @throws Exception TODO: Handle deletion of directories.
+     * @throws Exception
      */
     @Override
     public void processDeleteFileTxMessage(DFSDeleteFile data,

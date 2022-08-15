@@ -2,14 +2,11 @@ package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.model.DFSFile;
-import ai.sapper.hcdc.common.utils.JSONUtils;
 import ai.sapper.hcdc.core.model.DFSFileState;
 import ai.sapper.hcdc.core.model.EFileType;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import org.apache.parquet.Strings;
-
-import java.util.Map;
 
 public class ProtoBufUtils {
     public static DFSFile build(@NonNull DFSFileState fileState) throws Exception {

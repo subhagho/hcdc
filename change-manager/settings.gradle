@@ -1,5 +1,6 @@
 rootProject.name = 'change-manager'
 include 'common'
+include 'common-model'
 include 'core'
 include 'services'
 include 'namenode-agent'

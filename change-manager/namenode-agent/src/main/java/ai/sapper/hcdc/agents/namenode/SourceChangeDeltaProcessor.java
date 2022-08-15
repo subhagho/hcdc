@@ -6,7 +6,6 @@ import ai.sapper.hcdc.agents.common.ProcessorStateManager;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.agents.model.DFSTransactionType;
-import ai.sapper.hcdc.common.model.DFSAddFile;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSCloseFile;
 import ai.sapper.hcdc.common.utils.DefaultLogger;
