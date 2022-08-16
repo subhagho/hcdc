@@ -23,7 +23,6 @@ public class HadoopEnvConfig {
         private static final String HDFS_CONFIG_PROPERTY = "property";
         private static final String HDFS_CONFIG_PROPERTY_NAME = "name";
         private static final String HDFS_CONFIG_PROPERTY_VALUE = "value";
-
         private static final String HDFS_NN_DATA_DIR = "dfs.namenode.name.dir";
         private static final String HDFS_NN_EDITS_DIR = "fs.namenode.edits.dir";
         private static final String HDFS_NN_NAMESPACE = "dfs.nameservices";
@@ -40,15 +39,23 @@ public class HadoopEnvConfig {
     private String nameNodeDataDir;
     private String nameNodeEditsDir;
     private String nameNodeAdminUrl;
+    private short version;
 
     public HadoopEnvConfig(@NonNull String hadoopHome,
                            @NonNull String hdfsConfigFile,
                            @NonNull String namespace,
-                           @NonNull String nameNodeInstanceName) {
+                           @NonNull String nameNodeInstanceName,
+                           short version) {
         this.hadoopHome = hadoopHome;
         this.hdfsConfigFile = hdfsConfigFile;
         this.nameNodeInstanceName = nameNodeInstanceName;
         this.namespace = namespace;
+        this.version = version;
+    }
+
+    public HadoopEnvConfig withNameNodeAdminUrl(@NonNull String nameNodeAdminUrl) {
+        this.nameNodeAdminUrl = nameNodeAdminUrl;
+        return this;
     }
 
     public void read() throws Exception {
@@ -81,7 +88,23 @@ public class HadoopEnvConfig {
         if (!Strings.isNullOrEmpty(ed)) {
             nameNodeEditsDir = ed;
         }
-        String ns = config.getProperty(Constants.HDFS_NN_NAMESPACE);
+        if (isHAEnabled(config)) {
+            readHAConfig(config, cf);
+        } else {
+            readConfig(config, cf);
+        }
+        DefaultLogger.LOG.info(String.format("Using NameNode Admin UR [%s]", nameNodeAdminUrl));
+    }
+
+    private void readConfig(Properties config, File cf) throws Exception {
+        if (Strings.isNullOrEmpty(nameNodeAdminUrl)) {
+            throw new ConfigurationException("NameNode Admin URL needs to be set for non-HA connections.");
+        }
+    }
+
+    private void readHAConfig(Properties config, File cf) throws Exception {
+        String ns = namespace;
+        ns = config.getProperty(Constants.HDFS_NN_NAMESPACE);
         if (Strings.isNullOrEmpty(ns)) {
             throw new Exception(String.format("HDFS Configuration not found. [name=%s][file=%s]",
                     Constants.HDFS_NN_NAMESPACE, cf.getAbsolutePath()));
@@ -113,6 +136,9 @@ public class HadoopEnvConfig {
         if (Strings.isNullOrEmpty(nameNodeAdminUrl)) {
             throw new Exception(String.format("NameNode Admin URL not found. [name=%s][file=%s]", urlKey, cf.getAbsolutePath()));
         }
-        DefaultLogger.LOG.info(String.format("Using NameNode Admin UR [%s]", nameNodeAdminUrl));
+    }
+
+    private boolean isHAEnabled(Properties config) {
+        return config.containsKey(Constants.HDFS_NN_NAMESPACE);
     }
 }

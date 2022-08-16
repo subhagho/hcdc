@@ -1,5 +1,7 @@
 package ai.sapper.hcdc.agents.common;
 
+import ai.sapper.cdc.core.BaseEnv;
+import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.agents.namenode.HadoopEnvConfig;
 import ai.sapper.hcdc.agents.namenode.NameNodeAdminClient;
 import ai.sapper.hcdc.agents.model.NameNodeAgentState;
@@ -9,9 +11,7 @@ import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.NetUtils;
 import ai.sapper.cdc.core.DistributedLock;
-import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.HdfsConnection;
-import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import ai.sapper.cdc.core.model.ModuleInstance;
 import ai.sapper.cdc.core.schema.SchemaManager;
 import com.google.common.base.Preconditions;
@@ -27,23 +27,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Getter
 @Accessors(fluent = true)
-public class NameNodeEnv {
+public class NameNodeEnv extends BaseEnv {
     public static Logger LOG = LoggerFactory.getLogger(NameNodeEnv.class);
-
-    @Getter
-    @Setter
-    @Accessors(fluent = true)
-    public static class LockDef {
-        private String module;
-        private String path;
-        private ZookeeperConnection connection;
-    }
 
     private static final String NN_IGNORE_TNX = "%s.IGNORE";
 
@@ -53,7 +42,6 @@ public class NameNodeEnv {
 
     private NameNEnvConfig config;
     private HierarchicalConfiguration<ImmutableNode> configNode;
-    private ConnectionManager connectionManager;
     private HdfsConnection hdfsConnection;
     private ZkStateManager stateManager;
     private SchemaManager schemaManager;
@@ -61,9 +49,6 @@ public class NameNodeEnv {
     private HadoopEnvConfig hadoopConfig;
     private NameNodeAdminClient adminClient;
     private ModuleInstance moduleInstance;
-
-    private final Map<String, LockDef> lockDefs = new HashMap<>();
-
     private final NameNodeAgentState.AgentState agentState = new NameNodeAgentState.AgentState();
 
     public synchronized NameNodeEnv init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws NameNodeError {
@@ -83,11 +68,10 @@ public class NameNodeEnv {
 
             hostIPs = NetUtils.getInetAddresses();
 
-            connectionManager = new ConnectionManager();
-            connectionManager.init(xmlConfig, config.connectionConfigPath);
+            super.init(xmlConfig, config.module, config.connectionConfigPath);
 
             if (config().readHadoopConfig) {
-                hdfsConnection = connectionManager.getConnection(config.hdfsAdminConnection, HdfsConnection.class);
+                hdfsConnection = connections().getConnection(config.hdfsAdminConnection, HdfsConnection.class);
                 if (hdfsConnection == null) {
                     throw new ConfigurationException("HDFS Admin connection not found.");
                 }
@@ -96,7 +80,9 @@ public class NameNodeEnv {
                 hadoopConfig = new HadoopEnvConfig(config.hadoopHome,
                         config.hadoopConfFile,
                         config.hadoopNamespace,
-                        config.hadoopInstanceName);
+                        config.hadoopInstanceName,
+                        config.hadoopVersion)
+                        .withNameNodeAdminUrl(config.hadoopAdminUrl);
                 hadoopConfig.read();
                 adminClient = new NameNodeAdminClient(hadoopConfig.nameNodeAdminUrl(), config.hadoopUseSSL);
                 NameNodeStatus status = adminClient().status();
@@ -108,7 +94,7 @@ public class NameNodeEnv {
             }
 
             stateManager = config.stateManagerClass.newInstance();
-            stateManager.init(configNode, connectionManager, config.module, config.instance);
+            stateManager.init(configNode, connections(), config.module, config.instance);
 
             moduleInstance = new ModuleInstance()
                     .withIp(NetUtils.getInetAddress(hostIPs))
@@ -117,7 +103,6 @@ public class NameNodeEnv {
             moduleInstance.setModule(stateManager.module());
             moduleInstance.setName(stateManager.instance());
 
-            readLocks();
             DistributedLock lock = createLock(ZkStateManager.Constants.LOCK_REPLICATION);
             if (lock == null) {
                 throw new ConfigurationException(
@@ -133,7 +118,7 @@ public class NameNodeEnv {
             if (ConfigReader.checkIfNodeExists(configNode,
                     SchemaManager.SchemaManagerConfig.Constants.__CONFIG_PATH)) {
                 schemaManager = new SchemaManager();
-                schemaManager.init(configNode, connectionManager);
+                schemaManager.init(configNode, connections());
             }
 
             state.state(ENameNEnvState.Initialized);
@@ -148,24 +133,6 @@ public class NameNodeEnv {
         }
     }
 
-    private void readLocks() throws Exception {
-        List<HierarchicalConfiguration<ImmutableNode>> nodes = configNode.configurationsAt(NameNEnvConfig.Constants.CONFIG_LOCK);
-        for (HierarchicalConfiguration<ImmutableNode> node : nodes) {
-            String name = node.getString(NameNEnvConfig.Constants.CONFIG_LOCK_NAME);
-            String conn = node.getString(NameNEnvConfig.Constants.CONFIG_LOCK_CONN);
-            String path = name;
-            if (node.containsKey(NameNEnvConfig.Constants.CONFIG_LOCK_NODE)) {
-                path = node.getString(NameNEnvConfig.Constants.CONFIG_LOCK_NODE);
-            }
-            ZookeeperConnection connection = connectionManager.getConnection(conn, ZookeeperConnection.class);
-            LockDef def = new LockDef()
-                    .module(config.module)
-                    .path(path)
-                    .connection(connection);
-
-            lockDefs.put(name, def);
-        }
-    }
 
     public ENameNEnvState error(@NonNull Throwable t) {
         state.error(t);
@@ -221,10 +188,10 @@ public class NameNodeEnv {
     }
 
     public DistributedLock createLock(String name) {
-        if (lockDefs.containsKey(name)) {
-            LockDef def = lockDefs.get(name);
-            DistributedLock lock = new DistributedLock(def.module, def.path, stateManager.basePath())
-                    .withConnection(def.connection);
+        if (lockDefs().containsKey(name)) {
+            LockDef def = lockDefs().get(name);
+            DistributedLock lock = new DistributedLock(def.module(), def.path(), stateManager.basePath())
+                    .withConnection(def.connection());
             return lock;
         }
         return null;
@@ -249,12 +216,12 @@ public class NameNodeEnv {
         return __instance;
     }
 
-    public static ConnectionManager connectionManager() {
-        return get().connectionManager;
-    }
-
     public static ZkStateManager stateManager() {
         return get().stateManager;
+    }
+
+    public static ConnectionManager connectionManager() {
+        return get().connections();
     }
 
     public static DistributedLock globalLock() {
@@ -298,6 +265,8 @@ public class NameNodeEnv {
             private static final String CONFIG_HADOOP_HOME = "hadoop.home";
             private static final String CONFIG_HADOOP_INSTANCE = "hadoop.instance";
             private static final String CONFIG_HADOOP_NAMESPACE = "hadoop.namespace";
+            private static final String CONFIG_HADOOP_VERSION = "hadoop.version";
+            private static final String CONFIG_HADOOP_ADMIN_URL = "hadoop.adminUrl";
 
             private static final String CONFIG_HADOOP_CONFIG = "hadoop.config";
 
@@ -319,10 +288,12 @@ public class NameNodeEnv {
         private String hadoopNamespace;
         private String hadoopInstanceName;
         private String hadoopHome;
+        private String hadoopAdminUrl;
         private String hadoopConfFile;
         private boolean hadoopUseSSL = true;
         private boolean readHadoopConfig = true;
         private boolean enableHeartbeat = false;
+        private short hadoopVersion = 2;
 
         private Class<? extends ZkStateManager> stateManagerClass = ZkStateManager.class;
 
@@ -365,6 +336,12 @@ public class NameNodeEnv {
                 }
                 if (get().containsKey(Constants.CONFIG_HEARTBEAT)) {
                     enableHeartbeat = get().getBoolean(Constants.CONFIG_HEARTBEAT);
+                }
+                if (get().containsKey(Constants.CONFIG_HADOOP_VERSION)) {
+                    hadoopVersion = get().getShort(Constants.CONFIG_HADOOP_VERSION);
+                }
+                if (get().containsKey(Constants.CONFIG_HADOOP_ADMIN_URL)) {
+                    hadoopAdminUrl = get().getString(Constants.CONFIG_HADOOP_ADMIN_URL);
                 }
                 if (readHadoopConfig)
                     readHadoopConfigs();

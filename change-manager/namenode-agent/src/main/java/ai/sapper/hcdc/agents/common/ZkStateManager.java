@@ -231,6 +231,16 @@ public class ZkStateManager {
                 if (data != null && data.length > 0) {
                     String json = new String(data, StandardCharsets.UTF_8);
                     return JSONUtils.read(json, Heartbeat.class);
+                } else {
+                    Heartbeat hb = new Heartbeat();
+                    hb.setName(name);
+                    hb.setModule(NameNodeEnv.get().moduleInstance());
+                    hb.setState(NameNodeEnv.get().state().state().name());
+
+                    String json = JSONUtils.asString(hb, Heartbeat.class);
+                    client.setData().forPath(path, json.getBytes(StandardCharsets.UTF_8));
+
+                    return hb;
                 }
             }
             return null;

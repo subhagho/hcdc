@@ -77,7 +77,8 @@ public class NameNodeReplicator {
             replicatorConfig = new ReplicatorConfig(config);
             replicatorConfig.read();
 
-            hdfsConnection = NameNodeEnv.connectionManager().getConnection(replicatorConfig().hdfsConnection(), HdfsConnection.class);
+            hdfsConnection = NameNodeEnv.connectionManager()
+                    .getConnection(replicatorConfig().hdfsConnection(), HdfsConnection.class);
             Preconditions.checkNotNull(hdfsConnection);
             hdfsConnection.connect();
 

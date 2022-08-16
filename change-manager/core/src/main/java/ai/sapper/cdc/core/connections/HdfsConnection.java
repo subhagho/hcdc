@@ -213,9 +213,11 @@ public class HdfsConnection implements Connection {
                 if (Strings.isNullOrEmpty(primaryNameNodeUri)) {
                     throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.CONN_PRI_NAME_NODE_URI));
                 }
-                secondaryNameNodeUri = get().getString(Constants.CONN_SEC_NAME_NODE_URI);
-                if (Strings.isNullOrEmpty(secondaryNameNodeUri)) {
-                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.CONN_SEC_NAME_NODE_URI));
+                if (get().containsKey(Constants.CONN_SEC_NAME_NODE_URI)) {
+                    secondaryNameNodeUri = get().getString(Constants.CONN_SEC_NAME_NODE_URI);
+                    if (Strings.isNullOrEmpty(secondaryNameNodeUri)) {
+                        throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.CONN_SEC_NAME_NODE_URI));
+                    }
                 }
                 if (checkIfNodeExists((String) null, Constants.CONN_SECURITY_ENABLED))
                     isSecurityEnabled = get().getBoolean(Constants.CONN_SECURITY_ENABLED);

@@ -3,17 +3,18 @@
     <agent>
         <module>edits-log-processors</module>
         <instance>edits-log-reader</instance>
-        <source>ha-cluster</source>
+        <source>namenode</source>
         <hadoop>
-            <namespace>ha-cluster</namespace>
-            <instance>nn1</instance>
+            <namespace>namenode</namespace>
+            <instance>namenode</instance>
             <home>/opt/hadoop</home>
-            <config>src/test/resources/hdfs-site.xml</config>
+            <adminUrl>localhost:9870</adminUrl>
+            <config>src/test/resources/configs/hdfs-site.xml</config>
         </hadoop>
         <needHadoop>true</needHadoop>
         <connections>
             <path>config</path>
-            <hdfs-admin>source-hdfs-ha</hdfs-admin>
+            <hdfs-admin>source-hdfs</hdfs-admin>
         </connections>
         <managers>
             <state>
@@ -33,24 +34,25 @@
                 <pollingInterval>120000</pollingInterval>
             </edits>
         </processor>
-        <locks>
-            <lock>
-                <name>global</name>
-                <connection>zk-state-connection</connection>
-                <lock-node>NN-GLOBAL-LOCK</lock-node>
-            </lock>
-            <lock>
-                <name>LOCK_REPLICATION</name>
-                <connection>zk-state-connection</connection>
-                <lock-node>NN-REPLICATION-LOCK</lock-node>
-            </lock>
-        </locks>
+
     </agent>
     <replicator>
         <connections>
             <hdfs>source-hdfs</hdfs>
         </connections>
     </replicator>
+    <locks>
+        <lock>
+            <name>global</name>
+            <connection>zk-state-connection</connection>
+            <lock-node>NN-GLOBAL-LOCK</lock-node>
+        </lock>
+        <lock>
+            <name>LOCK_REPLICATION</name>
+            <connection>zk-state-connection</connection>
+            <lock-node>NN-REPLICATION-LOCK</lock-node>
+        </lock>
+    </locks>
     <config>
         <connections>
             <connection>
@@ -59,11 +61,11 @@
                     <name>source-hdfs</name>
                     <namenode>
                         <primary>
-                            <URI>hdfs://192.168.0.2:9000</URI>
+                            <URI>hdfs://localhost:9000</URI>
                         </primary>
-                        <secondary>
+                        <!--secondary>
                             <URI>hdfs://192.168.0.3:9000</URI>
-                        </secondary>
+                        </secondary-->
                     </namenode>
                     <security>
                         <enabled>false</enabled>
@@ -71,7 +73,7 @@
                     <enableAdmin>true</enableAdmin>
                 </hdfs>
             </connection>
-            <connection>
+            <!--connection>
                 <type>ai.sapper.cdc.core.connections.HdfsHAConnection</type>
                 <hdfs_ha>
                     <name>source-hdfs-ha</name>
@@ -84,12 +86,12 @@
                     </security>
                     <enableAdmin>true</enableAdmin>
                 </hdfs_ha>
-            </connection>
+            </connection-->
             <connection>
                 <type>ai.sapper.cdc.core.connections.ZookeeperConnection</type>
                 <zookeeper>
                     <name>zk-state-connection</name>
-                    <connectionString>192.168.0.5:2181,192.168.0.4:2181</connectionString>
+                    <connectionString>localhost:2181</connectionString>
                     <retry>
                         <interval>1500</interval>
                         <retries>5</retries>
