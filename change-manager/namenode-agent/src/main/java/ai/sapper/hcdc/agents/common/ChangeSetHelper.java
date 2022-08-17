@@ -2,7 +2,7 @@ package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
-import ai.sapper.cdc.core.io.FileSystem;
+import ai.sapper.cdc.core.io.HCDCFileSystem;
 import ai.sapper.cdc.core.io.PathInfo;
 import ai.sapper.cdc.core.io.Reader;
 import ai.sapper.cdc.core.model.BlockTransactionDelta;
@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.Map;
 
 public class ChangeSetHelper {
-    public static boolean createChangeSet(@NonNull FileSystem fs,
+    public static boolean createChangeSet(@NonNull HCDCFileSystem fs,
                                           @NonNull DFSFileState fileState,
                                           @NonNull DFSFileReplicaState replicaState,
                                           @NonNull File dest,

@@ -8,7 +8,7 @@ import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.WebServiceClient;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.HdfsConnection;
-import ai.sapper.cdc.core.io.FileSystem;
+import ai.sapper.cdc.core.io.HCDCFileSystem;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import com.google.common.base.Preconditions;
@@ -30,17 +30,17 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
     private static Logger LOG = LoggerFactory.getLogger(FileDeltaProcessor.class);
     private FileTransactionProcessor processor = new FileTransactionProcessor();
     private long receiveBatchTimeout = 1000;
-    private FileSystem fs;
+    private HCDCFileSystem fs;
     private FileDeltaProcessorConfig config;
     private HdfsConnection connection;
-    private FileSystem.FileSystemMocker fileSystemMocker;
+    private HCDCFileSystem.FileSystemMocker fileSystemMocker;
     private WebServiceClient client;
 
     public FileDeltaProcessor(@NonNull ZkStateManager stateManager) {
         super(stateManager);
     }
 
-    public FileDeltaProcessor withMockFileSystem(@NonNull FileSystem.FileSystemMocker fileSystemMocker) {
+    public FileDeltaProcessor withMockFileSystem(@NonNull HCDCFileSystem.FileSystemMocker fileSystemMocker) {
         this.fileSystemMocker = fileSystemMocker;
         return this;
     }
@@ -68,11 +68,11 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
             if (!connection.isConnected()) connection.connect();
 
             if (fileSystemMocker == null) {
-                Class<? extends FileSystem> fsc = (Class<? extends FileSystem>) Class.forName(config.fsType);
+                Class<? extends HCDCFileSystem> fsc = (Class<? extends HCDCFileSystem>) Class.forName(config.fsType);
                 fs = fsc.newInstance();
                 fs.init(config.config(), FileDeltaProcessorConfig.Constants.CONFIG_PATH_FS);
             } else {
-                fs = fileSystemMocker.create(config.config());
+                fs = (HCDCFileSystem) fileSystemMocker.create(config.config());
             }
             client = new WebServiceClient();
             client.init(config.config(),

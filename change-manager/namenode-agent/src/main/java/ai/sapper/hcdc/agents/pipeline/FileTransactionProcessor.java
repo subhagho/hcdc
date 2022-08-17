@@ -10,7 +10,7 @@ import ai.sapper.cdc.core.WebServiceClient;
 import ai.sapper.cdc.core.connections.HdfsConnection;
 import ai.sapper.cdc.core.io.FSBlock;
 import ai.sapper.cdc.core.io.FSFile;
-import ai.sapper.cdc.core.io.FileSystem;
+import ai.sapper.cdc.core.io.HCDCFileSystem;
 import ai.sapper.cdc.core.io.PathInfo;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
@@ -30,7 +30,7 @@ import java.util.List;
 public class FileTransactionProcessor extends TransactionProcessor {
     public static final String SERVICE_SNAPSHOT_DONE = "snapshotDone";
     private MessageSender<String, DFSChangeDelta> sender;
-    private FileSystem fs;
+    private HCDCFileSystem fs;
     private HdfsConnection connection;
     private WebServiceClient client;
 
@@ -44,7 +44,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
         return this;
     }
 
-    public FileTransactionProcessor withFileSystem(@NonNull FileSystem fs) {
+    public FileTransactionProcessor withFileSystem(@NonNull HCDCFileSystem fs) {
         this.fs = fs;
         return this;
     }

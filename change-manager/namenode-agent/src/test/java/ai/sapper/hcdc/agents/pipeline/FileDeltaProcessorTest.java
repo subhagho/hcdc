@@ -4,7 +4,7 @@ import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.cdc.core.io.FileSystem;
+import ai.sapper.cdc.core.io.HCDCFileSystem;
 import ai.sapper.cdc.core.io.impl.s3.S3FileSystem;
 import com.adobe.testing.s3mock.junit5.S3MockExtension;
 import lombok.NonNull;
@@ -50,7 +50,7 @@ class FileDeltaProcessorTest {
         }
     }
 
-    public static class S3Mocker implements FileSystem.FileSystemMocker {
+    public static class S3Mocker implements HCDCFileSystem.FileSystemMocker {
         private final S3Client s3Client;
 
         public S3Mocker(@NonNull S3Client s3Client) {
@@ -63,7 +63,7 @@ class FileDeltaProcessorTest {
          * @throws Exception
          */
         @Override
-        public FileSystem create(@NonNull HierarchicalConfiguration<ImmutableNode> config) throws Exception {
+        public HCDCFileSystem create(@NonNull HierarchicalConfiguration<ImmutableNode> config) throws Exception {
             return (S3FileSystem) new S3FileSystem()
                     .withClient(s3Client)
                     .init(config, FileDeltaProcessor.FileDeltaProcessorConfig.Constants.CONFIG_PATH_FS);

@@ -6,7 +6,7 @@ import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.connections.HdfsConnection;
-import ai.sapper.cdc.core.io.FileSystem;
+import ai.sapper.cdc.core.io.HCDCFileSystem;
 import ai.sapper.cdc.core.io.PathInfo;
 import ai.sapper.cdc.core.model.DFSBlockState;
 import ai.sapper.cdc.core.model.DFSFileState;
@@ -30,10 +30,10 @@ import java.io.IOException;
 public class CDCDataConverter {
     private final FormatConverter[] CONVERTERS = {new ParquetConverter(), new AvroConverter()};
 
-    private FileSystem fs;
+    private HCDCFileSystem fs;
     private HdfsConnection hdfsConnection;
 
-    public CDCDataConverter withFileSystem(@NonNull FileSystem fs) {
+    public CDCDataConverter withFileSystem(@NonNull HCDCFileSystem fs) {
         this.fs = fs;
         return this;
     }

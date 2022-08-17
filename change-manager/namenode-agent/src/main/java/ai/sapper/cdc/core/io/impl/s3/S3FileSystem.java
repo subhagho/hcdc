@@ -4,7 +4,7 @@ import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.DFSChangeData;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.PathUtils;
-import ai.sapper.cdc.core.io.FileSystem;
+import ai.sapper.cdc.core.io.HCDCFileSystem;
 import ai.sapper.cdc.core.io.PathInfo;
 import ai.sapper.cdc.core.io.Writer;
 import ai.sapper.cdc.core.io.impl.local.LocalFileSystem;
@@ -68,7 +68,7 @@ public class S3FileSystem extends LocalFileSystem {
      * @throws IOException
      */
     @Override
-    public FileSystem init(@NonNull HierarchicalConfiguration<ImmutableNode> config, String pathPrefix) throws IOException {
+    public HCDCFileSystem init(@NonNull HierarchicalConfiguration<ImmutableNode> config, String pathPrefix) throws IOException {
         try {
             S3FileSystemConfig cfg = new S3FileSystemConfig(config, pathPrefix);
             cfg.read();
@@ -399,7 +399,7 @@ public class S3FileSystem extends LocalFileSystem {
         return TEMP_PATH;
     }
 
-    public static class S3FileSystemConfig extends FileSystem.FileSystemConfig {
+    public static class S3FileSystemConfig extends HCDCFileSystem.FileSystemConfig {
         public static final String CONFIG_REGION = "region";
         public static final String CONFIG_DEFAULT_BUCKET = "defaultBucket";
         public static final String CONFIG_DOMAIN_MAP = "domains.mapping";
