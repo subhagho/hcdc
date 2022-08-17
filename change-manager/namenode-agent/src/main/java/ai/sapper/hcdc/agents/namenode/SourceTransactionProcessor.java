@@ -246,52 +246,64 @@ public class SourceTransactionProcessor extends TransactionProcessor {
         List<DFSFileState> files = stateManager()
                 .fileStateHelper()
                 .listFiles(data.getFile().getPath());
+        boolean delete = true;
         if (files != null && !files.isEmpty()) {
             for (DFSFileState file : files) {
                 if (!file.checkDeleted()
                         && !file.getHdfsFilePath().startsWith("/tmp")) {
-                    updateFileRecursiveDelete(file, message, data, txId);
+                    delete = updateFileRecursiveDelete(file, message, data, txId);
                 }
             }
         }
-        DFSFileState fs = stateManager()
-                .fileStateHelper()
-                .delete(data.getFile().getPath());
+        if (delete) {
+            DFSFileState fs = stateManager()
+                    .fileStateHelper()
+                    .delete(data.getFile().getPath());
+        }
         sendIgnoreTx(message, data);
     }
 
-    private void updateFileRecursiveDelete(DFSFileState fileState,
+    private boolean updateFileRecursiveDelete(DFSFileState fileState,
                                            MessageObject<String, DFSChangeDelta> message,
                                            DFSDeleteFile deleteFile,
                                            long txId) throws Exception {
-        if (fileState.checkDeleted()) return;
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
                 .get(fileState.getId());
-        if (!fileState.hasError() && rState != null && rState.isEnabled()) {
-            stateManager()
-                    .replicaStateHelper()
-                    .delete(fileState.getId());
+        if (rState != null) {
+            if (!fileState.hasError() && rState.isEnabled()) {
+                stateManager()
+                        .replicaStateHelper()
+                        .delete(fileState.getId());
 
-            DFSFile df = ProtoBufUtils.build(fileState);
-            DFSDeleteFile data = DFSDeleteFile.newBuilder()
-                    .setTransaction(deleteFile.getTransaction())
-                    .setFile(df)
-                    .setTimestamp(deleteFile.getTimestamp())
-                    .build();
+                DFSFile df = ProtoBufUtils.build(fileState);
+                DFSDeleteFile data = DFSDeleteFile.newBuilder()
+                        .setTransaction(deleteFile.getTransaction())
+                        .setFile(df)
+                        .setTimestamp(deleteFile.getTimestamp())
+                        .build();
 
-            MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
-                    data,
-                    DFSDeleteFile.class,
-                    rState.getEntity().getDomain(),
-                    rState.getEntity().getEntity(),
-                    MessageObject.MessageMode.Backlog);
-            m.correlationId(message.id());
+                MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
+                        data,
+                        DFSDeleteFile.class,
+                        rState.getEntity().getDomain(),
+                        rState.getEntity().getEntity(),
+                        MessageObject.MessageMode.Backlog);
+                m.correlationId(message.id());
 
-            stateManager().replicaStateHelper().delete(rState.getInode());
+                rState.setEnabled(false);
+                rState.setLastReplicationTime(System.currentTimeMillis());
+                rState.setLastReplicatedTx(txId);
 
-            sender.send(m);
+                stateManager().replicaStateHelper().update(rState);
+
+                sender.send(m);
+
+                return false;
+            }
+            return false;
         }
+        return true;
     }
 
     /**

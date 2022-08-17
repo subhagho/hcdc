@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.agents.pipeline;
 
+import ai.sapper.cdc.core.io.Archiver;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
@@ -12,13 +13,13 @@ import ai.sapper.cdc.core.io.HCDCFileSystem;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
-import org.apache.parquet.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +32,8 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
     private FileTransactionProcessor processor = new FileTransactionProcessor();
     private long receiveBatchTimeout = 1000;
     private HCDCFileSystem fs;
+    private Archiver archiver;
+
     private FileDeltaProcessorConfig config;
     private HdfsConnection connection;
     private HCDCFileSystem.FileSystemMocker fileSystemMocker;
@@ -79,7 +82,14 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
                     FileDeltaProcessorConfig.Constants.CONFIG_WS_PATH,
                     manger);
 
+            if (!Strings.isNullOrEmpty(config.archiverClass)) {
+                Class<? extends Archiver> cls = (Class<? extends Archiver>) Class.forName(config.archiverClass);
+                archiver = cls.newInstance();
+                archiver.init(config.config(), FileDeltaProcessorConfig.Constants.CONFIG_ARCHIVER);
+            }
+
             processor.withFileSystem(fs)
+                    .withArchiver(archiver)
                     .withHdfsConnection(connection)
                     .withClient(client)
                     .withSenderQueue(sender())
@@ -192,11 +202,13 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
             public static final String CONFIG_FS_TYPE = String.format("%s.type", CONFIG_PATH_FS);
             public static final String CONFIG_HDFS_CONN = "hdfs";
             public static final String CONFIG_WS_PATH = "snapshot";
+            public static final String CONFIG_ARCHIVER = "archiver";
+            public static final String CONFIG_ARCHIVER_CLASS = String.format("%s.class", CONFIG_ARCHIVER);
         }
 
         private String fsType;
         private String hdfsConnection;
-        private String snapshotService;
+        private String archiverClass;
         private HierarchicalConfiguration<ImmutableNode> fsConfig;
 
         public FileDeltaProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
@@ -227,6 +239,9 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
                 throw new ConfigurationException(
                         String.format("File Processor Error: missing configuration. [name=%s]",
                                 Constants.CONFIG_HDFS_CONN));
+            }
+            if (get().containsKey(Constants.CONFIG_ARCHIVER_CLASS)) {
+                archiverClass = get().getString(Constants.CONFIG_ARCHIVER_CLASS);
             }
         }
     }

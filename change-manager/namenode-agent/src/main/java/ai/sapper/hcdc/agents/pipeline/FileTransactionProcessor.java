@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.agents.pipeline;
 
 import ai.sapper.cdc.common.model.*;
+import ai.sapper.cdc.core.io.*;
 import ai.sapper.cdc.core.model.*;
 import ai.sapper.hcdc.agents.common.*;
 import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
@@ -8,10 +9,6 @@ import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.cdc.common.model.services.SnapshotDoneRequest;
 import ai.sapper.cdc.core.WebServiceClient;
 import ai.sapper.cdc.core.connections.HdfsConnection;
-import ai.sapper.cdc.core.io.FSBlock;
-import ai.sapper.cdc.core.io.FSFile;
-import ai.sapper.cdc.core.io.HCDCFileSystem;
-import ai.sapper.cdc.core.io.PathInfo;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
@@ -33,6 +30,7 @@ public class FileTransactionProcessor extends TransactionProcessor {
     private HCDCFileSystem fs;
     private HdfsConnection connection;
     private WebServiceClient client;
+    private Archiver archiver;
 
     public FileTransactionProcessor withHdfsConnection(@NonNull HdfsConnection connection) {
         this.connection = connection;
@@ -51,6 +49,11 @@ public class FileTransactionProcessor extends TransactionProcessor {
 
     public FileTransactionProcessor withClient(@NonNull WebServiceClient client) {
         this.client = client;
+        return this;
+    }
+
+    public FileTransactionProcessor withArchiver(Archiver archiver) {
+        this.archiver = archiver;
         return this;
     }
 
@@ -228,15 +231,49 @@ public class FileTransactionProcessor extends TransactionProcessor {
                         String.format("FileSystem file not found. [path=%s]",
                                 data.getFile().getPath()));
             }
+            CDCDataConverter converter = new CDCDataConverter()
+                    .withFileSystem(fs)
+                    .withSchemaManager(NameNodeEnv.get().schemaManager());
+            PathInfo outPath = converter.convert(fileState, rState, 0, txId);
+            if (outPath == null) {
+                throw new IOException(String.format("Error converting source file. [TXID=%d]", txId));
+            }
+            rState.setLastDeltaPath(outPath.pathConfig());
+            DFSChangeData delta = DFSChangeData.newBuilder()
+                    .setTransaction(data.getTransaction())
+                    .setFile(data.getFile())
+                    .setDomain(schemaEntity.getDomain())
+                    .setEntityName(schemaEntity.getEntity())
+                    .setFileSystem(fs.fileSystemCode())
+                    .setOutputPath(outPath.path())
+                    .build();
+            MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(
+                    message.value().getNamespace(),
+                    delta,
+                    DFSChangeData.class,
+                    schemaEntity.getDomain(),
+                    schemaEntity.getEntity(),
+                    message.mode());
+            sender.send(m);
+
+            if (archiver != null) {
+                String path = String.format("%s/%d", fileState.getHdfsFilePath(), fileState.getId());
+                PathInfo tp = archiver.getTargetPath(path, schemaEntity);
+                archiver.archive(file, tp, fs);
+            }
             file.delete();
             stateManager().replicationLock().lock();
             try {
                 rState = stateManager()
                         .replicaStateHelper()
                         .get(fileState.getId());
+                rState.setEnabled(false);
+                rState.setLastReplicatedTx(txId);
+                rState.setLastReplicationTime(System.currentTimeMillis());
+
                 stateManager()
                         .replicaStateHelper()
-                        .delete(rState.getInode());
+                        .update(rState);
             } finally {
                 stateManager().replicationLock().unlock();
             }
