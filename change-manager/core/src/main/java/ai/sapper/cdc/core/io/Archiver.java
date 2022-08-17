@@ -13,12 +13,14 @@ import java.io.IOException;
 @Getter
 @Accessors(fluent = true)
 public abstract class Archiver implements Closeable {
+    public static final String CONFIG_ARCHIVER = "archiver";
+
     private FileSystem targetFS;
 
     public abstract void init(@NonNull HierarchicalConfiguration<ImmutableNode> config,
                               String pathPrefix) throws IOException;
 
-    public abstract void archive(@NonNull FSFile source,
+    public abstract PathInfo archive(@NonNull FSFile source,
                                  @NonNull PathInfo target,
                                  @NonNull FileSystem sourceFS) throws IOException;
 

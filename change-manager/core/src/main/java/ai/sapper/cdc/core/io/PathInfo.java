@@ -17,6 +17,7 @@ import java.util.Map;
 @Setter
 @Accessors(fluent = true)
 public abstract class PathInfo {
+    public static final String CONFIG_KEY_TYPE = "type";
     public static final String CONFIG_KEY_DOMAIN = "domain";
     public static final String CONFIG_KEY_PATH = "path";
 
@@ -60,6 +61,7 @@ public abstract class PathInfo {
 
     public Map<String, String> pathConfig() {
         Map<String, String> config = new HashMap<>();
+        config.put(CONFIG_KEY_TYPE, getClass().getCanonicalName());
         config.put(CONFIG_KEY_DOMAIN, domain);
         config.put(CONFIG_KEY_PATH, path);
 

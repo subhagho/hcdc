@@ -10,6 +10,7 @@ import lombok.NonNull;
 import lombok.Setter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,11 +30,32 @@ public class DFSFileReplicaState {
     private long updateTime = 0;
     private EFileState state = EFileState.Unknown;
     private Map<String, String> storagePath;
-    private Map<String, String> lastDeltaPath;
+    private Map<Long, Map<String, String>> tnxDeltaPaths;
     private EFileType fileType = EFileType.UNKNOWN;
     private String schemaLocation;
 
     private List<DFSBlockReplicaState> blocks = new ArrayList<>();
+
+    public void addDelta(long tnxId, @NonNull Map<String, String> fsPath) {
+        if (tnxDeltaPaths == null) {
+            tnxDeltaPaths = new HashMap<>();
+        }
+        tnxDeltaPaths.put(tnxId, fsPath);
+    }
+
+    public Map<String, String> getDelta(long txId) {
+        if (tnxDeltaPaths != null) {
+            return tnxDeltaPaths.get(txId);
+        }
+        return null;
+    }
+
+    public Map<String, String> removeDelta(long txId) {
+        if (tnxDeltaPaths != null && tnxDeltaPaths.containsKey(txId)) {
+            return tnxDeltaPaths.remove(txId);
+        }
+        return null;
+    }
 
     public void add(@NonNull DFSBlockReplicaState block) throws Exception {
         DFSBlockReplicaState b = get(block.getBlockId());
@@ -80,6 +102,7 @@ public class DFSFileReplicaState {
 
         return this;
     }
+
     public boolean hasBlocks() {
         return !blocks.isEmpty();
     }

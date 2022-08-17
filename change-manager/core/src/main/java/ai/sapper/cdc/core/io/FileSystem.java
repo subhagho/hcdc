@@ -128,7 +128,7 @@ public abstract class FileSystem implements Closeable {
 
         public void read() throws ConfigurationException {
             if (get() == null) {
-                throw new ConfigurationException("Kafka Configuration not drt or is NULL");
+                throw new ConfigurationException("FileSystem Configuration not set or is NULL");
             }
             rootPath = get().getString(CONFIG_ROOT);
         }

@@ -85,7 +85,7 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
             if (!Strings.isNullOrEmpty(config.archiverClass)) {
                 Class<? extends Archiver> cls = (Class<? extends Archiver>) Class.forName(config.archiverClass);
                 archiver = cls.newInstance();
-                archiver.init(config.config(), FileDeltaProcessorConfig.Constants.CONFIG_ARCHIVER);
+                archiver.init(config.config(), Archiver.CONFIG_ARCHIVER);
             }
 
             processor.withFileSystem(fs)
@@ -202,8 +202,7 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
             public static final String CONFIG_FS_TYPE = String.format("%s.type", CONFIG_PATH_FS);
             public static final String CONFIG_HDFS_CONN = "hdfs";
             public static final String CONFIG_WS_PATH = "snapshot";
-            public static final String CONFIG_ARCHIVER = "archiver";
-            public static final String CONFIG_ARCHIVER_CLASS = String.format("%s.class", CONFIG_ARCHIVER);
+            public static final String CONFIG_ARCHIVER_CLASS = String.format("%s.class", Archiver.CONFIG_ARCHIVER);
         }
 
         private String fsType;

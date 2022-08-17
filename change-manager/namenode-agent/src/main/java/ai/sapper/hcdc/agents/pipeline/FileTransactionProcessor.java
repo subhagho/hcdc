@@ -236,9 +236,12 @@ public class FileTransactionProcessor extends TransactionProcessor {
                     .withSchemaManager(NameNodeEnv.get().schemaManager());
             PathInfo outPath = converter.convert(fileState, rState, 0, txId);
             if (outPath == null) {
-                throw new IOException(String.format("Error converting source file. [TXID=%d]", txId));
+                throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                        data.getFile().getPath(),
+                        String.format("Failed to generate transaction delta. [path=%s]",
+                                data.getFile().getPath()));
             }
-            rState.setLastDeltaPath(outPath.pathConfig());
+            rState.addDelta(txId, outPath.pathConfig());
             DFSChangeData delta = DFSChangeData.newBuilder()
                     .setTransaction(data.getTransaction())
                     .setFile(data.getFile())
@@ -259,7 +262,8 @@ public class FileTransactionProcessor extends TransactionProcessor {
             if (archiver != null) {
                 String path = String.format("%s/%d", fileState.getHdfsFilePath(), fileState.getId());
                 PathInfo tp = archiver.getTargetPath(path, schemaEntity);
-                archiver.archive(file, tp, fs);
+                PathInfo ap = archiver.archive(file, tp, fs);
+                rState.setStoragePath(ap.pathConfig());
             }
             file.delete();
             stateManager().replicationLock().lock();
@@ -565,9 +569,12 @@ public class FileTransactionProcessor extends TransactionProcessor {
                 try {
                     PathInfo outPath = converter.convert(fileState, rState, startTxId, txId);
                     if (outPath == null) {
-                        throw new IOException(String.format("Error converting source file. [TXID=%d]", txId));
+                        throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                                data.getFile().getPath(),
+                                String.format("Failed to generate transaction delta. [path=%s]",
+                                        data.getFile().getPath()));
                     }
-                    rState.setLastDeltaPath(outPath.pathConfig());
+                    rState.addDelta(txId, outPath.pathConfig());
                     DFSChangeData delta = DFSChangeData.newBuilder()
                             .setTransaction(data.getTransaction())
                             .setFile(data.getFile())

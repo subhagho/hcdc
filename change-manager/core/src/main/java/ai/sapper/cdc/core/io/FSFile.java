@@ -9,10 +9,17 @@ import lombok.NonNull;
 import lombok.experimental.Accessors;
 
 import java.io.Closeable;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Getter
 @Accessors(fluent = true)
@@ -256,5 +263,43 @@ public class FSFile implements Closeable {
             }
             blocks.clear();
         }
+    }
+
+    public File archive() throws IOException {
+        if (hasBlocks()) {
+            File dir = PathUtils.getTempDir();
+            for (FSBlock block : blocks) {
+                int bsize = 8095;
+                byte[] buffer = new byte[bsize];
+                File bf = new File(String.format("%s/%s.blk", dir.getAbsolutePath(), block.blockId()));
+                try (FileOutputStream fos = new FileOutputStream(bf)) {
+                    while (true) {
+                        long r = block.read(buffer);
+                        if (r > 0)
+                            fos.write(buffer, 0, (int) r);
+                        if (r < bsize) break;
+                    }
+                }
+            }
+            File zip = PathUtils.getTempFileWithExt("zip");
+            Path p = Files.createFile(Paths.get(zip.getAbsolutePath()));
+            try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(p))) {
+                Path pp = Paths.get(dir.getAbsolutePath());
+                Files.walk(pp)
+                        .filter(path -> !Files.isDirectory(path))
+                        .forEach(path -> {
+                            ZipEntry zipEntry = new ZipEntry(pp.relativize(path).toString());
+                            try {
+                                zs.putNextEntry(zipEntry);
+                                Files.copy(path, zs);
+                                zs.closeEntry();
+                            } catch (IOException e) {
+                                System.err.println(e);
+                            }
+                        });
+            }
+            return zip;
+        }
+        return null;
     }
 }
