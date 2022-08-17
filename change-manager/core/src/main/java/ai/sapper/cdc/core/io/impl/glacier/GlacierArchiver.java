@@ -23,7 +23,6 @@ import software.amazon.awssdk.services.glacier.model.UploadArchiveResponse;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
@@ -78,6 +77,11 @@ public class GlacierArchiver extends Archiver {
         }
         path = String.format("%s/%s", schemaEntity.getDomain(), path);
         return new GlacierPathInfo(client, path, schemaEntity.getDomain(), vault);
+    }
+
+    @Override
+    public File getFromArchive(@NonNull PathInfo path) throws IOException {
+        throw new IOException("Method not implemented...");
     }
 
     @Override

@@ -8,12 +8,14 @@ import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 
 @Getter
 @Accessors(fluent = true)
 public abstract class Archiver implements Closeable {
     public static final String CONFIG_ARCHIVER = "archiver";
+    public static final String CONFIG_KEY_ARCHIVE = "archived";
 
     private FileSystem targetFS;
 
@@ -21,9 +23,11 @@ public abstract class Archiver implements Closeable {
                               String pathPrefix) throws IOException;
 
     public abstract PathInfo archive(@NonNull FSFile source,
-                                 @NonNull PathInfo target,
-                                 @NonNull FileSystem sourceFS) throws IOException;
+                                     @NonNull PathInfo target,
+                                     @NonNull FileSystem sourceFS) throws IOException;
 
     public abstract PathInfo getTargetPath(@NonNull String path,
-                                       @NonNull SchemaEntity schemaEntity);
+                                           @NonNull SchemaEntity schemaEntity);
+
+    public abstract File getFromArchive(@NonNull PathInfo path) throws IOException;
 }

@@ -1,5 +1,6 @@
 package ai.sapper.cdc.core.io.impl.glacier;
 
+import ai.sapper.cdc.core.io.Archiver;
 import ai.sapper.cdc.core.io.PathInfo;
 import lombok.Getter;
 import lombok.NonNull;
@@ -26,6 +27,7 @@ public class GlacierPathInfo extends PathInfo {
         super(path, domain);
         this.client = client;
         this.vault = vault;
+        archive(true);
     }
 
     protected GlacierPathInfo(@NonNull GlacierClient client,
@@ -33,6 +35,7 @@ public class GlacierPathInfo extends PathInfo {
         super(config);
         this.client = client;
         vault = config.get(CONFIG_KEY_VAULT);
+        archive(true);
     }
 
     @Override

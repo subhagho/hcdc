@@ -24,6 +24,7 @@ public abstract class PathInfo {
     private final String domain;
     private final String path;
     private long dataSize = -1;
+    private boolean archive = false;
 
     protected PathInfo(@NonNull String path, @NonNull String domain) {
         this.path = PathUtils.formatPath(path);
@@ -64,6 +65,7 @@ public abstract class PathInfo {
         config.put(CONFIG_KEY_TYPE, getClass().getCanonicalName());
         config.put(CONFIG_KEY_DOMAIN, domain);
         config.put(CONFIG_KEY_PATH, path);
+        config.put(Archiver.CONFIG_KEY_ARCHIVE, String.valueOf(archive));
 
         return config;
     }
