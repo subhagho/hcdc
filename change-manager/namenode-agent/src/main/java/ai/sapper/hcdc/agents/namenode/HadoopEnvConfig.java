@@ -7,18 +7,22 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
+import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
-import org.apache.hadoop.conf.Configuration;
 
 import java.io.File;
-import java.io.FileInputStream;
+import java.util.List;
+import java.util.Properties;
 
 @Getter
 @Setter
 @Accessors(fluent = true)
 public class HadoopEnvConfig {
     public static class Constants {
+        private static final String HDFS_CONFIG_PROPERTY = "property";
+        private static final String HDFS_CONFIG_PROPERTY_NAME = "name";
+        private static final String HDFS_CONFIG_PROPERTY_VALUE = "value";
         private static final String HDFS_NN_DATA_DIR = "dfs.namenode.name.dir";
         private static final String HDFS_NN_EDITS_DIR = "fs.namenode.edits.dir";
         private static final String HDFS_NN_NAMESPACE = "dfs.nameservices";
@@ -31,7 +35,7 @@ public class HadoopEnvConfig {
     private final String nameNodeInstanceName;
     private final String namespace;
     private HierarchicalConfiguration<ImmutableNode> hdfsConfig;
-    private Configuration config;
+    private Properties config;
     private String nameNodeDataDir;
     private String nameNodeEditsDir;
     private String nameNodeAdminUrl;
@@ -49,7 +53,7 @@ public class HadoopEnvConfig {
         this.version = version;
     }
 
-    public HadoopEnvConfig withNameNodeAdminUrl(String nameNodeAdminUrl) {
+    public HadoopEnvConfig withNameNodeAdminUrl(@NonNull String nameNodeAdminUrl) {
         this.nameNodeAdminUrl = nameNodeAdminUrl;
         return this;
     }
@@ -59,36 +63,48 @@ public class HadoopEnvConfig {
         if (!cf.exists()) {
             throw new Exception(String.format("Configuration file not found. ]path=%s]", cf.getAbsolutePath()));
         }
-        config = new Configuration(true);
-        config.addResource(new FileInputStream(cf));
+        Configurations configs = new Configurations();
+        hdfsConfig = configs.xml(cf);
 
-        nameNodeDataDir = config.get(Constants.HDFS_NN_DATA_DIR);
+        List<HierarchicalConfiguration<ImmutableNode>> nodes = hdfsConfig.configurationsAt(Constants.HDFS_CONFIG_PROPERTY);
+        if (nodes == null || nodes.isEmpty()) {
+            throw new ConfigurationException(String.format("Failed to read HDFS configuration. [file=%s]", cf.getAbsolutePath()));
+        }
+        config = new Properties();
+        for (HierarchicalConfiguration<ImmutableNode> node : nodes) {
+            String sn = node.getString(Constants.HDFS_CONFIG_PROPERTY_NAME);
+            String vn = node.getString(Constants.HDFS_CONFIG_PROPERTY_VALUE);
+            if (!Strings.isNullOrEmpty(sn)) {
+                config.put(sn, vn);
+            }
+        }
+        nameNodeDataDir = config.getProperty(Constants.HDFS_NN_DATA_DIR);
         if (Strings.isNullOrEmpty(nameNodeDataDir)) {
             throw new Exception(String.format("HDFS Configuration not found. [name=%s][file=%s]",
                     Constants.HDFS_NN_DATA_DIR, cf.getAbsolutePath()));
         }
         nameNodeEditsDir = nameNodeDataDir;
-        String ed = config.get(Constants.HDFS_NN_EDITS_DIR);
+        String ed = config.getProperty(Constants.HDFS_NN_EDITS_DIR);
         if (!Strings.isNullOrEmpty(ed)) {
             nameNodeEditsDir = ed;
         }
-        if (isHAEnabled()) {
-            readHAConfig(cf);
+        if (isHAEnabled(config)) {
+            readHAConfig(config, cf);
         } else {
-            readConfig();
+            readConfig(config, cf);
         }
         DefaultLogger.LOG.info(String.format("Using NameNode Admin UR [%s]", nameNodeAdminUrl));
     }
 
-    private void readConfig() throws Exception {
+    private void readConfig(Properties config, File cf) throws Exception {
         if (Strings.isNullOrEmpty(nameNodeAdminUrl)) {
             throw new ConfigurationException("NameNode Admin URL needs to be set for non-HA connections.");
         }
     }
 
-    private void readHAConfig(File cf) throws Exception {
+    private void readHAConfig(Properties config, File cf) throws Exception {
         String ns = namespace;
-        ns = config.get(Constants.HDFS_NN_NAMESPACE);
+        ns = config.getProperty(Constants.HDFS_NN_NAMESPACE);
         if (Strings.isNullOrEmpty(ns)) {
             throw new Exception(String.format("HDFS Configuration not found. [name=%s][file=%s]",
                     Constants.HDFS_NN_NAMESPACE, cf.getAbsolutePath()));
@@ -97,7 +113,7 @@ public class HadoopEnvConfig {
             throw new Exception(String.format("HDFS Namespace mismatch. [expected=%s][actual=%s]", ns, namespace));
         }
         String nnKey = String.format(Constants.HDFS_NN_NODES, ns);
-        String nns = config.get(nnKey);
+        String nns = config.getProperty(nnKey);
         if (Strings.isNullOrEmpty(nns)) {
             throw new Exception(String.format("HDFS Configuration not found. [name=%s][file=%s]", nnKey, cf.getAbsolutePath()));
         }
@@ -116,14 +132,13 @@ public class HadoopEnvConfig {
         }
         DefaultLogger.LOG.info(String.format("Using NameNode instance [%s.%s]", ns, nn));
         String urlKey = String.format(Constants.HDFS_NN_URL, ns, nn);
-        nameNodeAdminUrl = config.get(urlKey);
+        nameNodeAdminUrl = config.getProperty(urlKey);
         if (Strings.isNullOrEmpty(nameNodeAdminUrl)) {
             throw new Exception(String.format("NameNode Admin URL not found. [name=%s][file=%s]", urlKey, cf.getAbsolutePath()));
         }
     }
 
-    private boolean isHAEnabled() {
-        String s = config.get(Constants.HDFS_NN_NAMESPACE, "");
-        return Strings.isNullOrEmpty(s);
+    private boolean isHAEnabled(Properties config) {
+        return config.containsKey(Constants.HDFS_NN_NAMESPACE);
     }
 }
