@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <configuration>
     <connections>
-        <!--connection>
-            <type>connections.ai.sapper.cdc.core.HdfsConnection</type>
+        <connection>
+            <type>ai.sapper.cdc.core.connections.HdfsConnection</type>
             <hdfs>
                 <name>test-hdfs</name>
                 <namenode>
                     <primary>
-                        <URI>hdfs://192.168.0.2:9000</URI>
+                        <URI>hdfs://localhost:8020</URI>
                     </primary>
                     <secondary>
-                        <URI>hdfs://192.168.0.3:9000</URI>
+                        <URI>hdfs://localhost:8030</URI>
                     </secondary>
                 </namenode>
                 <security>
@@ -20,21 +20,21 @@
             </hdfs>
         </connection>
         <connection>
-            <type>connections.ai.sapper.cdc.core.HdfsHAConnection</type>
+            <type>ai.sapper.cdc.core.connections.HdfsHAConnection</type>
             <hdfs_ha>
                 <name>test-hdfs-ha</name>
                 <nameservice>ha-cluster</nameservice>
                 <failoverProvider>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider
                 </failoverProvider>
-                <namenodes>nn1=192.168.0.2:9000;nn2=192.168.0.3:9000</namenodes>
+                <namenodes>nn1=localhost:8020;nn2=localhost:8030</namenodes>
                 <security>
                     <enabled>false</enabled>
                 </security>
                 <enableAdmin>true</enableAdmin>
             </hdfs_ha>
-        </connection -->
+        </connection>
         <connection>
-            <type>connections.ai.sapper.cdc.core.ZookeeperConnection</type>
+            <type>ai.sapper.cdc.core.connections.ZookeeperConnection</type>
             <zookeeper>
                 <name>test-zk</name>
                 <!--connectionString>192.168.0.5:2181,192.168.0.4:2181</connectionString -->
@@ -46,21 +46,19 @@
                 <connectionTimeout>10000</connectionTimeout>
             </zookeeper>
         </connection>
-        <!--connection>
-            <type>connections.ai.sapper.cdc.core.WebServiceConnection</type>
-            <service>
-                <web>
-                    <name>test-ws</name>
-                    <endpoint>https://howtodoinjava.com/</endpoint>
-                    <paths>
-                        <jersey>jersey</jersey>
-                        <other>jersey/jersey-restful-client-examples/</other>
-                    </paths>
-                </web>
-            </service>
-        </connection-->
         <connection>
-            <type>impl.connections.ai.sapper.cdc.core.BasicKafkaProducer</type>
+            <type>ai.sapper.cdc.core.connections.WebServiceConnection</type>
+            <rest>
+                <name>test-ws</name>
+                <endpoint>https://howtodoinjava.com/</endpoint>
+                <paths>
+                    <jersey>jersey</jersey>
+                    <other>jersey/jersey-restful-client-examples/</other>
+                </paths>
+            </rest>
+        </connection>
+        <connection>
+            <type>ai.sapper.cdc.core.connections.impl.BasicKafkaProducer</type>
             <kafka>
                 <name>test-kafka-producer</name>
                 <mode>Producer</mode>
@@ -71,7 +69,7 @@
             </kafka>
         </connection>
         <connection>
-            <type>impl.connections.ai.sapper.cdc.core.BasicKafkaConsumer</type>
+            <type>ai.sapper.cdc.core.connections.impl.BasicKafkaConsumer</type>
             <kafka>
                 <name>test-kafka-consumer</name>
                 <mode>Consumer</mode>

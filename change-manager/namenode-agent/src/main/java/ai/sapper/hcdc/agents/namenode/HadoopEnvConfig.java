@@ -91,12 +91,12 @@ public class HadoopEnvConfig {
         if (isHAEnabled(config)) {
             readHAConfig(config, cf);
         } else {
-            readConfig(config, cf);
+            readConfig();
         }
-        DefaultLogger.LOG.info(String.format("Using NameNode Admin UR [%s]", nameNodeAdminUrl));
+        DefaultLogger.LOG.info(String.format("Using NameNode Admin URL [%s]", nameNodeAdminUrl));
     }
 
-    private void readConfig(Properties config, File cf) throws Exception {
+    private void readConfig() throws Exception {
         if (Strings.isNullOrEmpty(nameNodeAdminUrl)) {
             throw new ConfigurationException("NameNode Admin URL needs to be set for non-HA connections.");
         }

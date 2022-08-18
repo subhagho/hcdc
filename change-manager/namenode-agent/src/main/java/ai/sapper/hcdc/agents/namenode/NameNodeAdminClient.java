@@ -44,7 +44,7 @@ public class NameNodeAdminClient {
             ClientConfig config = new DefaultClientConfig();
             Client client = Client.create(config);
             String up = String.format("%s/%s", url, Constants.PATH_NN_STATUS);
-
+            DefaultLogger.LOG.debug(String.format("NameNode Status URL: [%s]", up));
             WebResource wr = client.resource(up);
             String json = wr.accept(MediaType.APPLICATION_JSON).get(String.class);
             JMXResponse response = mapper.readValue(json, JMXResponse.class);
