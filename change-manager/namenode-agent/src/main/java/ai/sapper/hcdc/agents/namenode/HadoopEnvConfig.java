@@ -53,7 +53,7 @@ public class HadoopEnvConfig {
         this.version = version;
     }
 
-    public HadoopEnvConfig withNameNodeAdminUrl(@NonNull String nameNodeAdminUrl) {
+    public HadoopEnvConfig withNameNodeAdminUrl(String nameNodeAdminUrl) {
         this.nameNodeAdminUrl = nameNodeAdminUrl;
         return this;
     }
