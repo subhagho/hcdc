@@ -3,7 +3,7 @@
 
     <!-- Logging Properties -->
     <Properties>
-        <Property name="basePath">c:/Work/temp/logs/hcdc</Property>
+        <Property name="basePath">logs/services/</Property>
     </Properties>
 
     <Appenders>
