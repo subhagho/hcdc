@@ -52,10 +52,10 @@ publishing {
 configurations.all {
     resolutionStrategy.eachDependency { DependencyResolveDetails details ->
         if (details.requested.name == 'log4j') {
-            details.useTarget "org.apache.logging.log4j:log4j-slf4j18-impl:2.17.2"
+            details.useTarget "org.apache.logging.log4j:log4j-slf4j-impl:2.17.2"
         }
         if (details.requested.name == 'commons-logging') {
-            details.useTarget "org.apache.logging.log4j:log4j-slf4j18-impl:2.17.2"
+            details.useTarget "org.apache.logging.log4j:log4j-slf4j-impl:2.17.2"
         }
     }
 }
@@ -109,10 +109,9 @@ subprojects {
     dependencies {
         // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
         implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.36'
-        implementation 'org.slf4j:slf4j-log4j12:1.7.36'
         implementation 'org.apache.logging.log4j:log4j-api:2.17.2'
         implementation 'org.apache.logging.log4j:log4j-core:2.17.2'
-        implementation 'org.apache.logging.log4j:log4j-slf4j18-impl:2.17.2'
+        implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.2'
         implementation 'com.google.guava:guava:31.1-jre'
         implementation 'org.apache.commons:commons-lang3:3.12.0'
         implementation 'org.projectlombok:lombok:1.18.24'

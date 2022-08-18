@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+
+    <!-- Logging Properties -->
+    <Properties>
+        <Property name="basePath">c:/Work/temp/logs/hcdc</Property>
+    </Properties>
+
+    <Appenders>
+        <!-- Console Appender -->
+        <Console name="Console" target="SYSTEM_OUT" follow="true">
+            <PatternLayout
+                    pattern="%style{%d{ISO8601}}{black} %highlight{%-5level }[%style{%t}{bright,blue}] %style{%C{1.}}{bright,yellow}: %msg%n%throwable" />
+        </Console>
+
+        <!-- File Appenders on need basis -->
+        <RollingFile name="ServiceLog" fileName="${basePath}/HadoopCDC-services.log"
+                     filePattern="${basePath}/HadoopCDC-services-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout>
+                <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n
+                </pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <!-- Max 10 files will be created everyday -->
+            <DefaultRolloverStrategy max="10">
+                <Delete basePath="${basePath}" maxDepth="10">
+                    <!-- Delete all files older than 30 days -->
+                    <IfLastModified age="30d"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+
+        <RollingFile name="ContainerLog" fileName="${basePath}/container.log"
+                     filePattern="${basePath}/container-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout>
+                <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n
+                </pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <!-- Max 10 files will be created everyday -->
+            <DefaultRolloverStrategy max="10">
+                <Delete basePath="${basePath}" maxDepth="10">
+                    <!-- Delete all files older than 30 days -->
+                    <IfLastModified age="30d"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <Logger name="ai.sapper" additivity="false" level="debug">
+            <AppenderRef ref="ServiceLog"/>
+        </Logger>
+
+        <Logger name="org.springframework.boot" level="warn" additivity="false">
+            <AppenderRef ref="ContainerLog"/>
+        </Logger>
+        <Logger name="org.eclipse.jetty.util.log" level="warn" additivity="false">
+            <AppenderRef ref="ContainerLog"/>
+        </Logger>
+
+        <Root level="debug">
+            <AppenderRef ref="Console"/>
+        </Root>
+    </Loggers>
+</Configuration>

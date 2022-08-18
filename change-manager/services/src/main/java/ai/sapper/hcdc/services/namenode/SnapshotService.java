@@ -151,6 +151,8 @@ public class SnapshotService {
                     NameNodeEnv.get().state()),
                     HttpStatus.OK);
         } catch (Throwable t) {
+            DefaultLogger.LOG.error("Error starting service.", t);
+            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
             return new ResponseEntity<>(
                     new BasicResponse<>(EResponseState.Error,
                             (NameNodeEnv.NameNEnvState) null).withError(t),

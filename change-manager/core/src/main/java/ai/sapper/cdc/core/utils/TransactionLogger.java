@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class TransactionLogger {
-    private static final Logger LOG = LoggerFactory.getLogger("TRANSACTION");
+    private static final Logger LOG = LoggerFactory.getLogger("ai.sapper");
 
     public void debug(Class<?> caller, long txId, String mesg) {
         LOG.debug(String.format("[TXID=%d][%s]: %s", txId, caller.getCanonicalName(), mesg));
