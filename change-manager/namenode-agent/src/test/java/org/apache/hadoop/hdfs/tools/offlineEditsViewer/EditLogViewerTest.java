@@ -20,7 +20,7 @@ class EditLogViewerTest {
         try {
             DFSEditsFileFinder.EditsLogFile file = DFSEditsFileFinder.parseFileName(EDITS_FILE_01);
             assertNotNull(file);
-            EditsLogReader viewer = new EditsLogReader();
+            EditsLogFileReader viewer = new EditsLogFileReader();
             viewer.run(file);
 
             DFSEditLogBatch batch = viewer.batch();
@@ -45,7 +45,7 @@ class EditLogViewerTest {
     @Test
     void runFor() {
         try {
-            List<DFSEditLogBatch> batches = EditsLogReader.readEditsInRange(SOURCE_DIR, 7, 24);
+            List<DFSEditLogBatch> batches = EditsLogFileReader.readEditsInRange(SOURCE_DIR, 7, 24);
             assertNotNull(batches);
             for (DFSEditLogBatch batch : batches) {
                 List<DFSTransactionType<?>> transactions = batch.transactions();

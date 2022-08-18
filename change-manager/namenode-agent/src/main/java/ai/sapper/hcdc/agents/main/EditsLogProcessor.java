@@ -1,7 +1,7 @@
-package ai.sapper.hcdc.agents.namenode.main;
+package ai.sapper.hcdc.agents.main;
 
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
-import ai.sapper.hcdc.agents.namenode.EditLogProcessor;
+import ai.sapper.hcdc.agents.namenode.EditsLogReader;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
@@ -19,7 +19,7 @@ import org.apache.parquet.Strings;
 
 @Getter
 @Setter
-public class EditLogRunner {
+public class EditsLogProcessor {
     @Parameter(names = {"--config", "-c"}, required = true, description = "Path to the configuration file.")
     private String configfile;
     @Parameter(names = {"--type", "-t"}, description = "Configuration file type. (File, Resource, Remote)")
@@ -28,7 +28,7 @@ public class EditLogRunner {
     @Setter(AccessLevel.NONE)
     private HierarchicalConfiguration<ImmutableNode> config;
     @Setter(AccessLevel.NONE)
-    private EditLogProcessor processor;
+    private EditsLogReader processor;
     @Setter(AccessLevel.NONE)
     private Thread runner;
 
@@ -42,7 +42,7 @@ public class EditLogRunner {
             config = ConfigReader.read(configfile, fileSource);
             NameNodeEnv.setup(config);
 
-            processor = new EditLogProcessor(NameNodeEnv.stateManager());
+            processor = new EditsLogReader(NameNodeEnv.stateManager());
             processor.init(NameNodeEnv.get().configNode(), NameNodeEnv.connectionManager());
         } catch (Throwable t) {
             NameNodeEnv.get().error(t);
@@ -80,7 +80,7 @@ public class EditLogRunner {
 
     public static void main(String[] args) {
         try {
-            EditLogRunner runner = new EditLogRunner();
+            EditsLogProcessor runner = new EditsLogProcessor();
             JCommander.newBuilder().addObject(runner).build().parse(args);
             runner.init();
             runner.run();

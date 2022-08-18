@@ -1,7 +1,7 @@
 package ai.sapper.hcdc.services.namenode;
 
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
-import ai.sapper.hcdc.agents.namenode.main.EditLogRunner;
+import ai.sapper.hcdc.agents.main.EditsLogProcessor;
 import ai.sapper.cdc.common.model.services.BasicResponse;
 import ai.sapper.cdc.common.model.services.ConfigSource;
 import ai.sapper.cdc.common.model.services.EResponseState;
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class EditsLogReaderService {
-    private static EditLogRunner processor;
+    private static EditsLogProcessor processor;
 
     @RequestMapping(value = "/editslog/start", method = RequestMethod.POST)
     public ResponseEntity<BasicResponse<String>> start(@RequestBody ConfigSource config) {
@@ -27,7 +27,7 @@ public class EditsLogReaderService {
                     DefaultLogger.LOG.warn(String.format("Edit Log Processor Shutdown...[state=%s]", state.name()));
                 }
             });
-            processor = new EditLogRunner();
+            processor = new EditsLogProcessor();
             processor.setConfigfile(config.getPath());
             processor.setFileSource(config.getType());
             processor.init();

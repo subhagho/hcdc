@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.agents.namenode.main;
+package ai.sapper.hcdc.agents.main;
 
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.NameNodeError;

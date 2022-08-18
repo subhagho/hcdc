@@ -1,7 +1,7 @@
-package ai.sapper.hcdc.agents.namenode.main;
+package ai.sapper.hcdc.agents.main;
 
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
-import ai.sapper.hcdc.agents.namenode.SourceChangeDeltaProcessor;
+import ai.sapper.hcdc.agents.namenode.HDFSSnapshotProcessor;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
@@ -16,17 +16,16 @@ import org.apache.parquet.Strings;
 
 @Getter
 @Setter
-public class ChangeRunner {
+public class SnapshotRunner {
     @Parameter(names = {"--config", "-c"}, required = true, description = "Path to the configuration file.")
     private String configfile;
     @Parameter(names = {"--type", "-t"}, description = "Configuration file type. (File, Resource, Remote)")
     private String configSource;
     private EConfigFileType fileSource = EConfigFileType.File;
     private HierarchicalConfiguration<ImmutableNode> config;
-    private Thread runner;
-    private SourceChangeDeltaProcessor processor;
+    private HDFSSnapshotProcessor processor;
 
-    private void init() throws Exception {
+    public void init() throws Exception {
         Preconditions.checkState(!Strings.isNullOrEmpty(configfile));
         if (!Strings.isNullOrEmpty(configSource)) {
             fileSource = EConfigFileType.parse(configSource);
@@ -34,27 +33,23 @@ public class ChangeRunner {
         Preconditions.checkNotNull(fileSource);
         config = ConfigReader.read(configfile, fileSource);
         NameNodeEnv.setup(config);
-
-        processor = new SourceChangeDeltaProcessor(NameNodeEnv.stateManager());
+        processor = new HDFSSnapshotProcessor(NameNodeEnv.stateManager());
         processor.init(NameNodeEnv.get().configNode(), NameNodeEnv.connectionManager());
-    }
-
-    private void run() throws Exception {
-        runner = new Thread(processor);
-        runner.start();
     }
 
     public static void main(String[] args) {
         try {
-            ChangeRunner runner = new ChangeRunner();
+
+            SnapshotRunner runner = new SnapshotRunner();
             JCommander.newBuilder().addObject(runner).build().parse(args);
             runner.init();
-            runner.run();
-            runner.runner.join();
+            runner.processor.run();
         } catch (Throwable t) {
             t.printStackTrace();
             DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
             DefaultLogger.LOG.error(t.getLocalizedMessage());
+        } finally {
+            NameNodeEnv.dispose();
         }
     }
 }

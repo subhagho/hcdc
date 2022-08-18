@@ -41,19 +41,19 @@
             </source>
         </processor>
         <useSSL>false</useSSL>
-        <locks>
-            <lock>
-                <name>global</name>
-                <connection>zk-state-connection</connection>
-                <lock-node>NN-GLOBAL-LOCK</lock-node>
-            </lock>
-            <lock>
-                <name>LOCK_REPLICATION</name>
-                <connection>zk-state-connection</connection>
-                <lock-node>NN-REPLICATION-LOCK</lock-node>
-            </lock>
-        </locks>
     </agent>
+    <locks>
+        <lock>
+            <name>global</name>
+            <connection>zk-state-connection</connection>
+            <lock-node>NN-GLOBAL-LOCK</lock-node>
+        </lock>
+        <lock>
+            <name>LOCK_REPLICATION</name>
+            <connection>zk-state-connection</connection>
+            <lock-node>NN-REPLICATION-LOCK</lock-node>
+        </lock>
+    </locks>
     <config>
         <connections>
             <connection>

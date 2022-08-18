@@ -24,12 +24,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 
 @Getter
 @Accessors(fluent = true)
-public class FileDeltaProcessor extends ChangeDeltaProcessor {
-    private static Logger LOG = LoggerFactory.getLogger(FileDeltaProcessor.class);
-    private FileTransactionProcessor processor = new FileTransactionProcessor();
+public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
+    private static Logger LOG = LoggerFactory.getLogger(EntityChangeDeltaReader.class);
+    private EntityChangeTransactionReader processor = new EntityChangeTransactionReader();
     private long receiveBatchTimeout = 1000;
     private HCDCFileSystem fs;
     private Archiver archiver;
@@ -39,11 +40,11 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
     private HCDCFileSystem.FileSystemMocker fileSystemMocker;
     private WebServiceClient client;
 
-    public FileDeltaProcessor(@NonNull ZkStateManager stateManager) {
+    public EntityChangeDeltaReader(@NonNull ZkStateManager stateManager) {
         super(stateManager);
     }
 
-    public FileDeltaProcessor withMockFileSystem(@NonNull HCDCFileSystem.FileSystemMocker fileSystemMocker) {
+    public EntityChangeDeltaReader withMockFileSystem(@NonNull HCDCFileSystem.FileSystemMocker fileSystemMocker) {
         this.fileSystemMocker = fileSystemMocker;
         return this;
     }
@@ -143,11 +144,13 @@ public class FileDeltaProcessor extends ChangeDeltaProcessor {
                         if (txId > 0) {
                             if (message.mode() == MessageObject.MessageMode.New) {
                                 processor.updateTransaction(txId, message);
-                                LOG.debug(String.format("Processed transaction delta. [TXID=%d]", txId));
+                                LOGGER.info(getClass(), txId,
+                                        String.format("Processed transaction delta. [TXID=%d]", txId));
                             } else if (message.mode() == MessageObject.MessageMode.Snapshot) {
                                 if (stateManager().agentTxState().getProcessedTxId() < txId) {
                                     stateManager().update(txId);
-                                    LOG.debug(String.format("Processed transaction delta. [TXID=%d]", txId));
+                                    LOGGER.info(getClass(), txId,
+                                            String.format("Processed transaction delta. [TXID=%d]", txId));
                                 }
                             }
                         }

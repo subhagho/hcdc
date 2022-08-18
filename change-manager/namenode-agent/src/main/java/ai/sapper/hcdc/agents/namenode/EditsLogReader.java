@@ -20,18 +20,17 @@ import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
-import org.apache.hadoop.hdfs.tools.offlineEditsViewer.EditsLogReader;
+import org.apache.hadoop.hdfs.tools.offlineEditsViewer.EditsLogFileReader;
 import org.apache.parquet.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.List;
 
+import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
+
 @Getter
 @Accessors(fluent = true)
-public class EditLogProcessor implements Runnable {
-    private static final Logger LOG = LoggerFactory.getLogger(EditLogProcessor.class.getCanonicalName());
+public class EditsLogReader implements Runnable {
     private static final String PATH_NN_CURRENT_DIR = "current";
 
     private final ZkStateManager stateManager;
@@ -39,12 +38,12 @@ public class EditLogProcessor implements Runnable {
     private EditLogProcessorConfig processorConfig;
     private File editsDir;
 
-    public EditLogProcessor(@NonNull ZkStateManager stateManager) {
+    public EditsLogReader(@NonNull ZkStateManager stateManager) {
         this.stateManager = stateManager;
     }
 
-    public EditLogProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                                 @NonNull ConnectionManager manger) throws ConfigurationException {
+    public EditsLogReader init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                               @NonNull ConnectionManager manger) throws ConfigurationException {
         try {
             processorConfig = new EditLogProcessorConfig(xmlConfig);
             processorConfig.read();
@@ -95,7 +94,7 @@ public class EditLogProcessor implements Runnable {
                     lock.lock();
                     try {
                         long txid = doRun();
-                        LOG.info(String.format("Last Processed TXID = %d", txid));
+                        LOGGER.info(getClass(), txid, String.format("Last Processed TXID = %d", txid));
                     } finally {
                         lock.unlock();
                     }
@@ -104,8 +103,8 @@ public class EditLogProcessor implements Runnable {
             }
             NameNodeEnv.get().agentState().state(NameNodeAgentState.EAgentState.Stopped);
         } catch (Throwable t) {
-            LOG.error("Edits Log Processor terminated with error", t);
-            DefaultLogger.stacktrace(LOG, t);
+            DefaultLogger.LOG.error("Edits Log Processor terminated with error", t);
+            DefaultLogger.stacktrace(DefaultLogger.LOG, t);
             NameNodeEnv.get().agentState().error(t);
         }
     }
@@ -113,14 +112,15 @@ public class EditLogProcessor implements Runnable {
 
     public long doRun() throws Exception {
         NameNodeTxState state = stateManager.agentTxState();
-        EditsLogReader reader = new EditsLogReader();
+        EditsLogFileReader reader = new EditsLogFileReader();
         long txId = state.getProcessedTxId();
         List<DFSEditsFileFinder.EditsLogFile> files = DFSEditsFileFinder
                 .findEditsFiles(getPathNnCurrentDir(editsDir.getAbsolutePath()),
                         state.getProcessedTxId() + 1, -1);
         if (files != null && !files.isEmpty()) {
             for (DFSEditsFileFinder.EditsLogFile file : files) {
-                LOG.debug(String.format("Reading edits file [path=%s][startTx=%d]", file, state.getProcessedTxId()));
+                LOGGER.debug(getClass(), state.getProcessedTxId(),
+                        String.format("Reading edits file [path=%s][startTx=%d]", file, state.getProcessedTxId()));
                 reader.run(file, state.getProcessedTxId(), file.endTxId());
                 DFSEditLogBatch batch = reader.batch();
                 if (batch.transactions() != null && !batch.transactions().isEmpty()) {
@@ -138,7 +138,8 @@ public class EditLogProcessor implements Runnable {
                     editsDir.getAbsolutePath()));
         }
         long ltx = DFSEditsFileFinder.findSeenTxID(getPathNnCurrentDir(editsDir.getAbsolutePath()));
-        LOG.info(String.format("Current Edits File: %s, Last Seen TXID=%d", cf, ltx));
+        LOGGER.info(getClass(), ltx,
+                String.format("Current Edits File: %s, Last Seen TXID=%d", cf, ltx));
 
         return txId;
     }

@@ -1,7 +1,7 @@
-package ai.sapper.hcdc.agents.namenode.main;
+package ai.sapper.hcdc.agents.main;
 
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
-import ai.sapper.hcdc.agents.pipeline.CDCChangeDeltaProcessor;
+import ai.sapper.hcdc.agents.pipeline.EntityChangeDeltaReader;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
@@ -16,7 +16,7 @@ import org.apache.parquet.Strings;
 
 @Getter
 @Setter
-public class DeltaRunner {
+public class EntityChangeDeltaRunner {
     @Parameter(names = {"--config", "-c"}, required = true, description = "Path to the configuration file.")
     private String configfile;
     @Parameter(names = {"--type", "-t"}, description = "Configuration file type. (File, Resource, Remote)")
@@ -24,7 +24,7 @@ public class DeltaRunner {
     private EConfigFileType fileSource = EConfigFileType.File;
     private HierarchicalConfiguration<ImmutableNode> config;
     private Thread runner;
-    private CDCChangeDeltaProcessor processor;
+    private EntityChangeDeltaReader processor;
 
     private void init() throws Exception {
         Preconditions.checkState(!Strings.isNullOrEmpty(configfile));
@@ -35,7 +35,7 @@ public class DeltaRunner {
         config = ConfigReader.read(configfile, fileSource);
         NameNodeEnv.setup(config);
 
-        processor = new CDCChangeDeltaProcessor(NameNodeEnv.stateManager());
+        processor = new EntityChangeDeltaReader(NameNodeEnv.stateManager());
         processor.init(NameNodeEnv.get().configNode(), NameNodeEnv.connectionManager());
     }
 
@@ -46,7 +46,7 @@ public class DeltaRunner {
 
     public static void main(String[] args) {
         try {
-            DeltaRunner runner = new DeltaRunner();
+            EntityChangeDeltaRunner runner = new EntityChangeDeltaRunner();
             JCommander.newBuilder().addObject(runner).build().parse(args);
             runner.init();
             runner.run();

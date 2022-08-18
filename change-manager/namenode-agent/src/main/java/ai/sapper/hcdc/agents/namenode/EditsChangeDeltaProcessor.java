@@ -29,24 +29,26 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
+
 @Getter
 @Accessors(fluent = true)
-public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
-    private static final Logger LOG = LoggerFactory.getLogger(SourceChangeDeltaProcessor.class.getCanonicalName());
+public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
+    private static final Logger LOG = LoggerFactory.getLogger(EditsChangeDeltaProcessor.class.getCanonicalName());
 
-    private SourceTransactionProcessor processor;
+    private EditsChangeTransactionProcessor processor;
 
     private long receiveBatchTimeout = 1000;
 
-    public SourceChangeDeltaProcessor(@NonNull ZkStateManager stateManager) {
+    public EditsChangeDeltaProcessor(@NonNull ZkStateManager stateManager) {
         super(stateManager);
     }
 
-    public SourceChangeDeltaProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                                           @NonNull ConnectionManager manger) throws ConfigurationException {
+    public EditsChangeDeltaProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                                          @NonNull ConnectionManager manger) throws ConfigurationException {
         ChangeDeltaProcessorConfig config = new ChangeDeltaProcessorConfig(xmlConfig);
         super.init(config, manger);
-        processor = (SourceTransactionProcessor) new SourceTransactionProcessor()
+        processor = (EditsChangeTransactionProcessor) new EditsChangeTransactionProcessor()
                 .withSenderQueue(sender())
                 .withStateManager(stateManager())
                 .withErrorQueue(errorSender());
@@ -88,6 +90,7 @@ public class SourceChangeDeltaProcessor extends ChangeDeltaProcessor {
                         try {
                             txId = process(message);
                             processor.updateTransaction(txId, message);
+                            LOGGER.info(getClass(), txId, "Transaction read successfully...");
                         } catch (InvalidMessageError ie) {
                             LOG.error("Error processing message.", ie);
                             DefaultLogger.stacktrace(LOG, ie);

@@ -22,24 +22,26 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
+
 @Getter
 @Accessors(fluent = true)
-public class CDCChangeDeltaProcessor extends ChangeDeltaProcessor {
-    private static Logger LOG = LoggerFactory.getLogger(CDCChangeDeltaProcessor.class.getCanonicalName());
+public class EntityChangeDeltaProcessor extends ChangeDeltaProcessor {
+    private static Logger LOG = LoggerFactory.getLogger(EntityChangeDeltaProcessor.class.getCanonicalName());
 
-    private CDCTransactionProcessor processor;
+    private EntityChangeTransactionProcessor processor;
 
     private long receiveBatchTimeout = 1000;
 
-    public CDCChangeDeltaProcessor(@NonNull ZkStateManager stateManager) {
+    public EntityChangeDeltaProcessor(@NonNull ZkStateManager stateManager) {
         super(stateManager);
     }
 
-    public CDCChangeDeltaProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                                        @NonNull ConnectionManager manger) throws ConfigurationException {
+    public EntityChangeDeltaProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                                           @NonNull ConnectionManager manger) throws ConfigurationException {
         ChangeDeltaProcessorConfig config = new CDCChangeDeltaProcessorConfig(xmlConfig);
         super.init(config, manger);
-        processor = (CDCTransactionProcessor) new CDCTransactionProcessor()
+        processor = (EntityChangeTransactionProcessor) new EntityChangeTransactionProcessor()
                 .withSenderQueue(sender())
                 .withStateManager(stateManager())
                 .withErrorQueue(errorSender());
@@ -78,11 +80,13 @@ public class CDCChangeDeltaProcessor extends ChangeDeltaProcessor {
                             if (txId > 0) {
                                 if (message.mode() == MessageObject.MessageMode.New) {
                                     processor.updateTransaction(txId, message);
-                                    LOG.debug(String.format("Processed transaction delta. [TXID=%d]", txId));
+                                    LOGGER.info(getClass(), txId,
+                                            String.format("Processed transaction delta. [TXID=%d]", txId));
                                 } else if (message.mode() == MessageObject.MessageMode.Snapshot) {
                                     if (stateManager().agentTxState().getProcessedTxId() < txId) {
                                         stateManager().update(txId);
-                                        LOG.debug(String.format("Processed transaction delta. [TXID=%d]", txId));
+                                        LOGGER.info(getClass(), txId,
+                                                String.format("Processed transaction delta. [TXID=%d]", txId));
                                     }
                                 }
                             }

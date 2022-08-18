@@ -17,7 +17,7 @@ import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-class FileDeltaProcessorTest {
+class EntityChangeDeltaReaderTest {
     private static final String CONFIG_FILE = "src/test/resources/configs/file-delta-agent-0.xml";
     private static final String DEFAULT_BUCKET_NAME = "hcdc";
 
@@ -39,8 +39,8 @@ class FileDeltaProcessorTest {
             HierarchicalConfiguration<ImmutableNode> config = ConfigReader.read(CONFIG_FILE, EConfigFileType.File);
             NameNodeEnv.setup(config);
 
-            FileDeltaProcessor processor
-                    = new FileDeltaProcessor(NameNodeEnv.stateManager())
+            EntityChangeDeltaReader processor
+                    = new EntityChangeDeltaReader(NameNodeEnv.stateManager())
                     .withMockFileSystem(new S3Mocker(s3Client));
             processor.init(NameNodeEnv.get().configNode(), NameNodeEnv.connectionManager());
             processor.run();
@@ -66,7 +66,7 @@ class FileDeltaProcessorTest {
         public HCDCFileSystem create(@NonNull HierarchicalConfiguration<ImmutableNode> config) throws Exception {
             return (S3FileSystem) new S3FileSystem()
                     .withClient(s3Client)
-                    .init(config, FileDeltaProcessor.FileDeltaProcessorConfig.Constants.CONFIG_PATH_FS);
+                    .init(config, EntityChangeDeltaReader.FileDeltaProcessorConfig.Constants.CONFIG_PATH_FS);
         }
     }
 }

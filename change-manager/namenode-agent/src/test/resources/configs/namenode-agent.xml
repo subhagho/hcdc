@@ -34,7 +34,6 @@
                 <pollingInterval>120000</pollingInterval>
             </edits>
         </processor>
-
     </agent>
     <replicator>
         <connections>

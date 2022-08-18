@@ -12,6 +12,7 @@ public class InvalidTransactionError extends Exception {
     private final String hdfsPath;
     private final DFSError.ErrorCode errorCode;
     private DFSFile file;
+    private long txId;
 
     public InvalidTransactionError withFile(DFSFile file) {
         this.file = file;
@@ -26,10 +27,11 @@ public class InvalidTransactionError extends Exception {
      * @param message the detail message. The detail message is saved for
      *                later retrieval by the {@link #getMessage()} method.
      */
-    public InvalidTransactionError(DFSError.ErrorCode errorCode, String hdfsPath, String message) {
+    public InvalidTransactionError(long txId, DFSError.ErrorCode errorCode, String hdfsPath, String message) {
         super(String.format(__PREFIX, message));
         this.hdfsPath = hdfsPath;
         this.errorCode = errorCode;
+        this.txId = txId;
     }
 
     /**
@@ -46,10 +48,11 @@ public class InvalidTransactionError extends Exception {
      *                unknown.)
      * @since 1.4
      */
-    public InvalidTransactionError(DFSError.ErrorCode errorCode, String hdfsPath, String message, Throwable cause) {
+    public InvalidTransactionError(long txId, DFSError.ErrorCode errorCode, String hdfsPath, String message, Throwable cause) {
         super(String.format(__PREFIX, message), cause);
         this.hdfsPath = hdfsPath;
         this.errorCode = errorCode;
+        this.txId = txId;
     }
 
     /**
@@ -66,9 +69,20 @@ public class InvalidTransactionError extends Exception {
      *              unknown.)
      * @since 1.4
      */
-    public InvalidTransactionError(DFSError.ErrorCode errorCode, String hdfsPath, Throwable cause) {
+    public InvalidTransactionError(long txId, DFSError.ErrorCode errorCode, String hdfsPath, Throwable cause) {
         super(String.format(__PREFIX, cause.getLocalizedMessage()), cause);
         this.hdfsPath = hdfsPath;
         this.errorCode = errorCode;
+        this.txId = txId;
+    }
+
+    @Override
+    public String getMessage() {
+        return String.format("[TX=%d][path=%s][code=%s] %s", txId, hdfsPath, errorCode.name(), super.getMessage());
+    }
+
+    @Override
+    public String getLocalizedMessage() {
+        return String.format("[TX=%d][path=%s][code=%s] %s", txId, hdfsPath, errorCode.name(), super.getLocalizedMessage());
     }
 }

@@ -16,6 +16,8 @@ import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
+
 @Getter
 @Accessors(fluent = true)
 public abstract class TransactionProcessor {
@@ -70,7 +72,7 @@ public abstract class TransactionProcessor {
                                   @NonNull MessageObject<String, DFSChangeDelta> message) throws Exception {
         if (message.mode() == MessageObject.MessageMode.New && txId > 0) {
             stateManager().update(txId);
-            LOG.debug(String.format("Processed transaction delta. [TXID=%d]", txId));
+            LOGGER.debug(getClass(), txId, String.format("Processed transaction delta. [TXID=%d]", txId));
         }
     }
 
@@ -113,7 +115,8 @@ public abstract class TransactionProcessor {
         Object data = ChangeDeltaSerDe.parse(message.value());
         DFSTransaction tnx = extractTransaction(data);
         if (tnx != null)
-            LOG.debug(String.format("PROCESSING: [TXID=%d][OP=%s]", tnx.getTransactionId(), tnx.getOp().name()));
+            LOGGER.debug(getClass(), txId,
+                    String.format("PROCESSING: [TXID=%d][OP=%s]", tnx.getTransactionId(), tnx.getOp().name()));
         try {
             if (data instanceof DFSAddFile) {
                 processAddFileTxMessage((DFSAddFile) data, message, txId);
@@ -139,6 +142,7 @@ public abstract class TransactionProcessor {
                 throw new InvalidMessageError(message.id(), String.format("Message Body type not supported. [type=%s]", data.getClass().getCanonicalName()));
             }
         } catch (InvalidTransactionError te) {
+            LOGGER.error(getClass(), te.getTxId(), te);
             handleError(message, data, te);
             updateTransaction(txId, message);
             throw new InvalidMessageError(message.id(), te);

@@ -17,7 +17,9 @@ import lombok.NonNull;
 
 import java.util.List;
 
-public class SourceTransactionProcessor extends TransactionProcessor {
+import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
+
+public class EditsChangeTransactionProcessor extends TransactionProcessor {
     private MessageSender<String, DFSChangeDelta> sender;
 
     public TransactionProcessor withSenderQueue(@NonNull MessageSender<String, DFSChangeDelta> sender) {
@@ -52,7 +54,8 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 .get(data.getFile().getPath());
         if (data.getOverwrite()) {
             if (fileState == null) {
-                throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                throw new InvalidTransactionError(txId,
+                        DFSError.ErrorCode.SYNC_STOPPED,
                         data.getFile().getPath(),
                         String.format("NameNode out of sync. Overwrite called, but file not present. [path=%s]",
                                 data.getFile().getPath()))
@@ -72,11 +75,13 @@ public class SourceTransactionProcessor extends TransactionProcessor {
             processDeleteFileTxMessage(delF, m, txId);
         } else if (fileState != null) {
             if (fileState.getLastTnxId() >= txId) {
-                LOG.warn(String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
-                        message.id(), message.mode().name()));
+                LOGGER.warn(getClass(), txId,
+                        String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
+                                message.id(), message.mode().name()));
                 return;
             } else if (!fileState.checkDeleted()) {
-                throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                throw new InvalidTransactionError(txId,
+                        DFSError.ErrorCode.SYNC_STOPPED,
                         fileState.getHdfsFilePath(),
                         String.format("Valid File already exists. [path=%s]",
                                 fileState.getHdfsFilePath()))
@@ -125,7 +130,8 @@ public class SourceTransactionProcessor extends TransactionProcessor {
             MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.update(message, schemaEntity, message.mode());
             sender.send(m);
         } else {
-            LOG.debug(String.format("No match found. [path=%s]", fileState.getHdfsFilePath()));
+            LOGGER.debug(getClass(), txId,
+                    String.format("No match found. [path=%s]", fileState.getHdfsFilePath()));
             sendIgnoreTx(message, data);
         }
     }
@@ -144,15 +150,17 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 .fileStateHelper()
                 .get(data.getFile().getPath());
         if (fileState == null || fileState.checkDeleted()) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+            throw new InvalidTransactionError(txId,
+                    DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()))
                     .withFile(data.getFile());
         }
         if (fileState.getLastTnxId() >= txId) {
-            LOG.warn(String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
-                    message.id(), message.mode().name()));
+            LOGGER.warn(getClass(), txId,
+                    String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
+                            message.id(), message.mode().name()));
             return;
         }
         fileState = stateManager()
@@ -173,7 +181,8 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                     message.mode());
             sender.send(message);
         } else if (fileState.hasError()) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+            throw new InvalidTransactionError(txId,
+                    DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getHdfsFilePath(),
                     String.format("FileSystem sync error. [path=%s]",
                             fileState.getHdfsFilePath()))
@@ -214,8 +223,9 @@ public class SourceTransactionProcessor extends TransactionProcessor {
         if (fileState.checkDeleted()) return;
         if (!fileState.hasError()) {
             String destFile = fileState.getHdfsFilePath().replace(srcDir, destDir);
-            LOG.debug(String.format("Renaming file: [source=%s {%d}][target=%s]",
-                    fileState.getHdfsFilePath(), fileState.getId(), destFile));
+            LOGGER.debug(getClass(), txId,
+                    String.format("Renaming file: [source=%s {%d}][target=%s]",
+                            fileState.getHdfsFilePath(), fileState.getId(), destFile));
             DFSFile destF = DFSFile.newBuilder()
                     .setFileType(fileState.getFileType().name())
                     .setPath(destFile)
@@ -264,9 +274,9 @@ public class SourceTransactionProcessor extends TransactionProcessor {
     }
 
     private boolean updateFileRecursiveDelete(DFSFileState fileState,
-                                           MessageObject<String, DFSChangeDelta> message,
-                                           DFSDeleteFile deleteFile,
-                                           long txId) throws Exception {
+                                              MessageObject<String, DFSChangeDelta> message,
+                                              DFSDeleteFile deleteFile,
+                                              long txId) throws Exception {
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
                 .get(fileState.getId());
@@ -323,7 +333,8 @@ public class SourceTransactionProcessor extends TransactionProcessor {
             if (!stateManager()
                     .fileStateHelper()
                     .checkIsDirectoryPath(data.getFile().getPath())) {
-                throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                throw new InvalidTransactionError(txId,
+                        DFSError.ErrorCode.SYNC_STOPPED,
                         data.getFile().getPath(),
                         String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                                 data.getFile().getPath()))
@@ -333,12 +344,14 @@ public class SourceTransactionProcessor extends TransactionProcessor {
             return;
         }
         if (fileState.checkDeleted()) {
-            LOG.warn(String.format("File already deleted. [path=%s]", fileState.getHdfsFilePath()));
+            LOGGER.warn(getClass(), txId,
+                    String.format("File already deleted. [path=%s]", fileState.getHdfsFilePath()));
             return;
         }
         if (fileState.getLastTnxId() >= txId) {
-            LOG.warn(String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
-                    message.id(), message.mode().name()));
+            LOGGER.warn(getClass(), txId,
+                    String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
+                            message.id(), message.mode().name()));
             return;
         }
         fileState = stateManager()
@@ -367,7 +380,8 @@ public class SourceTransactionProcessor extends TransactionProcessor {
 
             sender.send(message);
         } else if (fileState.hasError()) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+            throw new InvalidTransactionError(txId,
+                    DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getHdfsFilePath(),
                     String.format("FileSystem sync error. [path=%s]",
                             fileState.getHdfsFilePath()))
@@ -391,15 +405,17 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 .fileStateHelper()
                 .get(data.getFile().getPath());
         if (fileState == null || !fileState.canProcess()) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+            throw new InvalidTransactionError(txId,
+                    DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()))
                     .withFile(data.getFile());
         }
         if (fileState.getLastTnxId() >= txId) {
-            LOG.warn(String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
-                    message.id(), message.mode().name()));
+            LOGGER.warn(getClass(), txId,
+                    String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
+                            message.id(), message.mode().name()));
             return;
         }
         long lastBlockId = -1;
@@ -439,7 +455,8 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                     message.mode());
             sender.send(message);
         } else if (fileState.hasError()) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+            throw new InvalidTransactionError(txId,
+                    DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getHdfsFilePath(),
                     String.format("FileSystem sync error. [path=%s]",
                             fileState.getHdfsFilePath()))
@@ -463,20 +480,23 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 .fileStateHelper()
                 .get(data.getFile().getPath());
         if (fileState == null || !fileState.canProcess()) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+            throw new InvalidTransactionError(txId,
+                    DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()))
                     .withFile(data.getFile());
         }
         if (fileState.getLastTnxId() >= txId) {
-            LOG.warn(String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
-                    message.id(), message.mode().name()));
+            LOGGER.warn(getClass(), txId,
+                    String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
+                            message.id(), message.mode().name()));
             return;
         }
         List<DFSBlock> blocks = data.getBlocksList();
         if (blocks.isEmpty()) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+            throw new InvalidTransactionError(txId,
+                    DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getHdfsFilePath(),
                     String.format("File State out of sync, no block to update. [path=%s]",
                             fileState.getHdfsFilePath()))
@@ -485,13 +505,15 @@ public class SourceTransactionProcessor extends TransactionProcessor {
         for (DFSBlock block : blocks) {
             DFSBlockState bs = fileState.get(block.getBlockId());
             if (bs == null) {
-                throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                throw new InvalidTransactionError(txId,
+                        DFSError.ErrorCode.SYNC_STOPPED,
                         fileState.getHdfsFilePath(),
                         String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
                                 fileState.getHdfsFilePath(), block.getBlockId()))
                         .withFile(data.getFile());
             } else if (bs.getDataSize() != block.getSize()) {
-                throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                throw new InvalidTransactionError(txId,
+                        DFSError.ErrorCode.SYNC_STOPPED,
                         fileState.getHdfsFilePath(),
                         String.format("File State out of sync, block size mismatch. [path=%s][blockID=%d]",
                                 fileState.getHdfsFilePath(), block.getBlockId()))
@@ -527,7 +549,8 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                     message.mode());
             sender.send(message);
         } else if (fileState.hasError()) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+            throw new InvalidTransactionError(txId,
+                    DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getHdfsFilePath(),
                     String.format("FileSystem sync error. [path=%s]", fileState.getHdfsFilePath()))
                     .withFile(data.getFile());
@@ -550,15 +573,17 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 .fileStateHelper()
                 .get(data.getFile().getPath());
         if (fileState == null || !fileState.canProcess()) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+            throw new InvalidTransactionError(txId,
+                    DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()))
                     .withFile(data.getFile());
         }
         if (fileState.getLastTnxId() >= txId) {
-            LOG.warn(String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
-                    message.id(), message.mode().name()));
+            LOGGER.warn(getClass(), txId,
+                    String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
+                            message.id(), message.mode().name()));
         }
     }
 
@@ -576,15 +601,17 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                 .fileStateHelper()
                 .get(data.getFile().getPath());
         if (fileState == null || !fileState.canProcess()) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+            throw new InvalidTransactionError(txId,
+                    DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()))
                     .withFile(data.getFile());
         }
         if (!checkCloseTxState(fileState, message.mode(), txId)) {
-            LOG.warn(String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
-                    message.id(), message.mode().name()));
+            LOGGER.warn(getClass(), txId,
+                    String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
+                            message.id(), message.mode().name()));
             return;
         }
         List<DFSBlock> blocks = data.getBlocksList();
@@ -592,7 +619,8 @@ public class SourceTransactionProcessor extends TransactionProcessor {
             for (DFSBlock block : blocks) {
                 DFSBlockState bs = fileState.get(block.getBlockId());
                 if (bs == null) {
-                    throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    throw new InvalidTransactionError(txId,
+                            DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getHdfsFilePath(),
                             String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
                                     fileState.getHdfsFilePath(), block.getBlockId()))
@@ -609,13 +637,15 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                                     EBlockState.Finalized,
                                     txId);
                 } else if (bs.getDataSize() != block.getSize()) {
-                    throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    throw new InvalidTransactionError(txId,
+                            DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getHdfsFilePath(),
                             String.format("File State out of sync, block size mismatch. [path=%s][blockID=%d]",
                                     fileState.getHdfsFilePath(), block.getBlockId()))
                             .withFile(data.getFile());
                 } else {
-                    throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    throw new InvalidTransactionError(txId,
+                            DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getHdfsFilePath(),
                             String.format("File State out of sync, block state mismatch. [path=%s][blockID=%d]",
                                     fileState.getHdfsFilePath(), block.getBlockId()))
@@ -649,7 +679,8 @@ public class SourceTransactionProcessor extends TransactionProcessor {
 
                 BlockTransactionDelta bd = bs.delta(txId);
                 if (bd == null) {
-                    throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                    throw new InvalidTransactionError(txId,
+                            DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getHdfsFilePath(),
                             String.format("Block State out of sync, missing transaction delta. [path=%s][blockID=%d]",
                                     fileState.getHdfsFilePath(), block.getBlockId()))
@@ -670,7 +701,8 @@ public class SourceTransactionProcessor extends TransactionProcessor {
                     message.mode());
             sender.send(message);
         } else if (fileState.hasError()) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+            throw new InvalidTransactionError(txId,
+                    DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getHdfsFilePath(),
                     String.format("FileSystem sync error. [path=%s]", fileState.getHdfsFilePath()))
                     .withFile(data.getFile());
@@ -690,7 +722,8 @@ public class SourceTransactionProcessor extends TransactionProcessor {
             if (!stateManager()
                     .fileStateHelper()
                     .checkIsDirectoryPath(data.getSrcFile().getPath())) {
-                throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+                throw new InvalidTransactionError(txId,
+                        DFSError.ErrorCode.SYNC_STOPPED,
                         data.getSrcFile().getPath(),
                         String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                                 data.getSrcFile().getPath()))
@@ -700,7 +733,8 @@ public class SourceTransactionProcessor extends TransactionProcessor {
             return;
         }
         if (!fileState.canProcess()) {
-            throw new InvalidTransactionError(DFSError.ErrorCode.SYNC_STOPPED,
+            throw new InvalidTransactionError(txId,
+                    DFSError.ErrorCode.SYNC_STOPPED,
                     data.getSrcFile().getPath(),
                     String.format("NameNode Replica: File state is invalid. [path=%s][state=%s]",
                             data.getSrcFile().getPath(), fileState.getState().name()))

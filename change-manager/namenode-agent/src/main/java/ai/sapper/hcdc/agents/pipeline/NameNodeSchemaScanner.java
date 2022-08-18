@@ -25,7 +25,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public class NameNodeFileScanner {
+public class NameNodeSchemaScanner {
     private static final int MAX_EXECUTOR_QUEUE_SIZE = 32;
     private static final int THREAD_SLEEP_INTERVAL = 5000; // 5 secs.
     private NameNodeFileScannerConfig config;
@@ -35,12 +35,12 @@ public class NameNodeFileScanner {
 
     private ThreadPoolExecutor executorService;
 
-    public NameNodeFileScanner(@NonNull ZkStateManager stateManager) {
+    public NameNodeSchemaScanner(@NonNull ZkStateManager stateManager) {
         this.stateManager = stateManager;
     }
 
-    public NameNodeFileScanner init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                                    @NonNull ConnectionManager manger) throws ConfigurationException {
+    public NameNodeSchemaScanner init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                                      @NonNull ConnectionManager manger) throws ConfigurationException {
         try {
             config = new NameNodeFileScannerConfig(xmlConfig);
             config.read();
@@ -63,7 +63,7 @@ public class NameNodeFileScanner {
         }
     }
 
-    public NameNodeFileScanner withSchemaManager(@NonNull SchemaManager schemaManager) {
+    public NameNodeSchemaScanner withSchemaManager(@NonNull SchemaManager schemaManager) {
         this.schemaManager = schemaManager;
         return this;
     }

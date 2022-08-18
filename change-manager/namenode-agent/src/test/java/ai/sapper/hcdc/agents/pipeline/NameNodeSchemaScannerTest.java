@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class NameNodeFileScannerTest {
+class NameNodeSchemaScannerTest {
     private static final String CONFIG_FILE = "src/test/resources/configs/hdfs-files-scanner.xml";
 
     @Test
@@ -21,7 +21,7 @@ class NameNodeFileScannerTest {
             NameNodeEnv.setup(config);
 
             Preconditions.checkNotNull(NameNodeEnv.get().schemaManager());
-            NameNodeFileScanner scanner = new NameNodeFileScanner(NameNodeEnv.stateManager());
+            NameNodeSchemaScanner scanner = new NameNodeSchemaScanner(NameNodeEnv.stateManager());
             scanner
                     .withSchemaManager(NameNodeEnv.get().schemaManager())
                     .init(NameNodeEnv.get().configNode(), NameNodeEnv.connectionManager());

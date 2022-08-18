@@ -1,6 +1,6 @@
 package org.apache.hadoop.hdfs.server.namenode;
 
-import ai.sapper.hcdc.agents.namenode.main.NameNodeReplicator;
+import ai.sapper.hcdc.agents.main.NameNodeReplicator;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import org.junit.jupiter.api.Test;
 

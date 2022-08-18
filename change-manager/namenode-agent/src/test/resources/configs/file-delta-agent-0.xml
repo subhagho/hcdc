@@ -69,19 +69,19 @@
             </files>
         </processor>
         <useSSL>false</useSSL>
-        <locks>
-            <lock>
-                <name>global</name>
-                <connection>zk-state-connection</connection>
-                <lock-node>PROCESSOR-GLOBAL-LOCK</lock-node>
-            </lock>
-            <lock>
-                <name>LOCK_REPLICATION</name>
-                <connection>zk-state-connection</connection>
-                <lock-node>PROCESSOR-DELTA-LOCK</lock-node>
-            </lock>
-        </locks>
     </agent>
+    <locks>
+        <lock>
+            <name>global</name>
+            <connection>zk-state-connection</connection>
+            <lock-node>PROCESSOR-GLOBAL-LOCK</lock-node>
+        </lock>
+        <lock>
+            <name>LOCK_REPLICATION</name>
+            <connection>zk-state-connection</connection>
+            <lock-node>PROCESSOR-DELTA-LOCK</lock-node>
+        </lock>
+    </locks>
     <config>
         <connections>
             <connection>
