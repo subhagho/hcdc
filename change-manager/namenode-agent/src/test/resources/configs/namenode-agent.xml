@@ -3,18 +3,18 @@
     <agent>
         <module>edits-log-processors</module>
         <instance>edits-log-reader</instance>
-        <source>namenode</source>
+        <source>ha-cluster</source>
         <hadoop>
-            <namespace>namenode</namespace>
-            <instance>namenode</instance>
-            <home>/opt/hadoop</home>
-            <adminUrl>localhost:9870</adminUrl>
+            <namespace>ha-cluster</namespace>
+            <instance>nn1</instance>
+            <home>/opt/hadoop/hadoop</home>
+            <!--adminUrl>localhost:9870</adminUrl-->
             <config>src/test/resources/configs/hdfs-site.xml</config>
         </hadoop>
         <needHadoop>true</needHadoop>
         <connections>
             <path>config</path>
-            <hdfs-admin>source-hdfs</hdfs-admin>
+            <hdfs-admin>source-hdfs-ha</hdfs-admin>
         </connections>
         <managers>
             <state>
@@ -37,7 +37,7 @@
     </agent>
     <replicator>
         <connections>
-            <hdfs>source-hdfs</hdfs>
+            <hdfs>source-hdfs-ha</hdfs>
         </connections>
     </replicator>
     <locks>
@@ -60,11 +60,11 @@
                     <name>source-hdfs</name>
                     <namenode>
                         <primary>
-                            <URI>hdfs://localhost:9000</URI>
+                            <URI>hdfs://192.168.2.2:9820</URI>
                         </primary>
-                        <!--secondary>
-                            <URI>hdfs://192.168.0.3:9000</URI>
-                        </secondary-->
+                        <secondary>
+                            <URI>hdfs://192.168.2.3:9820</URI>
+                        </secondary>
                     </namenode>
                     <security>
                         <enabled>false</enabled>
@@ -72,25 +72,26 @@
                     <enableAdmin>true</enableAdmin>
                 </hdfs>
             </connection>
-            <!--connection>
+            <connection>
                 <type>ai.sapper.cdc.core.connections.HdfsHAConnection</type>
                 <hdfs_ha>
                     <name>source-hdfs-ha</name>
                     <nameservice>ha-cluster</nameservice>
                     <failoverProvider>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider
                     </failoverProvider>
-                    <namenodes>nn1=192.168.0.2:9000;nn2=192.168.0.3:9000</namenodes>
+                    <namenodes>nn1=192.168.2.2:9820;nn2=192.168.2.3:9820</namenodes>
                     <security>
                         <enabled>false</enabled>
                     </security>
                     <enableAdmin>true</enableAdmin>
                 </hdfs_ha>
-            </connection-->
+            </connection>
             <connection>
                 <type>ai.sapper.cdc.core.connections.ZookeeperConnection</type>
                 <zookeeper>
                     <name>zk-state-connection</name>
-                    <connectionString>localhost:2181</connectionString>
+                    <!--connectionString>192.168.0.5:2181,192.168.0.4:2181</connectionString -->
+                    <connectionString>192.168.2.16:2181,192.168.2.17:2181,192.168.2.18:2181</connectionString>
                     <retry>
                         <interval>1500</interval>
                         <retries>5</retries>

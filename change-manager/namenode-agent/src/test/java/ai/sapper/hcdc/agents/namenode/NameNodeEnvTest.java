@@ -31,9 +31,6 @@ class NameNodeEnvTest {
             assertNotNull(NameNodeEnv.get().hdfsConnection());
             assertNotNull(NameNodeEnv.stateManager().connection());
 
-            Heartbeat hb = NameNodeEnv.stateManager().heartbeat(NameNodeEnv.get().config().hadoopInstanceName());
-            assertNotNull(hb);
-
             NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose();
             assertEquals(NameNodeEnv.ENameNEnvState.Disposed, state);
         } catch (Throwable t) {

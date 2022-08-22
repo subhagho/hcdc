@@ -59,6 +59,7 @@ public class ZkStateManager {
             config.read();
 
             connection = manger.getConnection(config.zkConnection(), ZookeeperConnection.class);
+            Preconditions.checkNotNull(connection);
             if (!connection.isConnected()) connection.connect();
             CuratorFramework client = connection().client();
 

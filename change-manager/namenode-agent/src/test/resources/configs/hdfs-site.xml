@@ -39,7 +39,7 @@
     </property>
     <property>
         <name>dfs.namenode.rpc-address.ha-cluster.nn1</name>
-        <value>0.0.0.0:9820</value>
+        <value>192.168.2.2:9820</value>
     </property>
     <property>
         <name>dfs.namenode.rpc-address.ha-cluster.nn2</name>
@@ -47,7 +47,7 @@
     </property>
     <property>
         <name>dfs.namenode.http-address.ha-cluster.nn1</name>
-        <value>0.0.0.0:50070</value>
+        <value>192.168.2.2:50070</value>
     </property>
     <property>
         <name>dfs.namenode.http-address.ha-cluster.nn2</name>
