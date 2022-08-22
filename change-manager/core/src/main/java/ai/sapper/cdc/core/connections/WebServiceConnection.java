@@ -16,6 +16,7 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.JerseyClientBuilder;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 @Getter
@@ -26,13 +27,26 @@ public class WebServiceConnection implements Connection {
     private URL endpoint;
     private WebServiceConnectionConfig config;
     private Client client;
+    private String name;
+
+    public WebServiceConnection() {
+    }
+
+    public WebServiceConnection(@NonNull String name,
+                                @NonNull String endpoint) throws MalformedURLException {
+        this.name = name;
+        this.endpoint = new URL(endpoint);
+        client = JerseyClientBuilder.newClient(
+                new ClientConfig().register(LoggingFilter.class));
+        state.state(EConnectionState.Initialized);
+    }
 
     /**
      * @return
      */
     @Override
     public String name() {
-        return config.name();
+        return name;
     }
 
     /**
@@ -46,11 +60,12 @@ public class WebServiceConnection implements Connection {
             config = new WebServiceConnectionConfig(xmlConfig);
             config.read();
 
+            name = config.name;
             endpoint = new URL(config.endpoint);
             client = JerseyClientBuilder.newClient(
                     new ClientConfig().register(LoggingFilter.class));
             state.state(EConnectionState.Initialized);
-            return null;
+            return this;
         } catch (Exception ex) {
             state.error(ex);
             throw new ConnectionError(ex);

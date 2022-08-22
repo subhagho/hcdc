@@ -29,6 +29,13 @@ public class WebServiceClient {
     private WebServiceConnection connection;
     private WebServiceClientConfig config;
 
+    public WebServiceClient() {
+    }
+
+    public WebServiceClient(@NonNull WebServiceConnection connection) {
+        this.connection = connection;
+    }
+
     public WebServiceClient init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                                  @NonNull String configPath,
                                  @NonNull ConnectionManager manager) throws ConfigurationException {
@@ -58,15 +65,46 @@ public class WebServiceClient {
         if (Strings.isNullOrEmpty(path)) {
             throw new ConnectionError(String.format("No service registered with name. [name=%s]", service));
         }
+        return getUrl(path, type, params, mediaType);
+    }
+
+    public <T> T getUrl(@NonNull String path,
+                        @NonNull Class<T> type,
+                        Map<String, String> query,
+                        String mediaType) throws ConnectionError {
+        Preconditions.checkNotNull(connection);
+        WebTarget target = connection.connect(path);
+        if (query != null && !query.isEmpty()) {
+            for (String q : query.keySet()) {
+                target = target.queryParam(q, query.get(q));
+            }
+        }
+
+        if (Strings.isNullOrEmpty(mediaType)) {
+            mediaType = MediaType.APPLICATION_JSON;
+        }
+        return getUrl(target, type, mediaType);
+    }
+
+    public <T> T getUrl(@NonNull String path,
+                        @NonNull Class<T> type,
+                        List<String> params,
+                        String mediaType) throws ConnectionError {
+        Preconditions.checkNotNull(connection);
         WebTarget target = connection.connect(path);
         if (params != null && !params.isEmpty()) {
             for (String param : params) {
                 target = target.path(param);
             }
         }
+
         if (Strings.isNullOrEmpty(mediaType)) {
             mediaType = MediaType.APPLICATION_JSON;
         }
+        return getUrl(target, type, mediaType);
+    }
+
+    private <T> T getUrl(WebTarget target, Class<T> type, String mediaType) throws ConnectionError {
         Invocation.Builder builder = target.request(mediaType);
         int count = 0;
         boolean handle = true;
