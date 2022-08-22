@@ -110,17 +110,6 @@
                     <topic>ha-cluster.edits</topic>
                 </kafka>
             </connection>
-            <!--connection>
-                <type>impl.connections.ai.sapper.cdc.core.BasicKafkaConsumer</type>
-                <kafka>
-                    <name>test-kafka-consumer</name>
-                    <mode>Consumer</mode>
-                    <config>
-                        <consumer>src/test/resources/consumer.properties</consumer>
-                        <topic>hcdc-test</topic>
-                    </config>
-                </kafka>
-            </connection-->
         </connections>
     </config>
 </configuration>
