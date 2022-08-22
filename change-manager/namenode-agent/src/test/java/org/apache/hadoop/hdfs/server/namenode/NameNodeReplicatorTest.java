@@ -15,11 +15,11 @@ class NameNodeReplicatorTest {
             System.setProperty("hadoop.home.dir", "C:/tools/hadoop");
 
             String[] args = {"--image",
-                    "src/test/resources/edits/logs/current/fsimage_0000000000000028553",
+                    "/data01/hadoop/nn-primary/nn-primary-data/namenode/current/fsimage_0000000000000001475",
                     "--config",
                     __CONFIG_FILE,
                     "--tmp",
-                    "/Work/temp/output/test"};
+                    "/tmp/output/test"};
             NameNodeReplicator.main(args);
 
         } catch (Throwable t) {

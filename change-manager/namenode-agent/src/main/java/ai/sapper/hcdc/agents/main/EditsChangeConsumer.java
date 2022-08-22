@@ -47,7 +47,10 @@ public class EditsChangeConsumer {
     public static void main(String[] args) {
         try {
             EditsChangeConsumer runner = new EditsChangeConsumer();
-            JCommander.newBuilder().addObject(runner).build().parse(args);
+            JCommander.newBuilder()
+                    .acceptUnknownOptions(true)
+                    .addObject(runner)
+                    .build().parse(args);
             runner.init();
             runner.run();
             runner.runner.join();

@@ -15,8 +15,8 @@
         </Console>
 
         <!-- File Appenders on need basis -->
-        <RollingFile name="services" fileName="${APP_LOG_ROOT}/HadoopCDC-core.log"
-                     filePattern="${APP_LOG_ROOT}/HadoopCDC-core-%d{yyyy-MM-dd}-%i.log">
+        <RollingFile name="services" fileName="${APP_LOG_ROOT}/HadoopCDC-agents.log"
+                     filePattern="${APP_LOG_ROOT}/HadoopCDC-agents-%d{yyyy-MM-dd}-%i.log">
             <PatternLayout pattern="${LOG_PATTERN}"/>
             <Policies>
                 <SizeBasedTriggeringPolicy size="10MB"/>

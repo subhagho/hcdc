@@ -53,26 +53,26 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                 .fileStateHelper()
                 .get(data.getFile().getPath());
         if (data.getOverwrite()) {
-            if (fileState == null) {
-                throw new InvalidTransactionError(txId,
-                        DFSError.ErrorCode.SYNC_STOPPED,
-                        data.getFile().getPath(),
-                        String.format("NameNode out of sync. Overwrite called, but file not present. [path=%s]",
-                                data.getFile().getPath()))
-                        .withFile(data.getFile());
+            if (fileState != null) {
+                if (!fileState.checkDeleted()) {
+                    DFSDeleteFile delF = DFSDeleteFile.newBuilder()
+                            .setTransaction(data.getTransaction())
+                            .setFile(data.getFile())
+                            .setTimestamp(System.currentTimeMillis())
+                            .build();
+                    MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
+                            delF,
+                            DFSDeleteFile.class,
+                            message.value().getDomain(),
+                            message.value().getEntity(),
+                            MessageObject.MessageMode.Backlog);
+                    processDeleteFileTxMessage(delF, m, txId);
+                } else if (fileState.checkDeleted()) {
+                    stateManager()
+                            .replicaStateHelper()
+                            .delete(fileState.getId());
+                }
             }
-            DFSDeleteFile delF = DFSDeleteFile.newBuilder()
-                    .setTransaction(data.getTransaction())
-                    .setFile(data.getFile())
-                    .setTimestamp(System.currentTimeMillis())
-                    .build();
-            MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
-                    delF,
-                    DFSDeleteFile.class,
-                    message.value().getDomain(),
-                    message.value().getEntity(),
-                    MessageObject.MessageMode.Backlog);
-            processDeleteFileTxMessage(delF, m, txId);
         } else if (fileState != null) {
             if (fileState.getLastTnxId() >= txId) {
                 LOGGER.warn(getClass(), txId,
