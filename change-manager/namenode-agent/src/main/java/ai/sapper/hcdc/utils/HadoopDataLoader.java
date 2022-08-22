@@ -111,12 +111,17 @@ public class HadoopDataLoader {
                         String filename = String.format("%s_%d.%s", folder, index, f.name().toLowerCase());
                         writer = getWriter(tdir, filename);
                         Preconditions.checkNotNull(writer);
+                        if (!writer.doUpload()) {
+                            tdir = dir;
+                            writer.path(dir);
+                        }
                         try {
                             List<List<String>> batch = nextBatch(records, arrayIndex);
                             if (batch == null) break;
                             writer.write(folder, reader.header(), batch);
 
-                            upload(fs, String.format("%s/%s", td.getAbsolutePath(), filename), dir, filename);
+                            if (writer.doUpload())
+                                upload(fs, String.format("%s/%s", td.getAbsolutePath(), filename), dir, filename);
 
                             arrayIndex += batch.size();
                             index++;
@@ -190,6 +195,8 @@ public class HadoopDataLoader {
         switch (f) {
             case Parquet:
                 return new ParquetDataWriter(dir, filename, fs);
+            case Avro:
+                return new AvroDataWriter(dir, filename, fs);
         }
         throw new Exception(String.format("Output format not supported. [format=%s]", f.name()));
     }

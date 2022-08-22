@@ -102,7 +102,7 @@
                     <connectionTimeout>10000</connectionTimeout>
                 </zookeeper>
             </connection>
-            <connection>
+            <!--connection>
                 <type>ai.sapper.cdc.core.connections.impl.BasicKafkaProducer</type>
                 <kafka>
                     <name>delta-kafka-queue</name>
@@ -110,7 +110,7 @@
                     <producer>
                         <config>src/test/resources/configs/kafka/producer-files-out.properties</config>
                     </producer>
-                    <topic>ha-cluster-delta-files</topic>
+                    <topic>ha-cluster.delta.files</topic>
                 </kafka>
             </connection>
             <connection>
@@ -121,7 +121,7 @@
                     <producer>
                         <config>src/test/resources/configs/kafka/producer-files-errors.properties</config>
                     </producer>
-                    <topic>ha-cluster-errors-files</topic>
+                    <topic>ha-cluster.errors.files</topic>
                 </kafka>
             </connection>
             <connection>
@@ -133,9 +133,9 @@
                         <config>src/test/resources/consumer.properties</config>
                         <partitions>1</partitions>
                     </consumer>
-                    <topic>ha-cluster-delta</topic>
+                    <topic>ha-cluster.delta</topic>
                 </kafka>
-            </connection>
+            </connection-->
         </connections>
     </config>
 </configuration>

@@ -113,7 +113,7 @@
                     <producer>
                         <config>src/test/resources/configs/kafka/producer-delta-out.properties</config>
                     </producer>
-                    <topic>ha-cluster-delta</topic>
+                    <topic>ha-cluster.delta</topic>
                 </kafka>
             </connection>
             <connection>
@@ -124,7 +124,7 @@
                     <producer>
                         <config>src/test/resources/configs/kafka/producer-delta-errors.properties</config>
                     </producer>
-                    <topic> ha-cluster-errors-delta</topic>
+                    <topic> ha-cluster.errors.delta</topic>
                 </kafka>
             </connection>
             <connection>
@@ -136,7 +136,7 @@
                         <config>src/test/resources/consumer.properties</config>
                         <partitions>0</partitions>
                     </consumer>
-                    <topic>ha-cluster-cdc</topic>
+                    <topic>ha-cluster.cdc</topic>
                 </kafka>
             </connection>
         </connections>

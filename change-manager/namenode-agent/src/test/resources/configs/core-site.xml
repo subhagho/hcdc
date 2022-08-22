@@ -23,12 +23,8 @@
 	</property>
 	<property>
 		<name>dfs.journalnode.edits.dir</name>
-		<value>/home/hadoop/data/jn</value>
+		<value>/opt/hadoop/data/journal</value>
 	</property>
-	<!--property>
-		<name>dfs.namenode.name.dir</name>
-		<value>/home/hadoop/data/nn</value>
-	</property-->
 	<property>
 		<name>dfs.blocksize</name>
 		<value>8388608</value>

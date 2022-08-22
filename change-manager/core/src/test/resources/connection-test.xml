@@ -7,10 +7,10 @@
                 <name>test-hdfs</name>
                 <namenode>
                     <primary>
-                        <URI>hdfs://localhost:9820</URI>
+                        <URI>hdfs://192.168.2.2:9820</URI>
                     </primary>
                     <secondary>
-                        <URI>hdfs://localhost:9830</URI>
+                        <URI>hdfs://192.168.2.3:9820</URI>
                     </secondary>
                 </namenode>
                 <security>
@@ -26,7 +26,7 @@
                 <nameservice>ha-cluster</nameservice>
                 <failoverProvider>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider
                 </failoverProvider>
-                <namenodes>nn1=localhost:9820;nn2=localhost:9830</namenodes>
+                <namenodes>nn1=192.168.2.2:9820;nn2=192.168.2.3:9820</namenodes>
                 <security>
                     <enabled>false</enabled>
                 </security>
@@ -38,7 +38,7 @@
             <zookeeper>
                 <name>test-zk</name>
                 <!--connectionString>192.168.0.5:2181,192.168.0.4:2181</connectionString -->
-                <connectionString>localhost:2181</connectionString>
+                <connectionString>192.168.2.16:2181,192.168.2.17:2181,192.168.2.18:2181</connectionString>
                 <retry>
                     <interval>1500</interval>
                     <retries>5</retries>

@@ -144,7 +144,7 @@
                     <producer>
                         <config>src/test/resources/configs/kafka/producer-files-out.properties</config>
                     </producer>
-                    <topic>ha-cluster-delta-files</topic>
+                    <topic>ha-cluster.delta.files</topic>
                 </kafka>
             </connection>
             <connection>
@@ -155,7 +155,7 @@
                     <producer>
                         <config>src/test/resources/configs/kafka/producer-files-errors.properties</config>
                     </producer>
-                    <topic>ha-cluster-errors-files</topic>
+                    <topic>ha-cluster.errors.files</topic>
                 </kafka>
             </connection>
             <connection>
@@ -167,7 +167,7 @@
                         <config>src/test/resources/consumer.properties</config>
                         <partitions>1</partitions>
                     </consumer>
-                    <topic>ha-cluster-delta</topic>
+                    <topic>ha-cluster.delta</topic>
                 </kafka>
             </connection>
         </connections>

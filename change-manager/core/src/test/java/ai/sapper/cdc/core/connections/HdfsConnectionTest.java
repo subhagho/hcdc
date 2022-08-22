@@ -123,9 +123,9 @@ class HdfsConnectionTest {
             fs.rename(path, df);
 
             //fs.truncate(df, 50000);
-            fs.truncate(df, 0);
+            //fs.truncate(df, 0);
 
-            fs.delete(df, false);
+            //fs.delete(df, false);
 
             connection.close();
         } catch (Throwable t) {

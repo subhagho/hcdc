@@ -2,6 +2,7 @@ package ai.sapper.hcdc.utils;
 
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.hadoop.fs.FileSystem;
 
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 @Getter
+@Setter
 @Accessors(fluent = true)
 public abstract class OutputDataWriter<T> implements Closeable {
 
@@ -37,7 +39,7 @@ public abstract class OutputDataWriter<T> implements Closeable {
         }
     }
 
-    private final String path;
+    private String path;
     private final String filename;
     private final FileSystem fs;
     private final EOutputFormat format;
@@ -72,4 +74,6 @@ public abstract class OutputDataWriter<T> implements Closeable {
     }
 
     public abstract void write(String name, @NonNull Map<String, Integer> header, @NonNull List<T> records) throws IOException;
+
+    public abstract boolean doUpload();
 }
