@@ -54,7 +54,7 @@ public class NameNodeAdminClient {
             DefaultLogger.LOG.debug(String.format("NameNode Status URL: [%s]", up));
             Map<String, String> query = new HashMap<>(1);
             query.put(Constants.PATH_NN_QUERY_KEY, Constants.PATH_NN_QUERY);
-            
+
             String json = client.getUrl(Constants.PATH_NN_PATH, String.class, query, MediaType.APPLICATION_JSON);
             JMXResponse response = mapper.readValue(json, JMXResponse.class);
             Map<String, String> bean = response.findBeanByName(Constants.REGEX_NAME);
