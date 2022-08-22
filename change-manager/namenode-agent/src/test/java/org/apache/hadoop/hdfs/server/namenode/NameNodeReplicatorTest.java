@@ -12,10 +12,10 @@ class NameNodeReplicatorTest {
     @Test
     void run() {
         try {
-            System.setProperty("hadoop.home.dir", "C:/tools/hadoop");
+            System.setProperty("hadoop.home.dir", "/opt/hadoop/hadoop");
 
             String[] args = {"--image",
-                    "/data01/hadoop/nn-primary/nn-primary-data/namenode/current/fsimage_0000000000000001475",
+                    "/data01/hadoop/nn-primary/nn-primary-data/namenode/current/fsimage_0000000000000002204",
                     "--config",
                     __CONFIG_FILE,
                     "--tmp",
