@@ -50,13 +50,6 @@
     </locks>
     <config>
         <connections>
-            <!--connection>
-                <type>ai.sapper.cdc.core.connections.WebServiceConnection</type>
-                <rest>
-                    <name>snapshot</name>
-                    <endpoint>http://localhost/snapshot</endpoint>
-                </rest>
-            </connection-->
             <connection>
                 <type>ai.sapper.cdc.core.connections.HdfsConnection</type>
                 <hdfs>
