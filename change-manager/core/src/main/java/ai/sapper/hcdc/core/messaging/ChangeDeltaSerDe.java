@@ -14,13 +14,17 @@ public class ChangeDeltaSerDe {
                                                                           @NonNull DFSError.ErrorCode code,
                                                                           @NonNull String message,
                                                                           DFSFile file) throws Exception {
-        DFSError error = DFSError.newBuilder()
-                .setCode(code)
+        DFSError.Builder error = DFSError.newBuilder();
+        error.setCode(code)
                 .setMessage(message)
-                .setTransaction(tnx)
-                .setFile(file)
-                .build();
-        MessageObject<String, DFSChangeDelta> m = create(namespace, error, DFSError.class, null, null, MessageObject.MessageMode.Error);
+                .setTransaction(tnx);
+        if (file != null) {
+            error.setFile(file);
+        }
+        MessageObject<String, DFSChangeDelta> m = create(namespace,
+                error.build(),
+                DFSError.class,
+                null, null, MessageObject.MessageMode.Error);
         m.correlationId(messageId);
 
         return m;
