@@ -1,7 +1,7 @@
 ## Execution Sequence
 ***
 
-### NameNodeReplicator:
+### [NameNodeReplicator](namenode-agent/src/main/java/ai/sapper/hcdc/agents/main/NameNodeReplicator.java):
 #### Copies the current state (as per the FSImage file) of the NameNode file system.
 - Arguments:
   - JVM: 
