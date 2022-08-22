@@ -13,6 +13,7 @@ import lombok.NonNull;
 import lombok.experimental.Accessors;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,7 +52,9 @@ public class NameNodeAdminClient {
                 client = new WebServiceClient(connection);
             }
             DefaultLogger.LOG.debug(String.format("NameNode Status URL: [%s]", up));
-            Map<String, String> query = Map.of(Constants.PATH_NN_QUERY_KEY, Constants.PATH_NN_QUERY);
+            Map<String, String> query = new HashMap<>(1);
+            query.put(Constants.PATH_NN_QUERY_KEY, Constants.PATH_NN_QUERY);
+            
             String json = client.getUrl(Constants.PATH_NN_PATH, String.class, query, MediaType.APPLICATION_JSON);
             JMXResponse response = mapper.readValue(json, JMXResponse.class);
             Map<String, String> bean = response.findBeanByName(Constants.REGEX_NAME);
