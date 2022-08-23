@@ -1,9 +1,12 @@
 package ai.sapper.cdc.core.messaging;
 
 import ai.sapper.cdc.common.model.*;
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.common.model.*;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.protobuf.MessageOrBuilder;
+import com.google.protobuf.util.JsonFormat;
 import lombok.NonNull;
 
 import java.util.UUID;
@@ -93,6 +96,16 @@ public class ChangeDeltaSerDe {
         message.mode(mode);
         message.key(key);
         message.value(delta);
+        if (DefaultLogger.LOG.isDebugEnabled()) {
+            JsonFormat.Printer printer = JsonFormat.printer().preservingProtoFieldNames();
+            StringBuilder mesg = new StringBuilder();
+            mesg.append("Message: [").append(message.id()).append("]\n");
+            mesg.append("Key: [").append(message.key()).append("]\n");
+            mesg.append("Domain: [").append(delta.getDomain()).append(":").append(delta.getEntityName()).append("]\n");
+            mesg.append("Data: [\n").append(printer.print((MessageOrBuilder) data)).append("\n]");
+
+            DefaultLogger.LOG.debug(mesg.toString());
+        }
         return message;
     }
 

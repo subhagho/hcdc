@@ -3,7 +3,7 @@
 
     <!-- Logging Properties -->
     <Properties>
-        <Property name="LOG_PATTERN">%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ} %p %m%n</Property>
+        <Property name="LOG_PATTERN">[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t][%c] - %msg%n</Property>
         <Property name="APP_LOG_ROOT">/home/subhagho/work/temp/logs/hcdc</Property>
     </Properties>
 
@@ -28,20 +28,18 @@
     </Appenders>
 
     <Loggers>
-
         <Logger name="org.eclipse.jetty" additivity="false" level="warn">
             <AppenderRef ref="Console"/>
         </Logger>
-
-
-        <Logger name="ai.sapper" additivity="false" level="info">
+        <Logger name="org.apache.parquet.io" additivity="false" level="warn">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="ai.sapper" additivity="false" level="debug">
             <AppenderRef ref="services"/>
         </Logger>
-
         <Root level="debug">
             <AppenderRef ref="Console"/>
         </Root>
-
     </Loggers>
 
 </Configuration>

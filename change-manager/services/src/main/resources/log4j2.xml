@@ -17,8 +17,7 @@
         <RollingFile name="ServiceLog" fileName="${basePath}/HadoopCDC-services.log"
                      filePattern="${basePath}/HadoopCDC-services-%d{yyyy-MM-dd}-%i.log.gz">
             <PatternLayout>
-                <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n
-                </pattern>
+                <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n</pattern>
             </PatternLayout>
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1" modulate="true"/>

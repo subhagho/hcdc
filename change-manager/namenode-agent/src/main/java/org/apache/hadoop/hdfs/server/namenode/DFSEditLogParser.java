@@ -390,7 +390,7 @@ public class DFSEditLogParser {
             DFSTransactionType.DFSAddFileType aft = new DFSTransactionType.DFSAddFileType();
 
             aft.id(aop.txid)
-                    .op(DFSTransaction.Operation.APPEND);
+                    .op(DFSTransaction.Operation.ADD_FILE);
             aft.file(new DFSTransactionType.DFSFileType().path(aop.path).inodeId(aop.inodeId));
             aft.length(aop.length)
                     .blockSize(aop.blockSize)

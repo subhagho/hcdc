@@ -34,7 +34,7 @@
         </Logger>
 
 
-        <Logger name="ai.sapper" additivity="false" level="info">
+        <Logger name="ai.sapper" additivity="false" level="debug">
             <AppenderRef ref="services"/>
         </Logger>
 

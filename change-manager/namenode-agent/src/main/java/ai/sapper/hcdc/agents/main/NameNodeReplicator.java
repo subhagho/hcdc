@@ -90,6 +90,10 @@ public class NameNodeReplicator {
             stateManager = NameNodeEnv.stateManager();
             Preconditions.checkNotNull(stateManager);
 
+            File td = new File(tempDir);
+            if (!td.exists()) {
+                td.mkdirs();
+            }
         } catch (Throwable t) {
             DefaultLogger.LOG.error(t.getLocalizedMessage());
             DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
