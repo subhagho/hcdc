@@ -43,18 +43,20 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
                 .fileStateHelper()
                 .get(data.getFile().getPath());
         if (fileState != null) {
-            if (fileState.getLastTnxId() >= txId) {
-                LOGGER.warn(getClass(), txId,
-                        String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
-                                message.id(), message.mode().name()));
-                return;
-            } else if (!fileState.checkDeleted()) {
-                throw new InvalidTransactionError(txId,
-                        DFSError.ErrorCode.SYNC_STOPPED,
-                        fileState.getHdfsFilePath(),
-                        String.format("Valid File already exists. [path=%s]",
-                                fileState.getHdfsFilePath()))
-                        .withFile(data.getFile());
+            if (!fileState.checkDeleted()) {
+                if (txId > fileState.getLastTnxId()) {
+                    throw new InvalidTransactionError(txId,
+                            DFSError.ErrorCode.SYNC_STOPPED,
+                            fileState.getHdfsFilePath(),
+                            String.format("Valid File already exists. [path=%s]",
+                                    fileState.getHdfsFilePath()))
+                            .withFile(data.getFile());
+                } else {
+                    LOGGER.warn(getClass(), txId,
+                            String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
+                                    message.id(), message.mode().name()));
+                    return;
+                }
             }
         }
 
@@ -211,9 +213,15 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
                             message.id(), message.mode().name()));
             return;
         }
-        fileState = stateManager()
-                .fileStateHelper()
-                .markDeleted(fileState.getHdfsFilePath());
+        if (message.mode() == MessageObject.MessageMode.Forked) {
+            fileState = stateManager()
+                    .fileStateHelper()
+                    .delete(fileState.getHdfsFilePath());
+        } else {
+            fileState = stateManager()
+                    .fileStateHelper()
+                    .markDeleted(fileState.getHdfsFilePath());
+        }
         sender.send(message);
     }
 

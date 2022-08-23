@@ -65,7 +65,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                             DFSDeleteFile.class,
                             message.value().getDomain(),
                             message.value().getEntity(),
-                            MessageObject.MessageMode.Backlog);
+                            MessageObject.MessageMode.Forked);
                     processDeleteFileTxMessage(delF, m, txId);
                 } else if (fileState.checkDeleted()) {
                     stateManager()
@@ -244,7 +244,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                     DFSRenameFile.class,
                     null,
                     null,
-                    MessageObject.MessageMode.Backlog);
+                    MessageObject.MessageMode.Forked);
             m.correlationId(message.id());
             processRenameFileTxMessage(data, m, txId);
         }
@@ -298,7 +298,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                         DFSDeleteFile.class,
                         rState.getEntity().getDomain(),
                         rState.getEntity().getEntity(),
-                        MessageObject.MessageMode.Backlog);
+                        MessageObject.MessageMode.Forked);
                 m.correlationId(message.id());
 
                 rState.setEnabled(false);
@@ -803,7 +803,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                 DFSCloseFile.class,
                 message.value().getDomain(),
                 null,
-                MessageObject.MessageMode.Backlog);
+                MessageObject.MessageMode.Forked);
         processCloseFileTxMessage(cms, cm, txId);
     }
 

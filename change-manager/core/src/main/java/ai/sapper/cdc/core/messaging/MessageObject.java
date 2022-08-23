@@ -9,7 +9,7 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 public class MessageObject<K, V> {
     public enum MessageMode {
-        New, ReSend, Snapshot, Backlog, Error, Retry
+        New, ReSend, Snapshot, Backlog, Error, Retry, Forked
     }
 
     public static final String HEADER_CORRELATION_ID = "hcdc_correlation_id";

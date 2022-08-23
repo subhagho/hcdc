@@ -130,7 +130,7 @@ public class EntityChangeDeltaProcessor extends ChangeDeltaProcessor {
 
         List<DFSFileState> files = stateManager().fileStateHelper().listFiles(null, EFileState.Deleted);
         if (files != null && !files.isEmpty()) {
-            for(DFSFileState file : files) {
+            for (DFSFileState file : files) {
                 DFSFileState f = stateManager().fileStateHelper().delete(file.getHdfsFilePath());
                 if (f != null) {
                     LOG.debug(String.format("File node deleted. [path=%s]", f.getHdfsFilePath()));
@@ -146,7 +146,8 @@ public class EntityChangeDeltaProcessor extends ChangeDeltaProcessor {
         if (message.mode() != null) {
             ret = (message.mode() == MessageObject.MessageMode.New
                     || message.mode() == MessageObject.MessageMode.Backlog
-                    || message.mode() == MessageObject.MessageMode.Snapshot);
+                    || message.mode() == MessageObject.MessageMode.Snapshot
+                    || message.mode() == MessageObject.MessageMode.Forked);
         }
         if (ret) {
             ret = message.value().hasTxId();

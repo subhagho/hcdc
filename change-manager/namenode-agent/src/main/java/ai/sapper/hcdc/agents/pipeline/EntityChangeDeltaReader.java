@@ -187,7 +187,8 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
         if (message.mode() != null) {
             ret = (message.mode() == MessageObject.MessageMode.New
                     || message.mode() == MessageObject.MessageMode.Backlog
-                    || message.mode() == MessageObject.MessageMode.Snapshot);
+                    || message.mode() == MessageObject.MessageMode.Snapshot
+                    || message.mode() == MessageObject.MessageMode.Forked);
         }
         if (ret) {
             ret = message.value().hasTxId();
