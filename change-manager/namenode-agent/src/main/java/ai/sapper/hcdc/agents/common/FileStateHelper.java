@@ -298,7 +298,7 @@ public class FileStateHelper {
         }
     }
 
-    public DFSFileState markDeleted(@NonNull String hdfsPath) throws StateManagerError {
+    public DFSFileState markDeleted(@NonNull String hdfsPath, boolean reset) throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
         Preconditions.checkArgument(!Strings.isNullOrEmpty(hdfsPath));
@@ -309,6 +309,8 @@ public class FileStateHelper {
                 if (fstate == null) {
                     throw new StateManagerError(String.format("File record data is NULL. [path=%s]", hdfsPath));
                 }
+                if (reset)
+                    fstate.reset();
                 fstate.setState(EFileState.Deleted);
 
                 return update(fstate);

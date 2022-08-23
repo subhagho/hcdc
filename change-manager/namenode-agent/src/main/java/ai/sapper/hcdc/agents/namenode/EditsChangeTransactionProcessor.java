@@ -242,11 +242,11 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                     .build();
 
             MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
-                    data,
-                    DFSRenameFile.class,
-                    null,
-                    null,
-                    MessageObject.MessageMode.Forked)
+                            data,
+                            DFSRenameFile.class,
+                            null,
+                            null,
+                            MessageObject.MessageMode.Recursive)
                     .correlationId(message.id());
 
             processRenameFileTxMessage(data, m, txId);
@@ -284,37 +284,30 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                 .replicaStateHelper()
                 .get(fileState.getId());
         if (rState != null) {
-            if (!fileState.hasError() && rState.isEnabled()) {
-                stateManager()
-                        .replicaStateHelper()
-                        .delete(fileState.getId());
+            DFSFile df = ProtoBufUtils.build(fileState);
+            DFSDeleteFile data = DFSDeleteFile.newBuilder()
+                    .setTransaction(deleteFile.getTransaction())
+                    .setFile(df)
+                    .setTimestamp(deleteFile.getTimestamp())
+                    .build();
 
-                DFSFile df = ProtoBufUtils.build(fileState);
-                DFSDeleteFile data = DFSDeleteFile.newBuilder()
-                        .setTransaction(deleteFile.getTransaction())
-                        .setFile(df)
-                        .setTimestamp(deleteFile.getTimestamp())
-                        .build();
+            MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
+                            data,
+                            DFSDeleteFile.class,
+                            rState.getEntity().getDomain(),
+                            rState.getEntity().getEntity(),
+                            MessageObject.MessageMode.Recursive)
+                    .correlationId(message.id());
 
-                MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
-                        data,
-                        DFSDeleteFile.class,
-                        rState.getEntity().getDomain(),
-                        rState.getEntity().getEntity(),
-                        MessageObject.MessageMode.Forked)
-                        .correlationId(message.id());
+            rState.setEnabled(false);
+            rState.setLastReplicationTime(System.currentTimeMillis());
+            rState.setLastReplicatedTx(txId);
 
-                rState.setEnabled(false);
-                rState.setLastReplicationTime(System.currentTimeMillis());
-                rState.setLastReplicatedTx(txId);
+            stateManager()
+                    .replicaStateHelper()
+                    .delete(fileState.getId());
 
-                stateManager().replicaStateHelper().update(rState);
-
-                sender.send(m);
-
-                return false;
-            }
-            return false;
+            sender.send(m);
         }
         return true;
     }
@@ -750,11 +743,11 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                 .setTimestamp(data.getTransaction().getTimestamp())
                 .build();
         MessageObject<String, DFSChangeDelta> dm = ChangeDeltaSerDe.create(message.value().getNamespace(),
-                dms,
-                DFSDeleteFile.class,
-                message.value().getDomain(),
-                message.value().getEntityName(),
-                MessageObject.MessageMode.Forked)
+                        dms,
+                        DFSDeleteFile.class,
+                        message.value().getDomain(),
+                        message.value().getEntityName(),
+                        MessageObject.MessageMode.Forked)
                 .correlationId(message.id());
 
         processDeleteFileTxMessage(dms, dm, txId);
@@ -794,11 +787,11 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
         }
         DFSAddFile ams = builder.build();
         MessageObject<String, DFSChangeDelta> am = ChangeDeltaSerDe.create(message.value().getNamespace(),
-                ams,
-                DFSAddFile.class,
-                message.value().getDomain(),
-                null,
-                MessageObject.MessageMode.Snapshot)
+                        ams,
+                        DFSAddFile.class,
+                        message.value().getDomain(),
+                        null,
+                        MessageObject.MessageMode.Snapshot)
                 .correlationId(message.id());
 
         processAddFileTxMessage(ams, am, txId);
@@ -806,11 +799,11 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
         // Close new file section
         DFSCloseFile cms = HDFSSnapshotProcessor.generateSnapshot(fileState, fa, txId);
         MessageObject<String, DFSChangeDelta> cm = ChangeDeltaSerDe.create(message.value().getNamespace(),
-                cms,
-                DFSCloseFile.class,
-                message.value().getDomain(),
-                null,
-                MessageObject.MessageMode.Backlog)
+                        cms,
+                        DFSCloseFile.class,
+                        message.value().getDomain(),
+                        null,
+                        MessageObject.MessageMode.Backlog)
                 .correlationId(message.id());
         processCloseFileTxMessage(cms, cm, txId);
     }

@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.agents.pipeline;
 
 import ai.sapper.cdc.common.model.*;
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.io.*;
 import ai.sapper.cdc.core.model.*;
 import ai.sapper.hcdc.agents.common.*;
@@ -23,6 +24,7 @@ import org.apache.hadoop.hdfs.HDFSBlockReader;
 
 import java.io.IOException;
 import java.util.List;
+
 import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 
 public class EntityChangeTransactionReader extends TransactionProcessor {
@@ -69,7 +71,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processAddFileTxMessage(DFSAddFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+    public void processAddFileTxMessage(DFSAddFile data,
+                                        MessageObject<String, DFSChangeDelta> message,
+                                        long txId) throws Exception {
         SchemaEntity schemaEntity = new SchemaEntity();
         schemaEntity.setDomain(message.value().getDomain());
         schemaEntity.setEntity(message.value().getEntityName());
@@ -80,13 +84,14 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     String.format("Invalid Schema Entity: domain or entity is NULL. [path=%s]",
                             data.getFile().getPath()));
         }
-        registerFile(data.getFile().getPath(), schemaEntity, message.mode(), txId);
+        registerFile(data.getFile(), schemaEntity, message, txId);
     }
 
-    private DFSFileReplicaState registerFile(String hdfsPath,
+    private DFSFileReplicaState registerFile(DFSFile file,
                                              SchemaEntity schemaEntity,
-                                             MessageObject.MessageMode mode,
+                                             MessageObject<String, DFSChangeDelta> message,
                                              long txId) throws Exception {
+        String hdfsPath = file.getPath();
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(hdfsPath);
@@ -97,7 +102,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     String.format("File not found. [path=%s]", hdfsPath));
         }
 
-        FSFile file = FileSystemHelper.createFile(fileState, fs, schemaEntity);
+        checkStaleInode(message, fileState, file);
+
+        FSFile fsf = FileSystemHelper.createFile(fileState, fs, schemaEntity);
         stateManager().replicationLock().lock();
         try {
             DFSFileReplicaState rState = stateManager()
@@ -108,10 +115,10 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                             true);
             rState.setSnapshotTxId(fileState.getLastTnxId());
             rState.setSnapshotTime(System.currentTimeMillis());
-            rState.setSnapshotReady(mode != MessageObject.MessageMode.Snapshot);
+            rState.setSnapshotReady(message.mode() != MessageObject.MessageMode.Snapshot);
             rState.setState(EFileState.New);
             rState.copyBlocks(fileState);
-            rState.setStoragePath(file.directory().pathConfig());
+            rState.setStoragePath(fsf.directory().pathConfig());
             rState.setLastReplicatedTx(txId);
             rState.setLastReplicationTime(System.currentTimeMillis());
             if (ProtoBufUtils.update(fileState, rState)) {
@@ -142,7 +149,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processAppendFileTxMessage(DFSAppendFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+    public void processAppendFileTxMessage(DFSAppendFile data,
+                                           MessageObject<String, DFSChangeDelta> message,
+                                           long txId) throws Exception {
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(data.getFile().getPath());
@@ -156,9 +165,11 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         if (fileState.getLastTnxId() >= txId) {
             LOGGER.warn(getClass(), txId,
                     String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
-                    message.id(), message.mode().name()));
+                            message.id(), message.mode().name()));
             return;
         }
+        checkStaleInode(message, fileState, data.getFile());
+
         SchemaEntity schemaEntity = new SchemaEntity();
         schemaEntity.setDomain(message.value().getDomain());
         schemaEntity.setEntity(message.value().getEntityName());
@@ -225,9 +236,11 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         if (fileState.getLastTnxId() >= txId) {
             LOGGER.warn(getClass(), txId,
                     String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
-                    message.id(), message.mode().name()));
+                            message.id(), message.mode().name()));
             return;
         }
+        checkStaleInode(message, fileState, data.getFile());
+
         SchemaEntity schemaEntity = new SchemaEntity();
         schemaEntity.setDomain(message.value().getDomain());
         schemaEntity.setEntity(message.value().getEntityName());
@@ -335,9 +348,10 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         if (fileState.getLastTnxId() >= txId) {
             LOGGER.warn(getClass(), txId,
                     String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
-                    message.id(), message.mode().name()));
+                            message.id(), message.mode().name()));
             return;
         }
+        checkStaleInode(message, fileState, data.getFile());
         SchemaEntity schemaEntity = new SchemaEntity();
         schemaEntity.setDomain(message.value().getDomain());
         schemaEntity.setEntity(message.value().getEntityName());
@@ -418,9 +432,10 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         if (fileState.getLastTnxId() >= txId) {
             LOGGER.warn(getClass(), txId,
                     String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
-                    message.id(), message.mode().name()));
+                            message.id(), message.mode().name()));
             return;
         }
+        checkStaleInode(message, fileState, data.getFile());
         List<DFSBlock> blocks = data.getBlocksList();
         if (blocks.isEmpty()) {
             throw new InvalidTransactionError(txId,
@@ -521,8 +536,17 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         if (fileState.getLastTnxId() >= txId) {
             LOGGER.warn(getClass(), txId,
                     String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
-                    message.id(), message.mode().name()));
+                            message.id(), message.mode().name()));
             return;
+        }
+        checkStaleInode(message, fileState, data.getFile());
+    }
+
+    private void checkStaleInode(MessageObject<String, DFSChangeDelta> message,
+                                 DFSFileState fileState,
+                                 DFSFile file) throws InvalidMessageError {
+        if (fileState.getId() != file.getInodeId()) {
+            throw new InvalidMessageError(message.id(), String.format("Stale transaction: [path=%s]", file.getPath()));
         }
     }
 
@@ -547,7 +571,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                         data.getFile().getPath(),
                         String.format("Invalid Schema Entity: domain or entity is NULL. [path=%s]", data.getFile().getPath()));
             }
-            registerFile(data.getFile().getPath(), schemaEntity, message.mode(), txId);
+            registerFile(data.getFile(), schemaEntity, message, txId);
         }
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
@@ -559,10 +583,12 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()));
         }
+        checkStaleInode(message, fileState, data.getFile());
+
         if (!checkCloseTxState(fileState, message.mode(), txId)) {
             LOGGER.warn(getClass(), txId,
                     String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
-                    message.id(), message.mode().name()));
+                            message.id(), message.mode().name()));
             return;
         }
 

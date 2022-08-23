@@ -220,7 +220,7 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
         } else {
             fileState = stateManager()
                     .fileStateHelper()
-                    .markDeleted(fileState.getHdfsFilePath());
+                    .markDeleted(fileState.getHdfsFilePath(), false);
         }
         sender.send(message);
     }

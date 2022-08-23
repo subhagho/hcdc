@@ -83,6 +83,15 @@ public class DFSFileState {
         return null;
     }
 
+    public void reset() {
+        blocks.clear();
+        numBlocks = 0;
+        schemaLocation = null;
+        dataSize = 0;
+        blockSize = 0;
+        fileType = EFileType.UNKNOWN;
+    }
+
     public boolean checkDeleted() {
         return (state == EFileState.Deleted);
     }
