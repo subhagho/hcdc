@@ -11,6 +11,10 @@ public class KafkaMessage<K, V> extends MessageObject<K, V> {
     public KafkaMessage() {
     }
 
+    public KafkaMessage(MessageObject<K, V> source) {
+        super(source);
+    }
+
     public KafkaMessage(@NonNull ConsumerRecord<K, ?> record, @NonNull V value) {
         queue(record.topic());
         key(record.key());
@@ -20,8 +24,9 @@ public class KafkaMessage<K, V> extends MessageObject<K, V> {
         if (ih != null && ih.value() != null) {
             String mid = new String(ih.value(), StandardCharsets.UTF_8);
             id(mid);
-        } else
+        } else {
             id(String.format("%s:%d:%d", record.topic(), record.partition(), record.offset()));
+        }
 
         Header ch = record.headers().lastHeader(HEADER_CORRELATION_ID);
         if (ch != null && ch.value() != null) {

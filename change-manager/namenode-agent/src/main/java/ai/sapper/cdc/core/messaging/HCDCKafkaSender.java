@@ -42,9 +42,7 @@ public class HCDCKafkaSender extends MessageSender<String, DFSChangeDelta> {
         checkState();
         try {
             message.queue(topic);
-            if (Strings.isNullOrEmpty(message.id())) {
-                message.id(UUID.randomUUID().toString());
-            }
+
             List<Header> headers = new ArrayList<>();
             Header h = new RecordHeader(MessageObject.HEADER_MESSAGE_ID, message.id().getBytes(StandardCharsets.UTF_8));
             headers.add(h);

@@ -61,11 +61,13 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                             .setTimestamp(System.currentTimeMillis())
                             .build();
                     MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(message.value().getNamespace(),
-                            delF,
-                            DFSDeleteFile.class,
-                            message.value().getDomain(),
-                            message.value().getEntity(),
-                            MessageObject.MessageMode.Forked);
+                                    delF,
+                                    DFSDeleteFile.class,
+                                    message.value().getDomain(),
+                                    message.value().getEntity(),
+                                    MessageObject.MessageMode.Forked)
+                            .correlationId(message.id());
+
                     processDeleteFileTxMessage(delF, m, txId);
                 } else if (fileState.checkDeleted()) {
                     stateManager()
@@ -244,8 +246,9 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                     DFSRenameFile.class,
                     null,
                     null,
-                    MessageObject.MessageMode.Forked);
-            m.correlationId(message.id());
+                    MessageObject.MessageMode.Forked)
+                    .correlationId(message.id());
+
             processRenameFileTxMessage(data, m, txId);
         }
     }
@@ -298,8 +301,8 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                         DFSDeleteFile.class,
                         rState.getEntity().getDomain(),
                         rState.getEntity().getEntity(),
-                        MessageObject.MessageMode.Forked);
-                m.correlationId(message.id());
+                        MessageObject.MessageMode.Forked)
+                        .correlationId(message.id());
 
                 rState.setEnabled(false);
                 rState.setLastReplicationTime(System.currentTimeMillis());
@@ -751,7 +754,9 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                 DFSDeleteFile.class,
                 message.value().getDomain(),
                 message.value().getEntityName(),
-                MessageObject.MessageMode.New);
+                MessageObject.MessageMode.Forked)
+                .correlationId(message.id());
+
         processDeleteFileTxMessage(dms, dm, txId);
 
         // Add new file section
@@ -793,7 +798,9 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                 DFSAddFile.class,
                 message.value().getDomain(),
                 null,
-                MessageObject.MessageMode.Snapshot);
+                MessageObject.MessageMode.Snapshot)
+                .correlationId(message.id());
+
         processAddFileTxMessage(ams, am, txId);
 
         // Close new file section
@@ -803,7 +810,8 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                 DFSCloseFile.class,
                 message.value().getDomain(),
                 null,
-                MessageObject.MessageMode.Forked);
+                MessageObject.MessageMode.Backlog)
+                .correlationId(message.id());
         processCloseFileTxMessage(cms, cm, txId);
     }
 

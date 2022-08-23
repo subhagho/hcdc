@@ -1,8 +1,13 @@
 package ai.sapper.cdc.core.messaging;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -22,4 +27,17 @@ public class MessageObject<K, V> {
     private MessageMode mode;
     private K key;
     private V value;
+
+    public MessageObject() {
+        this.id = UUID.randomUUID().toString();
+    }
+
+    public MessageObject(@NonNull String id) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(id));
+        this.id = id;
+    }
+
+    public MessageObject(@NonNull MessageObject<K, V> source) {
+        this.id = source.id;
+    }
 }

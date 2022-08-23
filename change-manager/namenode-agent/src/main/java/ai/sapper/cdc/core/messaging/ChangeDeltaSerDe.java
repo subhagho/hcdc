@@ -91,7 +91,6 @@ public class ChangeDeltaSerDe {
             id = UUID.randomUUID().toString();
         }
         MessageObject<String, DFSChangeDelta> message = new KafkaMessage<>();
-        message.id(String.format("%s:%s:%s:%s", namespace, mode.name(), delta.getTxId(), id));
         message.correlationId(String.valueOf(delta.getTxId()));
         message.mode(mode);
         message.key(key);
@@ -117,8 +116,7 @@ public class ChangeDeltaSerDe {
                 .setEntityName(schemaEntity.getEntity())
                 .setDomain(schemaEntity.getDomain())
                 .build();
-        MessageObject<String, DFSChangeDelta> m = new KafkaMessage<>();
-        m.id(message.id());
+        MessageObject<String, DFSChangeDelta> m = new KafkaMessage<>(message);
         m.correlationId(message.correlationId());
         m.mode(mode);
         m.key(message.key());
