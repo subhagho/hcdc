@@ -25,12 +25,12 @@
                 <sender>
                     <connectionType>kafka</connectionType>
                     <connection>delta-kafka-queue</connection>
-                    <partitioner>
+                    <!--partitioner>
                         <type>ai.sapper.hcdc.agents.pipeline.ChangeDeltaKafkaPartitioner</type>
                         <config>
                             <partitions>3</partitions>
                         </config>
-                    </partitioner>
+                    </partitioner -->
                 </sender>
                 <receiver>
                     <connectionType>kafka</connectionType>
