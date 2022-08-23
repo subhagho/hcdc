@@ -88,6 +88,11 @@ public class CDCDataConverter {
             try (HDFSBlockReader reader = new HDFSBlockReader(hdfsConnection.dfsClient(), fileState.getHdfsFilePath())) {
                 reader.init();
                 DFSBlockState blockState = fileState.findFirstBlock();
+                if (blockState == null) {
+                    throw new Exception(
+                            String.format("Error fetching first block from FileState. [path=%s]",
+                                    fileState.getHdfsFilePath()));
+                }
                 HDFSBlockData data = reader.read(blockState.getBlockId(),
                         blockState.getGenerationStamp(),
                         0L,

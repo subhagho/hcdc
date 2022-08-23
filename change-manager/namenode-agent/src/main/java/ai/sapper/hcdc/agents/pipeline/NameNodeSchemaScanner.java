@@ -77,7 +77,7 @@ public class NameNodeSchemaScanner {
                     if (inode % config.shardCount == config.shardId) {
                         FileScannerTask task = new FileScannerTask()
                                 .fileState(fs)
-                                .schemaManager(schemaManager)
+                                .schemaManager(new SchemaManager(schemaManager))
                                 .hdfsConnection(connection)
                                 .stateManager(stateManager);
                         executorService.submit(task);
@@ -130,10 +130,10 @@ public class NameNodeSchemaScanner {
                 CDCDataConverter.ExtractSchemaResponse response = converter.extractSchema(fileState, schemaEntity);
                 if (response != null) {
                     if (response.schema() != null) {
-                       String path = schemaManager().schemaPath(schemaEntity);
-                       if (!Strings.isNullOrEmpty(path)) {
-                           fileState.setSchemaLocation(path);
-                       }
+                        String path = schemaManager().schemaPath(schemaEntity);
+                        if (!Strings.isNullOrEmpty(path)) {
+                            fileState.setSchemaLocation(path);
+                        }
                     }
                     fileState.setFileType(response.fileType());
                     try (DistributedLock lock = NameNodeEnv.globalLock()) {

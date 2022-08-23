@@ -1,5 +1,6 @@
 package ai.sapper.cdc.core;
 
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import com.google.common.base.Preconditions;
@@ -80,10 +81,9 @@ public class DistributedLock extends ReentrantLock implements Closeable {
     public void lock() {
         Preconditions.checkState(mutex != null);
         try {
-            if (!mutex.isAcquiredInThisProcess())
-                if (!tryLock()) {
-                    throw new LockError(String.format("[%s][%s] Timeout getting lock.", id.namespace, id.name));
-                }
+            if (!tryLock()) {
+                throw new LockError(String.format("[%s][%s] Timeout getting lock.", id.namespace, id.name));
+            }
         } catch (Throwable ex) {
             throw new LockError(ex);
         }
@@ -117,19 +117,12 @@ public class DistributedLock extends ReentrantLock implements Closeable {
      */
     @Override
     public boolean tryLock() {
-        Preconditions.checkState(mutex != null);
-        if (super.tryLock()) {
-            try {
-                if (mutex.isAcquiredInThisProcess()) {
-                    return true;
-                }
-                return mutex.acquire(lockTimeout, TimeUnit.MILLISECONDS);
-            } catch (Throwable t) {
-                super.unlock();
-                throw new LockError(t);
-            }
+        try {
+            return tryLock(lockTimeout, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ie) {
+            DefaultLogger.LOG.debug(String.format("Lock Timeout: [name=%s]", id.toString()));
+            return false;
         }
-        return false;
     }
 
     /**
@@ -207,10 +200,9 @@ public class DistributedLock extends ReentrantLock implements Closeable {
     @Override
     public boolean tryLock(long timeout, TimeUnit unit) throws InterruptedException {
         Preconditions.checkState(mutex != null);
+        if (isLockByThread()) return true;
         if (super.tryLock(timeout, unit)) {
             try {
-                if (mutex.isAcquiredInThisProcess())
-                    return true;
                 return mutex.acquire(timeout, unit);
             } catch (Throwable t) {
                 super.unlock();
@@ -218,6 +210,10 @@ public class DistributedLock extends ReentrantLock implements Closeable {
             }
         }
         return false;
+    }
+
+    private boolean isLockByThread() {
+        return (isHeldByCurrentThread() && mutex.isAcquiredInThisProcess());
     }
 
     /**
@@ -279,10 +275,9 @@ public class DistributedLock extends ReentrantLock implements Closeable {
      */
     @Override
     public void close() throws IOException {
-        if (isLocked()) {
-            unlock();
+        if (getHoldCount() == 0) {
+            mutex = null;
         }
-        mutex = null;
     }
 
     public static final class LockError extends RuntimeException {
@@ -380,6 +375,14 @@ public class DistributedLock extends ReentrantLock implements Closeable {
         @Override
         public int hashCode() {
             return Objects.hash(namespace, name);
+        }
+
+        @Override
+        public String toString() {
+            return "LockId{" +
+                    "namespace='" + namespace + '\'' +
+                    ", name='" + name + '\'' +
+                    '}';
         }
     }
 }

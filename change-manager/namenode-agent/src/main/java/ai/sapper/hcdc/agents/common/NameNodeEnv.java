@@ -187,12 +187,16 @@ public class NameNodeEnv extends BaseEnv {
         return config.hadoopConfFile;
     }
 
-    public DistributedLock createLock(String name) {
+    public DistributedLock createLock(String name) throws NameNodeError {
         if (lockDefs().containsKey(name)) {
             LockDef def = lockDefs().get(name);
-            DistributedLock lock = new DistributedLock(def.module(), def.path(), stateManager.basePath())
+            if (def == null) {
+                throw new NameNodeError(String.format("No lock definition found: [name=%s]", name));
+            }
+            return new DistributedLock(def.module(),
+                    def.path(),
+                    stateManager.basePath())
                     .withConnection(def.connection());
-            return lock;
         }
         return null;
     }
@@ -224,7 +228,7 @@ public class NameNodeEnv extends BaseEnv {
         return get().connections();
     }
 
-    public static DistributedLock globalLock() {
+    public static DistributedLock globalLock() throws NameNodeError {
         return get().createLock(NameNEnvConfig.Constants.LOCK_GLOBAL);
     }
 

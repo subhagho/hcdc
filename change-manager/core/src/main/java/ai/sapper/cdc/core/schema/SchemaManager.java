@@ -33,6 +33,18 @@ public class SchemaManager {
     private ZookeeperConnection zkConnection;
     private DistributedLock lock;
 
+    public SchemaManager() {
+    }
+
+    public SchemaManager(@NonNull SchemaManager schemaManager) {
+        this.config = schemaManager.config;
+        this.zkConnection = schemaManager.zkConnection;
+        lock = new DistributedLock(SchemaManagerConfig.Constants.CONST_LOCK_NAMESPACE,
+                SchemaManagerConfig.Constants.CONST_LOCK_NAME,
+                config.basePath)
+                .withConnection(zkConnection);
+    }
+
     public SchemaManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                               @NonNull ConnectionManager manger) throws ConfigurationException {
         try {
