@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <configuration>
     <agent>
-        <module>edits-log-processors</module>
-        <instance>edits-log-reader</instance>
+        <module>EDITS-LOG-PROCESSORS</module>
+        <instance>EditsLogProcessor</instance>
         <source>ha-cluster</source>
         <hadoop>
             <namespace>ha-cluster</namespace>
@@ -18,7 +18,7 @@
         </connections>
         <managers>
             <state>
-                <basePath>/hcdc/state</basePath>
+                <basePath>/hCDC/state</basePath>
                 <connection>zk-state-connection</connection>
             </state>
         </managers>

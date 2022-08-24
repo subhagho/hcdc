@@ -1,7 +1,6 @@
 package ai.sapper.hcdc.agents.pipeline;
 
 import ai.sapper.cdc.common.model.*;
-import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.io.*;
 import ai.sapper.cdc.core.model.*;
 import ai.sapper.hcdc.agents.common.*;
@@ -162,12 +161,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()));
         }
-        if (fileState.getLastTnxId() >= txId) {
-            LOGGER.warn(getClass(), txId,
-                    String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
-                            message.id(), message.mode().name()));
-            return;
-        }
+
         checkStaleInode(message, fileState, data.getFile());
 
         SchemaEntity schemaEntity = new SchemaEntity();
@@ -177,7 +171,19 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
                 .get(fileState.getId());
-        if (!fileState.hasError() && rState != null && rState.isEnabled()) {
+        if (rState == null) {
+            throw new InvalidTransactionError(txId,
+                    DFSError.ErrorCode.SYNC_STOPPED,
+                    data.getFile().getPath(),
+                    String.format("File not setup for replication. [path=%s]",
+                            data.getFile().getPath()));
+        } else if (rState.getLastReplicatedTx() >= txId) {
+            if (message.mode() == MessageObject.MessageMode.New) {
+                throw new InvalidMessageError(message.id(),
+                        String.format("Duplicate message detected: [path=%s]", fileState.getHdfsFilePath()));
+            }
+        }
+        if (!fileState.hasError() &&  rState.isEnabled()) {
             FSFile file = fs.get(fileState, schemaEntity);
             if (file == null) {
                 throw new InvalidTransactionError(txId,
@@ -199,12 +205,6 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getHdfsFilePath(),
                     String.format("FileSystem sync error. [path=%s]", fileState.getHdfsFilePath()));
-        } else if (rState == null) {
-            throw new InvalidTransactionError(txId,
-                    DFSError.ErrorCode.SYNC_STOPPED,
-                    data.getFile().getPath(),
-                    String.format("File not setup for replication. [path=%s]",
-                            data.getFile().getPath()));
         }
     }
 
@@ -228,18 +228,15 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()));
         }
-        if (fileState.checkDeleted()) {
-            LOGGER.warn(getClass(), txId,
-                    String.format("File already deleted. [path=%s]", fileState.getHdfsFilePath()));
-            return;
-        }
-        if (fileState.getLastTnxId() >= txId) {
-            LOGGER.warn(getClass(), txId,
-                    String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
-                            message.id(), message.mode().name()));
-            return;
-        }
         checkStaleInode(message, fileState, data.getFile());
+
+        if (!fileState.checkDeleted()) {
+            throw new InvalidTransactionError(txId,
+                    DFSError.ErrorCode.SYNC_STOPPED,
+                    data.getFile().getPath(),
+                    String.format("File not marked for delete. [path=%s]",
+                            data.getFile().getPath()));
+        }
 
         SchemaEntity schemaEntity = new SchemaEntity();
         schemaEntity.setDomain(message.value().getDomain());
@@ -249,7 +246,19 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
                 .get(fileState.getId());
-        if (!fileState.hasError() && rState != null && rState.isEnabled()) {
+        if (rState == null) {
+            throw new InvalidTransactionError(txId,
+                    DFSError.ErrorCode.SYNC_STOPPED,
+                    data.getFile().getPath(),
+                    String.format("File not setup for replication. [path=%s]",
+                            data.getFile().getPath()));
+        } else if (rState.getLastReplicatedTx() >= txId) {
+            if (message.mode() == MessageObject.MessageMode.New) {
+                throw new InvalidMessageError(message.id(),
+                        String.format("Duplicate message detected: [path=%s]", fileState.getHdfsFilePath()));
+            }
+        }
+        if (!fileState.hasError() && rState.isEnabled()) {
             FSFile file = fs.get(fileState, schemaEntity);
             if (file == null) {
                 throw new InvalidTransactionError(txId,
@@ -316,12 +325,6 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getHdfsFilePath(),
                     String.format("FileSystem sync error. [path=%s]", fileState.getHdfsFilePath()));
-        } else if (rState == null) {
-            throw new InvalidTransactionError(txId,
-                    DFSError.ErrorCode.SYNC_STOPPED,
-                    data.getFile().getPath(),
-                    String.format("File not setup for replication. [path=%s]",
-                            data.getFile().getPath()));
         }
     }
 
@@ -345,12 +348,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()));
         }
-        if (fileState.getLastTnxId() >= txId) {
-            LOGGER.warn(getClass(), txId,
-                    String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
-                            message.id(), message.mode().name()));
-            return;
-        }
+
         checkStaleInode(message, fileState, data.getFile());
         SchemaEntity schemaEntity = new SchemaEntity();
         schemaEntity.setDomain(message.value().getDomain());
@@ -359,7 +357,19 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
                 .get(fileState.getId());
-        if (!fileState.hasError() && rState != null && rState.canUpdate()) {
+        if (rState == null) {
+            throw new InvalidTransactionError(txId,
+                    DFSError.ErrorCode.SYNC_STOPPED,
+                    data.getFile().getPath(),
+                    String.format("File not setup for replication. [path=%s]",
+                            data.getFile().getPath()));
+        } else if (rState.getLastReplicatedTx() >= txId) {
+            if (message.mode() == MessageObject.MessageMode.New) {
+                throw new InvalidMessageError(message.id(),
+                        String.format("Duplicate message detected: [path=%s]", fileState.getHdfsFilePath()));
+            }
+        }
+        if (!fileState.hasError() && rState.canUpdate()) {
             FSFile file = fs.get(fileState, schemaEntity);
             if (file == null) {
                 throw new InvalidTransactionError(txId,
@@ -381,14 +391,17 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             if (bb == null) {
                 file.add(block);
             }
-            DFSBlockReplicaState b = new DFSBlockReplicaState();
-            b.setState(EFileState.New);
-            b.setBlockId(block.getBlockId());
-            b.setPrevBlockId(block.getPrevBlockId());
+            DFSBlockReplicaState b = rState.get(block.getBlockId());
+            if (b == null) {
+                b = new DFSBlockReplicaState();
+                b.setState(EFileState.New);
+                b.setBlockId(block.getBlockId());
+                b.setPrevBlockId(block.getPrevBlockId());
+                rState.add(b);
+            }
             b.setStartOffset(0);
             b.setDataSize(block.getDataSize());
             b.setUpdateTime(System.currentTimeMillis());
-            rState.add(b);
 
             rState.setLastReplicatedTx(txId);
             rState.setLastReplicationTime(System.currentTimeMillis());
@@ -400,12 +413,6 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getHdfsFilePath(),
                     String.format("FileSystem sync error. [path=%s]", fileState.getHdfsFilePath()));
-        } else if (rState == null || !rState.canUpdate()) {
-            throw new InvalidTransactionError(txId,
-                    DFSError.ErrorCode.SYNC_STOPPED,
-                    data.getFile().getPath(),
-                    String.format("File not setup for replication. [path=%s]",
-                            data.getFile().getPath()));
         }
     }
 
@@ -429,12 +436,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                             data.getFile().getPath()));
         }
-        if (fileState.getLastTnxId() >= txId) {
-            LOGGER.warn(getClass(), txId,
-                    String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
-                            message.id(), message.mode().name()));
-            return;
-        }
+
         checkStaleInode(message, fileState, data.getFile());
         List<DFSBlock> blocks = data.getBlocksList();
         if (blocks.isEmpty()) {
@@ -451,7 +453,19 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
                 .get(fileState.getId());
-        if (!fileState.hasError() && rState != null && rState.canUpdate()) {
+        if (rState == null) {
+            throw new InvalidTransactionError(txId,
+                    DFSError.ErrorCode.SYNC_STOPPED,
+                    data.getFile().getPath(),
+                    String.format("File not setup for replication. [path=%s]",
+                            data.getFile().getPath()));
+        } else if (rState.getLastReplicatedTx() >= txId) {
+            if (message.mode() == MessageObject.MessageMode.New) {
+                throw new InvalidMessageError(message.id(),
+                        String.format("Duplicate message detected: [path=%s]", fileState.getHdfsFilePath()));
+            }
+        }
+        if (!fileState.hasError() && rState.canUpdate()) {
             FSFile file = fs.get(fileState, schemaEntity);
             if (file == null) {
                 throw new InvalidTransactionError(txId,
@@ -484,14 +498,19 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                             String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
                                     fileState.getHdfsFilePath(), block.getBlockId()));
                 }
-                DFSBlockReplicaState b = new DFSBlockReplicaState();
-                b.setState(EFileState.New);
-                b.setBlockId(bs.getBlockId());
-                b.setPrevBlockId(bs.getPrevBlockId());
+                DFSBlockReplicaState b = rState.get(bb.blockId());
+                if (b == null) {
+                    b = new DFSBlockReplicaState();
+                    rState.add(b);
+                    b.setState(EFileState.New);
+                    b.setBlockId(bs.getBlockId());
+                    b.setPrevBlockId(bs.getPrevBlockId());
+                }
+
                 b.setStartOffset(0);
                 b.setDataSize(bs.getDataSize());
                 b.setUpdateTime(System.currentTimeMillis());
-                rState.add(b);
+
                 rState.setLastReplicatedTx(txId);
                 rState.setLastReplicationTime(System.currentTimeMillis());
 
@@ -504,12 +523,6 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getHdfsFilePath(),
                     String.format("FileSystem sync error. [path=%s]", fileState.getHdfsFilePath()));
-        } else if (rState == null || !rState.canUpdate()) {
-            throw new InvalidTransactionError(txId,
-                    DFSError.ErrorCode.SYNC_STOPPED,
-                    data.getFile().getPath(),
-                    String.format("File not setup for replication. [path=%s]",
-                            data.getFile().getPath()));
         }
     }
 
@@ -585,16 +598,21 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         }
         checkStaleInode(message, fileState, data.getFile());
 
-        if (!checkCloseTxState(fileState, message.mode(), txId)) {
-            LOGGER.warn(getClass(), txId,
-                    String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
-                            message.id(), message.mode().name()));
-            return;
-        }
-
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
                 .get(fileState.getId());
+        if (rState == null) {
+            throw new InvalidTransactionError(txId,
+                    DFSError.ErrorCode.SYNC_STOPPED,
+                    data.getFile().getPath(),
+                    String.format("File not setup for replication. [path=%s]",
+                            data.getFile().getPath()));
+        } else if (rState.getLastReplicatedTx() >= txId) {
+            if (message.mode() == MessageObject.MessageMode.New) {
+                throw new InvalidMessageError(message.id(),
+                        String.format("Duplicate message detected: [path=%s]", fileState.getHdfsFilePath()));
+            }
+        }
         SchemaEntity schemaEntity = rState.getEntity();
         long startTxId = rState.getLastReplicatedTx();
         if (!fileState.hasError() && rState.canUpdate()) {
@@ -673,7 +691,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                                     data.getFile().getPath()));
                 }
                 if (message.mode() == MessageObject.MessageMode.Snapshot) {
-                    DFSFileReplicaState nState = snapShotDone(fileState, rState);
+                    DFSFileReplicaState nState = snapshotDone(fileState, rState);
                     if (!nState.isSnapshotReady()) {
                         throw new InvalidTransactionError(txId,
                                 DFSError.ErrorCode.SYNC_STOPPED,
@@ -710,7 +728,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         }
     }
 
-    private DFSFileReplicaState snapShotDone(DFSFileState fileState,
+    private DFSFileReplicaState snapshotDone(DFSFileState fileState,
                                              DFSFileReplicaState replicaState) throws Exception {
         SnapshotDoneRequest request
                 = new SnapshotDoneRequest(

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <configuration>
     <agent>
-        <module>change-delta-processors</module>
-        <instance>delta-stream-processor</instance>
+        <module>CDC-PROCESSORS</module>
+        <instance>EntityChangeDeltaConsumer</instance>
         <source>ha-cluster</source>
         <enableHeartbeat>true</enableHeartbeat>
         <needHadoop>false</needHadoop>
@@ -12,11 +12,11 @@
         <managers>
             <state>
                 <stateManagerClass>ai.sapper.hcdc.agents.common.ProcessorStateManager</stateManagerClass>
-                <basePath>/hcdc/state</basePath>
+                <basePath>/CDC/state</basePath>
                 <connection>zk-state-connection</connection>
             </state>
             <domain>
-                <basePath>/hcdc/registry/files</basePath>
+                <basePath>/hCDC/registry/files</basePath>
                 <connection>zk-state-connection</connection>
             </domain>
         </managers>

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <configuration>
     <agent>
-        <module>change-delta-processors</module>
-        <instance>file-delta-processor/1</instance>
+        <module>CDC-PROCESSORS</module>
+        <instance>EntityChangeDeltaReader/0</instance>
         <source>ha-cluster</source>
         <enableHeartbeat>true</enableHeartbeat>
         <needHadoop>false</needHadoop>
@@ -12,11 +12,11 @@
         <managers>
             <state>
                 <stateManagerClass>ai.sapper.hcdc.agents.common.ProcessorStateManager</stateManagerClass>
-                <basePath>/hcdc/state</basePath>
+                <basePath>/CDC/state</basePath>
                 <connection>zk-state-connection</connection>
             </state>
             <domain>
-                <basePath>/hcdc/registry/files</basePath>
+                <basePath>/hCDC/registry/files</basePath>
                 <connection>zk-state-connection</connection>
                 <hdfs>source-hdfs-ha</hdfs>
             </domain>
@@ -38,12 +38,12 @@
                 <sender>
                     <connectionType>kafka</connectionType>
                     <connection>delta-kafka-queue</connection>
-                    <partitioner>
+                    <!--partitioner>
                         <type>ai.sapper.hcdc.agents.pipeline.ChangeDeltaKafkaPartitioner</type>
                         <config>
                             <partitions>3</partitions>
                         </config>
-                    </partitioner>
+                    </partitioner-->
                 </sender>
                 <receiver>
                     <connectionType>kafka</connectionType>
@@ -88,8 +88,7 @@
                 <type>ai.sapper.cdc.core.connections.WebServiceConnection</type>
                 <rest>
                     <name>snapshot</name>
-                    <endpoint>http://localhost/snapshot</endpoint>
-
+                    <endpoint>http://localhost:8080/snapshot</endpoint>
                 </rest>
             </connection>
             <connection>
@@ -98,10 +97,10 @@
                     <name>source-hdfs</name>
                     <namenode>
                         <primary>
-                            <URI>hdfs://192.168.0.2:9000</URI>
+                            <URI>hdfs://192.168.2.2:9820</URI>
                         </primary>
                         <secondary>
-                            <URI>hdfs://192.168.0.3:9000</URI>
+                            <URI>hdfs://192.168.2.3:9820</URI>
                         </secondary>
                     </namenode>
                     <security>
@@ -117,7 +116,7 @@
                     <nameservice>ha-cluster</nameservice>
                     <failoverProvider>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider
                     </failoverProvider>
-                    <namenodes>nn1=192.168.0.2:9000;nn2=192.168.0.3:9000</namenodes>
+                    <namenodes>nn1=192.168.2.2:9820;nn2=192.168.2.3:9820</namenodes>
                     <security>
                         <enabled>false</enabled>
                     </security>
@@ -128,7 +127,8 @@
                 <type>ai.sapper.cdc.core.connections.ZookeeperConnection</type>
                 <zookeeper>
                     <name>zk-state-connection</name>
-                    <connectionString>192.168.0.5:2181,192.168.0.4:2181</connectionString>
+                    <!--connectionString>192.168.0.5:2181,192.168.0.4:2181</connectionString -->
+                    <connectionString>192.168.2.16:2181,192.168.2.17:2181,192.168.2.18:2181</connectionString>
                     <retry>
                         <interval>1500</interval>
                         <retries>5</retries>
@@ -165,7 +165,7 @@
                     <mode>Consumer</mode>
                     <consumer>
                         <config>src/test/resources/consumer.properties</config>
-                        <partitions>1</partitions>
+                        <!--partitions>1</partitions-->
                     </consumer>
                     <topic>ha-cluster.delta</topic>
                 </kafka>
