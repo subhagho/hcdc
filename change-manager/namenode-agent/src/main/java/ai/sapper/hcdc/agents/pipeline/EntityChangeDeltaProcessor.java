@@ -80,13 +80,18 @@ public class EntityChangeDeltaProcessor extends ChangeDeltaProcessor {
                             if (txId > 0) {
                                 if (message.mode() == MessageObject.MessageMode.New) {
                                     processor.updateTransaction(txId, message);
+                                    stateManager().updateCurrentTx(txId);
                                     LOGGER.info(getClass(), txId,
                                             String.format("Processed transaction delta. [TXID=%d]", txId));
                                 } else if (message.mode() == MessageObject.MessageMode.Snapshot) {
                                     if (stateManager().agentTxState().getProcessedTxId() < txId) {
+                                        stateManager().updateCurrentTx(txId);
                                         stateManager().update(txId);
                                         LOGGER.info(getClass(), txId,
                                                 String.format("Processed transaction delta. [TXID=%d]", txId));
+                                    }
+                                    if (stateManager().getModuleState().getSnapshotTxId() < txId) {
+                                        stateManager().updateSnapshotTx(txId);
                                     }
                                 }
                             }
