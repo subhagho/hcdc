@@ -60,6 +60,8 @@ public class HdfsConnection implements Connection {
                 config.read();
 
                 hdfsConfig = new Configuration();
+                hdfsConfig.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getCanonicalName());
+                hdfsConfig.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getCanonicalName());
                 hdfsConfig.set(HDFS_PARAM_DEFAULT_FS, config.primaryNameNodeUri);
                 hdfsConfig.set(HDFS_PARAM_DFS_IMPLEMENTATION, DistributedFileSystem.class.getName());
                 if (config.isSecurityEnabled) {

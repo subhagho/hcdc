@@ -54,6 +54,8 @@ public class HdfsHAConnection extends HdfsConnection {
                 config.read();
 
                 hdfsConfig = new Configuration();
+                hdfsConfig.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getCanonicalName());
+                hdfsConfig.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getCanonicalName());
                 hdfsConfig.set(Constants.DFS_NAME_SERVICES, config.nameService);
                 hdfsConfig.set(String.format(Constants.DFS_FAILOVER_PROVIDER, config.nameService), config.failoverProvider);
                 String nns = String.format("%s,%s", config.nameNodeAddresses[0][0], config.nameNodeAddresses[1][0]);
