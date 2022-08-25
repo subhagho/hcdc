@@ -77,14 +77,7 @@ public class DFSFileReplicaState {
     public DFSFileReplicaState copyBlocks(@NonNull DFSFileState fileState) throws Exception {
         if (fileState.hasBlocks()) {
             for (DFSBlockState bs : fileState.getBlocks()) {
-                DFSBlockReplicaState b = new DFSBlockReplicaState();
-                b.setState(EFileState.New);
-                b.setBlockId(bs.getBlockId());
-                b.setPrevBlockId(bs.getPrevBlockId());
-                b.setStartOffset(0);
-                b.setDataSize(bs.getDataSize());
-                b.setUpdateTime(System.currentTimeMillis());
-                add(b);
+                copyBlock(bs);
             }
         }
         return this;

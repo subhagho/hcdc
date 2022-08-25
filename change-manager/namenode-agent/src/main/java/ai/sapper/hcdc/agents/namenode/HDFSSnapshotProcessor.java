@@ -85,6 +85,7 @@ public class HDFSSnapshotProcessor {
         DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
         Preconditions.checkNotNull(domainManager.hdfsConnection());
         int count = 0;
+        long txId = stateManager.getModuleState().getCurrentTxId();
         try (DistributedLock lock = NameNodeEnv.globalLock()
                 .withLockTimeout(processorConfig.defaultLockTimeout)) {
             lock.lock();
@@ -95,7 +96,7 @@ public class HDFSSnapshotProcessor {
                         List<DomainFilterMatcher.PathFilter> filters = matcher.patterns();
                         if (filters != null && !filters.isEmpty()) {
                             for (DomainFilterMatcher.PathFilter filter : filters) {
-                                count += processFilter(filter, domain);
+                                count += processFilter(filter, domain, txId);
                             }
                         }
                     }
@@ -133,7 +134,8 @@ public class HDFSSnapshotProcessor {
     }
 
     public int processFilter(@NonNull Filter filter,
-                             @NonNull String domain) throws Exception {
+                             @NonNull String domain,
+                             long txId) throws Exception {
         DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
         DomainFilterMatcher matcher = domainManager.matchers().get(domain);
         if (matcher == null) {
@@ -144,11 +146,12 @@ public class HDFSSnapshotProcessor {
             throw new Exception(
                     String.format("Specified filter not registered. [domain=%s][filter=%s]", domain, filter.toString()));
         }
-        return processFilter(pf, domain);
+        return processFilter(pf, domain, txId);
     }
 
     public int processFilter(@NonNull DomainFilterMatcher.PathFilter filter,
-                             String domain) throws Exception {
+                             String domain,
+                             long txId) throws Exception {
         DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
         FileSystem fs = domainManager.hdfsConnection().fileSystem();
         List<Path> paths = FileSystemUtils.list(filter.path(), fs);
@@ -161,7 +164,7 @@ public class HDFSSnapshotProcessor {
                     SchemaEntity d = new SchemaEntity();
                     d.setDomain(domain);
                     d.setEntity(filter.filter().getEntity());
-                    snapshot(hdfsPath, d);
+                    snapshot(hdfsPath, d, txId);
                     count++;
                 }
             }
@@ -170,19 +173,22 @@ public class HDFSSnapshotProcessor {
     }
 
     public int processFilterWithLock(@NonNull DomainFilterMatcher.PathFilter filter,
-                                     String domain) throws Exception {
+                                     String domain,
+                                     long txId) throws Exception {
         try (DistributedLock lock = NameNodeEnv.globalLock()
                 .withLockTimeout(processorConfig().defaultLockTimeout())) {
             lock.lock();
             try {
-                return processFilter(filter, domain);
+                return processFilter(filter, domain, txId);
             } finally {
                 lock.unlock();
             }
         }
     }
 
-    public void snapshot(@NonNull String hdfsPath, @NonNull SchemaEntity entity) throws SnapshotError {
+    public void snapshot(@NonNull String hdfsPath,
+                         @NonNull SchemaEntity entity,
+                         long txId) throws SnapshotError {
         Preconditions.checkState(sender != null);
         stateManager.replicationLock().lock();
         try {
@@ -194,17 +200,24 @@ public class HDFSSnapshotProcessor {
                 DefaultLogger.LOG.info(String.format("HDFS File State not found. [path=%s]", hdfsPath));
                 return;
             }
+            if (txId < 0) {
+                txId = fileState.getLastTnxId();
+            }
             DFSFileReplicaState rState = stateManager
                     .replicaStateHelper()
                     .get(fileState.getId());
-            if (rState == null) {
-                rState = stateManager
+            if (rState != null) {
+                if (rState.getSnapshotTxId() > txId) {
+                    return;
+                }
+                stateManager
                         .replicaStateHelper()
-                        .create(fileState.getId(), fileState.getHdfsFilePath(), entity, true);
+                        .delete(rState.getInode());
             }
-            if (rState.getSnapshotTxId() > 0) {
-                return;
-            }
+            rState = stateManager
+                    .replicaStateHelper()
+                    .create(fileState.getId(), fileState.getHdfsFilePath(), entity, true);
+
             if (fileState.getFileType() != null
                     && fileState.getFileType() != EFileType.UNKNOWN) {
                 rState.setFileType(fileState.getFileType());
@@ -425,7 +438,7 @@ public class HDFSSnapshotProcessor {
                             DomainFilterMatcher.PathFilter filter,
                             @NonNull String path) {
             try {
-                int count = processor.processFilterWithLock(filter, matcher.domain());
+                int count = processor.processFilterWithLock(filter, matcher.domain(), -1);
                 DefaultLogger.LOG.info(String.format("Processed filer: [filter=%s][files=%d]",
                         JSONUtils.asString(filter.filter(), Filter.class), count));
             } catch (Exception ex) {

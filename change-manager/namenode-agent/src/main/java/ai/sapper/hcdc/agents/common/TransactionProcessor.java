@@ -1,7 +1,7 @@
 package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.cdc.common.model.*;
-import ai.sapper.hcdc.agents.model.NameNodeTxState;
+import ai.sapper.hcdc.agents.model.AgentTxState;
 import ai.sapper.cdc.core.filters.DomainManager;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
@@ -153,7 +153,7 @@ public abstract class TransactionProcessor {
                                      boolean ignoreMissing) throws Exception {
         long txId = Long.parseLong(message.value().getTxId());
         if (message.mode() == MessageObject.MessageMode.New) {
-            NameNodeTxState txState = stateManager().agentTxState();
+            AgentTxState txState = stateManager().agentTxState();
             if (txId != txState.getProcessedTxId() + 1) {
                 if (!ignoreMissing) {
                     throw new InvalidMessageError(message.id(),

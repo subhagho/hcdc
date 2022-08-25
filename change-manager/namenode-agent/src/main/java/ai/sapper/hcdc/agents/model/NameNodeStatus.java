@@ -26,7 +26,7 @@ public class NameNodeStatus {
     private String nNRole;
     private String host;
     private boolean securityEnabled;
-    private long lastHATransitionTime;
+    private long haLastTransitionTime;
 
     public NameNodeStatus parse(@NonNull Map<String, String> map) {
         header = map.get(Contants.KEY_HEADER);
@@ -40,7 +40,7 @@ public class NameNodeStatus {
         }
         s = map.get(Contants.KEY_HA_TRANSITION_TIME);
         if (!Strings.isNullOrEmpty(s)) {
-            lastHATransitionTime = Long.parseLong(s);
+            haLastTransitionTime = Long.parseLong(s);
         }
         return this;
     }

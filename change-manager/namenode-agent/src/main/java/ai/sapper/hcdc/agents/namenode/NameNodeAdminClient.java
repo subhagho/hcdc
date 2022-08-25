@@ -12,9 +12,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
@@ -62,7 +60,7 @@ public class NameNodeAdminClient {
                 NameNodeStatus status = new NameNodeStatus().parse(bean);
                 DefaultLogger.LOG.info(
                         String.format("[%s] Received NN state [State=%s][Transition Time=%d]",
-                                status.getHost(), status.getState(), status.getLastHATransitionTime()));
+                                status.getHost(), status.getState(), status.getHaLastTransitionTime()));
                 return status;
             }
             return null;

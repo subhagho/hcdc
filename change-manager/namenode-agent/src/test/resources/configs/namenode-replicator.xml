@@ -99,7 +99,7 @@
                     <connectionTimeout>10000</connectionTimeout>
                 </zookeeper>
             </connection>
-            <connection>
+            <!--connection>
                 <type>ai.sapper.cdc.core.connections.impl.BasicKafkaProducer</type>
                 <kafka>
                     <name>edits-kafka-queue</name>
@@ -109,7 +109,7 @@
                     </producer>
                     <topic>ha-cluster.edits</topic>
                 </kafka>
-            </connection>
+            </connection -->
         </connections>
     </config>
 </configuration>

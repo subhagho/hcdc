@@ -8,7 +8,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class NameNodeTxState {
+public class AgentTxState {
     private String namespace;
     private long updatedTime;
     private long processedTxId = 0;

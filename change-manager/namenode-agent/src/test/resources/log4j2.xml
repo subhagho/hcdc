@@ -4,7 +4,8 @@
     <!-- Logging Properties -->
     <Properties>
         <Property name="LOG_PATTERN">[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t][%c] - %msg%n</Property>
-        <Property name="APP_LOG_ROOT">/home/subhagho/work/temp/logs/hcdc</Property>
+        <Property name="LOGDIR">/home/subhagho/work/temp/logs/hcdc</Property>
+        <Property name="AGENT">HadoopCDC-${sys:AGENT_NAME}</Property>
     </Properties>
 
     <Appenders>
@@ -15,8 +16,8 @@
         </Console>
 
         <!-- File Appenders on need basis -->
-        <RollingFile name="services" fileName="${APP_LOG_ROOT}/HadoopCDC-agents.log"
-                     filePattern="${APP_LOG_ROOT}/HadoopCDC-agents-%d{yyyy-MM-dd}-%i.log">
+        <RollingFile name="services" fileName="${LOGDIR}/${AGENT}.log"
+                     filePattern="${LOGDIR}/${AGENT}-%d{yyyy-MM-dd}-%i.log">
             <PatternLayout pattern="${LOG_PATTERN}"/>
             <Policies>
                 <SizeBasedTriggeringPolicy size="10MB"/>

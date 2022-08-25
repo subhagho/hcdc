@@ -4,10 +4,7 @@ import ai.sapper.cdc.core.messaging.*;
 import ai.sapper.hcdc.agents.common.DFSEditsFileFinder;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
-import ai.sapper.hcdc.agents.model.DFSEditLogBatch;
-import ai.sapper.hcdc.agents.model.DFSTransactionType;
-import ai.sapper.hcdc.agents.model.NameNodeAgentState;
-import ai.sapper.hcdc.agents.model.NameNodeTxState;
+import ai.sapper.hcdc.agents.model.*;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.cdc.common.utils.DefaultLogger;
@@ -111,23 +108,24 @@ public class EditsLogReader implements Runnable {
 
 
     public long doRun() throws Exception {
-        NameNodeTxState state = stateManager.agentTxState();
+        ModuleTxState state = stateManager.getModuleState();
         EditsLogFileReader reader = new EditsLogFileReader();
-        long txId = state.getProcessedTxId();
+        long txId = state.getCurrentTxId();
         List<DFSEditsFileFinder.EditsLogFile> files = DFSEditsFileFinder
                 .findEditsFiles(getPathNnCurrentDir(editsDir.getAbsolutePath()),
-                        state.getProcessedTxId() + 1, -1);
+                        state.getCurrentTxId() + 1, -1);
         if (files != null && !files.isEmpty()) {
             for (DFSEditsFileFinder.EditsLogFile file : files) {
-                LOGGER.debug(getClass(), state.getProcessedTxId(),
-                        String.format("Reading edits file [path=%s][startTx=%d]", file, state.getProcessedTxId()));
-                reader.run(file, state.getProcessedTxId(), file.endTxId());
+                LOGGER.debug(getClass(), state.getCurrentTxId(),
+                        String.format("Reading edits file [path=%s][startTx=%d]", file, state.getCurrentTxId()));
+                reader.run(file, state.getCurrentTxId(), file.endTxId());
                 DFSEditLogBatch batch = reader.batch();
                 if (batch.transactions() != null && !batch.transactions().isEmpty()) {
                     long tid = processBatch(batch, txId);
                     if (tid > 0) {
                         txId = tid;
                         stateManager.update(txId);
+                        stateManager.updateCurrentTx(txId);
                     }
                 }
             }

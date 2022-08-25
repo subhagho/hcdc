@@ -1,7 +1,8 @@
 package ai.sapper.hcdc.agents.common;
 
+import ai.sapper.hcdc.agents.model.ModuleTxState;
 import ai.sapper.hcdc.agents.model.NameNodeAgentState;
-import ai.sapper.hcdc.agents.model.NameNodeTxState;
+import ai.sapper.hcdc.agents.model.AgentTxState;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.DistributedLock;
@@ -30,6 +31,8 @@ public class ZkStateManager {
         public static final String ZK_PATH_PROCESS_STATE = "state";
         public static final String ZK_PATH_REPLICATION = "/replication";
 
+        public static final String ZK_PATH_TNX_STATE = "/transaction";
+
         public static final String LOCK_REPLICATION = "LOCK_REPLICATION";
         public static final String ZK_PATH_SNAPSHOT_ID = "snapshotId";
     }
@@ -37,8 +40,10 @@ public class ZkStateManager {
     private ZookeeperConnection connection;
     private ZkStateManagerConfig config;
     private String zkPath;
-    private String zkStatePath;
-    private NameNodeTxState agentTxState;
+    private String zkAgentStatePath;
+    private String zkModuleStatePath;
+    private AgentTxState agentTxState;
+    private ModuleTxState moduleTxState;
     private DistributedLock replicationLock;
     private String source;
     private String module;
@@ -70,6 +75,7 @@ public class ZkStateManager {
                     throw new StateManagerError(String.format("Error creating ZK base path. [path=%s]", basePath()));
                 }
             }
+
             String zkFSPath = PathUtils.formatZkPath(String.format("%s/%s/%s", basePath(), module, Constants.ZK_PATH_FILES));
             if (client.checkExists().forPath(zkFSPath) == null) {
                 String path = client.create().creatingParentContainersIfNeeded().forPath(zkFSPath);
@@ -88,6 +94,8 @@ public class ZkStateManager {
                     throw new StateManagerError(String.format("Error creating ZK replication path. [path=%s]", basePath()));
                 }
             }
+            moduleTxState = getModuleState();
+
             replicaStateHelper
                     .withZkConnection(connection)
                     .withZkPath(zkPathReplication);
@@ -107,21 +115,93 @@ public class ZkStateManager {
         return this;
     }
 
+    public ModuleTxState getModuleState() throws Exception {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
+
+        synchronized (this) {
+            if (moduleTxState == null) {
+                zkModuleStatePath = PathUtils.formatZkPath(
+                        String.format("%s/%s/%s", basePath(), module, Constants.ZK_PATH_PROCESS_STATE));
+                moduleTxState = checkModuleState();
+                if (moduleTxState == null) {
+                    moduleTxState = new ModuleTxState();
+                    moduleTxState.setModule(module);
+
+                    moduleTxState = update(moduleTxState);
+                }
+            }
+        }
+        return moduleTxState;
+    }
+
+    public ModuleTxState updateCurrentTx(long currentTx) throws Exception {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
+
+        synchronized (this) {
+            if (moduleTxState.getCurrentTxId() < currentTx) {
+                moduleTxState.setCurrentTxId(currentTx);
+                update(moduleTxState);
+            }
+        }
+        return moduleTxState;
+    }
+
+    public ModuleTxState updateSnapshotTx(long snapshotTx) throws Exception {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
+
+        synchronized (this) {
+            if (moduleTxState.getSnapshotTxId() < snapshotTx) {
+                moduleTxState.setSnapshotTxId(snapshotTx);
+                update(moduleTxState);
+            }
+        }
+        return moduleTxState;
+    }
+
+    private ModuleTxState update(ModuleTxState state) throws Exception {
+        CuratorFramework client = connection().client();
+        if (client.checkExists().forPath(zkModuleStatePath) == null) {
+            client.create()
+                    .creatingParentContainersIfNeeded()
+                    .forPath(zkModuleStatePath);
+        }
+        state.setAgentInstance(instance);
+        state.setUpdateTimestamp(System.currentTimeMillis());
+
+        String json = JSONUtils.asString(state, ModuleTxState.class);
+        client.setData().forPath(zkModuleStatePath, json.getBytes(StandardCharsets.UTF_8));
+        return state;
+    }
+
+    private ModuleTxState checkModuleState() throws Exception {
+        CuratorFramework client = connection().client();
+        if (client.checkExists().forPath(zkModuleStatePath) != null) {
+            byte[] data = client.getData().forPath(zkModuleStatePath);
+            if (data != null && data.length > 0) {
+                return JSONUtils.read(data, ModuleTxState.class);
+            }
+        }
+        return null;
+    }
+
     public void checkAgentState() throws Exception {
         CuratorFramework client = connection().client();
-        zkStatePath = PathUtils.formatZkPath(
+        zkAgentStatePath = PathUtils.formatZkPath(
                 String.format("%s/%s", zkPath, Constants.ZK_PATH_PROCESS_STATE));
-        if (client.checkExists().forPath(zkStatePath) == null) {
-            String path = client.create().creatingParentContainersIfNeeded().forPath(zkStatePath);
+        if (client.checkExists().forPath(zkAgentStatePath) == null) {
+            String path = client.create().creatingParentContainersIfNeeded().forPath(zkAgentStatePath);
             if (Strings.isNullOrEmpty(path)) {
                 throw new StateManagerError(String.format("Error creating ZK base path. [path=%s]", basePath()));
             }
-            agentTxState = new NameNodeTxState();
+            agentTxState = new AgentTxState();
             agentTxState.setNamespace(module);
             agentTxState.setUpdatedTime(0);
 
-            String json = JSONUtils.asString(agentTxState, NameNodeTxState.class);
-            client.setData().forPath(zkStatePath, json.getBytes(StandardCharsets.UTF_8));
+            String json = JSONUtils.asString(agentTxState, AgentTxState.class);
+            client.setData().forPath(zkAgentStatePath, json.getBytes(StandardCharsets.UTF_8));
         } else {
             agentTxState = readState();
         }
@@ -129,10 +209,10 @@ public class ZkStateManager {
         update(agentTxState);
     }
 
-    public NameNodeTxState initState(long txId) throws StateManagerError {
+    public AgentTxState initState(long txId) throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
-        Preconditions.checkArgument(txId > agentTxState.getProcessedTxId());
+        if (txId < agentTxState.getProcessedTxId()) return agentTxState;
 
         synchronized (this) {
             try {
@@ -146,20 +226,20 @@ public class ZkStateManager {
         }
     }
 
-    private NameNodeTxState update(NameNodeTxState agentTxState) throws Exception {
+    private AgentTxState update(AgentTxState agentTxState) throws Exception {
         agentTxState.setUpdatedTime(System.currentTimeMillis());
 
         CuratorFramework client = connection().client();
-        String json = JSONUtils.asString(agentTxState, NameNodeTxState.class);
-        client.setData().forPath(zkStatePath, json.getBytes(StandardCharsets.UTF_8));
+        String json = JSONUtils.asString(agentTxState, AgentTxState.class);
+        client.setData().forPath(zkAgentStatePath, json.getBytes(StandardCharsets.UTF_8));
 
         return agentTxState;
     }
 
-    public NameNodeTxState update(long processedTxId) throws StateManagerError {
+    public AgentTxState update(long processedTxId) throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
-        Preconditions.checkArgument(processedTxId > agentTxState.getProcessedTxId());
+        if (processedTxId < agentTxState.getProcessedTxId()) return agentTxState;
 
         synchronized (this) {
             try {
@@ -171,16 +251,16 @@ public class ZkStateManager {
         }
     }
 
-    private NameNodeTxState readState() throws StateManagerError {
+    private AgentTxState readState() throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
         synchronized (this) {
             try {
                 CuratorFramework client = connection().client();
-                byte[] data = client.getData().forPath(zkStatePath);
+                byte[] data = client.getData().forPath(zkAgentStatePath);
                 if (data != null && data.length > 0) {
                     String json = new String(data, StandardCharsets.UTF_8);
-                    return JSONUtils.read(json, NameNodeTxState.class);
+                    return JSONUtils.read(json, AgentTxState.class);
                 }
                 throw new StateManagerError(String.format("NameNode State not found. [path=%s]", zkPath));
             } catch (Exception ex) {
@@ -254,18 +334,11 @@ public class ZkStateManager {
         return PathUtils.formatZkPath(String.format("%s/%s/%s", zkPath, Constants.ZK_PATH_HEARTBEAT, name));
     }
 
-    public String updateSnapshotTxId(long txid) throws StateManagerError {
+    public ModuleTxState updateSnapshotTxId(long txid) throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
         try {
-            CuratorFramework client = connection().client();
-            String path = getSnapshotIDPath();
-            if (client.checkExists().forPath(path) == null) {
-                client.create().creatingParentContainersIfNeeded().forPath(path);
-            }
-            byte[] data = String.valueOf(txid).getBytes(StandardCharsets.UTF_8);
-            client.setData().forPath(path, data);
-            return path;
+            return updateSnapshotTx(txid);
         } catch (Exception ex) {
             throw new StateManagerError(ex);
         }
@@ -274,24 +347,7 @@ public class ZkStateManager {
     public long getSnapshotTxId() throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
-        try {
-            CuratorFramework client = connection().client();
-            String path = getSnapshotIDPath();
-            if (client.checkExists().forPath(path) != null) {
-                byte[] data = client.getData().forPath(path);
-                if (data != null && data.length > 0) {
-                    String v = new String(data, StandardCharsets.UTF_8);
-                    return Long.parseLong(v);
-                }
-            }
-            return -1;
-        } catch (Exception ex) {
-            throw new StateManagerError(ex);
-        }
-    }
-
-    private String getSnapshotIDPath() {
-        return PathUtils.formatZkPath(String.format("%s/%s/%s", basePath(), module, Constants.ZK_PATH_SNAPSHOT_ID));
+        return moduleTxState.getSnapshotTxId();
     }
 
     public void deleteAll() throws StateManagerError {

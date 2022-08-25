@@ -3,7 +3,7 @@ package ai.sapper.hcdc.agents.main;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.NameNodeError;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
-import ai.sapper.hcdc.agents.model.NameNodeTxState;
+import ai.sapper.hcdc.agents.model.AgentTxState;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
@@ -14,6 +14,7 @@ import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import ai.sapper.cdc.core.model.DFSFileState;
 import ai.sapper.cdc.core.model.EBlockState;
 import ai.sapper.cdc.core.model.EFileState;
+import ai.sapper.hcdc.agents.model.ModuleTxState;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.base.Preconditions;
@@ -113,11 +114,15 @@ public class NameNodeReplicator {
                             String.format("WARNING: Will delete existing file structure, if present. [path=%s]",
                                     stateManager.fileStateHelper().getFilePath(null)));
                     stateManager.deleteAll();
-                    copy();
-                    NameNodeTxState txState = stateManager.initState(txnId);
-                    String tp = stateManager.updateSnapshotTxId(txnId);
 
-                    DefaultLogger.LOG.info(String.format("NameNode replication done. [state=%s][TXID PATH=%s]", txState, tp));
+                    copy();
+
+                    AgentTxState nnTxState = stateManager.initState(txnId);
+                    ModuleTxState mTx = stateManager.updateSnapshotTxId(txnId);
+                    mTx = stateManager.updateCurrentTx(txnId);
+
+                    DefaultLogger.LOG.info(String.format("NameNode replication done. [state=%s][module state=%s]", nnTxState, mTx));
+
                 } finally {
                     lock.unlock();
                 }

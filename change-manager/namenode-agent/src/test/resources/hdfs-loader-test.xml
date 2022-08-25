@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <configuration>
     <loader>
-        <baseDir>/test/hcdc/loader/parquet</baseDir>
+        <baseDir>/test/hcdc/loader/avro</baseDir>
         <connections>
             <path>config</path>
             <use>test-hdfs-ha</use>
