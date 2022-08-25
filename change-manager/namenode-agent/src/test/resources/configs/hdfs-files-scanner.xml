@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <configuration>
     <agent>
-        <module>edits-log-processors</module>
-        <instance>hdfs-files-scanner/0</instance>
+        <module>EDITS-LOG-PROCESSORS</module>
+        <instance>HDFSSchemaScanner/0</instance>
         <source>ha-cluster</source>
         <needHadoop>false</needHadoop>
         <connections>
@@ -25,11 +25,6 @@
         </managers>
         <scanner>
             <files>
-                <filesystem>
-                    <type>ai.sapper.cdc.core.io.impl.local.LocalFileSystem</type>
-                    <!-- root>C:\Work\temp\output\fs</root -->
-                    <root>/home/subhagho/work/temp/data/hcdc</root>
-                </filesystem>
                 <hdfs>source-hdfs-ha</hdfs>
                 <threads>4</threads>
             </files>

@@ -70,7 +70,9 @@ public class NameNodeSchemaScanner {
 
     public void run() throws Exception {
         try {
-            List<DFSFileState> files = stateManager.fileStateHelper().listFiles(config.basePath);
+            List<DFSFileState> files = stateManager
+                    .fileStateHelper()
+                    .listFiles(null);
             if (files != null && !files.isEmpty()) {
                 for (DFSFileState fs : files) {
                     long inode = fs.getId();
@@ -158,8 +160,6 @@ public class NameNodeSchemaScanner {
         private static final String __CONFIG_PATH = "scanner.files";
 
         public static class Constants {
-            public static final String CONFIG_PATH_FS = "filesystem";
-            public static final String CONFIG_FS_TYPE = String.format("%s.type", CONFIG_PATH_FS);
             public static final String CONFIG_HDFS_CONN = "hdfs";
             public static final String CONFIG_SHARD_PATH = "shards";
             public static final String CONFIG_SHARD_COUNT = String.format("%s.count", CONFIG_SHARD_PATH);
@@ -167,31 +167,17 @@ public class NameNodeSchemaScanner {
             public static final String CONFIG_THREAD_COUNT = "threads";
         }
 
-        private String fsType;
         private String hdfsConnection;
         private HierarchicalConfiguration<ImmutableNode> fsConfig;
         private int shardCount = 1;
         private int shardId = 0;
         private int threads = 1;
-        private String basePath;
 
         public NameNodeFileScannerConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);
         }
 
         public void read() throws ConfigurationException {
-            fsConfig = get().configurationAt(Constants.CONFIG_PATH_FS);
-            if (fsConfig == null) {
-                throw new ConfigurationException(
-                        String.format("File Scanner Error: missing configuration. [path=%s]",
-                                Constants.CONFIG_PATH_FS));
-            }
-            fsType = get().getString(Constants.CONFIG_FS_TYPE);
-            if (Strings.isNullOrEmpty(fsType)) {
-                throw new ConfigurationException(
-                        String.format("File Scanner Error: missing configuration. [name=%s]",
-                                Constants.CONFIG_FS_TYPE));
-            }
             hdfsConnection = get().getString(Constants.CONFIG_HDFS_CONN);
             if (Strings.isNullOrEmpty(hdfsConnection)) {
                 throw new ConfigurationException(

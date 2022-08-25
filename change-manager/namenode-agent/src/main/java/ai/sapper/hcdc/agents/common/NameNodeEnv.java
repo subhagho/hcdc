@@ -100,8 +100,8 @@ public class NameNodeEnv extends BaseEnv {
                     .withIp(NetUtils.getInetAddress(hostIPs))
                     .withStartTime(System.currentTimeMillis());
             moduleInstance.setSource(config.source);
-            moduleInstance.setModule(stateManager.module());
-            moduleInstance.setName(stateManager.instance());
+            moduleInstance.setModule(config.module());
+            moduleInstance.setName(config.instance());
 
             DistributedLock lock = createLock(ZkStateManager.Constants.LOCK_REPLICATION);
             if (lock == null) {
@@ -109,6 +109,7 @@ public class NameNodeEnv extends BaseEnv {
                         String.format("Replication Lock not defined. [name=%s]",
                                 ZkStateManager.Constants.LOCK_REPLICATION));
             }
+
             stateManager
                     .withReplicationLock(lock)
                     .withModuleInstance(moduleInstance);
@@ -275,11 +276,6 @@ public class NameNodeEnv extends BaseEnv {
             private static final String CONFIG_HADOOP_CONFIG = "hadoop.config";
 
             private static final String HDFS_NN_USE_HTTPS = "useSSL";
-            private static final String CONFIG_LOCKS = "locks";
-            private static final String CONFIG_LOCK = String.format("%s.lock", CONFIG_LOCKS);
-            private static final String CONFIG_LOCK_NAME = "name";
-            private static final String CONFIG_LOCK_CONN = "connection";
-            private static final String CONFIG_LOCK_NODE = "lock-node";
             private static final String LOCK_GLOBAL = "global";
             private static final String CONFIG_LOAD_HADOOP = "needHadoop";
         }
