@@ -1,5 +1,7 @@
 package ai.sapper.hcdc.agents.common.converter;
 
+import ai.sapper.cdc.common.model.AvroChangeType;
+import ai.sapper.cdc.common.model.EntityDef;
 import ai.sapper.cdc.common.schema.AvroUtils;
 import ai.sapper.hcdc.agents.common.FormatConverter;
 import ai.sapper.cdc.common.model.SchemaEntity;
@@ -59,18 +61,18 @@ public class AvroConverter extends FormatConverter {
                         @NonNull DFSFileState fileState,
                         @NonNull SchemaEntity schemaEntity,
                         long txId,
-                        int op) throws IOException {
+                        @NonNull AvroChangeType.EChangeType op) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
-            Schema schema = hasSchema(fileState, schemaEntity);
+            EntityDef schema = hasSchema(fileState, schemaEntity);
             if (schema == null) {
                 schema = parseSchema(source, fileState, schemaEntity);
             }
-            Schema wrapper = AvroUtils.createSchema(schema);
+            Schema wrapper = AvroUtils.createSchema(schema.schema());
             final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(wrapper);
             try (DataFileWriter<GenericRecord> fos = new DataFileWriter<>(writer)) {
                 fos.create(wrapper, output);
-                GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema);
+                GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema.schema());
                 try (DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(source, reader)) {
                     while (dataFileReader.hasNext()) {
                         GenericRecord record = dataFileReader.next();
@@ -110,14 +112,13 @@ public class AvroConverter extends FormatConverter {
         return false;
     }
 
-    private Schema parseSchema(File file,
+    private EntityDef parseSchema(File file,
                                DFSFileState fileState,
                                SchemaEntity schemaEntity) throws Exception {
         DatumReader<GenericRecord> datumReader = new GenericDatumReader<>();
         try (DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(file, datumReader)) {
             Schema schema = dataFileReader.getSchema();
-            schemaManager().checkAndSave(schema, schemaEntity);
-            return schema;
+            return schemaManager().checkAndSave(schema, schemaEntity);
         }
     }
 
@@ -127,12 +128,12 @@ public class AvroConverter extends FormatConverter {
      * @throws IOException
      */
     @Override
-    public Schema extractSchema(@NonNull HDFSBlockReader reader,
+    public EntityDef extractSchema(@NonNull HDFSBlockReader reader,
                                 @NonNull DFSFileState fileState,
                                 @NonNull SchemaEntity schemaEntity) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
-            Schema schema = hasSchema(fileState, schemaEntity);
+            EntityDef schema = hasSchema(fileState, schemaEntity);
             if (schema != null) {
                 return schema;
             }

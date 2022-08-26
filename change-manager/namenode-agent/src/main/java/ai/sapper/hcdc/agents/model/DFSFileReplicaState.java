@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.agents.model;
 
 import ai.sapper.cdc.common.model.SchemaEntity;
+import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.core.model.DFSBlockState;
 import ai.sapper.cdc.core.model.DFSFileState;
 import ai.sapper.cdc.core.model.EFileState;
@@ -33,6 +34,7 @@ public class DFSFileReplicaState {
     private Map<Long, Map<String, String>> tnxDeltaPaths;
     private EFileType fileType = EFileType.UNKNOWN;
     private String schemaLocation;
+    private SchemaVersion schemaVersion;
 
     private List<DFSBlockReplicaState> blocks = new ArrayList<>();
 

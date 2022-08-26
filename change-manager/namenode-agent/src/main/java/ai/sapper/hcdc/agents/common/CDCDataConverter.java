@@ -1,5 +1,8 @@
 package ai.sapper.hcdc.agents.common;
 
+import ai.sapper.cdc.common.model.AvroChangeType;
+import ai.sapper.cdc.common.model.EntityDef;
+import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.hcdc.agents.common.converter.AvroConverter;
 import ai.sapper.hcdc.agents.common.converter.ParquetConverter;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
@@ -63,7 +66,7 @@ public class CDCDataConverter {
 
     public PathInfo convert(@NonNull DFSFileState fileState,
                             @NonNull DFSFileReplicaState replicaState,
-                            int op,
+                            @NonNull AvroChangeType.EChangeType op,
                             long startTxId,
                             long currentTxId) throws IOException {
         Preconditions.checkNotNull(fs);
@@ -104,11 +107,13 @@ public class CDCDataConverter {
                                 data.data().array(),
                                 (int) data.dataSize())) {
                             EFileType fileType = converter.fileType();
-                            Schema schema = converter.extractSchema(reader,
+                            EntityDef schema = converter.extractSchema(reader,
                                     fileState, schemaEntity);
                             if (schema != null) {
                                 ExtractSchemaResponse response = new ExtractSchemaResponse();
-                                return response.fileType(fileType).schema(schema);
+                                return response.fileType(fileType)
+                                        .schema(schema.schema())
+                                        .version(schema.version());
                             }
                         }
                     }
@@ -132,9 +137,12 @@ public class CDCDataConverter {
                             DFSFileReplicaState replicaState,
                             long txId) throws Exception {
         Preconditions.checkNotNull(fs);
-        String dir = FilenameUtils.getFullPath(fileState.getHdfsFilePath());
 
-        String uploadPath = String.format("%s/%d", dir, txId);
+        String uploadPath = String.format("%s/%s/%d/%d",
+                replicaState.getEntity().getDomain(),
+                replicaState.getEntity().getEntity(),
+                replicaState.getInode(),
+                txId);
         PathInfo path = fs.get(uploadPath, replicaState.getEntity().getDomain());
         fs.mkdirs(path);
 
@@ -146,7 +154,7 @@ public class CDCDataConverter {
                          DFSFileReplicaState replicaState,
                          long startTxId,
                          long currentTxId,
-                         int op) throws Exception {
+                         @NonNull AvroChangeType.EChangeType op) throws Exception {
         File source = null;
         if (converter.supportsPartial()) {
             source = createDeltaFile(fileState, replicaState, startTxId, currentTxId);
@@ -210,5 +218,6 @@ public class CDCDataConverter {
     public static class ExtractSchemaResponse {
         private EFileType fileType;
         private Schema schema;
+        private SchemaVersion version;
     }
 }

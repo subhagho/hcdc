@@ -1,5 +1,7 @@
 package ai.sapper.hcdc.agents.common;
 
+import ai.sapper.cdc.common.model.AvroChangeType;
+import ai.sapper.cdc.common.model.EntityDef;
 import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.schema.AvroUtils;
 import ai.sapper.cdc.core.model.DFSFileState;
@@ -33,8 +35,8 @@ public abstract class FormatConverter {
         return this;
     }
 
-    public Schema hasSchema(DFSFileState fileState, SchemaEntity schemaEntity) throws Exception {
-        Schema schema = schemaManager().get(schemaEntity);
+    public EntityDef hasSchema(DFSFileState fileState, SchemaEntity schemaEntity) throws Exception {
+        EntityDef schema = schemaManager().get(schemaEntity);
         if (schema == null) {
             if (!Strings.isNullOrEmpty(fileState.getSchemaLocation())) {
                 schema = schemaManager().get(fileState.getSchemaLocation());
@@ -43,11 +45,11 @@ public abstract class FormatConverter {
         return schema;
     }
 
-    public GenericRecord wrap(Schema schema, GenericRecord record, int op, long txId) {
+    public GenericRecord wrap(Schema schema, GenericRecord record, @NonNull AvroChangeType.EChangeType op, long txId) {
         Preconditions.checkNotNull(record);
         GenericRecord wrapper = new GenericData.Record(schema);
         wrapper.put(AvroUtils.AVRO_FIELD_TXID, txId);
-        wrapper.put(AvroUtils.AVRO_FIELD_OP, op);
+        wrapper.put(AvroUtils.AVRO_FIELD_OP, op.opCode());
         wrapper.put(AvroUtils.AVRO_FIELD_TIMESTAMP, System.currentTimeMillis());
         wrapper.put(AvroUtils.AVRO_FIELD_DATA, record);
 
@@ -61,13 +63,13 @@ public abstract class FormatConverter {
                                  @NonNull DFSFileState fileState,
                                  @NonNull SchemaEntity schemaEntity,
                                  long txId,
-                                 int op) throws IOException;
+                                 @NonNull AvroChangeType.EChangeType op) throws IOException;
 
     public abstract boolean supportsPartial();
 
     public abstract boolean detect(@NonNull String path, byte[] data, int length) throws IOException;
 
-    public abstract Schema extractSchema(@NonNull HDFSBlockReader reader,
-                                         @NonNull DFSFileState fileState,
-                                         @NonNull SchemaEntity schemaEntity) throws IOException;
+    public abstract EntityDef extractSchema(@NonNull HDFSBlockReader reader,
+                                            @NonNull DFSFileState fileState,
+                                            @NonNull SchemaEntity schemaEntity) throws IOException;
 }

@@ -1,5 +1,7 @@
 package ai.sapper.hcdc.agents.common.converter;
 
+import ai.sapper.cdc.common.model.AvroChangeType;
+import ai.sapper.cdc.common.model.EntityDef;
 import ai.sapper.hcdc.agents.common.FormatConverter;
 import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.schema.AvroUtils;
@@ -60,23 +62,23 @@ public class JsonConverter extends FormatConverter {
                         @NonNull DFSFileState fileState,
                         @NonNull SchemaEntity schemaEntity,
                         long txId,
-                        int op) throws IOException {
+                        @NonNull AvroChangeType.EChangeType op) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
-            Schema schema = hasSchema(fileState, schemaEntity);
+            EntityDef schema = hasSchema(fileState, schemaEntity);
             if (schema == null) {
                 schema = parseSchema(source, fileState, schemaEntity);
             }
-            Schema wrapper = AvroUtils.createSchema(schema);
-            final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema);
+            Schema wrapper = AvroUtils.createSchema(schema.schema());
+            final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema.schema());
             try (DataFileWriter<GenericRecord> fos = new DataFileWriter<>(writer)) {
-                fos.create(schema, output);
+                fos.create(schema.schema(), output);
                 try (BufferedReader br = new BufferedReader(new FileReader(source))) {
                     String line;
                     while ((line = br.readLine()) != null) {
                         line = line.trim();
                         if (Strings.isNullOrEmpty(line)) continue;
-                        GenericRecord record = AvroUtils.jsonToAvroRecord(line, schema);
+                        GenericRecord record = AvroUtils.jsonToAvroRecord(line, schema.schema());
                         GenericRecord wrapped = wrap(wrapper, record, op, txId);
                         fos.append(wrapped);
                     }
@@ -108,7 +110,7 @@ public class JsonConverter extends FormatConverter {
         return canParse(path, null);
     }
 
-    private Schema parseSchema(File file,
+    private EntityDef parseSchema(File file,
                                DFSFileState fileState,
                                SchemaEntity schemaEntity) throws Exception {
         Schema schema = null;
@@ -145,9 +147,9 @@ public class JsonConverter extends FormatConverter {
             }
         }
         if (schema != null) {
-            schemaManager().checkAndSave(schema, schemaEntity);
+            return schemaManager().checkAndSave(schema, schemaEntity);
         }
-        return schema;
+        return null;
     }
 
     /**
@@ -157,12 +159,12 @@ public class JsonConverter extends FormatConverter {
      * @throws IOException
      */
     @Override
-    public Schema extractSchema(@NonNull HDFSBlockReader reader,
+    public EntityDef extractSchema(@NonNull HDFSBlockReader reader,
                                 @NonNull DFSFileState fileState,
                                 @NonNull SchemaEntity schemaEntity) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
-            Schema schema = hasSchema(fileState, schemaEntity);
+            EntityDef schema = hasSchema(fileState, schemaEntity);
             if (schema != null) {
                 return schema;
             }

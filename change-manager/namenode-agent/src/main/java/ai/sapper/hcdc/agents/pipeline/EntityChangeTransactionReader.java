@@ -124,9 +124,12 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 String path = rState.getSchemaLocation();
                 if (!Strings.isNullOrEmpty(path)) {
                     SchemaManager schemaManager = NameNodeEnv.get().schemaManager();
-                    path = schemaManager.copySchema(rState.getSchemaLocation(), rState.getEntity());
-                    if (!Strings.isNullOrEmpty(path)) {
-                        rState.setSchemaLocation(path);
+                    EntityDef def = schemaManager.copySchema(rState.getSchemaLocation(), rState.getEntity());
+                    if (def != null && !Strings.isNullOrEmpty(def.schemaPath())) {
+                        rState.setSchemaLocation(def.schemaPath());
+                        if (def.version() != null) {
+                            rState.setSchemaVersion(def.version());
+                        }
                     }
                 }
             }
@@ -272,7 +275,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     .withSchemaManager(NameNodeEnv.get().schemaManager());
             PathInfo outPath = converter.convert(fileState,
                     rState,
-                    AvroChangeType.OP_DATA_DELETE,
+                    AvroChangeType.EChangeType.RecordDelete,
                     0,
                     txId);
             if (outPath == null) {
@@ -664,7 +667,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 try {
                     PathInfo outPath = converter.convert(fileState,
                             rState,
-                            AvroChangeType.OP_DATA_INSERT,
+                            AvroChangeType.EChangeType.RecordInsert,
                             startTxId,
                             txId);
                     if (outPath == null) {
@@ -707,11 +710,13 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                                 String.format("Error marking Snapshot Done. [TXID=%d]", txId));
                     }
                 }
-                Schema schema = schemaManager.get(rState.getEntity());
+                EntityDef schema = schemaManager.get(rState.getEntity());
                 if (schema != null) {
-                    String path = schemaManager.schemaPath(rState.getEntity());
-                    if (!Strings.isNullOrEmpty(path)) {
-                        rState.setSchemaLocation(path);
+                    if (!Strings.isNullOrEmpty(schema.schemaPath())) {
+                        rState.setSchemaLocation(schema.schemaPath());
+                    }
+                    if (schema.version() != null) {
+                        rState.setSchemaVersion(schema.version());
                     }
                 }
                 rState.setSnapshotReady(true);

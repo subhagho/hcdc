@@ -1,6 +1,7 @@
 package ai.sapper.cdc.core.schema;
 
 import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.model.EntityDef;
 import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.model.services.PathOrSchema;
 import ai.sapper.cdc.common.model.services.PathWithSchema;
@@ -24,10 +25,13 @@ import org.apache.log4j.Level;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Getter
 @Accessors(fluent = true)
 public class SchemaManager {
+    public static final String REGEX_PATH_VERSION = "(/.*)/(\\d+)/(\\d+)$";
     public static final String DEFAULT_DOMAIN = "default";
     private SchemaManagerConfig config;
     private ZookeeperConnection zkConnection;
@@ -72,28 +76,28 @@ public class SchemaManager {
         }
     }
 
-    public String checkAndSave(@NonNull String schemaStr, @NonNull SchemaEntity schemaEntity) throws Exception {
+    public EntityDef checkAndSave(@NonNull String schemaStr, @NonNull SchemaEntity schemaEntity) throws Exception {
         Schema schema = new Schema.Parser().parse(schemaStr);
         return checkAndSave(schema, schemaEntity);
     }
 
-    public String checkAndSave(@NonNull Schema schema, @NonNull SchemaEntity schemaEntity) throws Exception {
+    public EntityDef checkAndSave(@NonNull Schema schema, @NonNull SchemaEntity schemaEntity) throws Exception {
         SchemaVersion version = currentVersion(schemaEntity);
-        Schema current = get(schemaEntity, version);
+        EntityDef current = get(schemaEntity, version);
         if (current == null) {
             return save(schema, schemaEntity, version);
         } else {
-            SchemaVersion next = nextVersion(schema, current, version);
+            SchemaVersion next = nextVersion(schema, current.schema(), version);
             if (!next.equals(version)) {
                 return save(schema, schemaEntity, next);
             }
         }
-        return getZkPath(schemaEntity, version);
+        return current;
     }
 
-    public String save(@NonNull Schema schema,
-                       @NonNull SchemaEntity schemaEntity,
-                       @NonNull SchemaVersion version) throws Exception {
+    public EntityDef save(@NonNull Schema schema,
+                          @NonNull SchemaEntity schemaEntity,
+                          @NonNull SchemaVersion version) throws Exception {
         lock.lock();
         try {
             String path = getZkPath(schemaEntity, version);
@@ -108,16 +112,19 @@ public class SchemaManager {
             String json = JSONUtils.asString(version, SchemaVersion.class);
             client.setData().forPath(p, json.getBytes(StandardCharsets.UTF_8));
 
-            return path;
+            return new EntityDef()
+                    .schemaPath(p)
+                    .schema(schema)
+                    .version(version);
         } finally {
             lock.unlock();
         }
     }
 
-    public String copySchema(@NonNull String source, @NonNull SchemaEntity schemaEntity) throws Exception {
-        Schema schema = get(source);
+    public EntityDef copySchema(@NonNull String source, @NonNull SchemaEntity schemaEntity) throws Exception {
+        EntityDef schema = get(source);
         if (schema != null) {
-            return checkAndSave(schema, schemaEntity);
+            return checkAndSave(schema.schema(), schemaEntity);
         }
         return null;
     }
@@ -176,11 +183,11 @@ public class SchemaManager {
         }
     }
 
-    public Schema get(@NonNull SchemaEntity schemaEntity) throws Exception {
+    public EntityDef get(@NonNull SchemaEntity schemaEntity) throws Exception {
         return get(schemaEntity, currentVersion(schemaEntity));
     }
 
-    public Schema get(@NonNull SchemaEntity schemaEntity, @NonNull SchemaVersion version) throws Exception {
+    public EntityDef get(@NonNull SchemaEntity schemaEntity, @NonNull SchemaVersion version) throws Exception {
         String path = getZkPath(schemaEntity, version);
         return get(path);
     }
@@ -189,26 +196,44 @@ public class SchemaManager {
         return getZkPath(schemaEntity, currentVersion(schemaEntity));
     }
 
-    public Schema get(@NonNull String path) throws Exception {
+    public EntityDef get(@NonNull String path) throws Exception {
         CuratorFramework client = zkConnection().client();
         if (client.checkExists().forPath(path) != null) {
             byte[] data = client.getData().forPath(path);
             if (data != null && data.length > 0) {
+                SchemaVersion version = null;
+                Pattern p = Pattern.compile(REGEX_PATH_VERSION);
+                Matcher m = p.matcher(path);
+                if (m.matches()) {
+                    String mjv = m.group(2);
+                    String mnv = m.group(3);
+                    if (!Strings.isNullOrEmpty(mjv) && !Strings.isNullOrEmpty(mnv)) {
+                        version = new SchemaVersion();
+                        version.setMajorVersion(Integer.parseInt(mjv));
+                        version.setMinorVersion(Integer.parseInt(mnv));
+                    }
+                }
+
                 String schemaStr = new String(data, StandardCharsets.UTF_8);
-                return new Schema.Parser().parse(schemaStr);
+                return new EntityDef().schemaPath(path)
+                        .version(version)
+                        .schema(new Schema.Parser().parse(schemaStr));
             }
         }
         return null;
     }
 
-    private Schema get(@NonNull String path, SchemaVersion version) throws Exception {
+    private EntityDef get(@NonNull String path, SchemaVersion version) throws Exception {
         CuratorFramework client = zkConnection().client();
         path = PathUtils.formatZkPath(String.format("%s/%s", path, version.path()));
         if (client.checkExists().forPath(path) != null) {
             byte[] data = client.getData().forPath(path);
             if (data != null && data.length > 0) {
                 String schemaStr = new String(data, StandardCharsets.UTF_8);
-                return new Schema.Parser().parse(schemaStr);
+                return new EntityDef()
+                        .schema(new Schema.Parser().parse(schemaStr))
+                        .version(version)
+                        .schemaPath(path);
             }
         }
         return null;
@@ -264,13 +289,13 @@ public class SchemaManager {
                     String zkPath = String.format("%s/%s", path, cp);
                     SchemaVersion version = currentVersion(zkPath);
                     if (version != null) {
-                        Schema schema = get(zkPath, version);
+                        EntityDef schema = get(zkPath, version);
                         if (schema != null) {
                             PathWithSchema ws = new PathWithSchema();
                             ws.setDomain(domain);
                             ws.setNode(cp);
                             ws.setZkPath(zkPath);
-                            ws.setSchemaStr(schema.toString(false));
+                            ws.setSchemaStr(schema.schema().toString(false));
                             ws.setVersion(JSONUtils.asString(version, SchemaVersion.class));
                             paths.add(ws);
                             added = true;
@@ -301,13 +326,13 @@ public class SchemaManager {
                     String zkPath = String.format("%s/%s", path, cp);
                     SchemaVersion version = currentVersion(zkPath);
                     if (version != null) {
-                        Schema schema = get(zkPath, version);
+                        EntityDef schema = get(zkPath, version);
                         if (schema != null) {
                             PathWithSchema ws = new PathWithSchema();
                             ws.setDomain(domain);
                             ws.setNode(cp);
                             ws.setZkPath(zkPath);
-                            ws.setSchemaStr(schema.toString(false));
+                            ws.setSchemaStr(schema.schema().toString(false));
                             ws.setVersion(JSONUtils.asString(version, SchemaVersion.class));
                             paths.add(ws);
                             added = true;
