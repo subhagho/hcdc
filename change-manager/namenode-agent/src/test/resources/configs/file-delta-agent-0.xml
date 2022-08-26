@@ -21,18 +21,18 @@
                 <hdfs>source-hdfs-ha</hdfs>
             </domain>
             <schema>
-                <basePath>/hcdc/registry/schemas</basePath>
+                <basePath>/CDC/registry/schemas</basePath>
                 <connection>zk-state-connection</connection>
             </schema>
         </managers>
         <processor>
             <files>
                 <filesystem>
-                    <type>ai.sapper.cdc.core.io.impl.s3.S3FileSystem</type>
-                    <!-- root>C:\Work\temp\output\fs</root -->
-                    <root>/hcdc/replication/</root>
+                    <type>ai.sapper.cdc.core.io.impl.local.LocalFileSystem</type>
+                    <root>/home/subhagho/work/temp/data/hcdc</root>
+                    <!--root>/hcdc/replication/</root>
                     <region>US_WEST_2</region>
-                    <defaultBucket>hcdc</defaultBucket>
+                    <defaultBucket>hcdc</defaultBucket-->
                 </filesystem>
                 <hdfs>source-hdfs-ha</hdfs>
                 <sender>

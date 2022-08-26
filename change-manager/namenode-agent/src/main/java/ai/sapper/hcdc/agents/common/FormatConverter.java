@@ -1,13 +1,17 @@
 package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.cdc.common.model.SchemaEntity;
+import ai.sapper.cdc.common.schema.AvroUtils;
 import ai.sapper.cdc.core.model.DFSFileState;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.schema.SchemaManager;
+import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.hdfs.HDFSBlockReader;
 import org.apache.parquet.Strings;
 
@@ -39,12 +43,25 @@ public abstract class FormatConverter {
         return schema;
     }
 
+    public GenericRecord wrap(Schema schema, GenericRecord record, int op, long txId) {
+        Preconditions.checkNotNull(record);
+        GenericRecord wrapper = new GenericData.Record(schema);
+        wrapper.put(AvroUtils.AVRO_FIELD_TXID, txId);
+        wrapper.put(AvroUtils.AVRO_FIELD_OP, op);
+        wrapper.put(AvroUtils.AVRO_FIELD_TIMESTAMP, System.currentTimeMillis());
+        wrapper.put(AvroUtils.AVRO_FIELD_DATA, record);
+
+        return wrapper;
+    }
+
     public abstract boolean canParse(@NonNull String path, EFileType fileType) throws IOException;
 
     public abstract File convert(@NonNull File source,
                                  @NonNull File output,
                                  @NonNull DFSFileState fileState,
-                                 @NonNull SchemaEntity schemaEntity) throws IOException;
+                                 @NonNull SchemaEntity schemaEntity,
+                                 long txId,
+                                 int op) throws IOException;
 
     public abstract boolean supportsPartial();
 

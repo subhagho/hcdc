@@ -58,13 +58,16 @@ public class JsonConverter extends FormatConverter {
     public File convert(@NonNull File source,
                         @NonNull File output,
                         @NonNull DFSFileState fileState,
-                        @NonNull SchemaEntity schemaEntity) throws IOException {
+                        @NonNull SchemaEntity schemaEntity,
+                        long txId,
+                        int op) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
             Schema schema = hasSchema(fileState, schemaEntity);
             if (schema == null) {
                 schema = parseSchema(source, fileState, schemaEntity);
             }
+            Schema wrapper = AvroUtils.createSchema(schema);
             final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema);
             try (DataFileWriter<GenericRecord> fos = new DataFileWriter<>(writer)) {
                 fos.create(schema, output);
@@ -74,7 +77,8 @@ public class JsonConverter extends FormatConverter {
                         line = line.trim();
                         if (Strings.isNullOrEmpty(line)) continue;
                         GenericRecord record = AvroUtils.jsonToAvroRecord(line, schema);
-                        fos.append(record);
+                        GenericRecord wrapped = wrap(wrapper, record, op, txId);
+                        fos.append(wrapped);
                     }
                 }
             }

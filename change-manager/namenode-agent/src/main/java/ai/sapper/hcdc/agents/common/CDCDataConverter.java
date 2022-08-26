@@ -63,6 +63,7 @@ public class CDCDataConverter {
 
     public PathInfo convert(@NonNull DFSFileState fileState,
                             @NonNull DFSFileReplicaState replicaState,
+                            int op,
                             long startTxId,
                             long currentTxId) throws IOException {
         Preconditions.checkNotNull(fs);
@@ -71,7 +72,7 @@ public class CDCDataConverter {
         try {
             for (FormatConverter converter : CONVERTERS) {
                 if (converter.canParse(fileState.getHdfsFilePath(), replicaState.getFileType())) {
-                    File output = convert(converter, fileState, replicaState, startTxId, currentTxId);
+                    File output = convert(converter, fileState, replicaState, startTxId, currentTxId, op);
                     return upload(output, fileState, replicaState, currentTxId);
                 }
             }
@@ -144,7 +145,8 @@ public class CDCDataConverter {
                          DFSFileState fileState,
                          DFSFileReplicaState replicaState,
                          long startTxId,
-                         long currentTxId) throws Exception {
+                         long currentTxId,
+                         int op) throws Exception {
         File source = null;
         if (converter.supportsPartial()) {
             source = createDeltaFile(fileState, replicaState, startTxId, currentTxId);
@@ -154,7 +156,7 @@ public class CDCDataConverter {
         String fname = FilenameUtils.getName(replicaState.getHdfsPath());
         fname = FilenameUtils.removeExtension(fname);
         String path = PathUtils.formatPath(String.format("%s/%s-%d.avro", fs.tempPath(), fname, currentTxId));
-        return converter.convert(source, new File(path), fileState, replicaState.getEntity());
+        return converter.convert(source, new File(path), fileState, replicaState.getEntity(), currentTxId, op);
     }
 
     private File createSourceFile(DFSFileState fileState,

@@ -10,13 +10,15 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static ai.sapper.cdc.common.utils.DefaultLogger.stacktrace;
 
-public class ConnectionManager {
+public class ConnectionManager implements Closeable {
     public static Logger __LOG = LoggerFactory.getLogger(ConnectionManager.class);
     private static final String __PATH = "connections";
     private static final String __CONNECTION_LIST = "connection";
@@ -92,5 +94,18 @@ public class ConnectionManager {
         if (connections.containsKey(name))
             throw new ConnectionError(String.format("Connection with name already exists. [name=%s]", name));
         connections.put(name, connection);
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (connections != null && !connections.isEmpty()) {
+            for (String key : connections.keySet()) {
+                Connection c = connections.get(key);
+                if (c != null) {
+                    c.close();
+                }
+            }
+            connections.clear();
+        }
     }
 }

@@ -10,6 +10,27 @@ import org.apache.avro.io.*;
 import java.io.*;
 
 public class AvroUtils {
+    public static final String AVRO_FIELD_TXID = "txId";
+    public static final String AVRO_FIELD_OP = "op";
+    public static final String AVRO_FIELD_TIMESTAMP = "timestamp";
+    public static final String AVRO_FIELD_DATA = "data";
+
+    private static final String AVRO_SCHEMA_WRAPPER = "{\n" +
+            "\t\"type\" : \"record\",\n" +
+            "\t\"namespace\" : \"ai.sapper.cdc.deltas\", \n" +
+            "\t\"name\" : \"ChangeDelta\", \n" +
+            "\t\"fields\" : [\n" +
+            "\t\t{ \"name\" : \"txId\", \"type\" : \"long\" }, \n" +
+            "\t\t{ \"name\" : \"op\", \"type\" : \"int\" }, \n" +
+            "\t\t{ \"name\" : \"timestamp\", \"type\" : \"long\" }, \n" +
+            "\t\t{ \"name\" : \"data\", \"type\" : %s \n }\n] \n" +
+            "}";
+
+    public static Schema createSchema(@NonNull Schema schema) throws Exception {
+        String scStr = String.format(AVRO_SCHEMA_WRAPPER, schema.toString(false));
+        return new Schema.Parser().parse(scStr);
+    }
+
     public static GenericRecord jsonToAvroRecord(@NonNull String json, @NonNull Schema schema) throws IOException {
         try {
             DatumReader<GenericRecord> reader = new GenericDatumReader<>(schema);

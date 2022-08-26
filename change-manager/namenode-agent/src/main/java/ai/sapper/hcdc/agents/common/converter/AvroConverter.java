@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.agents.common.converter;
 
+import ai.sapper.cdc.common.schema.AvroUtils;
 import ai.sapper.hcdc.agents.common.FormatConverter;
 import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.utils.PathUtils;
@@ -56,22 +57,26 @@ public class AvroConverter extends FormatConverter {
     public File convert(@NonNull File source,
                         @NonNull File output,
                         @NonNull DFSFileState fileState,
-                        @NonNull SchemaEntity schemaEntity) throws IOException {
+                        @NonNull SchemaEntity schemaEntity,
+                        long txId,
+                        int op) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
             Schema schema = hasSchema(fileState, schemaEntity);
             if (schema == null) {
                 schema = parseSchema(source, fileState, schemaEntity);
             }
-            final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema);
+            Schema wrapper = AvroUtils.createSchema(schema);
+            final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(wrapper);
             try (DataFileWriter<GenericRecord> fos = new DataFileWriter<>(writer)) {
-                fos.create(schema, output);
+                fos.create(wrapper, output);
                 GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema);
                 try (DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(source, reader)) {
                     while (dataFileReader.hasNext()) {
                         GenericRecord record = dataFileReader.next();
                         if (record == null) break;
-                        fos.append(record);
+                        GenericRecord wrapped = wrap(wrapper, record, op, txId);
+                        fos.append(wrapped);
                     }
                 }
             }

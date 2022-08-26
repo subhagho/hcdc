@@ -142,6 +142,7 @@ public class NameNodeEnv extends BaseEnv {
 
     public synchronized ENameNEnvState stop() {
         try {
+            close();
             if (agentState.state() == NameNodeAgentState.EAgentState.Active
                     || agentState.state() == NameNodeAgentState.EAgentState.StandBy) {
                 agentState.state(NameNodeAgentState.EAgentState.Stopped);

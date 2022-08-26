@@ -183,7 +183,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                         String.format("Duplicate message detected: [path=%s]", fileState.getHdfsFilePath()));
             }
         }
-        if (!fileState.hasError() &&  rState.isEnabled()) {
+        if (!fileState.hasError() && rState.isEnabled()) {
             FSFile file = fs.get(fileState, schemaEntity);
             if (file == null) {
                 throw new InvalidTransactionError(txId,
@@ -270,7 +270,11 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             CDCDataConverter converter = new CDCDataConverter()
                     .withFileSystem(fs)
                     .withSchemaManager(NameNodeEnv.get().schemaManager());
-            PathInfo outPath = converter.convert(fileState, rState, 0, txId);
+            PathInfo outPath = converter.convert(fileState,
+                    rState,
+                    AvroChangeType.OP_DATA_DELETE,
+                    0,
+                    txId);
             if (outPath == null) {
                 throw new InvalidTransactionError(txId,
                         DFSError.ErrorCode.SYNC_STOPPED,
@@ -658,7 +662,11 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     }
                 }
                 try {
-                    PathInfo outPath = converter.convert(fileState, rState, startTxId, txId);
+                    PathInfo outPath = converter.convert(fileState,
+                            rState,
+                            AvroChangeType.OP_DATA_INSERT,
+                            startTxId,
+                            txId);
                     if (outPath == null) {
                         throw new InvalidTransactionError(txId,
                                 DFSError.ErrorCode.SYNC_STOPPED,

@@ -68,4 +68,10 @@ public abstract class BaseEnv {
             lockDefs.put(name, def);
         }
     }
+
+    public void close() throws Exception {
+        if (connections != null) {
+            connections.close();
+        }
+    }
 }
