@@ -76,12 +76,14 @@ public class SchemaManager {
         }
     }
 
-    public EntityDef checkAndSave(@NonNull String schemaStr, @NonNull SchemaEntity schemaEntity) throws Exception {
+    public EntityDef checkAndSave(@NonNull String schemaStr,
+                                  @NonNull SchemaEntity schemaEntity) throws Exception {
         Schema schema = new Schema.Parser().parse(schemaStr);
         return checkAndSave(schema, schemaEntity);
     }
 
-    public EntityDef checkAndSave(@NonNull Schema schema, @NonNull SchemaEntity schemaEntity) throws Exception {
+    public EntityDef checkAndSave(@NonNull Schema schema,
+                                  @NonNull SchemaEntity schemaEntity) throws Exception {
         SchemaVersion version = currentVersion(schemaEntity);
         EntityDef current = get(schemaEntity, version);
         if (current == null) {
@@ -121,7 +123,8 @@ public class SchemaManager {
         }
     }
 
-    public EntityDef copySchema(@NonNull String source, @NonNull SchemaEntity schemaEntity) throws Exception {
+    public EntityDef copySchema(@NonNull String source,
+                                @NonNull SchemaEntity schemaEntity) throws Exception {
         EntityDef schema = get(source);
         if (schema != null) {
             return checkAndSave(schema.schema(), schemaEntity);
@@ -129,7 +132,9 @@ public class SchemaManager {
         return null;
     }
 
-    private SchemaVersion nextVersion(Schema schema, Schema current, SchemaVersion version) throws Exception {
+    private SchemaVersion nextVersion(Schema schema,
+                                      Schema current,
+                                      SchemaVersion version) throws Exception {
         SchemaVersion next = new SchemaVersion(version);
         if (current != null) {
             if (schema.equals(current)) return next;
@@ -153,7 +158,8 @@ public class SchemaManager {
         return next;
     }
 
-    public boolean delete(@NonNull SchemaEntity schemaEntity, @NonNull SchemaVersion version) throws Exception {
+    public boolean delete(@NonNull SchemaEntity schemaEntity,
+                          @NonNull SchemaVersion version) throws Exception {
         lock.lock();
         try {
             String path = getZkPath(schemaEntity, version);
@@ -187,7 +193,8 @@ public class SchemaManager {
         return get(schemaEntity, currentVersion(schemaEntity));
     }
 
-    public EntityDef get(@NonNull SchemaEntity schemaEntity, @NonNull SchemaVersion version) throws Exception {
+    public EntityDef get(@NonNull SchemaEntity schemaEntity,
+                         @NonNull SchemaVersion version) throws Exception {
         String path = getZkPath(schemaEntity, version);
         return get(path);
     }

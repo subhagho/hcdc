@@ -121,19 +121,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             rState.setStoragePath(fsf.directory().pathConfig());
             rState.setLastReplicatedTx(txId);
             rState.setLastReplicationTime(System.currentTimeMillis());
-            if (ProtoBufUtils.update(fileState, rState)) {
-                String path = rState.getSchemaLocation();
-                if (!Strings.isNullOrEmpty(path)) {
-                    SchemaManager schemaManager = NameNodeEnv.get().schemaManager();
-                    EntityDef def = schemaManager.copySchema(rState.getSchemaLocation(), rState.getEntity());
-                    if (def != null && !Strings.isNullOrEmpty(def.schemaPath())) {
-                        rState.setSchemaLocation(def.schemaPath());
-                        if (def.version() != null) {
-                            rState.setSchemaVersion(def.version());
-                        }
-                    }
-                }
-            }
+
             rState = stateManager().replicaStateHelper().update(rState);
             return rState;
         } catch (Exception ex) {
@@ -688,6 +676,23 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                             .setFileSystem(fs.fileSystemCode())
                             .setOutputPath(outPath.path())
                             .build();
+
+                    EntityDef schema = schemaManager.get(rState.getEntity());
+                    if (schema != null) {
+                        if (!Strings.isNullOrEmpty(schema.schemaPath())) {
+                            rState.setSchemaLocation(schema.schemaPath());
+                        }
+                        if (schema.version() != null) {
+                            if (prevSchema != null) {
+                                compareSchemaVersions(prevSchema.version(),
+                                        schema.version(),
+                                        rState, data.getTransaction(),
+                                        message, txId);
+                            }
+                            rState.setSchemaVersion(schema.version());
+                        }
+                    }
+
                     MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(
                             message.value().getNamespace(),
                             delta,
@@ -712,21 +717,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                                 String.format("Error marking Snapshot Done. [TXID=%d]", txId));
                     }
                 }
-                EntityDef schema = schemaManager.get(rState.getEntity());
-                if (schema != null) {
-                    if (!Strings.isNullOrEmpty(schema.schemaPath())) {
-                        rState.setSchemaLocation(schema.schemaPath());
-                    }
-                    if (schema.version() != null) {
-                        if (prevSchema != null) {
-                            compareSchemaVersions(prevSchema.version(),
-                                    schema.version(),
-                                    rState, data.getTransaction(),
-                                    message, txId);
-                        }
-                        rState.setSchemaVersion(schema.version());
-                    }
-                }
+
                 rState.setSnapshotReady(true);
                 rState.setSnapshotTime(System.currentTimeMillis());
                 rState.setState(EFileState.Finalized);
