@@ -74,7 +74,7 @@ public class AvroConverter extends FormatConverter {
                     while (dataFileReader.hasNext()) {
                         GenericRecord record = dataFileReader.next();
                         if (record == null) break;
-                        GenericRecord wrapped = wrap(wrapper, record, op, txId);
+                        GenericRecord wrapped = wrap(wrapper, schemaEntity, record, op, txId);
                         fos.append(wrapped);
                     }
                 }
@@ -110,8 +110,8 @@ public class AvroConverter extends FormatConverter {
     }
 
     private EntityDef parseSchema(File file,
-                               DFSFileState fileState,
-                               SchemaEntity schemaEntity) throws Exception {
+                                  DFSFileState fileState,
+                                  SchemaEntity schemaEntity) throws Exception {
         DatumReader<GenericRecord> datumReader = new GenericDatumReader<>();
         try (DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(file, datumReader)) {
             Schema schema = dataFileReader.getSchema();
@@ -126,8 +126,8 @@ public class AvroConverter extends FormatConverter {
      */
     @Override
     public EntityDef extractSchema(@NonNull HDFSBlockReader reader,
-                                @NonNull DFSFileState fileState,
-                                @NonNull SchemaEntity schemaEntity) throws IOException {
+                                   @NonNull DFSFileState fileState,
+                                   @NonNull SchemaEntity schemaEntity) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
             EntityDef schema = hasSchema(fileState, schemaEntity);

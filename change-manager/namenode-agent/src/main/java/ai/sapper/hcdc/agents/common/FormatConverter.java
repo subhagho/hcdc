@@ -45,11 +45,17 @@ public abstract class FormatConverter {
         return schema;
     }
 
-    public GenericRecord wrap(Schema schema, GenericRecord record, @NonNull AvroChangeType.EChangeType op, long txId) {
+    public GenericRecord wrap(@NonNull Schema schema,
+                              @NonNull SchemaEntity schemaEntity,
+                              @NonNull GenericRecord record,
+                              @NonNull AvroChangeType.EChangeType op,
+                              long txId) {
         Preconditions.checkNotNull(record);
         GenericRecord wrapper = new GenericData.Record(schema);
         wrapper.put(AvroUtils.AVRO_FIELD_TXID, txId);
         wrapper.put(AvroUtils.AVRO_FIELD_OP, op.opCode());
+        wrapper.put(AvroUtils.AVRO_FIELD_DOMAIN, schemaEntity.getDomain());
+        wrapper.put(AvroUtils.AVRO_FIELD_ENTITY, schemaEntity.getEntity());
         wrapper.put(AvroUtils.AVRO_FIELD_TIMESTAMP, System.currentTimeMillis());
         wrapper.put(AvroUtils.AVRO_FIELD_DATA, record);
 

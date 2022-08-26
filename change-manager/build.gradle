@@ -57,6 +57,9 @@ configurations.all {
         if (details.requested.name == 'commons-logging') {
             details.useTarget "org.apache.logging.log4j:log4j-slf4j18-impl:2.18.0"
         }
+        if (details.requested.name == 'log4j-slf4j-impl') {
+            details.useTarget "org.apache.logging.log4j:log4j-slf4j18-impl:2.18.0"
+        }
         if (details.requested.name == 'avro') {
             details.useTarget "org.apache.avro:avro:1.11.0"
         }

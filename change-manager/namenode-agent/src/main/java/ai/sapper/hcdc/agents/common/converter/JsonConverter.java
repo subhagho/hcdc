@@ -79,7 +79,7 @@ public class JsonConverter extends FormatConverter {
                         line = line.trim();
                         if (Strings.isNullOrEmpty(line)) continue;
                         GenericRecord record = AvroUtils.jsonToAvroRecord(line, schema.schema());
-                        GenericRecord wrapped = wrap(wrapper, record, op, txId);
+                        GenericRecord wrapped = wrap(wrapper, schemaEntity, record, op, txId);
                         fos.append(wrapped);
                     }
                 }
