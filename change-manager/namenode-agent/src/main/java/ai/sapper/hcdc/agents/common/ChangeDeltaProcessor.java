@@ -45,6 +45,7 @@ public abstract class ChangeDeltaProcessor implements Runnable {
                     .connection(processorConfig().senderConfig.connection())
                     .type(processorConfig().senderConfig.type())
                     .partitioner(processorConfig().senderConfig.partitionerClass())
+                    .auditLogger(NameNodeEnv.get().auditLogger())
                     .build();
 
             receiver = new HCDCMessagingBuilders.ReceiverBuilder()
@@ -56,6 +57,7 @@ public abstract class ChangeDeltaProcessor implements Runnable {
                     .zkConnection(stateManager().connection())
                     .zkStatePath(stateManager.zkPath())
                     .batchSize(processorConfig.receiverConfig.batchSize())
+                    .auditLogger(NameNodeEnv.get().auditLogger())
                     .build();
 
             if (!Strings.isNullOrEmpty(processorConfig.batchTimeout)) {

@@ -1,7 +1,9 @@
 package ai.sapper.cdc.core.messaging;
 
 import ai.sapper.cdc.common.model.*;
+import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.model.*;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -12,12 +14,12 @@ import lombok.NonNull;
 import java.util.UUID;
 
 public class ChangeDeltaSerDe {
-    public static <T> MessageObject<String, DFSChangeDelta> createErrorTx(@NonNull String namespace,
-                                                                          @NonNull String messageId,
-                                                                          @NonNull DFSTransaction tnx,
-                                                                          @NonNull DFSError.ErrorCode code,
-                                                                          @NonNull String message,
-                                                                          DFSFile file) throws Exception {
+    public static MessageObject<String, DFSChangeDelta> createErrorTx(@NonNull String namespace,
+                                                                      @NonNull String messageId,
+                                                                      @NonNull DFSTransaction tnx,
+                                                                      @NonNull DFSError.ErrorCode code,
+                                                                      @NonNull String message,
+                                                                      DFSFile file) throws Exception {
         DFSError.Builder error = DFSError.newBuilder();
         error.setCode(code)
                 .setMessage(message)
@@ -34,14 +36,39 @@ public class ChangeDeltaSerDe {
         return m;
     }
 
-    public static <T> MessageObject<String, DFSChangeDelta> createIgnoreTx(@NonNull String namespace,
-                                                                           @NonNull DFSTransaction tnx,
-                                                                           @NonNull MessageObject.MessageMode mode) throws Exception {
+    public static MessageObject<String, DFSChangeDelta> createIgnoreTx(@NonNull String namespace,
+                                                                       @NonNull DFSTransaction tnx,
+                                                                       @NonNull MessageObject.MessageMode mode) throws Exception {
         DFSIgnoreTx ignoreTx = DFSIgnoreTx.newBuilder()
                 .setOpCode(tnx.getOp().name())
                 .setTransaction(tnx)
                 .build();
         return create(namespace, ignoreTx, DFSIgnoreTx.class, null, null, mode);
+    }
+
+    public static MessageObject<String, DFSChangeDelta> createSchemaChange(@NonNull String namespace,
+                                                                           @NonNull DFSTransaction tnx,
+                                                                           @NonNull SchemaVersion current,
+                                                                           @NonNull SchemaVersion updated,
+                                                                           @NonNull DFSFileReplicaState rState,
+                                                                           @NonNull MessageObject.MessageMode mode) throws Exception {
+        DFSFile file = DFSFile.newBuilder()
+                .setPath(rState.getHdfsPath())
+                .setInodeId(rState.getInode())
+                .build();
+        DFSSchemaChange change = DFSSchemaChange.newBuilder()
+                .setTransaction(tnx)
+                .setFile(file)
+                .setDomain(rState.getEntity().getDomain())
+                .setEntityName(rState.getEntity().getEntity())
+                .setCurrentSchema(current.toString())
+                .setUpdatedSchema(updated.toString())
+                .build();
+        return create(namespace, change,
+                DFSSchemaChange.class,
+                rState.getEntity().getDomain(),
+                rState.getEntity().getEntity(),
+                mode);
     }
 
     public static <T> MessageObject<String, DFSChangeDelta> create(@NonNull String namespace,
@@ -76,6 +103,8 @@ public class ChangeDeltaSerDe {
             id = create(namespace, (DFSChangeData) data, builder);
         } else if (type.equals(DFSError.class)) {
             id = create(namespace, (DFSError) data, builder);
+        } else if (type.equals(DFSSchemaChange.class)) {
+            id = create(namespace, (DFSSchemaChange) data, builder);
         } else {
             throw new MessagingError(String.format("Invalid Message DataType. [type=%s]", type.getCanonicalName()));
         }
@@ -268,6 +297,21 @@ public class ChangeDeltaSerDe {
         return UUID.randomUUID().toString();
     }
 
+    public static String create(@NonNull String namespace,
+                                @NonNull DFSSchemaChange data,
+                                @NonNull DFSChangeDelta.Builder builder) throws Exception {
+        builder
+                .setNamespace(namespace)
+                .setTimestamp(System.currentTimeMillis())
+                .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
+                .setEntity(data.getFile().getPath())
+                .setType(data.getClass().getCanonicalName())
+                .setDomain(data.getDomain())
+                .setEntityName(data.getEntityName())
+                .setBody(data.toByteString());
+        return UUID.randomUUID().toString();
+    }
+
     public static Object parse(@NonNull DFSChangeDelta changeDelta) throws Exception {
         Preconditions.checkArgument(changeDelta.hasType());
         String type = changeDelta.getType();
@@ -293,6 +337,8 @@ public class ChangeDeltaSerDe {
             return DFSChangeData.parseFrom(changeDelta.getBody());
         } else if (type.compareTo(DFSError.class.getCanonicalName()) == 0) {
             return DFSError.parseFrom(changeDelta.getBody());
+        } else if (type.compareTo(DFSSchemaChange.class.getCanonicalName()) == 0) {
+            return DFSSchemaChange.parseFrom(changeDelta.getBody());
         } else {
             throw new MessagingError(String.format("Invalid Message Type. [type=%s]", type));
         }

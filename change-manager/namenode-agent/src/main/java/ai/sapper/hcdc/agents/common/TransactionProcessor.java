@@ -10,6 +10,7 @@ import ai.sapper.cdc.core.messaging.MessageSender;
 import ai.sapper.cdc.core.model.DFSFileState;
 import ai.sapper.hcdc.common.model.*;
 import com.google.common.base.Preconditions;
+import com.google.protobuf.MessageOrBuilder;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -141,6 +142,7 @@ public abstract class TransactionProcessor {
             } else {
                 throw new InvalidMessageError(message.id(), String.format("Message Body type not supported. [type=%s]", data.getClass().getCanonicalName()));
             }
+            NameNodeEnv.audit(getClass(), (MessageOrBuilder) data);
         } catch (InvalidTransactionError te) {
             LOGGER.error(getClass(), te.getTxId(), te);
             handleError(message, data, te);

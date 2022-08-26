@@ -69,6 +69,9 @@
             </files>
         </processor>
         <useSSL>false</useSSL>
+        <audit>
+            <class>ai.sapper.cdc.common.audit.DefaultAuditLogger</class>
+        </audit>
     </agent>
     <locks>
         <lock>

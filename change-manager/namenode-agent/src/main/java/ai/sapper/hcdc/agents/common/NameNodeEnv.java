@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.agents.common;
 
+import ai.sapper.cdc.common.audit.AuditLogger;
 import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.agents.namenode.HadoopEnvConfig;
@@ -16,6 +17,7 @@ import ai.sapper.cdc.core.model.ModuleInstance;
 import ai.sapper.cdc.core.schema.SchemaManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.protobuf.MessageOrBuilder;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -39,7 +41,7 @@ public class NameNodeEnv extends BaseEnv {
     private final NameNEnvState state = new NameNEnvState();
 
     private Thread heartbeatThread;
-
+    private AuditLogger auditLogger;
     private NameNEnvConfig config;
     private HierarchicalConfiguration<ImmutableNode> configNode;
     private HdfsConnection hdfsConnection;
@@ -122,6 +124,18 @@ public class NameNodeEnv extends BaseEnv {
                 schemaManager.init(configNode, connections());
             }
 
+            if (ConfigReader.checkIfNodeExists(configNode,
+                    AuditLogger.__CONFIG_PATH)) {
+                String c = configNode.getString(AuditLogger.CONFIG_AUDIT_CLASS);
+                if (Strings.isNullOrEmpty(c)) {
+                    throw new ConfigurationException(
+                            String.format("Audit Logger class not specified. [node=%s]",
+                                    AuditLogger.CONFIG_AUDIT_CLASS));
+                }
+                Class<? extends AuditLogger> cls = (Class<? extends AuditLogger>) Class.forName(c);
+                auditLogger = cls.newInstance();
+                auditLogger.init(configNode);
+            }
             state.state(ENameNEnvState.Initialized);
             if (config.enableHeartbeat) {
                 heartbeatThread = new Thread(new HeartbeatThread().withStateManager(stateManager));
@@ -232,6 +246,18 @@ public class NameNodeEnv extends BaseEnv {
 
     public static DistributedLock globalLock() throws NameNodeError {
         return get().createLock(NameNEnvConfig.Constants.LOCK_GLOBAL);
+    }
+
+    public static <T> void audit(@NonNull Class<?> caller, @NonNull T data) {
+        if (NameNodeEnv.get().auditLogger != null) {
+            NameNodeEnv.get().auditLogger.audit(caller, System.currentTimeMillis(), data);
+        }
+    }
+
+    public static void audit(@NonNull Class<?> caller, @NonNull MessageOrBuilder data) {
+        if (NameNodeEnv.get().auditLogger != null) {
+            NameNodeEnv.get().auditLogger.audit(caller, System.currentTimeMillis(), data);
+        }
     }
 
     public enum ENameNEnvState {

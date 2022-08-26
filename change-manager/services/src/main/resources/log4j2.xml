@@ -31,6 +31,14 @@
                 </Delete>
             </DefaultRolloverStrategy>
         </RollingFile>
+        <RollingFile name="audit" fileName="${basePath}/audit.log"
+                     filePattern="${basePath}/audit-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout pattern="%msg%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="100"/>
+        </RollingFile>
 
         <RollingFile name="ContainerLog" fileName="${basePath}/container.log"
                      filePattern="${basePath}/container-%d{yyyy-MM-dd}-%i.log">
@@ -53,6 +61,9 @@
     </Appenders>
 
     <Loggers>
+        <Logger name="ai.sapper.cdc.common.audit" additivity="false" level="info">
+            <AppenderRef ref="audit"/>
+        </Logger>
         <Logger name="ai.sapper" additivity="false" level="debug">
             <AppenderRef ref="ServiceLog"/>
         </Logger>

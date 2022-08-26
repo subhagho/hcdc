@@ -166,10 +166,7 @@ public class NameNodeReplicator {
                     prevBlockId = block.id;
                 }
             }
-            if (DefaultLogger.LOG.isDebugEnabled()) {
-                String json = JSONUtils.asString(fileState, DFSFileState.class);
-                DefaultLogger.LOG.debug(json);
-            }
+            NameNodeEnv.audit(getClass(), fileState);
         }
     }
 

@@ -65,6 +65,9 @@ public class HCDCKafkaSender extends MessageSender<String, DFSChangeDelta> {
             result = producer.producer().send(new ProducerRecord<>(topic, partition, message.key(), data, headers));
             RecordMetadata rm = result.get();
 
+            if (auditLogger() != null) {
+                auditLogger().audit(getClass(), System.currentTimeMillis(), message.value());
+            }
             return message;
         } catch (Exception ex) {
             throw new MessagingError(ex);

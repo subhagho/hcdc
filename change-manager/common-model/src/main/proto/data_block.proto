@@ -140,6 +140,15 @@ message DFSChangeData {
   required string outputPath = 6;
 }
 
+message DFSSchemaChange {
+  required DFSTransaction transaction = 1;
+  required DFSFile file = 2;
+  required string domain = 3;
+  required string entityName = 4;
+  required string currentSchema = 5;
+  required string updatedSchema = 6;
+}
+
 message DFSChangeDelta {
   required string namespace = 1;
   required string txId = 2;

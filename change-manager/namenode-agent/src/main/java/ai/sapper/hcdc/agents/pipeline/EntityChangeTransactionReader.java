@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.agents.pipeline;
 
 import ai.sapper.cdc.common.model.*;
+import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.core.io.*;
 import ai.sapper.cdc.core.model.*;
 import ai.sapper.hcdc.agents.common.*;
@@ -716,6 +717,12 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                         rState.setSchemaLocation(schema.schemaPath());
                     }
                     if (schema.version() != null) {
+                        if (rState.getSchemaVersion() != null) {
+                            compareSchemaVersions(rState.getSchemaVersion(),
+                                    schema.version(),
+                                    rState, data.getTransaction(),
+                                    message, txId);
+                        }
                         rState.setSchemaVersion(schema.version());
                     }
                 }
@@ -739,6 +746,22 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     String.format("File not setup for replication. [path=%s]",
                             data.getFile().getPath()));
         }
+    }
+
+    private void compareSchemaVersions(SchemaVersion current,
+                                       SchemaVersion updated,
+                                       DFSFileReplicaState replicaState,
+                                       DFSTransaction tnx,
+                                       MessageObject<String, DFSChangeDelta> message,
+                                       long txId) throws Exception {
+        if (current.equals(updated)) return;
+        MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe
+                .createSchemaChange(message.value().getNamespace(),
+                        tnx, current, updated, replicaState, MessageObject.MessageMode.Schema
+                );
+        m.correlationId(message.id());
+
+        sender.send(m);
     }
 
     private DFSFileReplicaState snapshotDone(DFSFileState fileState,

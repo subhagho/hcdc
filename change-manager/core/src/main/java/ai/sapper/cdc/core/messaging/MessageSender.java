@@ -1,5 +1,6 @@
 package ai.sapper.cdc.core.messaging;
 
+import ai.sapper.cdc.common.audit.AuditLogger;
 import ai.sapper.cdc.core.connections.MessageConnection;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
@@ -13,6 +14,7 @@ import java.util.List;
 @Accessors(fluent = true)
 public abstract class MessageSender<K, M> implements Closeable {
     private MessageConnection connection;
+    private AuditLogger auditLogger;
 
     public MessageSender<K, M> withConnection(@NonNull MessageConnection connection) {
         Preconditions.checkArgument(connection.isConnected());
@@ -20,6 +22,11 @@ public abstract class MessageSender<K, M> implements Closeable {
 
         this.connection = connection;
 
+        return this;
+    }
+
+    public MessageSender<K, M> withAuditLogger(AuditLogger auditLogger) {
+        this.auditLogger = auditLogger;
         return this;
     }
 

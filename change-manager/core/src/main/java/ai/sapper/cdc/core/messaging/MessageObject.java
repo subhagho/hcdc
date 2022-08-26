@@ -14,7 +14,7 @@ import java.util.UUID;
 @Accessors(fluent = true)
 public class MessageObject<K, V> {
     public enum MessageMode {
-        New, ReSend, Snapshot, Backlog, Error, Retry, Forked, Recursive
+        New, ReSend, Snapshot, Backlog, Error, Retry, Forked, Recursive, Schema
     }
 
     public static final String HEADER_CORRELATION_ID = "hcdc_correlation_id";

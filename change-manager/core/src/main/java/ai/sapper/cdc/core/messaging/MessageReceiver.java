@@ -1,5 +1,6 @@
 package ai.sapper.cdc.core.messaging;
 
+import ai.sapper.cdc.common.audit.AuditLogger;
 import ai.sapper.cdc.core.connections.MessageConnection;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import com.google.common.base.Preconditions;
@@ -18,12 +19,18 @@ public abstract class MessageReceiver<I, M> implements Closeable {
     private ZookeeperConnection zkConnection;
     private String zkStatePath;
     private boolean saveState = false;
+    private AuditLogger auditLogger;
 
     public MessageReceiver<I, M> withConnection(@NonNull MessageConnection connection) {
         Preconditions.checkArgument(connection.isConnected());
         Preconditions.checkArgument(connection.canReceive());
 
         this.connection = connection;
+        return this;
+    }
+
+    public MessageReceiver<I, M> withAuditLogger(AuditLogger auditLogger) {
+        this.auditLogger = auditLogger;
         return this;
     }
 

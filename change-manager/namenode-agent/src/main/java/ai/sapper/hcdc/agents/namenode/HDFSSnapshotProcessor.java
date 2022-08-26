@@ -60,6 +60,7 @@ public class HDFSSnapshotProcessor {
                     .connection(processorConfig().senderConfig.connection())
                     .type(processorConfig().senderConfig.type())
                     .partitioner(processorConfig().senderConfig.partitionerClass())
+                    .auditLogger(NameNodeEnv.get().auditLogger())
                     .build();
 
             tnxSender = new HCDCMessagingBuilders.SenderBuilder()
@@ -68,6 +69,7 @@ public class HDFSSnapshotProcessor {
                     .connection(processorConfig().tnxSenderConfig.connection())
                     .type(processorConfig().tnxSenderConfig.type())
                     .partitioner(processorConfig().tnxSenderConfig.partitionerClass())
+                    .auditLogger(NameNodeEnv.get().auditLogger())
                     .build();
             if (stateManager instanceof ProcessorStateManager) {
                 ((ProcessorStateManager) stateManager)

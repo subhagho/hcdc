@@ -41,6 +41,9 @@
                 <readBatchTimeout>5000</readBatchTimeout>
             </snapshot>
         </processor>
+        <audit>
+            <class>ai.sapper.cdc.common.audit.DefaultAuditLogger</class>
+        </audit>
     </agent>
     <locks>
         <lock>

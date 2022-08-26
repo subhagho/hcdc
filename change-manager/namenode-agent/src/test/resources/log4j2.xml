@@ -25,10 +25,21 @@
             <DefaultRolloverStrategy max="10"/>
         </RollingFile>
 
+        <RollingFile name="audit" fileName="${LOGDIR}/audit.log"
+                     filePattern="${LOGDIR}/audit-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout pattern="%msg%n"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="100"/>
+        </RollingFile>
 
     </Appenders>
 
     <Loggers>
+        <Logger name="ai.sapper.cdc.common.audit" additivity="false" level="info">
+            <AppenderRef ref="audit"/>
+        </Logger>
         <Logger name="org.eclipse.jetty" additivity="false" level="warn">
             <AppenderRef ref="Console"/>
         </Logger>

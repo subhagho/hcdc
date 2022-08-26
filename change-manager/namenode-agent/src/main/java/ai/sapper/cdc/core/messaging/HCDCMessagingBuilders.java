@@ -1,5 +1,6 @@
 package ai.sapper.cdc.core.messaging;
 
+import ai.sapper.cdc.common.audit.AuditLogger;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
@@ -37,6 +38,7 @@ public class HCDCMessagingBuilders {
         private String partitioner;
         private HierarchicalConfiguration<ImmutableNode> config;
         private ConnectionManager manager;
+        private AuditLogger auditLogger;
 
         public MessageSender<String, DFSChangeDelta> build() throws MessagingError {
             Preconditions.checkArgument(!Strings.isNullOrEmpty(type));
@@ -72,7 +74,8 @@ public class HCDCMessagingBuilders {
 
                 return new HCDCKafkaSender()
                         .withPartitioner(part)
-                        .withConnection(kc);
+                        .withConnection(kc)
+                        .withAuditLogger(auditLogger);
             } catch (MessagingError me) {
                 throw me;
             } catch (Exception ex) {
@@ -94,6 +97,7 @@ public class HCDCMessagingBuilders {
         private HierarchicalConfiguration<ImmutableNode> config;
         private ConnectionManager manager;
         private int batchSize = -1;
+        private AuditLogger auditLogger;
 
         public MessageReceiver<String, DFSChangeDelta> build() throws MessagingError {
             Preconditions.checkArgument(!Strings.isNullOrEmpty(type));
@@ -127,7 +131,8 @@ public class HCDCMessagingBuilders {
                     .withConnection(kc)
                     .withSaveState(saveState)
                     .withZkPath(zkStatePath)
-                    .withZookeeperConnection(zkConnection);
+                    .withZookeeperConnection(zkConnection)
+                    .withAuditLogger(auditLogger);
         }
     }
 }

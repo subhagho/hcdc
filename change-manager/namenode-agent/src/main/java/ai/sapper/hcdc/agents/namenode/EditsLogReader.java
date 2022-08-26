@@ -51,6 +51,7 @@ public class EditsLogReader implements Runnable {
                     .connection(processorConfig().senderConfig.connection())
                     .type(processorConfig().senderConfig.type())
                     .partitioner(processorConfig().senderConfig.partitionerClass())
+                    .auditLogger(NameNodeEnv.get().auditLogger())
                     .build();
             if (NameNodeEnv.get().hadoopConfig() == null) {
                 throw new ConfigurationException("Hadoop Configuration not initialized...");

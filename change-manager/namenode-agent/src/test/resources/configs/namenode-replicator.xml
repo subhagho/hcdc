@@ -34,6 +34,9 @@
                 <pollingInterval>120000</pollingInterval>
             </edits>
         </processor>
+        <audit>
+            <class>ai.sapper.cdc.common.audit.DefaultAuditLogger</class>
+        </audit>
     </agent>
     <replicator>
         <connections>
