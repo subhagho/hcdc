@@ -64,10 +64,7 @@ public class AvroConverter extends FormatConverter {
                         @NonNull AvroChangeType.EChangeType op) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
-            EntityDef schema = hasSchema(fileState, schemaEntity);
-            if (schema == null) {
-                schema = parseSchema(source, fileState, schemaEntity);
-            }
+            EntityDef schema = parseSchema(source, fileState, schemaEntity);
             Schema wrapper = AvroUtils.createSchema(schema.schema());
             final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(wrapper);
             try (DataFileWriter<GenericRecord> fos = new DataFileWriter<>(writer)) {

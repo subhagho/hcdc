@@ -72,10 +72,8 @@ public class ParquetConverter extends FormatConverter {
         conf.set(AvroReadSupport.READ_INT96_AS_FIXED, "true");
         ParquetReader<GenericRecord> reader = new AvroParquetReader(conf, new Path(source.toURI()));
         try {
-            EntityDef schema = hasSchema(fileState, schemaEntity);
-            if (schema == null) {
-                schema = parseSchema(source, fileState, schemaEntity);
-            }
+            EntityDef schema = parseSchema(source, fileState, schemaEntity);
+
             Schema wrapper = AvroUtils.createSchema(schema.schema());
             final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(wrapper);
             try (DataFileWriter<GenericRecord> fos = new DataFileWriter<>(writer)) {

@@ -192,24 +192,24 @@ public class SchemaEvolutionValidator {
                 // schema.
                 // Check if it is optional or has a default value.
                 if (isOptional(newField)) {
-                    if (newField.defaultValue() == null) {
+                    if (newField.defaultVal() == null) {
                         messages.add(new Message(Level.INFO, "Added optional field " + name + "."
                                 + fieldName
                                 + " with no default value."));
                     } else {
                         messages.add(new Message(Level.INFO, "Added optional field " + name + "."
                                 + fieldName + " with default value: "
-                                + newField.defaultValue()));
+                                + newField.defaultVal()));
                     }
                 } else {
-                    if (newField.defaultValue() == null) {
+                    if (newField.defaultVal() == null) {
                         messages.add(new Message(Level.ERROR, "Added required field " + name + "."
                                 + fieldName
                                 + " with no default value."));
                     } else {
                         messages.add(new Message(Level.INFO, "Added required field " + name + "."
                                 + fieldName + " with default value: "
-                                + newField.defaultValue()));
+                                + newField.defaultVal()));
                     }
                 }
             } else {
@@ -236,30 +236,30 @@ public class SchemaEvolutionValidator {
                 compareTypes(oldField.schema(), newField.schema(), messages, name + "." + fieldName);
 
                 // Check if the default value has been changed
-                if (newField.defaultValue() == null) {
-                    if (oldField.defaultValue() != null) {
+                if (newField.defaultVal() == null) {
+                    if (oldField.defaultVal() != null) {
                         messages.add(new Message(Level.WARN,
                                 "Removed default value for existing field " + name
                                         + "." + fieldName
                                         + ". The old default was: "
-                                        + oldField.defaultValue()));
+                                        + oldField.defaultVal()));
                     }
                 } else // newField.defaultValue() != null
                 {
-                    if (oldField.defaultValue() == null) {
+                    if (oldField.defaultVal() == null) {
                         messages.add(new Message(Level.WARN,
                                 "Added a default value for existing field " + name
                                         + "." + fieldName
                                         + ". The new default is: "
-                                        + newField.defaultValue()));
-                    } else if (!newField.defaultValue().equals(oldField.defaultValue())) {
+                                        + newField.defaultVal()));
+                    } else if (!newField.defaultVal().equals(oldField.defaultVal())) {
                         messages.add(new Message(Level.INFO,
                                 "Changed the default value for existing field "
                                         + name + "." + fieldName
                                         + ". The old default was: "
-                                        + oldField.defaultValue()
+                                        + oldField.defaultVal()
                                         + ". The new default is: "
-                                        + newField.defaultValue()));
+                                        + newField.defaultVal()));
                     }
                 }
             }
@@ -267,7 +267,7 @@ public class SchemaEvolutionValidator {
             // For all fields in the new schema (whether or not it existed in
             // the old schema), if there is a default value for this field, make
             // sure it is legal.
-            if (newField.defaultValue() != null) {
+            if (newField.defaultVal() != null) {
                 checkDefaultValueIsLegal(newField, messages, name + "." + fieldName);
             }
         }
@@ -632,7 +632,7 @@ public class SchemaEvolutionValidator {
             throw new IllegalArgumentException("Field must be non-null. Name=" + name);
         }
 
-        if (field.defaultValue() != null) {
+        if (field.defaultVal() != null) {
             // Get the type schema. If this is a UNION, the default must be of
             // the leading type
             Schema fieldSchema = field.schema();
@@ -641,9 +641,9 @@ public class SchemaEvolutionValidator {
             }
 
             // Get the default value
-            JsonNode defaultJson = field.defaultValue();
+            Object defaultJson = field.defaultVal();
 
-            String expectedVal = checkDefaultJson(defaultJson, field.schema());
+            String expectedVal = String.valueOf(defaultJson);
 
             if (expectedVal != null) {
                 messages.add(new Message(Level.ERROR, "Illegal default value for field " + name
@@ -764,17 +764,17 @@ public class SchemaEvolutionValidator {
                 if (defaultJson.isObject()) {
                     boolean isGood = true;
                     for (Field field : schema.getFields()) {
-                        JsonNode jsonNode = defaultJson.get(field.name());
+                        Object jsonNode = defaultJson.get(field.name());
 
                         if (jsonNode == null) {
-                            jsonNode = field.defaultValue();
+                            jsonNode = field.defaultVal();
                             if (jsonNode == null) {
                                 isGood = false;
                                 break;
                             }
                         }
 
-                        String val = checkDefaultJson(jsonNode, field.schema());
+                        String val = String.valueOf(jsonNode);
                         if (val != null) {
                             isGood = false;
                             break;
@@ -796,85 +796,4 @@ public class SchemaEvolutionValidator {
 
         return expectedVal;
     }
-
-    /**
-     * Given an AVRO serializer definition, validates if all the avro schemas
-     * are valid i.e parseable.
-     *
-     * @param avroSerDef
-     */
-    /*
-    public static void validateAllAvroSchemas(SerializerDefinition avroSerDef) {
-        Map<Integer, String> schemaVersions = avroSerDef.getAllSchemaInfoVersions();
-        if(schemaVersions.size() < 1) {
-            throw new VoldemortException("No schema specified");
-        }
-        for(Map.Entry<Integer, String> entry: schemaVersions.entrySet()) {
-            Integer schemaVersionNumber = entry.getKey();
-            String schemaStr = entry.getValue();
-            try {
-                Schema.parse(schemaStr);
-            } catch(Exception e) {
-                throw new VoldemortException("Unable to parse Avro schema version :"
-                        + schemaVersionNumber + ", schema string :"
-                        + schemaStr);
-            }
-        }
-    }
-
-    public static void checkSchemaCompatibility(SerializerDefinition serDef) {
-
-        Map<Integer, String> schemaVersions = serDef.getAllSchemaInfoVersions();
-
-        Iterator schemaIterator = schemaVersions.entrySet().iterator();
-
-        Schema firstSchema = null;
-        Schema secondSchema = null;
-
-        String firstSchemaStr;
-        String secondSchemaStr;
-
-        if(!schemaIterator.hasNext())
-            throw new VoldemortException("No schema specified");
-
-        Map.Entry schemaPair = (Map.Entry) schemaIterator.next();
-
-        firstSchemaStr = (String) schemaPair.getValue();
-
-        while(schemaIterator.hasNext()) {
-
-            schemaPair = (Map.Entry) schemaIterator.next();
-
-            secondSchemaStr = (String) schemaPair.getValue();
-            Schema oldSchema = Schema.parse(firstSchemaStr);
-            Schema newSchema = Schema.parse(secondSchemaStr);
-            List<Message> messages = SchemaEvolutionValidator.checkBackwardCompatibility(oldSchema,
-                    newSchema,
-                    oldSchema.getName());
-            Level maxLevel = Level.ALL;
-            for(Message message: messages) {
-                System.out.println(message.getLevel() + ": " + message.getMessage());
-                if(message.getLevel().isGreaterOrEqual(maxLevel)) {
-                    maxLevel = message.getLevel();
-                }
-            }
-
-            if(maxLevel.isGreaterOrEqual(Level.ERROR)) {
-                System.out.println(Level.ERROR
-                        + ": The schema is not backward compatible. New clients will not be able to read existing data.");
-                throw new VoldemortException(" The schema is not backward compatible. New clients will not be able to read existing data.");
-            } else if(maxLevel.isGreaterOrEqual(Level.WARN)) {
-                System.out.println(Level.WARN
-                        + ": The schema is partially backward compatible, but old clients will not be able to read data serialized in the new format.");
-                throw new VoldemortException("The schema is partially backward compatible, but old clients will not be able to read data serialized in the new format.");
-            } else {
-                System.out.println(Level.INFO
-                        + ": The schema is backward compatible. Old and new clients will be able to read records serialized by one another.");
-            }
-
-            firstSchemaStr = secondSchemaStr;
-
-        }
-    }
-     */
 }

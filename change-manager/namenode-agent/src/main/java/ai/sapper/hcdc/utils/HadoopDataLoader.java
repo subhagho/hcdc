@@ -25,6 +25,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class HadoopDataLoader {
     @Parameter(names = {"--config", "-c"}, description = "Configuration File path", required = true)
@@ -93,6 +95,12 @@ public class HadoopDataLoader {
             while (true) {
                 List<List<String>> records = reader.read();
                 if (records != null && !records.isEmpty()) {
+                    for (List<String> record : records) {
+                        record.add(UUID.randomUUID().toString());
+                    }
+                    Map<String, Integer> header = reader.header();
+                    header.put("ADDED_COLUMN_UUID", header.size());
+
                     String folder = getFolderName(file);
                     String datePath = OutputDataWriter.getDatePath();
                     OutputDataWriter.EOutputFormat f = OutputDataWriter.EOutputFormat.parse(outputFormat);
@@ -118,7 +126,7 @@ public class HadoopDataLoader {
                         try {
                             List<List<String>> batch = nextBatch(records, arrayIndex);
                             if (batch == null) break;
-                            writer.write(folder, reader.header(), batch);
+                            writer.write(folder, header, batch);
 
                             if (writer.doUpload())
                                 upload(fs, String.format("%s/%s", td.getAbsolutePath(), filename), dir, filename);
