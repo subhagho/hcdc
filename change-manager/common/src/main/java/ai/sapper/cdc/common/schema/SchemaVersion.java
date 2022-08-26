@@ -35,4 +35,12 @@ public class SchemaVersion {
         }
         return false;
     }
+
+    public int compare(SchemaVersion target) {
+        int ret = target.majorVersion - majorVersion;
+        if (ret == 0) {
+            ret = target.minorVersion - minorVersion;
+        }
+        return ret;
+    }
 }

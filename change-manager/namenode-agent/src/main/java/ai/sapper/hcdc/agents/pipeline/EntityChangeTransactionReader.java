@@ -635,6 +635,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                                     data.getFile().getPath()));
                 }
                 SchemaManager schemaManager = NameNodeEnv.get().schemaManager();
+                EntityDef prevSchema = schemaManager.get(rState.getEntity());
                 CDCDataConverter converter = new CDCDataConverter()
                         .withFileSystem(fs)
                         .withSchemaManager(schemaManager);
@@ -717,8 +718,8 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                         rState.setSchemaLocation(schema.schemaPath());
                     }
                     if (schema.version() != null) {
-                        if (rState.getSchemaVersion() != null) {
-                            compareSchemaVersions(rState.getSchemaVersion(),
+                        if (prevSchema != null) {
+                            compareSchemaVersions(prevSchema.version(),
                                     schema.version(),
                                     rState, data.getTransaction(),
                                     message, txId);
@@ -754,7 +755,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                                        DFSTransaction tnx,
                                        MessageObject<String, DFSChangeDelta> message,
                                        long txId) throws Exception {
-        if (current.equals(updated)) return;
+        if (current.equals(updated) || current.compare(updated) <= 0) return;
         MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe
                 .createSchemaChange(message.value().getNamespace(),
                         tnx, current, updated, replicaState, MessageObject.MessageMode.Schema
