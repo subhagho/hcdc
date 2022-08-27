@@ -15,7 +15,6 @@ import ai.sapper.hcdc.common.model.*;
 import com.google.common.base.Strings;
 import lombok.NonNull;
 
-import java.io.IOException;
 import java.util.List;
 
 import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;

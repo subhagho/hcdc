@@ -17,8 +17,6 @@ import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
-
 import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 
 @Getter

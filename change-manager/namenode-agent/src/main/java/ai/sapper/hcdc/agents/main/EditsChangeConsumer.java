@@ -10,13 +10,9 @@ import com.beust.jcommander.Parameter;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.parquet.Strings;
-
-import java.io.Closeable;
-import java.io.IOException;
 
 @Getter
 public class EditsChangeConsumer implements Service<NameNodeEnv.ENameNEnvState> {

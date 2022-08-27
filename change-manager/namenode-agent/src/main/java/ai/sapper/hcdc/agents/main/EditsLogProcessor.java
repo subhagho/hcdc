@@ -2,7 +2,6 @@ package ai.sapper.hcdc.agents.main;
 
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
-import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.namenode.EditsLogReader;
