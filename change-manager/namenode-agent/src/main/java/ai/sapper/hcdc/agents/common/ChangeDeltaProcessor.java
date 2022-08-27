@@ -19,9 +19,12 @@ import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 
+import java.io.Closeable;
+import java.io.IOException;
+
 @Getter
 @Accessors(fluent = true)
-public abstract class ChangeDeltaProcessor implements Runnable {
+public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     private final ZkStateManager stateManager;
     private ChangeDeltaProcessorConfig processorConfig;
     private MessageSender<String, DFSChangeDelta> sender;
@@ -109,6 +112,22 @@ public abstract class ChangeDeltaProcessor implements Runnable {
 
     public abstract ChangeDeltaProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                                               @NonNull ConnectionManager manger) throws ConfigurationException;
+
+    @Override
+    public void close() throws IOException {
+        if (sender != null) {
+            sender.close();
+            sender = null;
+        }
+        if (receiver != null) {
+            receiver.close();
+            receiver = null;
+        }
+        if (errorSender != null) {
+            errorSender.close();
+            errorSender = null;
+        }
+    }
 
     @Getter
     @Setter

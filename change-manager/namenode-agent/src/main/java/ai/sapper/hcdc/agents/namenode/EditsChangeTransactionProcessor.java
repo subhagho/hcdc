@@ -15,6 +15,7 @@ import ai.sapper.hcdc.common.model.*;
 import com.google.common.base.Strings;
 import lombok.NonNull;
 
+import java.io.IOException;
 import java.util.List;
 
 import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
@@ -128,9 +129,11 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
             rState.setSnapshotReady(true);
             rState.copyBlocks(fileState);
             rState.setSchemaLocation(fileState.getSchemaLocation());
-            rState = stateManager().replicaStateHelper().update(rState);
+
             MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.update(message, schemaEntity, message.mode());
             sender.send(m);
+
+            rState = stateManager().replicaStateHelper().update(rState);
         } else {
             LOGGER.debug(getClass(), txId,
                     String.format("No match found. [path=%s]", fileState.getHdfsFilePath()));
@@ -303,11 +306,11 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
             rState.setLastReplicationTime(System.currentTimeMillis());
             rState.setLastReplicatedTx(txId);
 
+            sender.send(m);
+
             stateManager()
                     .replicaStateHelper()
                     .delete(fileState.getId());
-
-            sender.send(m);
         }
         return true;
     }
@@ -372,9 +375,9 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                     rState.getEntity().getEntity(),
                     message.mode());
 
-            stateManager().replicaStateHelper().delete(rState.getInode());
-
             sender.send(message);
+
+            stateManager().replicaStateHelper().delete(rState.getInode());
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
@@ -439,7 +442,6 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                     rState.copyBlock(bs);
                 }
             }
-            rState = stateManager().replicaStateHelper().update(rState);
             DFSFile df = ProtoBufUtils.build(fileState);
             data = data.toBuilder().setFile(df).build();
 
@@ -450,6 +452,8 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                     rState.getEntity().getEntity(),
                     message.mode());
             sender.send(message);
+
+            rState = stateManager().replicaStateHelper().update(rState);
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
@@ -533,7 +537,6 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                     rState.copyBlock(bs);
                 }
             }
-            rState = stateManager().replicaStateHelper().update(rState);
             DFSFile df = ProtoBufUtils.build(fileState);
             data = data.toBuilder().setFile(df).build();
 
@@ -544,6 +547,8 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                     rState.getEntity().getEntity(),
                     message.mode());
             sender.send(message);
+
+            rState = stateManager().replicaStateHelper().update(rState);
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
@@ -688,7 +693,6 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                 builder.addBlocks(bb.build());
             }
             data = builder.build();
-            rState = stateManager().replicaStateHelper().update(rState);
             message = ChangeDeltaSerDe.create(message.value().getNamespace(),
                     data,
                     DFSCloseFile.class,
@@ -696,6 +700,8 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                     rState.getEntity().getEntity(),
                     message.mode());
             sender.send(message);
+
+            rState = stateManager().replicaStateHelper().update(rState);
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,

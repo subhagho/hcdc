@@ -91,10 +91,11 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
             }
         }
         fileState.setState(EFileState.Updating);
+
+        sender.send(message);
         fileState = stateManager()
                 .fileStateHelper()
                 .update(fileState);
-        sender.send(message);
     }
 
     private void addFile(DFSCloseFile data,
@@ -180,10 +181,11 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
 
         ProtoBufUtils.update(fileState, data.getFile());
         fileState.setState(EFileState.Updating);
+
+        sender.send(message);
         fileState = stateManager()
                 .fileStateHelper()
                 .update(fileState);
-        sender.send(message);
     }
 
     /**
@@ -213,6 +215,8 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
                             message.id(), message.mode().name()));
             return;
         }
+
+        sender.send(message);
         if (message.mode() == MessageObject.MessageMode.Forked) {
             fileState = stateManager()
                     .fileStateHelper()
@@ -222,7 +226,6 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
                     .fileStateHelper()
                     .markDeleted(fileState.getHdfsFilePath(), false);
         }
-        sender.send(message);
     }
 
     /**
@@ -433,10 +436,11 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
             }
         }
         fileState.setState(EFileState.Finalized);
+
+        sender.send(message);
         fileState = stateManager()
                 .fileStateHelper()
                 .update(fileState);
-        sender.send(message);
     }
 
     /**

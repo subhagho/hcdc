@@ -27,6 +27,7 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 
 import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
@@ -222,5 +223,10 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
             ret = message.value().hasTxId();
         }
         return ret;
+    }
+
+    @Override
+    public void close() throws IOException {
+
     }
 }
