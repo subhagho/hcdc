@@ -1,10 +1,10 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
+import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;

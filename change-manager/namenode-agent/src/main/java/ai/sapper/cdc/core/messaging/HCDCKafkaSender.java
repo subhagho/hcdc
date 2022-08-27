@@ -1,7 +1,7 @@
 package ai.sapper.cdc.core.messaging;
 
-import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.cdc.core.connections.impl.BasicKafkaProducer;
+import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.NonNull;
@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.Future;
 
 public class HCDCKafkaSender extends MessageSender<String, DFSChangeDelta> {

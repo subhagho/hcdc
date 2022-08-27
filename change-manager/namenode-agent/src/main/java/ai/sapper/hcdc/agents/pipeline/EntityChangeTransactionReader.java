@@ -1,25 +1,29 @@
 package ai.sapper.hcdc.agents.pipeline;
 
-import ai.sapper.cdc.common.model.*;
-import ai.sapper.cdc.common.schema.SchemaVersion;
-import ai.sapper.cdc.core.io.*;
-import ai.sapper.cdc.core.model.*;
-import ai.sapper.hcdc.agents.common.*;
-import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
-import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
+import ai.sapper.cdc.common.model.AvroChangeType;
+import ai.sapper.cdc.common.model.EntityDef;
+import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.model.services.SnapshotDoneRequest;
+import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.core.WebServiceClient;
 import ai.sapper.cdc.core.connections.HdfsConnection;
+import ai.sapper.cdc.core.io.*;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.MessageSender;
+import ai.sapper.cdc.core.model.*;
 import ai.sapper.cdc.core.schema.SchemaManager;
+import ai.sapper.hcdc.agents.common.CDCDataConverter;
+import ai.sapper.hcdc.agents.common.InvalidTransactionError;
+import ai.sapper.hcdc.agents.common.NameNodeEnv;
+import ai.sapper.hcdc.agents.common.TransactionProcessor;
+import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
+import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.model.*;
 import com.google.common.base.Strings;
 import jakarta.ws.rs.core.MediaType;
 import lombok.NonNull;
-import org.apache.avro.Schema;
 import org.apache.hadoop.hdfs.HDFSBlockReader;
 
 import java.io.IOException;

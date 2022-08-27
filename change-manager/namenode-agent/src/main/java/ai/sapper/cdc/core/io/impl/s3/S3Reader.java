@@ -1,8 +1,8 @@
 package ai.sapper.cdc.core.io.impl.s3;
 
-import ai.sapper.cdc.core.io.impl.local.LocalReader;
 import ai.sapper.cdc.core.io.PathInfo;
 import ai.sapper.cdc.core.io.Reader;
+import ai.sapper.cdc.core.io.impl.local.LocalReader;
 import lombok.NonNull;
 
 import java.io.IOException;

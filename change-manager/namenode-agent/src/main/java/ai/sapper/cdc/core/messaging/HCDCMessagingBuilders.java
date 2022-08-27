@@ -1,11 +1,11 @@
 package ai.sapper.cdc.core.messaging;
 
 import ai.sapper.cdc.common.audit.AuditLogger;
-import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import ai.sapper.cdc.core.connections.impl.BasicKafkaConsumer;
 import ai.sapper.cdc.core.connections.impl.BasicKafkaProducer;
+import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;

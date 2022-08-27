@@ -1,12 +1,12 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
-import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.cdc.core.io.HCDCFileSystem;
 import ai.sapper.cdc.core.io.PathInfo;
 import ai.sapper.cdc.core.io.Reader;
 import ai.sapper.cdc.core.model.BlockTransactionDelta;
 import ai.sapper.cdc.core.model.DFSFileState;
+import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
+import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import lombok.NonNull;
 
 import java.io.File;

@@ -1,14 +1,14 @@
 package ai.sapper.cdc.core.schema;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
 import org.apache.log4j.Level;
 import org.codehaus.jackson.JsonNode;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**

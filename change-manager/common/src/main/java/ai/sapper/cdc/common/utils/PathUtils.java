@@ -3,7 +3,6 @@ package ai.sapper.cdc.common.utils;
 import lombok.NonNull;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.UUID;
 
 public class PathUtils {

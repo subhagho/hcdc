@@ -1,20 +1,20 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.cdc.common.audit.AuditLogger;
-import ai.sapper.cdc.core.BaseEnv;
-import ai.sapper.cdc.core.connections.ConnectionManager;
-import ai.sapper.hcdc.agents.namenode.HadoopEnvConfig;
-import ai.sapper.hcdc.agents.namenode.NameNodeAdminClient;
-import ai.sapper.hcdc.agents.model.NameNodeAgentState;
-import ai.sapper.hcdc.agents.model.NameNodeStatus;
 import ai.sapper.cdc.common.AbstractState;
 import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.audit.AuditLogger;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.NetUtils;
+import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.DistributedLock;
+import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.HdfsConnection;
 import ai.sapper.cdc.core.model.ModuleInstance;
 import ai.sapper.cdc.core.schema.SchemaManager;
+import ai.sapper.hcdc.agents.model.NameNodeAgentState;
+import ai.sapper.hcdc.agents.model.NameNodeStatus;
+import ai.sapper.hcdc.agents.namenode.HadoopEnvConfig;
+import ai.sapper.hcdc.agents.namenode.NameNodeAdminClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.protobuf.MessageOrBuilder;

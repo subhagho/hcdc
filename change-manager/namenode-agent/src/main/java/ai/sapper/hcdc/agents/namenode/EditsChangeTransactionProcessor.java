@@ -1,16 +1,16 @@
 package ai.sapper.hcdc.agents.namenode;
 
-import ai.sapper.cdc.common.model.*;
+import ai.sapper.cdc.common.model.SchemaEntity;
+import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
+import ai.sapper.cdc.core.messaging.InvalidMessageError;
+import ai.sapper.cdc.core.messaging.MessageObject;
+import ai.sapper.cdc.core.messaging.MessageSender;
 import ai.sapper.cdc.core.model.*;
 import ai.sapper.hcdc.agents.common.InvalidTransactionError;
 import ai.sapper.hcdc.agents.common.ProtoBufUtils;
 import ai.sapper.hcdc.agents.common.TransactionProcessor;
 import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
-import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
-import ai.sapper.cdc.core.messaging.InvalidMessageError;
-import ai.sapper.cdc.core.messaging.MessageObject;
-import ai.sapper.cdc.core.messaging.MessageSender;
 import ai.sapper.hcdc.common.model.*;
 import com.google.common.base.Strings;
 import lombok.NonNull;

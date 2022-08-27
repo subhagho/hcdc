@@ -1,6 +1,6 @@
 package ai.sapper.cdc.core.messaging;
 
-import ai.sapper.cdc.common.model.*;
+import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;

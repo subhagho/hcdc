@@ -1,8 +1,5 @@
 package ai.sapper.hcdc.agents.pipeline;
 
-import ai.sapper.hcdc.agents.common.CDCDataConverter;
-import ai.sapper.hcdc.agents.common.NameNodeEnv;
-import ai.sapper.hcdc.agents.common.ZkStateManager;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.utils.DefaultLogger;
@@ -11,6 +8,9 @@ import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.HdfsConnection;
 import ai.sapper.cdc.core.model.DFSFileState;
 import ai.sapper.cdc.core.schema.SchemaManager;
+import ai.sapper.hcdc.agents.common.CDCDataConverter;
+import ai.sapper.hcdc.agents.common.NameNodeEnv;
+import ai.sapper.hcdc.agents.common.ZkStateManager;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;

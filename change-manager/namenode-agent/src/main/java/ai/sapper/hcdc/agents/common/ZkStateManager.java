@@ -1,8 +1,5 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.hcdc.agents.model.ModuleTxState;
-import ai.sapper.hcdc.agents.model.NameNodeAgentState;
-import ai.sapper.hcdc.agents.model.AgentTxState;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.DistributedLock;
@@ -11,6 +8,9 @@ import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import ai.sapper.cdc.core.filters.DomainManager;
 import ai.sapper.cdc.core.model.Heartbeat;
 import ai.sapper.cdc.core.model.ModuleInstance;
+import ai.sapper.hcdc.agents.model.AgentTxState;
+import ai.sapper.hcdc.agents.model.ModuleTxState;
+import ai.sapper.hcdc.agents.model.NameNodeAgentState;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;

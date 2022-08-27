@@ -1,13 +1,13 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.cdc.common.model.*;
-import ai.sapper.hcdc.agents.model.AgentTxState;
+import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.core.filters.DomainManager;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.MessageSender;
 import ai.sapper.cdc.core.model.DFSFileState;
+import ai.sapper.hcdc.agents.model.AgentTxState;
 import ai.sapper.hcdc.common.model.*;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.MessageOrBuilder;

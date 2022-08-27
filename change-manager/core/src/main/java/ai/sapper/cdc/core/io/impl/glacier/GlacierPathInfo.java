@@ -1,6 +1,5 @@
 package ai.sapper.cdc.core.io.impl.glacier;
 
-import ai.sapper.cdc.core.io.Archiver;
 import ai.sapper.cdc.core.io.PathInfo;
 import lombok.Getter;
 import lombok.NonNull;
@@ -8,7 +7,6 @@ import lombok.experimental.Accessors;
 import org.apache.commons.io.FilenameUtils;
 import software.amazon.awssdk.services.glacier.GlacierClient;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 

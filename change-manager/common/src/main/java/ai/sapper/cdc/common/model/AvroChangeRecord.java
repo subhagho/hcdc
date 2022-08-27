@@ -1,6 +1,5 @@
 package ai.sapper.cdc.common.model;
 
-import ai.sapper.cdc.common.schema.AvroUtils;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;

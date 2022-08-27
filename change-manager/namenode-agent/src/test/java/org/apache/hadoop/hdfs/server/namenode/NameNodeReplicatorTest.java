@@ -1,10 +1,10 @@
 package org.apache.hadoop.hdfs.server.namenode;
 
-import ai.sapper.hcdc.agents.main.NameNodeReplicator;
 import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.hcdc.agents.main.NameNodeReplicator;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class NameNodeReplicatorTest {
     private static final String __CONFIG_FILE = "src/test/resources/configs/namenode-agent.xml";

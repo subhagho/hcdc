@@ -1,11 +1,11 @@
 package ai.sapper.cdc.core.io.impl.local;
 
-import ai.sapper.hcdc.common.model.DFSChangeData;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.io.HCDCFileSystem;
 import ai.sapper.cdc.core.io.PathInfo;
 import ai.sapper.cdc.core.io.Reader;
 import ai.sapper.cdc.core.io.Writer;
+import ai.sapper.hcdc.common.model.DFSChangeData;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;

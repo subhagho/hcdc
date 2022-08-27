@@ -1,7 +1,7 @@
 package ai.sapper.cdc.core.messaging;
 
-import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.cdc.core.connections.impl.BasicKafkaConsumer;
+import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.NonNull;

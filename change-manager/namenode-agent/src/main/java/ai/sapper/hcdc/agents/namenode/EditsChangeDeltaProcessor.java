@@ -1,13 +1,5 @@
 package ai.sapper.hcdc.agents.namenode;
 
-import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
-import ai.sapper.hcdc.agents.common.NameNodeEnv;
-import ai.sapper.hcdc.agents.common.ProcessorStateManager;
-import ai.sapper.hcdc.agents.common.ZkStateManager;
-import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
-import ai.sapper.hcdc.agents.model.DFSTransactionType;
-import ai.sapper.hcdc.common.model.DFSChangeDelta;
-import ai.sapper.hcdc.common.model.DFSCloseFile;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.filters.DomainManager;
@@ -17,6 +9,14 @@ import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.model.BlockTransactionDelta;
 import ai.sapper.cdc.core.model.DFSBlockState;
 import ai.sapper.cdc.core.model.DFSFileState;
+import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
+import ai.sapper.hcdc.agents.common.NameNodeEnv;
+import ai.sapper.hcdc.agents.common.ProcessorStateManager;
+import ai.sapper.hcdc.agents.common.ZkStateManager;
+import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
+import ai.sapper.hcdc.agents.model.DFSTransactionType;
+import ai.sapper.hcdc.common.model.DFSChangeDelta;
+import ai.sapper.hcdc.common.model.DFSCloseFile;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;

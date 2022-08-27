@@ -1,15 +1,15 @@
 package ai.sapper.hcdc.agents.pipeline;
 
-import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import com.google.common.base.Preconditions;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class NameNodeSchemaScannerTest {
     private static final String CONFIG_FILE = "src/test/resources/configs/hdfs-files-scanner.xml";

@@ -1,11 +1,11 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.hcdc.common.model.DFSError;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import ai.sapper.cdc.core.model.*;
+import ai.sapper.hcdc.common.model.DFSError;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
