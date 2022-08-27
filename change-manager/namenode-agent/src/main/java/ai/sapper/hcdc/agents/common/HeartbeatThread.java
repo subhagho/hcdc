@@ -5,8 +5,13 @@ import com.google.common.base.Preconditions;
 import lombok.NonNull;
 
 public class HeartbeatThread implements Runnable {
+    private final String name;
     private long sleepInterval = 60 * 1000; // 60 secs.
     private ZkStateManager stateManager;
+
+    public HeartbeatThread(@NonNull String name) {
+        this.name = name;
+    }
 
     public HeartbeatThread withStateManager(@NonNull ZkStateManager stateManager) {
         this.stateManager = stateManager;
@@ -28,9 +33,9 @@ public class HeartbeatThread implements Runnable {
     public void run() {
         Preconditions.checkNotNull(stateManager);
         try {
-            while (NameNodeEnv.get().state().isAvailable()) {
+            while (NameNodeEnv.get(name).state().isAvailable()) {
                 stateManager.heartbeat(stateManager.moduleInstance().getInstanceId(),
-                        NameNodeEnv.get().agentState());
+                        NameNodeEnv.get(name).agentState());
                 Thread.sleep(sleepInterval);
             }
         } catch (Exception ex) {

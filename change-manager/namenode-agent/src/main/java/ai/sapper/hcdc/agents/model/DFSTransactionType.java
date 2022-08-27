@@ -91,7 +91,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
 
     public abstract void parseFrom(T proto) throws DFSAgentError;
 
-    public abstract ChangeDeltaMessage getMessage() throws DFSAgentError;
+    public abstract ChangeDeltaMessage getMessage(@NonNull String source) throws DFSAgentError;
 
 
     /**
@@ -291,13 +291,13 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public ChangeDeltaMessage getMessage() throws DFSAgentError {
+        public ChangeDeltaMessage getMessage(@NonNull String source) throws DFSAgentError {
             ChangeDeltaMessage message = new ChangeDeltaMessage();
             DFSAddBlock proto = convertToProto();
 
             message.setKey(proto.getFile().getPath());
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(NameNodeEnv.get().source());
+            builder.setNamespace(source);
             builder.setType(proto.getClass().getCanonicalName());
             builder.setEntity(proto.getFile().getPath());
             builder.setTimestamp(System.currentTimeMillis());
@@ -390,13 +390,13 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public ChangeDeltaMessage getMessage() throws DFSAgentError {
+        public ChangeDeltaMessage getMessage(@NonNull String source) throws DFSAgentError {
             ChangeDeltaMessage message = new ChangeDeltaMessage();
             DFSAddFile proto = convertToProto();
 
             message.setKey(proto.getFile().getPath());
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(NameNodeEnv.get().source());
+            builder.setNamespace(source);
             builder.setType(proto.getClass().getCanonicalName());
             builder.setEntity(proto.getFile().getPath());
             builder.setTimestamp(System.currentTimeMillis());
@@ -466,13 +466,13 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public ChangeDeltaMessage getMessage() throws DFSAgentError {
+        public ChangeDeltaMessage getMessage(@NonNull String source) throws DFSAgentError {
             ChangeDeltaMessage message = new ChangeDeltaMessage();
             DFSAppendFile proto = convertToProto();
 
             message.setKey(proto.getFile().getPath());
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(NameNodeEnv.get().source());
+            builder.setNamespace(source);
             builder.setType(proto.getClass().getCanonicalName());
             builder.setEntity(proto.getFile().getPath());
             builder.setTimestamp(System.currentTimeMillis());
@@ -571,13 +571,13 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public ChangeDeltaMessage getMessage() throws DFSAgentError {
+        public ChangeDeltaMessage getMessage(@NonNull String source) throws DFSAgentError {
             ChangeDeltaMessage message = new ChangeDeltaMessage();
             DFSCloseFile proto = convertToProto();
 
             message.setKey(proto.getFile().getPath());
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(NameNodeEnv.get().source());
+            builder.setNamespace(source);
             builder.setType(proto.getClass().getCanonicalName());
             builder.setEntity(proto.getFile().getPath());
             builder.setTimestamp(System.currentTimeMillis());
@@ -647,13 +647,13 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public ChangeDeltaMessage getMessage() throws DFSAgentError {
+        public ChangeDeltaMessage getMessage(@NonNull String source) throws DFSAgentError {
             ChangeDeltaMessage message = new ChangeDeltaMessage();
             DFSDeleteFile proto = convertToProto();
 
             message.setKey(proto.getFile().getPath());
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(NameNodeEnv.get().source());
+            builder.setNamespace(source);
             builder.setType(proto.getClass().getCanonicalName());
             builder.setEntity(proto.getFile().getPath());
             builder.setTimestamp(System.currentTimeMillis());
@@ -731,13 +731,13 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public ChangeDeltaMessage getMessage() throws DFSAgentError {
+        public ChangeDeltaMessage getMessage(@NonNull String source) throws DFSAgentError {
             ChangeDeltaMessage message = new ChangeDeltaMessage();
             DFSTruncateBlock proto = convertToProto();
 
             message.setKey(proto.getFile().getPath());
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(NameNodeEnv.get().source());
+            builder.setNamespace(source);
             builder.setType(proto.getClass().getCanonicalName());
             builder.setEntity(proto.getFile().getPath());
             builder.setTimestamp(System.currentTimeMillis());
@@ -816,13 +816,13 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public ChangeDeltaMessage getMessage() throws DFSAgentError {
+        public ChangeDeltaMessage getMessage(@NonNull String source) throws DFSAgentError {
             ChangeDeltaMessage message = new ChangeDeltaMessage();
             DFSUpdateBlocks proto = convertToProto();
 
             message.setKey(proto.getFile().getPath());
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(NameNodeEnv.get().source());
+            builder.setNamespace(source);
             builder.setType(proto.getClass().getCanonicalName());
             builder.setEntity(proto.getFile().getPath());
             builder.setTimestamp(System.currentTimeMillis());
@@ -903,13 +903,13 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public ChangeDeltaMessage getMessage() throws DFSAgentError {
+        public ChangeDeltaMessage getMessage(@NonNull String source) throws DFSAgentError {
             ChangeDeltaMessage message = new ChangeDeltaMessage();
             DFSRenameFile proto = convertToProto();
 
             message.setKey(proto.getDestFile().getPath());
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(NameNodeEnv.get().source());
+            builder.setNamespace(source);
             builder.setType(proto.getClass().getCanonicalName());
             builder.setEntity(proto.getDestFile().getPath());
             builder.setTimestamp(System.currentTimeMillis());
@@ -969,13 +969,13 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public ChangeDeltaMessage getMessage() throws DFSAgentError {
+        public ChangeDeltaMessage getMessage(@NonNull String source) throws DFSAgentError {
             ChangeDeltaMessage message = new ChangeDeltaMessage();
             DFSIgnoreTx proto = convertToProto();
 
-            message.setKey(NameNodeEnv.get().ignoreTnxKey());
+            message.setKey(String.format(NameNodeEnv.NN_IGNORE_TNX, source));
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(NameNodeEnv.get().source());
+            builder.setNamespace(source);
             builder.setType(proto.getClass().getCanonicalName());
             builder.setEntity("");
             builder.setTimestamp(System.currentTimeMillis());

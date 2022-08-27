@@ -26,8 +26,13 @@ import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 public abstract class TransactionProcessor {
     public static final Logger LOG = LoggerFactory.getLogger(TransactionProcessor.class);
 
+    private final String name;
     private ZkStateManager stateManager;
     private MessageSender<String, DFSChangeDelta> errorSender;
+
+    public TransactionProcessor(@NonNull String name) {
+        this.name = name;
+    }
 
     public TransactionProcessor withStateManager(@NonNull ZkStateManager stateManager) {
         this.stateManager = stateManager;
@@ -144,7 +149,7 @@ public abstract class TransactionProcessor {
             } else {
                 throw new InvalidMessageError(message.id(), String.format("Message Body type not supported. [type=%s]", data.getClass().getCanonicalName()));
             }
-            NameNodeEnv.audit(getClass(), (MessageOrBuilder) data);
+            NameNodeEnv.audit(name, getClass(), (MessageOrBuilder) data);
         } catch (InvalidTransactionError te) {
             LOGGER.error(getClass(), te.getTxId(), te);
             handleError(message, data, te);

@@ -18,10 +18,9 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.parquet.Strings;
 
 @Getter
-@Setter
-public class EditsLogProcessor {
+public class EditsLogProcessor implements Service<NameNodeEnv.ENameNEnvState> {
     @Parameter(names = {"--config", "-c"}, required = true, description = "Path to the configuration file.")
-    private String configfile;
+    private String configFile;
     @Parameter(names = {"--type", "-t"}, description = "Configuration file type. (File, Resource, Remote)")
     private String configSource;
     private EConfigFileType fileSource = EConfigFileType.File;
@@ -32,49 +31,82 @@ public class EditsLogProcessor {
     @Setter(AccessLevel.NONE)
     private Thread runner;
 
-    public void init() throws Exception {
+    @Override
+    public Service<NameNodeEnv.ENameNEnvState> setConfigFile(@NonNull String path) {
+        configFile = path;
+        return this;
+    }
+
+    @Override
+    public Service<NameNodeEnv.ENameNEnvState> setConfigSource(@NonNull String type) {
+        configSource = type;
+        return this;
+    }
+
+    public Service<NameNodeEnv.ENameNEnvState> init() throws Exception {
         try {
-            Preconditions.checkState(!Strings.isNullOrEmpty(configfile));
+            Preconditions.checkState(!Strings.isNullOrEmpty(configFile));
             if (!Strings.isNullOrEmpty(configSource)) {
                 fileSource = EConfigFileType.parse(configSource);
             }
             Preconditions.checkNotNull(fileSource);
-            config = ConfigReader.read(configfile, fileSource);
-            NameNodeEnv.setup(config);
+            config = ConfigReader.read(configFile, fileSource);
+            NameNodeEnv.setup(name(), config);
 
-            processor = new EditsLogReader(NameNodeEnv.stateManager());
-            processor.init(NameNodeEnv.get().configNode(), NameNodeEnv.connectionManager());
+            processor = new EditsLogReader(NameNodeEnv.get(getClass().getSimpleName()).stateManager(), name());
+            processor.init(NameNodeEnv.get(name()).configNode(),
+                    NameNodeEnv.get(name())
+                            .connectionManager());
+            return this;
         } catch (Throwable t) {
-            NameNodeEnv.get().error(t);
+            NameNodeEnv.get(name()).error(t);
             throw t;
         }
     }
 
-    public void run() throws Exception {
+    public Service<NameNodeEnv.ENameNEnvState> start() throws Exception {
         try {
             runner = new Thread(processor);
             runner.start();
+
+            return this;
         } catch (Throwable t) {
-            NameNodeEnv.get().error(t);
+            NameNodeEnv.get(name()).error(t);
             throw t;
         }
     }
 
-    public long runOnce(@NonNull String configfile) throws Exception {
+    @Override
+    public Service<NameNodeEnv.ENameNEnvState> stop() throws Exception {
+        NameNodeEnv.dispose(name());
+        runner.join();
+        return this;
+    }
+
+    @Override
+    public NameNodeEnv.NameNEnvState status() {
         try {
-            this.configfile = configfile;
-            init();
-            try (DistributedLock lock = NameNodeEnv.globalLock()) {
-                lock.lock();
-                try {
-                    return processor.doRun();
-                } finally {
-                    lock.unlock();
-                }
+            return NameNodeEnv.status(name());
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    @Override
+    public String name() {
+        return getClass().getSimpleName();
+    }
+
+    public long runOnce(@NonNull String configfile) throws Exception {
+        this.configFile = configfile;
+        init();
+        try (DistributedLock lock = NameNodeEnv.get(name()).globalLock()) {
+            lock.lock();
+            try {
+                return processor.doRun();
+            } finally {
+                lock.unlock();
             }
-        } finally {
-            NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose();
-            DefaultLogger.LOG.warn(String.format("Edit Log Processor Shutdown...[state=%s]", state.name()));
         }
     }
 
@@ -83,8 +115,7 @@ public class EditsLogProcessor {
             EditsLogProcessor runner = new EditsLogProcessor();
             JCommander.newBuilder().addObject(runner).build().parse(args);
             runner.init();
-            runner.run();
-            runner.runner.join();
+            runner.start();
         } catch (Throwable t) {
             t.printStackTrace();
         }

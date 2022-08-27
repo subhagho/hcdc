@@ -31,7 +31,7 @@ import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 @Accessors(fluent = true)
 public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
     private static Logger LOG = LoggerFactory.getLogger(EntityChangeDeltaReader.class);
-    private EntityChangeTransactionReader processor = new EntityChangeTransactionReader();
+    private EntityChangeTransactionReader processor;
     private long receiveBatchTimeout = 1000;
     private HCDCFileSystem fs;
     private Archiver archiver;
@@ -41,8 +41,8 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
     private HCDCFileSystem.FileSystemMocker fileSystemMocker;
     private WebServiceClient client;
 
-    public EntityChangeDeltaReader(@NonNull ZkStateManager stateManager) {
-        super(stateManager);
+    public EntityChangeDeltaReader(@NonNull ZkStateManager stateManager, @NonNull String name) {
+        super(stateManager, name);
     }
 
     public EntityChangeDeltaReader withMockFileSystem(@NonNull HCDCFileSystem.FileSystemMocker fileSystemMocker) {
@@ -64,6 +64,8 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
             config.read();
 
             super.init(config, manger);
+
+            processor  = new EntityChangeTransactionReader(name());
 
             connection = manger.getConnection(config.hdfsConnection, HdfsConnection.class);
             if (connection == null) {
@@ -131,7 +133,7 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
         Preconditions.checkState(errorSender() != null);
         Preconditions.checkArgument(fs != null);
         try {
-            while (NameNodeEnv.get().state().isAvailable()) {
+            while (NameNodeEnv.get(name()).state().isAvailable()) {
                 List<MessageObject<String, DFSChangeDelta>> batch = receiver().nextBatch(receiveBatchTimeout);
                 if (batch == null || batch.isEmpty()) {
                     if (once) break;
@@ -163,7 +165,7 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
                     receiver().ack(message.id());
                 }
             }
-            LOG.warn(String.format("File Delta Processor thread stopped. [env state=%s]", NameNodeEnv.get().state().state().name()));
+            LOG.warn(String.format("File Delta Processor thread stopped. [env state=%s]", NameNodeEnv.get(name()).state().state().name()));
         } catch (Throwable t) {
             LOG.error("Delta Change Processor terminated with error", t);
             DefaultLogger.stacktrace(LOG, t);

@@ -18,16 +18,17 @@ class NameNodeSchemaScannerTest {
     void run() {
         try {
             HierarchicalConfiguration<ImmutableNode> config = ConfigReader.read(CONFIG_FILE, EConfigFileType.File);
-            NameNodeEnv.setup(config);
+            String name = NameNodeSchemaScanner.class.getSimpleName();
+            NameNodeEnv.setup(name, config);
 
-            Preconditions.checkNotNull(NameNodeEnv.get().schemaManager());
-            NameNodeSchemaScanner scanner = new NameNodeSchemaScanner(NameNodeEnv.stateManager());
+            Preconditions.checkNotNull(NameNodeEnv.get(name).schemaManager());
+            NameNodeSchemaScanner scanner = new NameNodeSchemaScanner(NameNodeEnv.get(name).stateManager(), name);
             scanner
-                    .withSchemaManager(NameNodeEnv.get().schemaManager())
-                    .init(NameNodeEnv.get().configNode(), NameNodeEnv.connectionManager());
+                    .withSchemaManager(NameNodeEnv.get(name).schemaManager())
+                    .init(NameNodeEnv.get(name).configNode(), NameNodeEnv.get(name).connectionManager());
             scanner.run();
 
-            NameNodeEnv.dispose();
+            NameNodeEnv.dispose(name);
         } catch (Throwable t) {
             DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
             fail(t);

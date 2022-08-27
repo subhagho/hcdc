@@ -39,13 +39,16 @@ import java.util.List;
 @Getter
 @Accessors(fluent = true)
 public class HDFSSnapshotProcessor {
+    private final String name;
     private final ZkStateManager stateManager;
     private MessageSender<String, DFSChangeDelta> sender;
     private MessageSender<String, DFSChangeDelta> tnxSender;
     private HDFSSnapshotProcessorConfig processorConfig;
 
-    public HDFSSnapshotProcessor(@NonNull ZkStateManager stateManager) {
+    public HDFSSnapshotProcessor(@NonNull ZkStateManager stateManager,
+                                 @NonNull String name) {
         this.stateManager = stateManager;
+        this.name = name;
     }
 
     public HDFSSnapshotProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
@@ -60,7 +63,7 @@ public class HDFSSnapshotProcessor {
                     .connection(processorConfig().senderConfig.connection())
                     .type(processorConfig().senderConfig.type())
                     .partitioner(processorConfig().senderConfig.partitionerClass())
-                    .auditLogger(NameNodeEnv.get().auditLogger())
+                    .auditLogger(NameNodeEnv.get(name).auditLogger())
                     .build();
 
             tnxSender = new HCDCMessagingBuilders.SenderBuilder()
@@ -69,7 +72,7 @@ public class HDFSSnapshotProcessor {
                     .connection(processorConfig().tnxSenderConfig.connection())
                     .type(processorConfig().tnxSenderConfig.type())
                     .partitioner(processorConfig().tnxSenderConfig.partitionerClass())
-                    .auditLogger(NameNodeEnv.get().auditLogger())
+                    .auditLogger(NameNodeEnv.get(name).auditLogger())
                     .build();
             if (stateManager instanceof ProcessorStateManager) {
                 ((ProcessorStateManager) stateManager)
@@ -88,7 +91,7 @@ public class HDFSSnapshotProcessor {
         Preconditions.checkNotNull(domainManager.hdfsConnection());
         int count = 0;
         long txId = stateManager.getModuleState().getCurrentTxId();
-        try (DistributedLock lock = NameNodeEnv.globalLock()
+        try (DistributedLock lock = NameNodeEnv.get(name).globalLock()
                 .withLockTimeout(processorConfig.defaultLockTimeout)) {
             lock.lock();
             try {
@@ -177,7 +180,7 @@ public class HDFSSnapshotProcessor {
     public int processFilterWithLock(@NonNull DomainFilterMatcher.PathFilter filter,
                                      String domain,
                                      long txId) throws Exception {
-        try (DistributedLock lock = NameNodeEnv.globalLock()
+        try (DistributedLock lock = NameNodeEnv.get(name).globalLock()
                 .withLockTimeout(processorConfig().defaultLockTimeout())) {
             lock.lock();
             try {
@@ -228,7 +231,7 @@ public class HDFSSnapshotProcessor {
             rState.copyBlocks(fileState);
 
             DFSCloseFile closeFile = generateSnapshot(fileState, true, fileState.getLastTnxId());
-            MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
+            MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get(name).source(),
                     closeFile,
                     DFSCloseFile.class,
                     entity.getDomain(),
@@ -278,7 +281,7 @@ public class HDFSSnapshotProcessor {
             long lastTxId = tnxId;
             if (fileState.getLastTnxId() > rState.getSnapshotTxId()) {
                 DFSCloseFile closeFile = generateSnapshot(fileState, true, tnxId);
-                MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
+                MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get(name).source(),
                         closeFile,
                         DFSCloseFile.class,
                         entity.getDomain(),

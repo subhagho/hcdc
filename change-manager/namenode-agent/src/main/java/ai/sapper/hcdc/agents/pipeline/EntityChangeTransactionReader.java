@@ -39,6 +39,10 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
     private WebServiceClient client;
     private Archiver archiver;
 
+    public EntityChangeTransactionReader(@NonNull String name) {
+        super(name);
+    }
+
     public EntityChangeTransactionReader withHdfsConnection(@NonNull HdfsConnection connection) {
         this.connection = connection;
         return this;
@@ -265,7 +269,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             }
             CDCDataConverter converter = new CDCDataConverter()
                     .withFileSystem(fs)
-                    .withSchemaManager(NameNodeEnv.get().schemaManager());
+                    .withSchemaManager(NameNodeEnv.get(name()).schemaManager());
             PathInfo outPath = converter.convert(fileState,
                     rState,
                     AvroChangeType.EChangeType.RecordDelete,
@@ -626,7 +630,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                             String.format("FileSystem file not found. [path=%s]",
                                     data.getFile().getPath()));
                 }
-                SchemaManager schemaManager = NameNodeEnv.get().schemaManager();
+                SchemaManager schemaManager = NameNodeEnv.get(name()).schemaManager();
                 EntityDef prevSchema = schemaManager.get(rState.getEntity());
                 CDCDataConverter converter = new CDCDataConverter()
                         .withFileSystem(fs)

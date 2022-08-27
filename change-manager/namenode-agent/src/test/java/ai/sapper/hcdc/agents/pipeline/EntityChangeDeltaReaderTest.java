@@ -32,17 +32,18 @@ class EntityChangeDeltaReaderTest {
     @Test
     void run() {
         try {
+            String name = EntityChangeDeltaReader.class.getSimpleName();
             final S3Client s3Client = S3_MOCK.createS3ClientV2();
 
             s3Client.createBucket(CreateBucketRequest.builder().bucket(DEFAULT_BUCKET_NAME).build());
 
             HierarchicalConfiguration<ImmutableNode> config = ConfigReader.read(CONFIG_FILE, EConfigFileType.File);
-            NameNodeEnv.setup(config);
+            NameNodeEnv.setup(name, config);
 
             EntityChangeDeltaReader processor
-                    = new EntityChangeDeltaReader(NameNodeEnv.stateManager())
+                    = new EntityChangeDeltaReader(NameNodeEnv.get(name).stateManager(), name)
                     .withMockFileSystem(new S3Mocker(s3Client));
-            processor.init(NameNodeEnv.get().configNode(), NameNodeEnv.connectionManager());
+            processor.init(NameNodeEnv.get(name).configNode(), NameNodeEnv.get(name).connectionManager());
             processor.run();
         } catch (Throwable t) {
             DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));

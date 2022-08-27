@@ -52,11 +52,18 @@ public class ZkStateManager {
 
     private final ReplicationStateHelper replicaStateHelper = new ReplicationStateHelper();
     private final FileStateHelper fileStateHelper = new FileStateHelper();
+    private String name;
+
+    public ZkStateManager withName(@NonNull String name) {
+        this.name = name;
+        return this;
+    }
 
     public ZkStateManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                                @NonNull ConnectionManager manger,
                                @NonNull String module,
                                @NonNull String instance) throws StateManagerError {
+        Preconditions.checkState(!Strings.isNullOrEmpty(name));
         try {
             this.instance = instance;
             this.module = module;
@@ -315,8 +322,8 @@ public class ZkStateManager {
                 } else {
                     Heartbeat hb = new Heartbeat();
                     hb.setName(name);
-                    hb.setModule(NameNodeEnv.get().moduleInstance());
-                    hb.setState(NameNodeEnv.get().state().state().name());
+                    hb.setModule(NameNodeEnv.get(name).moduleInstance());
+                    hb.setState(NameNodeEnv.get(name).state().state().name());
 
                     String json = JSONUtils.asString(hb, Heartbeat.class);
                     client.setData().forPath(path, json.getBytes(StandardCharsets.UTF_8));

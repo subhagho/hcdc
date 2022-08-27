@@ -33,13 +33,15 @@ import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 public class EditsLogReader implements Runnable {
     private static final String PATH_NN_CURRENT_DIR = "current";
 
+    private final String name;
     private final ZkStateManager stateManager;
     private MessageSender<String, DFSChangeDelta> sender;
     private EditLogProcessorConfig processorConfig;
     private File editsDir;
 
-    public EditsLogReader(@NonNull ZkStateManager stateManager) {
+    public EditsLogReader(@NonNull ZkStateManager stateManager, @NonNull String name) {
         this.stateManager = stateManager;
+        this.name = name;
     }
 
     public EditsLogReader init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
@@ -54,12 +56,12 @@ public class EditsLogReader implements Runnable {
                     .connection(processorConfig().senderConfig.connection())
                     .type(processorConfig().senderConfig.type())
                     .partitioner(processorConfig().senderConfig.partitionerClass())
-                    .auditLogger(NameNodeEnv.get().auditLogger())
+                    .auditLogger(NameNodeEnv.get(name).auditLogger())
                     .build();
-            if (NameNodeEnv.get().hadoopConfig() == null) {
+            if (NameNodeEnv.get(name).hadoopConfig() == null) {
                 throw new ConfigurationException("Hadoop Configuration not initialized...");
             }
-            String edir = NameNodeEnv.get().hadoopConfig().nameNodeEditsDir();
+            String edir = NameNodeEnv.get(name).hadoopConfig().nameNodeEditsDir();
             editsDir = new File(edir);
             if (!editsDir.exists()) {
                 throw new ConfigurationException(
@@ -88,9 +90,9 @@ public class EditsLogReader implements Runnable {
     public void run() {
         Preconditions.checkState(sender != null);
         try {
-            NameNodeEnv.get().agentState().state(NameNodeAgentState.EAgentState.Active);
-            while (NameNodeEnv.get().state().isAvailable()) {
-                try (DistributedLock lock = NameNodeEnv.globalLock()
+            NameNodeEnv.get(name).agentState().state(NameNodeAgentState.EAgentState.Active);
+            while (NameNodeEnv.get(name).state().isAvailable()) {
+                try (DistributedLock lock = NameNodeEnv.get(name).globalLock()
                         .withLockTimeout(processorConfig.defaultLockTimeout())) {
                     lock.lock();
                     try {
@@ -102,11 +104,15 @@ public class EditsLogReader implements Runnable {
                 }
                 Thread.sleep(processorConfig.pollingInterval);
             }
-            NameNodeEnv.get().agentState().state(NameNodeAgentState.EAgentState.Stopped);
+            NameNodeEnv.get(name).agentState().state(NameNodeAgentState.EAgentState.Stopped);
         } catch (Throwable t) {
-            DefaultLogger.LOG.error("Edits Log Processor terminated with error", t);
-            DefaultLogger.stacktrace(DefaultLogger.LOG, t);
-            NameNodeEnv.get().agentState().error(t);
+            try {
+                DefaultLogger.LOG.error("Edits Log Processor terminated with error", t);
+                DefaultLogger.stacktrace(DefaultLogger.LOG, t);
+                NameNodeEnv.get(name).agentState().error(t);
+            } catch (Exception ex) {
+                DefaultLogger.LOG.error(ex.getLocalizedMessage());
+            }
         }
     }
 
@@ -152,7 +158,7 @@ public class EditsLogReader implements Runnable {
             for (DFSTransactionType<?> tnx : batch.transactions()) {
                 if (tnx.id() <= lastTxId) continue;
                 Object proto = tnx.convertToProto();
-                MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get().source(),
+                MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get(name).source(),
                         proto,
                         proto.getClass(),
                         null,

@@ -61,22 +61,17 @@ public class DomainFilterLoader {
 
     public static void main(String[] args) {
         try {
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                public void run() {
-                    NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose();
-                    DefaultLogger.LOG.warn(String.format("Edit Log Processor Shutdown...[state=%s]", state.name()));
-                }
-            });
+            String name = "DOMAIN_FILTER_LOADER";
             DomainFilterLoader loader = new DomainFilterLoader();
             JCommander.newBuilder().addObject(loader).build().parse(args);
             XMLConfiguration config = ConfigReader.read(loader.configfile, EConfigFileType.File);
-            NameNodeEnv.setup(config);
-            if (!(NameNodeEnv.stateManager() instanceof ProcessorStateManager)) {
+            NameNodeEnv.setup(name, config);
+            if (!(NameNodeEnv.get(name).stateManager() instanceof ProcessorStateManager)) {
                 throw new Exception(
                         String.format("Invalid StateManager instance. [expected=%s]",
                                 ProcessorStateManager.class.getCanonicalName()));
             }
-            loader.read(loader.filters, ((ProcessorStateManager) NameNodeEnv.stateManager()).domainManager());
+            loader.read(loader.filters, ((ProcessorStateManager) NameNodeEnv.get(name).stateManager()).domainManager());
         } catch (Throwable t) {
             DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
             DefaultLogger.LOG.error(t.getLocalizedMessage());

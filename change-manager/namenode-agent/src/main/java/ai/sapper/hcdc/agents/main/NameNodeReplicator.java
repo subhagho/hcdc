@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.agents.main;
 
+import ai.sapper.cdc.common.AbstractState;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
@@ -35,8 +36,7 @@ import java.io.RandomAccessFile;
 import java.util.*;
 
 @Getter
-@Accessors(fluent = true)
-public class NameNodeReplicator {
+public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
     private static class Constants {
         private static final String NODE_INODES = "INodeSection.inode";
         private static final String NODE_TX_ID = "NameSection.txid";
@@ -54,7 +54,7 @@ public class NameNodeReplicator {
     @Parameter(names = {"--image", "-i"}, required = true, description = "Path to the FS Image file.")
     private String fsImageFile;
     @Parameter(names = {"--config", "-c"}, required = true, description = "Path to the configuration file.")
-    private String configfile;
+    private String configFile;
     @Parameter(names = {"--type", "-t"}, description = "Configuration file type. (File, Resource, Remote)")
     private String configSource;
     private EConfigFileType fileSource = EConfigFileType.File;
@@ -65,35 +65,49 @@ public class NameNodeReplicator {
     private final Map<Long, DFSInode> inodes = new HashMap<>();
     private final Map<Long, DFSDirectory> directoryMap = new HashMap<>();
 
-    public void init() throws NameNodeError {
+    @Override
+    public Service<NameNodeEnv.ENameNEnvState> setConfigFile(@NonNull String path) {
+        configFile = path;
+        return this;
+    }
+
+    @Override
+    public Service<NameNodeEnv.ENameNEnvState> setConfigSource(@NonNull String type) {
+        configSource = type;
+        return this;
+    }
+
+    public Service<NameNodeEnv.ENameNEnvState> init() throws NameNodeError {
         try {
-            Preconditions.checkState(!Strings.isNullOrEmpty(configfile));
+            Preconditions.checkState(!Strings.isNullOrEmpty(configFile));
             if (!org.apache.parquet.Strings.isNullOrEmpty(configSource)) {
                 fileSource = EConfigFileType.parse(configSource);
             }
             Preconditions.checkNotNull(fileSource);
-            config = ConfigReader.read(configfile, fileSource);
-            NameNodeEnv.setup(config);
+            config = ConfigReader.read(configFile, fileSource);
+            NameNodeEnv.setup(name(), config);
             replicatorConfig = new ReplicatorConfig(config);
             replicatorConfig.read();
 
-            hdfsConnection = NameNodeEnv.connectionManager()
-                    .getConnection(replicatorConfig().hdfsConnection(), HdfsConnection.class);
+            hdfsConnection = NameNodeEnv.get(name()).connectionManager()
+                    .getConnection(getReplicatorConfig().hdfsConnection(), HdfsConnection.class);
             Preconditions.checkNotNull(hdfsConnection);
             hdfsConnection.connect();
 
-            zkConnection = NameNodeEnv.stateManager().connection();
+            zkConnection = NameNodeEnv.get(name()).stateManager().connection();
             Preconditions.checkNotNull(zkConnection);
             if (!zkConnection.isConnected()) zkConnection.connect();
 
             fs = hdfsConnection.fileSystem();
-            stateManager = NameNodeEnv.stateManager();
+            stateManager = NameNodeEnv.get(name()).stateManager();
             Preconditions.checkNotNull(stateManager);
 
             File td = new File(tempDir);
             if (!td.exists()) {
                 td.mkdirs();
             }
+
+            return this;
         } catch (Throwable t) {
             DefaultLogger.LOG.error(t.getLocalizedMessage());
             DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
@@ -101,9 +115,40 @@ public class NameNodeReplicator {
         }
     }
 
-    public void run() throws NameNodeError {
+    @Override
+    public Service<NameNodeEnv.ENameNEnvState> start() throws Exception {
         try {
-            try (DistributedLock lock = NameNodeEnv.globalLock()) {
+            run();
+            return this;
+        } catch (Throwable t) {
+            NameNodeEnv.get(name()).error(t);
+            throw t;
+        }
+    }
+
+    @Override
+    public Service<NameNodeEnv.ENameNEnvState> stop() throws Exception {
+        NameNodeEnv.dispose(name());
+        return this;
+    }
+
+    @Override
+    public NameNodeEnv.NameNEnvState status() {
+        try {
+            return NameNodeEnv.status(name());
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    @Override
+    public String name() {
+        return getClass().getSimpleName();
+    }
+
+    private void run() throws NameNodeError {
+        try {
+            try (DistributedLock lock = NameNodeEnv.get(name()).globalLock()) {
                 lock.lock();
                 try {
                     String output = generateFSImageSnapshot();
@@ -126,7 +171,6 @@ public class NameNodeReplicator {
                     lock.unlock();
                 }
             }
-            NameNodeEnv.dispose();
         } catch (Throwable t) {
             DefaultLogger.LOG.error(t.getLocalizedMessage());
             DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
@@ -165,7 +209,7 @@ public class NameNodeReplicator {
                     prevBlockId = block.id;
                 }
             }
-            NameNodeEnv.audit(getClass(), fileState);
+            NameNodeEnv.audit(name(), getClass(), fileState);
         }
     }
 
@@ -272,7 +316,8 @@ public class NameNodeReplicator {
             NameNodeReplicator replicator = new NameNodeReplicator();
             JCommander.newBuilder().addObject(replicator).build().parse(args);
             replicator.init();
-            replicator.run();
+            replicator.start();
+            replicator.stop();
         } catch (Throwable t) {
             t.printStackTrace();
         }

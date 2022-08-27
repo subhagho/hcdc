@@ -9,16 +9,19 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.parquet.Strings;
 
+import java.io.Closeable;
+import java.io.IOException;
+
 @Getter
-@Setter
-public class EditsChangeConsumer {
+public class EditsChangeConsumer implements Service<NameNodeEnv.ENameNEnvState> {
     @Parameter(names = {"--config", "-c"}, required = true, description = "Path to the configuration file.")
-    private String configfile;
+    private String configFile;
     @Parameter(names = {"--type", "-t"}, description = "Configuration file type. (File, Resource, Remote)")
     private String configSource;
     private EConfigFileType fileSource = EConfigFileType.File;
@@ -26,22 +29,73 @@ public class EditsChangeConsumer {
     private Thread runner;
     private EditsChangeDeltaProcessor processor;
 
-    private void init() throws Exception {
-        Preconditions.checkState(!Strings.isNullOrEmpty(configfile));
-        if (!Strings.isNullOrEmpty(configSource)) {
-            fileSource = EConfigFileType.parse(configSource);
-        }
-        Preconditions.checkNotNull(fileSource);
-        config = ConfigReader.read(configfile, fileSource);
-        NameNodeEnv.setup(config);
-
-        processor = new EditsChangeDeltaProcessor(NameNodeEnv.stateManager());
-        processor.init(NameNodeEnv.get().configNode(), NameNodeEnv.connectionManager());
+    @Override
+    public Service<NameNodeEnv.ENameNEnvState> setConfigFile(@NonNull String path) {
+        configFile = path;
+        return this;
     }
 
-    private void run() throws Exception {
-        runner = new Thread(processor);
-        runner.start();
+    @Override
+    public Service<NameNodeEnv.ENameNEnvState> setConfigSource(@NonNull String type) {
+        configSource = type;
+        return this;
+    }
+
+    public Service<NameNodeEnv.ENameNEnvState> init() throws Exception {
+        try {
+            Preconditions.checkState(!Strings.isNullOrEmpty(configFile));
+            if (!Strings.isNullOrEmpty(configSource)) {
+                fileSource = EConfigFileType.parse(configSource);
+            }
+            Preconditions.checkNotNull(fileSource);
+            config = ConfigReader.read(configSource, fileSource);
+            NameNodeEnv.setup(name(), config);
+
+            processor = new EditsChangeDeltaProcessor(NameNodeEnv
+                    .get(name())
+                    .stateManager(), name());
+            processor.init(NameNodeEnv.get(name())
+                            .configNode(),
+                    NameNodeEnv.get(name())
+                            .connectionManager());
+            return this;
+        } catch (Throwable t) {
+            NameNodeEnv.get(name()).error(t);
+            throw t;
+        }
+    }
+
+    public Service<NameNodeEnv.ENameNEnvState> start() throws Exception {
+        try {
+            runner = new Thread(processor);
+            runner.start();
+
+            return this;
+        } catch (Throwable t) {
+            NameNodeEnv.get(name()).error(t);
+            throw t;
+        }
+    }
+
+    @Override
+    public Service<NameNodeEnv.ENameNEnvState> stop() throws Exception {
+        NameNodeEnv.dispose(name());
+        runner.join();
+        return this;
+    }
+
+    @Override
+    public NameNodeEnv.NameNEnvState status() {
+        try {
+            return NameNodeEnv.status(name());
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    @Override
+    public String name() {
+        return getClass().getSimpleName();
     }
 
     public static void main(String[] args) {
@@ -52,8 +106,7 @@ public class EditsChangeConsumer {
                     .addObject(runner)
                     .build().parse(args);
             runner.init();
-            runner.run();
-            runner.runner.join();
+            runner.start();
         } catch (Throwable t) {
             t.printStackTrace();
             DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));

@@ -7,7 +7,6 @@ import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.NetUtils;
 import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.DistributedLock;
-import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.HdfsConnection;
 import ai.sapper.cdc.core.model.ModuleInstance;
 import ai.sapper.cdc.core.schema.SchemaManager;
@@ -29,16 +28,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Accessors(fluent = true)
 public class NameNodeEnv extends BaseEnv {
     public static Logger LOG = LoggerFactory.getLogger(NameNodeEnv.class);
 
-    private static final String NN_IGNORE_TNX = "%s.IGNORE";
+    public static final String NN_IGNORE_TNX = "%s.IGNORE";
 
     private final NameNEnvState state = new NameNEnvState();
+    private final String name;
 
     private Thread heartbeatThread;
     private AuditLogger auditLogger;
@@ -53,16 +55,15 @@ public class NameNodeEnv extends BaseEnv {
     private ModuleInstance moduleInstance;
     private final NameNodeAgentState.AgentState agentState = new NameNodeAgentState.AgentState();
 
+    public NameNodeEnv(@NonNull String name) {
+        this.name = name;
+    }
+
     public synchronized NameNodeEnv init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws NameNodeError {
         try {
             if (state.isAvailable()) return this;
 
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                public void run() {
-                    NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose();
-                    DefaultLogger.LOG.warn(String.format("Edit Log Processor Shutdown...[state=%s]", state.name()));
-                }
-            });
+            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownThread().name(name)));
             configNode = xmlConfig.configurationAt(NameNEnvConfig.Constants.__CONFIG_PATH);
 
             this.config = new NameNEnvConfig(xmlConfig);
@@ -73,7 +74,7 @@ public class NameNodeEnv extends BaseEnv {
             super.init(xmlConfig, config.module, config.connectionConfigPath);
 
             if (config().readHadoopConfig) {
-                hdfsConnection = connections().getConnection(config.hdfsAdminConnection, HdfsConnection.class);
+                hdfsConnection = connectionManager().getConnection(config.hdfsAdminConnection, HdfsConnection.class);
                 if (hdfsConnection == null) {
                     throw new ConfigurationException("HDFS Admin connection not found.");
                 }
@@ -96,7 +97,8 @@ public class NameNodeEnv extends BaseEnv {
             }
 
             stateManager = config.stateManagerClass.newInstance();
-            stateManager.init(configNode, connections(), config.module, config.instance);
+            stateManager.withName(name)
+                    .init(configNode, connectionManager(), config.module, config.instance);
 
             moduleInstance = new ModuleInstance()
                     .withIp(NetUtils.getInetAddress(hostIPs))
@@ -121,7 +123,7 @@ public class NameNodeEnv extends BaseEnv {
             if (ConfigReader.checkIfNodeExists(configNode,
                     SchemaManager.SchemaManagerConfig.Constants.__CONFIG_PATH)) {
                 schemaManager = new SchemaManager();
-                schemaManager.init(configNode, connections());
+                schemaManager.init(configNode, connectionManager());
             }
 
             if (ConfigReader.checkIfNodeExists(configNode,
@@ -138,7 +140,7 @@ public class NameNodeEnv extends BaseEnv {
             }
             state.state(ENameNEnvState.Initialized);
             if (config.enableHeartbeat) {
-                heartbeatThread = new Thread(new HeartbeatThread().withStateManager(stateManager));
+                heartbeatThread = new Thread(new HeartbeatThread(name).withStateManager(stateManager));
                 heartbeatThread.start();
             }
             return this;
@@ -179,10 +181,6 @@ public class NameNodeEnv extends BaseEnv {
         return state.state();
     }
 
-    public String ignoreTnxKey() {
-        return String.format(NN_IGNORE_TNX, config.hadoopNamespace);
-    }
-
     public String module() {
         return config.module();
     }
@@ -217,51 +215,94 @@ public class NameNodeEnv extends BaseEnv {
         return null;
     }
 
-    private static final NameNodeEnv __instance = new NameNodeEnv();
 
-    public static NameNodeEnv setup(@NonNull HierarchicalConfiguration<ImmutableNode> config) throws NameNodeError {
-        synchronized (__instance) {
-            return __instance.init(config);
+    public DistributedLock globalLock() throws NameNodeError {
+        return createLock(NameNEnvConfig.Constants.LOCK_GLOBAL);
+    }
+
+    private static final Map<String, NameNodeEnv> __instances = new HashMap<>();
+
+    public static NameNodeEnv setup(@NonNull String name,
+                                    @NonNull HierarchicalConfiguration<ImmutableNode> config) throws NameNodeError {
+        synchronized (__instances) {
+            NameNodeEnv env = __instances.get(name);
+            if (env == null) {
+                env = new NameNodeEnv(name);
+                __instances.put(name, env);
+            }
+            return env.init(config);
         }
     }
 
-    public static ENameNEnvState dispose() {
-        synchronized (__instance) {
-            return __instance.stop();
+    public static ENameNEnvState dispose(@NonNull String name) throws NameNodeError {
+        synchronized (__instances) {
+            NameNodeEnv env = __instances.get(name);
+            if (env == null) {
+                throw new NameNodeError(String.format("NameNode Env instance not found. [name=%s]", name));
+            }
+            return env.stop();
         }
     }
 
-    public static NameNodeEnv get() {
-        Preconditions.checkState(__instance.state.isAvailable());
-        return __instance;
+    public static NameNodeEnv get(@NonNull String name) throws NameNodeError {
+        NameNodeEnv env = __instances.get(name);
+        if (env == null) {
+            throw new NameNodeError(String.format("NameNode Env instance not found. [name=%s]", name));
+        }
+        Preconditions.checkState(env.state.isAvailable());
+        return env;
     }
 
-    public static ZkStateManager stateManager() {
-        return get().stateManager;
+    public static NameNodeEnv.NameNEnvState status(@NonNull String name) throws NameNodeError {
+        NameNodeEnv env = __instances.get(name);
+        if (env == null) {
+            throw new NameNodeError(String.format("NameNode Env instance not found. [name=%s]", name));
+        }
+        return env.state;
     }
 
-    public static ConnectionManager connectionManager() {
-        return get().connections();
-    }
-
-    public static DistributedLock globalLock() throws NameNodeError {
-        return get().createLock(NameNEnvConfig.Constants.LOCK_GLOBAL);
-    }
-
-    public static <T> void audit(@NonNull Class<?> caller, @NonNull T data) {
-        if (NameNodeEnv.get().auditLogger != null) {
-            NameNodeEnv.get().auditLogger.audit(caller, System.currentTimeMillis(), data);
+    public static <T> void audit(@NonNull String name, @NonNull Class<?> caller, @NonNull T data) {
+        try {
+            if (NameNodeEnv.get(name).auditLogger != null) {
+                NameNodeEnv.get(name).auditLogger.audit(caller, System.currentTimeMillis(), data);
+            }
+        } catch (Exception ex) {
+            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
+            DefaultLogger.LOG.error(ex.getLocalizedMessage());
         }
     }
 
-    public static void audit(@NonNull Class<?> caller, @NonNull MessageOrBuilder data) {
-        if (NameNodeEnv.get().auditLogger != null) {
-            NameNodeEnv.get().auditLogger.audit(caller, System.currentTimeMillis(), data);
+    public static void audit(@NonNull String name, @NonNull Class<?> caller, @NonNull MessageOrBuilder data) {
+        try {
+            if (NameNodeEnv.get(name).auditLogger != null) {
+                NameNodeEnv.get(name).auditLogger.audit(caller, System.currentTimeMillis(), data);
+            }
+        } catch (Exception ex) {
+            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
+            DefaultLogger.LOG.error(ex.getLocalizedMessage());
         }
     }
 
     public enum ENameNEnvState {
         Unknown, Initialized, Error, Disposed
+    }
+
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    private static class ShutdownThread implements Runnable {
+        private String name;
+
+        @Override
+        public void run() {
+            try {
+                NameNodeEnv.dispose(name);
+                DefaultLogger.LOG.warn(String.format("NameNode environment shutdown. [name=%s]", name));
+            } catch (Exception ex) {
+                DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
+                DefaultLogger.LOG.error(ex.getLocalizedMessage());
+            }
+        }
     }
 
     @Getter

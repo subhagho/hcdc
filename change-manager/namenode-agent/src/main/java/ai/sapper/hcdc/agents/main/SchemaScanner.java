@@ -1,25 +1,27 @@
 package ai.sapper.hcdc.agents.main;
 
+import ai.sapper.cdc.common.AbstractState;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
+import ai.sapper.hcdc.agents.common.NameNodeError;
 import ai.sapper.hcdc.agents.pipeline.NameNodeSchemaScanner;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.base.Preconditions;
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.parquet.Strings;
 
 @Getter
-@Setter
-public class SchemaScanner {
+public class SchemaScanner implements Service<NameNodeEnv.ENameNEnvState> {
     @Parameter(names = {"--config", "-c"}, required = true, description = "Path to the configuration file.")
-    private String configfile;
+    private String configFile;
     @Parameter(names = {"--type", "-t"}, description = "Configuration file type. (File, Resource, Remote)")
     private String configSource;
     @Setter(AccessLevel.NONE)
@@ -29,21 +31,72 @@ public class SchemaScanner {
     @Setter(AccessLevel.NONE)
     private NameNodeSchemaScanner scanner;
 
-    public void init() throws Exception {
-        Preconditions.checkState(!Strings.isNullOrEmpty(configfile));
-        if (!Strings.isNullOrEmpty(configSource)) {
-            fileSource = EConfigFileType.parse(configSource);
-        }
-        Preconditions.checkNotNull(fileSource);
-        config = ConfigReader.read(configfile, fileSource);
-        NameNodeEnv.setup(config);
-        NameNodeSchemaScanner scanner = new NameNodeSchemaScanner(NameNodeEnv.stateManager());
-        scanner
-                .withSchemaManager(NameNodeEnv.get().schemaManager())
-                .init(NameNodeEnv.get().configNode(), NameNodeEnv.connectionManager());
+    @Override
+    public Service<NameNodeEnv.ENameNEnvState> setConfigFile(@NonNull String path) {
+        configFile = path;
+        return this;
     }
 
-    public void run() throws Exception {
+    @Override
+    public Service<NameNodeEnv.ENameNEnvState> setConfigSource(@NonNull String type) {
+        configSource = type;
+        return this;
+    }
+
+    public Service<NameNodeEnv.ENameNEnvState> init() throws Exception {
+        try {
+            Preconditions.checkState(!Strings.isNullOrEmpty(configFile));
+            if (!Strings.isNullOrEmpty(configSource)) {
+                fileSource = EConfigFileType.parse(configSource);
+            }
+            Preconditions.checkNotNull(fileSource);
+            config = ConfigReader.read(configFile, fileSource);
+            NameNodeEnv.setup(name(), config);
+            NameNodeSchemaScanner scanner = new NameNodeSchemaScanner(NameNodeEnv.get(name()).stateManager(), name());
+            scanner
+                    .withSchemaManager(NameNodeEnv.get(name()).schemaManager())
+                    .init(NameNodeEnv.get(name()).configNode(), NameNodeEnv.get(name()).connectionManager());
+
+            return this;
+        } catch (Throwable t) {
+            DefaultLogger.LOG.error(t.getLocalizedMessage());
+            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            throw new NameNodeError(t);
+        }
+    }
+
+    @Override
+    public Service<NameNodeEnv.ENameNEnvState> start() throws Exception {
+        try {
+            run();
+            return this;
+        } catch (Throwable t) {
+            NameNodeEnv.get(name()).error(t);
+            throw t;
+        }
+    }
+
+    @Override
+    public Service<NameNodeEnv.ENameNEnvState> stop() throws Exception {
+        NameNodeEnv.dispose(name());
+        return this;
+    }
+
+    @Override
+    public NameNodeEnv.NameNEnvState status() {
+        try {
+            return NameNodeEnv.status(name());
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    @Override
+    public String name() {
+        return getClass().getSimpleName();
+    }
+
+    private void run() throws Exception {
         Preconditions.checkNotNull(scanner);
         scanner.run();
     }
@@ -53,12 +106,11 @@ public class SchemaScanner {
             SchemaScanner runner = new SchemaScanner();
             JCommander.newBuilder().addObject(runner).build().parse(args);
             runner.init();
-            runner.run();
+            runner.start();
+            runner.stop();
         } catch (Exception ex) {
             DefaultLogger.LOG.error(ex.getLocalizedMessage());
             DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
-        } finally {
-            NameNodeEnv.dispose();
         }
     }
 }

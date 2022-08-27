@@ -26,7 +26,7 @@ public class SnapshotService {
     public ResponseEntity<DomainFilters> addFilter(@PathVariable("domain") String domain,
                                                    @RequestBody Filter filter) {
         try {
-            ServiceHelper.checkService(processor);
+            ServiceHelper.checkService(processor.name(), processor);
             DomainFilters filters = processor.getProcessor().addFilter(domain, filter);
             return new ResponseEntity<>(filters,
                     HttpStatus.OK);
@@ -40,7 +40,7 @@ public class SnapshotService {
     public ResponseEntity<DomainFilters> addFilter(@PathVariable("domain") String domain,
                                                    @RequestBody Map<String, List<Filter>> filters) {
         try {
-            ServiceHelper.checkService(processor);
+            ServiceHelper.checkService(processor.name(), processor);
             DomainFilters dfs = null;
             for (String entity : filters.keySet()) {
                 List<Filter> fs = filters.get(entity);
@@ -59,7 +59,7 @@ public class SnapshotService {
     public ResponseEntity<Filter> removeFilter(@PathVariable("domain") String domain,
                                                @RequestBody Filter filter) {
         try {
-            ServiceHelper.checkService(processor);
+            ServiceHelper.checkService(processor.name(), processor);
             Filter f = processor.getProcessor().removeFilter(domain, filter);
             return new ResponseEntity<>(f, HttpStatus.OK);
         } catch (Throwable t) {
@@ -72,7 +72,7 @@ public class SnapshotService {
     public ResponseEntity<DomainFilter> removeFilter(@PathVariable("domain") String domain,
                                                      @PathVariable("entity") String entity) {
         try {
-            ServiceHelper.checkService(processor);
+            ServiceHelper.checkService(processor.name(), processor);
             DomainFilter f = processor.getProcessor().removeFilter(domain, entity);
             return new ResponseEntity<>(f, HttpStatus.OK);
         } catch (Throwable t) {
@@ -86,7 +86,7 @@ public class SnapshotService {
                                                      @PathVariable("entity") String entity,
                                                      @PathVariable("path") String path) {
         try {
-            ServiceHelper.checkService(processor);
+            ServiceHelper.checkService(processor.name(), processor);
             List<Filter> f = processor.getProcessor().removeFilter(domain, entity, path);
             return new ResponseEntity<>(f, HttpStatus.OK);
         } catch (Throwable t) {
@@ -98,7 +98,7 @@ public class SnapshotService {
     @RequestMapping(value = "/snapshot/run", method = RequestMethod.POST)
     public ResponseEntity<BasicResponse<Integer>> run() {
         try {
-            ServiceHelper.checkService(processor);
+            ServiceHelper.checkService(processor.name(), processor);
             int count = processor.getProcessor().run();
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
                     count),
@@ -113,7 +113,7 @@ public class SnapshotService {
     @RequestMapping(value = "/snapshot/done", method = RequestMethod.POST)
     public ResponseEntity<DFSFileReplicaState> snapshotDone(@RequestBody SnapshotDoneRequest request) {
         try {
-            ServiceHelper.checkService(processor);
+            ServiceHelper.checkService(processor.name(), processor);
             DFSFileReplicaState rState = processor.getProcessor()
                     .snapshotDone(request.getHdfsPath(),
                             request.getEntity(),
@@ -128,13 +128,13 @@ public class SnapshotService {
     @RequestMapping(value = "/snapshot/status", method = RequestMethod.GET)
     public ResponseEntity<BasicResponse<NameNodeEnv.NameNEnvState>> state() {
         try {
-            ServiceHelper.checkService(processor);
+            ServiceHelper.checkService(processor.name(), processor);
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
-                    NameNodeEnv.get().state()),
+                    processor.status()),
                     HttpStatus.OK);
         } catch (Throwable t) {
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
-                    (NameNodeEnv.NameNEnvState) null).withError(t),
+                    processor.status()).withError(t),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -143,35 +143,33 @@ public class SnapshotService {
     public ResponseEntity<BasicResponse<NameNodeEnv.NameNEnvState>> start(@RequestBody ConfigSource config) {
         try {
             processor = new SnapshotRunner();
-            processor.setConfigfile(config.getPath());
-            processor.setFileSource(config.getType());
+            processor.setConfigFile(config.getPath())
+                    .setConfigSource(config.getType().name());
             processor.init();
             DefaultLogger.LOG.info(String.format("EditsLog processor started. [config=%s]", config.toString()));
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
-                    NameNodeEnv.get().state()),
+                    processor.status()),
                     HttpStatus.OK);
         } catch (Throwable t) {
             DefaultLogger.LOG.error("Error starting service.", t);
             DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
-            return new ResponseEntity<>(
-                    new BasicResponse<>(EResponseState.Error,
-                            (NameNodeEnv.NameNEnvState) null).withError(t),
+            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
+                    processor.status()).withError(t),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @RequestMapping(value = "/admin/snapshot/stop", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<NameNodeEnv.ENameNEnvState>> stop() {
+    public ResponseEntity<BasicResponse<NameNodeEnv.NameNEnvState>> stop() {
         try {
-            ServiceHelper.checkService(processor);
-            NameNodeEnv.dispose();
-            processor = null;
+            ServiceHelper.checkService(processor.name(), processor);
+            processor.stop();
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
-                    NameNodeEnv.ENameNEnvState.Disposed),
+                    processor.status()),
                     HttpStatus.OK);
         } catch (Throwable t) {
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
-                    NameNodeEnv.ENameNEnvState.Error).withError(t),
+                    processor.status()).withError(t),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -179,7 +177,9 @@ public class SnapshotService {
     @RequestMapping(value = "/schema/expand/domain/{domain}", method = RequestMethod.GET)
     public ResponseEntity<List<PathOrSchema>> expandDomain(@PathVariable("domain") String domain) {
         try {
-            SchemaManager schemaManager = NameNodeEnv.get().schemaManager();
+            ServiceHelper.checkService(processor.name(), processor);
+            SchemaManager schemaManager = NameNodeEnv.get(processor.name())
+                    .schemaManager();
             if (schemaManager == null) {
                 throw new Exception("SchemaManager not initialized...");
             }
@@ -199,7 +199,9 @@ public class SnapshotService {
     public ResponseEntity<List<PathOrSchema>> expandPath(@PathVariable("domain") String domain,
                                                          @RequestBody String path) {
         try {
-            SchemaManager schemaManager = NameNodeEnv.get().schemaManager();
+            ServiceHelper.checkService(processor.name(), processor);
+            SchemaManager schemaManager = NameNodeEnv.get(processor.name())
+                    .schemaManager();
             if (schemaManager == null) {
                 throw new Exception("SchemaManager not initialized...");
             }

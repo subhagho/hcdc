@@ -41,15 +41,15 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
 
     private long receiveBatchTimeout = 1000;
 
-    public EditsChangeDeltaProcessor(@NonNull ZkStateManager stateManager) {
-        super(stateManager);
+    public EditsChangeDeltaProcessor(@NonNull ZkStateManager stateManager, @NonNull String name) {
+        super(stateManager, name);
     }
 
     public EditsChangeDeltaProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                                           @NonNull ConnectionManager manger) throws ConfigurationException {
         ChangeDeltaProcessorConfig config = new ChangeDeltaProcessorConfig(xmlConfig);
         super.init(config, manger);
-        processor = (EditsChangeTransactionProcessor) new EditsChangeTransactionProcessor()
+        processor = (EditsChangeTransactionProcessor) new EditsChangeTransactionProcessor(name())
                 .withSenderQueue(sender())
                 .withStateManager(stateManager())
                 .withErrorQueue(errorSender());
@@ -74,7 +74,7 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
         Preconditions.checkState(errorSender() != null);
         Preconditions.checkState(stateManager() instanceof ProcessorStateManager);
         try {
-            while (NameNodeEnv.get().state().isAvailable()) {
+            while (NameNodeEnv.get(name()).state().isAvailable()) {
                 List<MessageObject<String, DFSChangeDelta>> batch = receiver().nextBatch(receiveBatchTimeout);
                 if (batch == null || batch.isEmpty()) {
                     Thread.sleep(receiveBatchTimeout);

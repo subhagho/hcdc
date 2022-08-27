@@ -30,13 +30,15 @@ public class NameNodeSchemaScanner {
     private static final int THREAD_SLEEP_INTERVAL = 5000; // 5 secs.
     private NameNodeFileScannerConfig config;
     private HdfsConnection connection;
-    private ZkStateManager stateManager;
+    private final ZkStateManager stateManager;
+    private final String name;
     private SchemaManager schemaManager;
 
     private ThreadPoolExecutor executorService;
 
-    public NameNodeSchemaScanner(@NonNull ZkStateManager stateManager) {
+    public NameNodeSchemaScanner(@NonNull ZkStateManager stateManager, @NonNull String name) {
         this.stateManager = stateManager;
+        this.name = name;
     }
 
     public NameNodeSchemaScanner init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
@@ -77,7 +79,7 @@ public class NameNodeSchemaScanner {
                 for (DFSFileState fs : files) {
                     long inode = fs.getId();
                     if (inode % config.shardCount == config.shardId) {
-                        FileScannerTask task = new FileScannerTask()
+                        FileScannerTask task = new FileScannerTask(name)
                                 .fileState(fs)
                                 .schemaManager(new SchemaManager(schemaManager))
                                 .hdfsConnection(connection)
@@ -106,10 +108,15 @@ public class NameNodeSchemaScanner {
     @Setter
     @Accessors(fluent = true)
     private static class FileScannerTask implements Runnable {
+        private final String name;
         private DFSFileState fileState;
         private HdfsConnection hdfsConnection;
         private ZkStateManager stateManager;
         private SchemaManager schemaManager;
+
+        public FileScannerTask(@NonNull String name) {
+            this.name = name;
+        }
 
         /**
          * When an object implementing interface <code>Runnable</code> is used
@@ -138,7 +145,7 @@ public class NameNodeSchemaScanner {
                         }
                     }
                     fileState.setFileType(response.fileType());
-                    try (DistributedLock lock = NameNodeEnv.globalLock()) {
+                    try (DistributedLock lock = NameNodeEnv.get(name).globalLock()) {
                         lock.lock();
                         try {
                             stateManager.fileStateHelper().update(fileState);

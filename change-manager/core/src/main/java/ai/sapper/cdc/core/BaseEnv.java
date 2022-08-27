@@ -34,15 +34,15 @@ public abstract class BaseEnv {
         private static final String CONFIG_LOCK_NODE = "lock-node";
     }
 
-    private ConnectionManager connections;
+    private ConnectionManager connectionManager;
     private final Map<String, LockDef> lockDefs = new HashMap<>();
 
     public void init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                      @NonNull String module,
                      @NonNull String connectionsConfigPath) throws ConfigurationException {
         try {
-            connections = new ConnectionManager();
-            connections.init(xmlConfig, connectionsConfigPath);
+            connectionManager = new ConnectionManager();
+            connectionManager.init(xmlConfig, connectionsConfigPath);
 
             readLocks(xmlConfig, module);
         } catch (Exception ex) {
@@ -59,7 +59,7 @@ public abstract class BaseEnv {
             if (node.containsKey(Constants.CONFIG_LOCK_NODE)) {
                 path = node.getString(Constants.CONFIG_LOCK_NODE);
             }
-            ZookeeperConnection connection = connections.getConnection(conn, ZookeeperConnection.class);
+            ZookeeperConnection connection = connectionManager.getConnection(conn, ZookeeperConnection.class);
             LockDef def = new LockDef()
                     .module(module)
                     .path(path)
@@ -70,8 +70,8 @@ public abstract class BaseEnv {
     }
 
     public void close() throws Exception {
-        if (connections != null) {
-            connections.close();
+        if (connectionManager != null) {
+            connectionManager.close();
         }
     }
 }

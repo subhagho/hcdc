@@ -25,6 +25,7 @@ import java.io.IOException;
 @Getter
 @Accessors(fluent = true)
 public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
+    private final String name;
     private final ZkStateManager stateManager;
     private ChangeDeltaProcessorConfig processorConfig;
     private MessageSender<String, DFSChangeDelta> sender;
@@ -32,8 +33,9 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     private MessageReceiver<String, DFSChangeDelta> receiver;
     private long receiveBatchTimeout = 1000;
 
-    public ChangeDeltaProcessor(@NonNull ZkStateManager stateManager) {
+    public ChangeDeltaProcessor(@NonNull ZkStateManager stateManager, @NonNull String name) {
         this.stateManager = stateManager;
+        this.name = name;
     }
 
     public ChangeDeltaProcessor init(@NonNull ChangeDeltaProcessorConfig config,
@@ -48,7 +50,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
                     .connection(processorConfig().senderConfig.connection())
                     .type(processorConfig().senderConfig.type())
                     .partitioner(processorConfig().senderConfig.partitionerClass())
-                    .auditLogger(NameNodeEnv.get().auditLogger())
+                    .auditLogger(NameNodeEnv.get(name).auditLogger())
                     .build();
 
             receiver = new HCDCMessagingBuilders.ReceiverBuilder()
@@ -60,7 +62,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
                     .zkConnection(stateManager().connection())
                     .zkStatePath(stateManager.zkPath())
                     .batchSize(processorConfig.receiverConfig.batchSize())
-                    .auditLogger(NameNodeEnv.get().auditLogger())
+                    .auditLogger(NameNodeEnv.get(name).auditLogger())
                     .build();
 
             if (!Strings.isNullOrEmpty(processorConfig.batchTimeout)) {
@@ -99,12 +101,16 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     @Override
     public void run() {
         try {
-            NameNodeEnv.get().agentState().state(NameNodeAgentState.EAgentState.Active);
+            NameNodeEnv.get(name).agentState().state(NameNodeAgentState.EAgentState.Active);
             doRun();
-            NameNodeEnv.get().agentState().state(NameNodeAgentState.EAgentState.Stopped);
+            NameNodeEnv.get(name).agentState().state(NameNodeAgentState.EAgentState.Stopped);
         } catch (Throwable t) {
-            NameNodeEnv.get().agentState().error(t);
-            DefaultLogger.LOG.error(t.getLocalizedMessage(), t);
+            try {
+                NameNodeEnv.get(name).agentState().error(t);
+                DefaultLogger.LOG.error(t.getLocalizedMessage(), t);
+            } catch (Exception ex) {
+                DefaultLogger.LOG.error(ex.getLocalizedMessage(), ex);
+            }
         }
     }
 
@@ -134,6 +140,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     @Accessors(fluent = true)
     public static class ChangeDeltaProcessorConfig extends ConfigReader {
         public static final String __CONFIG_PATH = "processor.source";
+
         public static class Constants {
             public static final String __CONFIG_PATH_SENDER = "sender";
             public static final String __CONFIG_PATH_RECEIVER = "receiver";

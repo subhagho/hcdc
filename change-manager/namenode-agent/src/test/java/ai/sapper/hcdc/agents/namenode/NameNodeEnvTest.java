@@ -27,12 +27,14 @@ class NameNodeEnvTest {
     @Test
     void init() {
         try {
-            NameNodeEnv.setup(xmlConfiguration);
-            DefaultLogger.LOG.info(String.format("Name Node Agent environment initialized. [source=%s]", NameNodeEnv.get().source()));
-            assertNotNull(NameNodeEnv.get().hdfsConnection());
-            assertNotNull(NameNodeEnv.stateManager().connection());
+            String name = getClass().getSimpleName();
 
-            NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose();
+            NameNodeEnv.setup(name, xmlConfiguration);
+            DefaultLogger.LOG.info(String.format("Name Node Agent environment initialized. [source=%s]", NameNodeEnv.get(name).source()));
+            assertNotNull(NameNodeEnv.get(name).hdfsConnection());
+            assertNotNull(NameNodeEnv.get(name).stateManager().connection());
+
+            NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose(name);
             assertEquals(NameNodeEnv.ENameNEnvState.Disposed, state);
         } catch (Throwable t) {
             DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
@@ -43,13 +45,15 @@ class NameNodeEnvTest {
     @Test
     void testLocking() {
         try {
-            NameNodeEnv.setup(xmlConfiguration);
-            DefaultLogger.LOG.info(String.format("Name Node Agent environment initialized. [source=%s]", NameNodeEnv.get().source()));
-            assertNotNull(NameNodeEnv.get().hdfsConnection());
-            assertNotNull(NameNodeEnv.stateManager().connection());
+            String name = getClass().getSimpleName();
+
+            NameNodeEnv.setup(name, xmlConfiguration);
+            DefaultLogger.LOG.info(String.format("Name Node Agent environment initialized. [source=%s]", NameNodeEnv.get(name).source()));
+            assertNotNull(NameNodeEnv.get(name).hdfsConnection());
+            assertNotNull(NameNodeEnv.get(name).stateManager().connection());
             Thread[] threads = new Thread[5];
             for (int ii = 0; ii < 5; ii++) {
-                threads[ii] = new Thread(new Locker());
+                threads[ii] = new Thread(new Locker(name));
                 threads[ii].start();
             }
             for (int ii = 0; ii < 5; ii++) {
@@ -62,13 +66,18 @@ class NameNodeEnvTest {
     }
 
     private static class Locker implements Runnable {
+        private final String name;
+
+        public Locker(String name) {
+            this.name = name;
+        }
 
         @Override
         public void run() {
             try {
                 Thread.sleep(500);
-                try (DistributedLock gl = NameNodeEnv.globalLock()) {
-                    try (DistributedLock lock = NameNodeEnv.get().createLock("LOCK_REPLICATION")) {
+                try (DistributedLock gl = NameNodeEnv.get(name).globalLock()) {
+                    try (DistributedLock lock = NameNodeEnv.get(name).createLock("LOCK_REPLICATION")) {
                         for (int ii = 0; ii < 5; ii++) {
                             gl.lock();
                             try {

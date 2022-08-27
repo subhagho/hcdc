@@ -23,6 +23,10 @@ import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 public class EditsChangeTransactionProcessor extends TransactionProcessor {
     private MessageSender<String, DFSChangeDelta> sender;
 
+    public EditsChangeTransactionProcessor(@NonNull String name) {
+        super(name);
+    }
+
     public TransactionProcessor withSenderQueue(@NonNull MessageSender<String, DFSChangeDelta> sender) {
         this.sender = sender;
         return this;

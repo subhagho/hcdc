@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.agents.main;
 
+import ai.sapper.cdc.common.AbstractState;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
@@ -9,16 +10,15 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NonNull;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.parquet.Strings;
 
 @Getter
-@Setter
-public class EntityChangeDeltaConsumer {
+public class EntityChangeDeltaConsumer implements Service<NameNodeEnv.ENameNEnvState> {
     @Parameter(names = {"--config", "-c"}, required = true, description = "Path to the configuration file.")
-    private String configfile;
+    private String configFile;
     @Parameter(names = {"--type", "-t"}, description = "Configuration file type. (File, Resource, Remote)")
     private String configSource;
     private EConfigFileType fileSource = EConfigFileType.File;
@@ -26,22 +26,69 @@ public class EntityChangeDeltaConsumer {
     private Thread runner;
     private EntityChangeDeltaProcessor processor;
 
-    private void init() throws Exception {
-        Preconditions.checkState(!Strings.isNullOrEmpty(configfile));
-        if (!Strings.isNullOrEmpty(configSource)) {
-            fileSource = EConfigFileType.parse(configSource);
-        }
-        Preconditions.checkNotNull(fileSource);
-        config = ConfigReader.read(configfile, fileSource);
-        NameNodeEnv.setup(config);
-
-        processor = new EntityChangeDeltaProcessor(NameNodeEnv.stateManager());
-        processor.init(NameNodeEnv.get().configNode(), NameNodeEnv.connectionManager());
+    @Override
+    public Service<NameNodeEnv.ENameNEnvState> setConfigFile(@NonNull String path) {
+        configFile = path;
+        return this;
     }
 
-    private void run() throws Exception {
-        runner = new Thread(processor);
-        runner.start();
+    @Override
+    public Service<NameNodeEnv.ENameNEnvState> setConfigSource(@NonNull String type) {
+        configSource = type;
+        return this;
+    }
+
+    public Service<NameNodeEnv.ENameNEnvState> init() throws Exception {
+        try {
+            Preconditions.checkState(!Strings.isNullOrEmpty(configFile));
+            if (!Strings.isNullOrEmpty(configSource)) {
+                fileSource = EConfigFileType.parse(configSource);
+            }
+            Preconditions.checkNotNull(fileSource);
+            config = ConfigReader.read(configFile, fileSource);
+            NameNodeEnv.setup(name(), config);
+
+            processor = new EntityChangeDeltaProcessor(NameNodeEnv.get(name()).stateManager(), name());
+            processor.init(NameNodeEnv.get(name()).configNode(),
+                    NameNodeEnv.get(name()).connectionManager());
+            return this;
+        } catch (Throwable t) {
+            NameNodeEnv.get(name()).error(t);
+            throw t;
+        }
+    }
+
+    @Override
+    public Service<NameNodeEnv.ENameNEnvState> start() throws Exception {
+        try {
+            runner = new Thread(processor);
+            runner.start();
+            return this;
+        } catch (Throwable t) {
+            NameNodeEnv.get(name()).error(t);
+            throw t;
+        }
+    }
+
+    @Override
+    public Service<NameNodeEnv.ENameNEnvState> stop() throws Exception {
+        NameNodeEnv.dispose(name());
+        runner.join();
+        return this;
+    }
+
+    @Override
+    public NameNodeEnv.NameNEnvState status() {
+        try {
+            return NameNodeEnv.status(name());
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    @Override
+    public String name() {
+        return getClass().getSimpleName();
     }
 
     public static void main(String[] args) {
@@ -49,8 +96,7 @@ public class EntityChangeDeltaConsumer {
             EntityChangeDeltaConsumer runner = new EntityChangeDeltaConsumer();
             JCommander.newBuilder().addObject(runner).build().parse(args);
             runner.init();
-            runner.run();
-            runner.runner.join();
+            runner.start();
         } catch (Throwable t) {
             t.printStackTrace();
             DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));

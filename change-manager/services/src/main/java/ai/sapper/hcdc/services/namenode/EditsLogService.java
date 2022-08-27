@@ -15,58 +15,53 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-public class EditsLogReaderService {
+public class EditsLogService {
     private static EditsLogProcessor processor;
 
-    @RequestMapping(value = "/editslog/start", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<String>> start(@RequestBody ConfigSource config) {
+    @RequestMapping(value = "/edits/log/start", method = RequestMethod.POST)
+    public ResponseEntity<BasicResponse<NameNodeEnv.NameNEnvState>> start(@RequestBody ConfigSource config) {
         try {
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                public void run() {
-                    NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose();
-                    DefaultLogger.LOG.warn(String.format("Edit Log Processor Shutdown...[state=%s]", state.name()));
-                }
-            });
             processor = new EditsLogProcessor();
-            processor.setConfigfile(config.getPath());
-            processor.setFileSource(config.getType());
+            processor.setConfigFile(config.getPath())
+                    .setConfigSource(config.getType().name());
             processor.init();
-            processor.run();
+            processor.start();
             DefaultLogger.LOG.info(String.format("EditsLog processor started. [config=%s]", config.toString()));
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
-                    NameNodeEnv.get().state().state().name()),
+                    processor.status()),
                     HttpStatus.OK);
         } catch (Throwable t) {
-            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error, t.getMessage()).withError(t),
+            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
+                    processor.status()).withError(t),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @RequestMapping(value = "/editslog/status", method = RequestMethod.GET)
-    public ResponseEntity<BasicResponse<NameNodeEnv.ENameNEnvState>> state() {
+    @RequestMapping(value = "/edits/log/status", method = RequestMethod.GET)
+    public ResponseEntity<BasicResponse<NameNodeEnv.NameNEnvState>> state() {
         try {
-            ServiceHelper.checkService(processor);
+            ServiceHelper.checkService(processor.name(), processor);
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
-                    NameNodeEnv.get().state().state()),
+                    processor.status()),
                     HttpStatus.OK);
         } catch (Throwable t) {
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
-                    NameNodeEnv.ENameNEnvState.Error).withError(t),
+                    processor.status()).withError(t),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @RequestMapping(value = "/editslog/stop", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<NameNodeEnv.ENameNEnvState>> stop() {
+    @RequestMapping(value = "/edits/log/stop", method = RequestMethod.POST)
+    public ResponseEntity<BasicResponse<NameNodeEnv.NameNEnvState>> stop() {
         try {
-            ServiceHelper.checkService(processor);
-            NameNodeEnv.dispose();
+            ServiceHelper.checkService(processor.name(), processor);
+            processor.stop();
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
-                    NameNodeEnv.get().state().state()),
+                    processor.status()),
                     HttpStatus.OK);
         } catch (Throwable t) {
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
-                    NameNodeEnv.ENameNEnvState.Error).withError(t),
+                    processor.status()).withError(t),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

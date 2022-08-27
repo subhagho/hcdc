@@ -33,15 +33,15 @@ public class EntityChangeDeltaProcessor extends ChangeDeltaProcessor {
 
     private long receiveBatchTimeout = 1000;
 
-    public EntityChangeDeltaProcessor(@NonNull ZkStateManager stateManager) {
-        super(stateManager);
+    public EntityChangeDeltaProcessor(@NonNull ZkStateManager stateManager, @NonNull String name) {
+        super(stateManager, name);
     }
 
     public EntityChangeDeltaProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                                            @NonNull ConnectionManager manger) throws ConfigurationException {
         ChangeDeltaProcessorConfig config = new CDCChangeDeltaProcessorConfig(xmlConfig);
         super.init(config, manger);
-        processor = (EntityChangeTransactionProcessor) new EntityChangeTransactionProcessor()
+        processor = (EntityChangeTransactionProcessor) new EntityChangeTransactionProcessor(name())
                 .withSenderQueue(sender())
                 .withStateManager(stateManager())
                 .withErrorQueue(errorSender());
@@ -65,7 +65,7 @@ public class EntityChangeDeltaProcessor extends ChangeDeltaProcessor {
         Preconditions.checkState(receiver() != null);
         Preconditions.checkState(errorSender() != null);
         try {
-            while (NameNodeEnv.get().state().isAvailable()) {
+            while (NameNodeEnv.get(name()).state().isAvailable()) {
                 List<MessageObject<String, DFSChangeDelta>> batch = receiver().nextBatch(receiveBatchTimeout);
                 if (batch == null || batch.isEmpty()) {
                     Thread.sleep(receiveBatchTimeout);
@@ -106,7 +106,7 @@ public class EntityChangeDeltaProcessor extends ChangeDeltaProcessor {
                     }
                 }
             }
-            LOG.warn(String.format("Delta Change Processor thread stopped. [env state=%s]", NameNodeEnv.get().state().state().name()));
+            LOG.warn(String.format("Delta Change Processor thread stopped. [env state=%s]", NameNodeEnv.get(name()).state().state().name()));
         } catch (Throwable t) {
             LOG.error("Delta Change Processor terminated with error", t);
             DefaultLogger.stacktrace(LOG, t);
