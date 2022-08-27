@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.services.namenode;
+package ai.sapper.hcdc.services.pipeline;
 
 import ai.sapper.cdc.common.model.services.BasicResponse;
 import ai.sapper.cdc.common.model.services.ConfigSource;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class EntityDeltaRunnerService {
     private EntityChangeDeltaRunner processor;
 
-    @RequestMapping(value = "/entity/consumer/start", method = RequestMethod.POST)
+    @RequestMapping(value = "/entity/runner/start", method = RequestMethod.POST)
     public ResponseEntity<BasicResponse<NameNodeEnv.NameNEnvState>> start(@RequestBody ConfigSource config) {
         try {
             processor = new EntityChangeDeltaRunner();
@@ -38,7 +38,7 @@ public class EntityDeltaRunnerService {
         }
     }
 
-    @RequestMapping(value = "/entity/consumer/status", method = RequestMethod.GET)
+    @RequestMapping(value = "/entity/runner/status", method = RequestMethod.GET)
     public ResponseEntity<BasicResponse<NameNodeEnv.NameNEnvState>> state() {
         try {
             ServiceHelper.checkService(processor.name(), processor);
@@ -52,7 +52,7 @@ public class EntityDeltaRunnerService {
         }
     }
 
-    @RequestMapping(value = "/entity/consumer/stop", method = RequestMethod.POST)
+    @RequestMapping(value = "/entity/runner/stop", method = RequestMethod.POST)
     public ResponseEntity<BasicResponse<NameNodeEnv.NameNEnvState>> stop() {
         try {
             ServiceHelper.checkService(processor.name(), processor);

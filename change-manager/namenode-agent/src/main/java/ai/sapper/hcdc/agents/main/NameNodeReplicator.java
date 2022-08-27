@@ -65,6 +65,16 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
     private final Map<Long, DFSInode> inodes = new HashMap<>();
     private final Map<Long, DFSDirectory> directoryMap = new HashMap<>();
 
+    public NameNodeReplicator withFsImagePath(@NonNull String path) {
+        fsImageFile = path;
+        return this;
+    }
+
+    public NameNodeReplicator withTmpDir(@NonNull String tmpDir) {
+        this.tempDir = tmpDir;
+        return this;
+    }
+
     @Override
     public Service<NameNodeEnv.ENameNEnvState> setConfigFile(@NonNull String path) {
         configFile = path;
@@ -77,6 +87,7 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
         return this;
     }
 
+    @Override
     public Service<NameNodeEnv.ENameNEnvState> init() throws NameNodeError {
         try {
             Preconditions.checkState(!Strings.isNullOrEmpty(configFile));

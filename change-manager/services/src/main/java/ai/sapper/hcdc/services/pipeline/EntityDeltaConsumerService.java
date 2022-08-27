@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.services.namenode;
+package ai.sapper.hcdc.services.pipeline;
 
 import ai.sapper.cdc.common.AbstractState;
 import ai.sapper.cdc.common.model.services.BasicResponse;
