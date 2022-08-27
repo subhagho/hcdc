@@ -44,7 +44,7 @@ public class EditsChangeConsumer implements Service<NameNodeEnv.ENameNEnvState> 
                 fileSource = EConfigFileType.parse(configSource);
             }
             Preconditions.checkNotNull(fileSource);
-            config = ConfigReader.read(configSource, fileSource);
+            config = ConfigReader.read(configFile, fileSource);
             NameNodeEnv.setup(name(), config);
 
             processor = new EditsChangeDeltaProcessor(NameNodeEnv
@@ -56,6 +56,8 @@ public class EditsChangeConsumer implements Service<NameNodeEnv.ENameNEnvState> 
                             .connectionManager());
             return this;
         } catch (Throwable t) {
+            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOG.error(t.getLocalizedMessage());
             NameNodeEnv.get(name()).error(t);
             throw t;
         }
@@ -68,6 +70,8 @@ public class EditsChangeConsumer implements Service<NameNodeEnv.ENameNEnvState> 
 
             return this;
         } catch (Throwable t) {
+            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOG.error(t.getLocalizedMessage());
             NameNodeEnv.get(name()).error(t);
             throw t;
         }

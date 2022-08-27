@@ -131,6 +131,8 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
             run();
             return this;
         } catch (Throwable t) {
+            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOG.error(t.getLocalizedMessage());
             NameNodeEnv.get(name()).error(t);
             throw t;
         }

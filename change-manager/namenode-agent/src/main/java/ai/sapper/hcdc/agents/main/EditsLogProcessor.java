@@ -2,6 +2,7 @@ package ai.sapper.hcdc.agents.main;
 
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.namenode.EditsLogReader;
@@ -58,6 +59,8 @@ public class EditsLogProcessor implements Service<NameNodeEnv.ENameNEnvState> {
                             .connectionManager());
             return this;
         } catch (Throwable t) {
+            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOG.error(t.getLocalizedMessage());
             NameNodeEnv.get(name()).error(t);
             throw t;
         }
@@ -70,6 +73,8 @@ public class EditsLogProcessor implements Service<NameNodeEnv.ENameNEnvState> {
 
             return this;
         } catch (Throwable t) {
+            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOG.error(t.getLocalizedMessage());
             NameNodeEnv.get(name()).error(t);
             throw t;
         }

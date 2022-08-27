@@ -52,6 +52,8 @@ public class EntityChangeDeltaConsumer implements Service<NameNodeEnv.ENameNEnvS
                     NameNodeEnv.get(name()).connectionManager());
             return this;
         } catch (Throwable t) {
+            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOG.error(t.getLocalizedMessage());
             NameNodeEnv.get(name()).error(t);
             throw t;
         }
@@ -64,6 +66,8 @@ public class EntityChangeDeltaConsumer implements Service<NameNodeEnv.ENameNEnvS
             runner.start();
             return this;
         } catch (Throwable t) {
+            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOG.error(t.getLocalizedMessage());
             NameNodeEnv.get(name()).error(t);
             throw t;
         }

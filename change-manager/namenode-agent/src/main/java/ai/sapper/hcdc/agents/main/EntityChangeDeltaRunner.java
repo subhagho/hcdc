@@ -51,6 +51,8 @@ public class EntityChangeDeltaRunner implements Service<NameNodeEnv.ENameNEnvSta
             processor.init(NameNodeEnv.get(name()).configNode(), NameNodeEnv.get(name()).connectionManager());
             return this;
         } catch (Throwable t) {
+            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOG.error(t.getLocalizedMessage());
             NameNodeEnv.get(name()).error(t);
             throw t;
         }
@@ -63,6 +65,8 @@ public class EntityChangeDeltaRunner implements Service<NameNodeEnv.ENameNEnvSta
             runner.start();
             return this;
         } catch (Throwable t) {
+            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOG.error(t.getLocalizedMessage());
             NameNodeEnv.get(name()).error(t);
             throw t;
         }
