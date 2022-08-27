@@ -3,13 +3,14 @@ package ai.sapper.cdc.core.connections;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import jakarta.ws.rs.client.Invocation;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import org.apache.commons.configuration2.XMLConfiguration;
+import org.glassfish.jersey.client.JerseyWebTarget;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -35,7 +36,7 @@ class WebServiceConnectionTest {
         try {
             WebServiceConnection ws = manager.getConnection(__CONNECTION_NAME, WebServiceConnection.class);
 
-            WebTarget wt = ws.connect("jersey");
+            JerseyWebTarget wt = ws.connect("jersey");
             Invocation.Builder builder = wt.request(MediaType.APPLICATION_JSON);
             Response response = builder.get();
             String data = response.readEntity(String.class);

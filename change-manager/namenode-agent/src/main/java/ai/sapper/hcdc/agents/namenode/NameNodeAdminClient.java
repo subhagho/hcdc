@@ -7,11 +7,11 @@ import ai.sapper.cdc.core.model.JMXResponse;
 import ai.sapper.hcdc.agents.common.NameNodeError;
 import ai.sapper.hcdc.agents.model.NameNodeStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.ws.rs.core.MediaType;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 
+import javax.ws.rs.core.MediaType;
 import java.util.HashMap;
 import java.util.Map;
 

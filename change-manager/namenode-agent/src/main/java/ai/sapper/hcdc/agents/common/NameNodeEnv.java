@@ -158,7 +158,6 @@ public class NameNodeEnv extends BaseEnv {
 
     public synchronized ENameNEnvState stop() {
         try {
-            close();
             if (agentState.state() == NameNodeAgentState.EAgentState.Active
                     || agentState.state() == NameNodeAgentState.EAgentState.StandBy) {
                 agentState.state(NameNodeAgentState.EAgentState.Stopped);
@@ -172,6 +171,7 @@ public class NameNodeEnv extends BaseEnv {
                 }
                 state.state(ENameNEnvState.Disposed);
             }
+            close();
             if (heartbeatThread != null) {
                 heartbeatThread.join();
             }

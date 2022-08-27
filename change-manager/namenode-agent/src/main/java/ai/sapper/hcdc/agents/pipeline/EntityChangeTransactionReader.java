@@ -22,10 +22,10 @@ import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.model.*;
 import com.google.common.base.Strings;
-import jakarta.ws.rs.core.MediaType;
 import lombok.NonNull;
 import org.apache.hadoop.hdfs.HDFSBlockReader;
 
+import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.List;
 

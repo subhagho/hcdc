@@ -51,7 +51,7 @@ public class SchemaScanner implements Service<NameNodeEnv.ENameNEnvState> {
             Preconditions.checkNotNull(fileSource);
             config = ConfigReader.read(configFile, fileSource);
             NameNodeEnv.setup(name(), config);
-            NameNodeSchemaScanner scanner = new NameNodeSchemaScanner(NameNodeEnv.get(name()).stateManager(), name());
+            scanner = new NameNodeSchemaScanner(NameNodeEnv.get(name()).stateManager(), name());
             scanner
                     .withSchemaManager(NameNodeEnv.get(name()).schemaManager())
                     .init(NameNodeEnv.get(name()).configNode(), NameNodeEnv.get(name()).connectionManager());
@@ -67,7 +67,8 @@ public class SchemaScanner implements Service<NameNodeEnv.ENameNEnvState> {
     @Override
     public Service<NameNodeEnv.ENameNEnvState> start() throws Exception {
         try {
-            run();
+            Preconditions.checkNotNull(scanner);
+            scanner.run();
             return this;
         } catch (Throwable t) {
             NameNodeEnv.get(name()).error(t);
@@ -93,11 +94,6 @@ public class SchemaScanner implements Service<NameNodeEnv.ENameNEnvState> {
     @Override
     public String name() {
         return getClass().getSimpleName();
-    }
-
-    private void run() throws Exception {
-        Preconditions.checkNotNull(scanner);
-        scanner.run();
     }
 
     public static void main(String[] args) {

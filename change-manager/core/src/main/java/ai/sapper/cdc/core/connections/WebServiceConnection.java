@@ -2,9 +2,6 @@ package ai.sapper.cdc.core.connections;
 
 import ai.sapper.cdc.common.ConfigReader;
 import com.google.common.base.Strings;
-import com.sun.jersey.api.client.filter.LoggingFilter;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.WebTarget;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -13,7 +10,9 @@ import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.JerseyClient;
 import org.glassfish.jersey.client.JerseyClientBuilder;
+import org.glassfish.jersey.client.JerseyWebTarget;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -26,7 +25,7 @@ public class WebServiceConnection implements Connection {
     protected final ConnectionState state = new ConnectionState();
     private URL endpoint;
     private WebServiceConnectionConfig config;
-    private Client client;
+    private JerseyClient client;
     private String name;
 
     public WebServiceConnection() {
@@ -36,8 +35,7 @@ public class WebServiceConnection implements Connection {
                                 @NonNull String endpoint) throws MalformedURLException {
         this.name = name;
         this.endpoint = new URL(endpoint);
-        client = JerseyClientBuilder.newClient(
-                new ClientConfig().register(LoggingFilter.class));
+        client = new JerseyClientBuilder().build();
         state.state(EConnectionState.Initialized);
     }
 
@@ -59,11 +57,10 @@ public class WebServiceConnection implements Connection {
         try {
             config = new WebServiceConnectionConfig(xmlConfig);
             config.read();
-
+            client = new JerseyClientBuilder().build();
             name = config.name;
             endpoint = new URL(config.endpoint);
-            client = JerseyClientBuilder.newClient(
-                    new ClientConfig().register(LoggingFilter.class));
+
             state.state(EConnectionState.Initialized);
             return this;
         } catch (Exception ex) {
@@ -81,7 +78,7 @@ public class WebServiceConnection implements Connection {
         throw new ConnectionError("Method should not be called...");
     }
 
-    public WebTarget connect(@NonNull String path) throws ConnectionError {
+    public JerseyWebTarget connect(@NonNull String path) throws ConnectionError {
         try {
             return client.target(endpoint.toURI()).path(path);
         } catch (Exception ex) {

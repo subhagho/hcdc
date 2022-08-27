@@ -7,11 +7,6 @@ import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.WebServiceConnection;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.client.Invocation;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -19,7 +14,12 @@ import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.http.HttpStatus;
+import org.glassfish.jersey.client.JerseyWebTarget;
 
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.Map;
 
@@ -73,7 +73,7 @@ public class WebServiceClient {
                         Map<String, String> query,
                         String mediaType) throws ConnectionError {
         Preconditions.checkNotNull(connection);
-        WebTarget target = connection.connect(path);
+        JerseyWebTarget target = connection.connect(path);
         if (query != null && !query.isEmpty()) {
             for (String q : query.keySet()) {
                 target = target.queryParam(q, query.get(q));
@@ -91,7 +91,7 @@ public class WebServiceClient {
                         List<String> params,
                         String mediaType) throws ConnectionError {
         Preconditions.checkNotNull(connection);
-        WebTarget target = connection.connect(path);
+        JerseyWebTarget target = connection.connect(path);
         if (params != null && !params.isEmpty()) {
             for (String param : params) {
                 target = target.path(param);
@@ -104,7 +104,7 @@ public class WebServiceClient {
         return getUrl(target, type, mediaType);
     }
 
-    private <T> T getUrl(WebTarget target, Class<T> type, String mediaType) throws ConnectionError {
+    private <T> T getUrl(JerseyWebTarget target, Class<T> type, String mediaType) throws ConnectionError {
         Invocation.Builder builder = target.request(mediaType);
         int count = 0;
         boolean handle = true;
@@ -143,7 +143,7 @@ public class WebServiceClient {
         if (Strings.isNullOrEmpty(path)) {
             throw new ConnectionError(String.format("No service registered with name. [name=%s]", service));
         }
-        WebTarget target = connection.connect(path);
+        JerseyWebTarget target = connection.connect(path);
         if (params != null && !params.isEmpty()) {
             for (String param : params) {
                 target = target.path(param);
@@ -191,7 +191,7 @@ public class WebServiceClient {
         if (Strings.isNullOrEmpty(path)) {
             throw new ConnectionError(String.format("No service registered with name. [name=%s]", service));
         }
-        WebTarget target = connection.connect(path);
+        JerseyWebTarget target = connection.connect(path);
         if (params != null && !params.isEmpty()) {
             for (String param : params) {
                 target = target.path(param);
@@ -238,7 +238,7 @@ public class WebServiceClient {
         if (Strings.isNullOrEmpty(path)) {
             throw new ConnectionError(String.format("No service registered with name. [name=%s]", service));
         }
-        WebTarget target = connection.connect(path);
+        JerseyWebTarget target = connection.connect(path);
         if (params != null && !params.isEmpty()) {
             for (String param : params) {
                 target = target.path(param);
