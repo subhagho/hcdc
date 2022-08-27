@@ -10,12 +10,6 @@ import org.apache.avro.io.*;
 import java.io.*;
 
 public class AvroUtils {
-    public static final String AVRO_FIELD_TXID = "txId";
-    public static final String AVRO_FIELD_OP = "op";
-    public static final String AVRO_FIELD_TIMESTAMP = "timestamp";
-    public static final String AVRO_FIELD_DOMAIN = "domain";
-    public static final String AVRO_FIELD_ENTITY = "entity";
-    public static final String AVRO_FIELD_DATA = "data";
 
     private static final String AVRO_SCHEMA_WRAPPER = "{\n" +
             "\t\"type\" : \"record\",\n" +

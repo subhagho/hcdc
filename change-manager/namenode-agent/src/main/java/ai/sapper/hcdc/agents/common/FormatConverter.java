@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.agents.common;
 
+import ai.sapper.cdc.common.model.AvroChangeRecord;
 import ai.sapper.cdc.common.model.AvroChangeType;
 import ai.sapper.cdc.common.model.EntityDef;
 import ai.sapper.cdc.common.model.SchemaEntity;
@@ -49,17 +50,16 @@ public abstract class FormatConverter {
                               @NonNull SchemaEntity schemaEntity,
                               @NonNull GenericRecord record,
                               @NonNull AvroChangeType.EChangeType op,
-                              long txId) {
+                              long txId) throws IOException {
         Preconditions.checkNotNull(record);
-        GenericRecord wrapper = new GenericData.Record(schema);
-        wrapper.put(AvroUtils.AVRO_FIELD_TXID, txId);
-        wrapper.put(AvroUtils.AVRO_FIELD_OP, op.opCode());
-        wrapper.put(AvroUtils.AVRO_FIELD_DOMAIN, schemaEntity.getDomain());
-        wrapper.put(AvroUtils.AVRO_FIELD_ENTITY, schemaEntity.getEntity());
-        wrapper.put(AvroUtils.AVRO_FIELD_TIMESTAMP, System.currentTimeMillis());
-        wrapper.put(AvroUtils.AVRO_FIELD_DATA, record);
+        AvroChangeRecord avro = new AvroChangeRecord()
+                .txId(txId)
+                .timestamp(System.currentTimeMillis())
+                .op(op)
+                .schemaEntity(schemaEntity)
+                .data(record);
 
-        return wrapper;
+        return avro.toAvro(schema);
     }
 
     public abstract boolean canParse(@NonNull String path, EFileType fileType) throws IOException;
