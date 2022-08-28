@@ -179,7 +179,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         public DFSFile getProto() {
             Preconditions.checkState(!Strings.isNullOrEmpty(namespace));
             Preconditions.checkState(!Strings.isNullOrEmpty(path));
-            Preconditions.checkState(inodeId >= 0);
+
             return DFSFile.newBuilder()
                     .setNamespace(namespace)
                     .setPath(path)
