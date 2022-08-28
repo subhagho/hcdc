@@ -28,7 +28,7 @@
         <processor>
             <files>
                 <filesystem>
-                    <type>ai.sapper.cdc.core.io.impl.local.LocalFileSystem</type>
+                    <type>ai.sapper.cdc.ai.sapper.cdc.core.io.impl.local.LocalFileSystem</type>
                     <root>/home/subhagho/work/temp/data/hcdc</root>
                     <!--root>/hcdc/replication/</root>
                     <region>US_WEST_2</region>

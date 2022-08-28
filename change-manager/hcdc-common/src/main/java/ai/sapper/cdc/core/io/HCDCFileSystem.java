@@ -1,5 +1,6 @@
 package ai.sapper.cdc.core.io;
 
+import ai.sapper.cdc.core.io.FileSystem;
 import ai.sapper.hcdc.common.model.DFSChangeData;
 import lombok.Getter;
 import lombok.experimental.Accessors;

@@ -22,6 +22,7 @@ import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.common.utils.SchemaEntityHelper;
+import ai.sapper.hcdc.messaging.HCDCChangeDeltaSerDe;
 import com.google.common.base.Strings;
 import lombok.NonNull;
 import org.apache.hadoop.hdfs.HDFSBlockReader;
@@ -741,7 +742,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                                        MessageObject<String, DFSChangeDelta> message,
                                        long txId) throws Exception {
         if (current.equals(updated) || current.compare(updated) <= 0) return;
-        MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe
+        MessageObject<String, DFSChangeDelta> m = HCDCChangeDeltaSerDe
                 .createSchemaChange(message.value().getNamespace(),
                         tnx, current, updated, replicaState, MessageObject.MessageMode.Schema
                 );

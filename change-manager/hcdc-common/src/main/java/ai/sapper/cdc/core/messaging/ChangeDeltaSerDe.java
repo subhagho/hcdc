@@ -1,9 +1,7 @@
 package ai.sapper.cdc.core.messaging;
 
 import ai.sapper.cdc.common.model.SchemaEntity;
-import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.common.utils.SchemaEntityHelper;
 import com.google.common.base.Preconditions;
@@ -45,29 +43,6 @@ public class ChangeDeltaSerDe {
                 .setTransaction(tnx)
                 .build();
         return create(namespace, ignoreTx, DFSIgnoreTx.class, null, mode);
-    }
-
-    public static MessageObject<String, DFSChangeDelta> createSchemaChange(@NonNull String namespace,
-                                                                           @NonNull DFSTransaction tnx,
-                                                                           @NonNull SchemaVersion current,
-                                                                           @NonNull SchemaVersion updated,
-                                                                           @NonNull DFSFileReplicaState rState,
-                                                                           @NonNull MessageObject.MessageMode mode) throws Exception {
-        DFSFile file = DFSFile.newBuilder()
-                .setPath(rState.getHdfsPath())
-                .setInodeId(rState.getInode())
-                .build();
-        DFSSchemaChange change = DFSSchemaChange.newBuilder()
-                .setTransaction(tnx)
-                .setFile(file)
-                .setSchema(SchemaEntityHelper.proto(rState.getEntity()))
-                .setCurrentSchema(current.toString())
-                .setUpdatedSchema(updated.toString())
-                .build();
-        return create(namespace, change,
-                DFSSchemaChange.class,
-                rState.getEntity(),
-                mode);
     }
 
     public static <T> MessageObject<String, DFSChangeDelta> create(@NonNull String namespace,

@@ -27,6 +27,7 @@ dependencies {
     implementation project(':common')
     implementation project(':common-model')
     implementation project(':core')
+    implementation project(':hcdc-common')
 
     implementation 'org.ehcache:ehcache:3.10.0'
     // https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-hdfs-client

@@ -1,6 +1,5 @@
 package ai.sapper.cdc.core.io.impl.s3;
 
-import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.io.HCDCFileSystem;
@@ -429,8 +428,8 @@ public class S3FileSystem extends LocalFileSystem {
                 throw new ConfigurationException(
                         String.format("S3 File System : missing configuration. [name=%s]", CONFIG_DEFAULT_BUCKET));
             }
-            if (ConfigReader.checkIfNodeExists(get(), CONFIG_DOMAIN_MAP)) {
-                mappings = ConfigReader.readAsMap(get(), CONFIG_DOMAIN_MAP);
+            if (checkIfNodeExists(get(), CONFIG_DOMAIN_MAP)) {
+                mappings = readAsMap(get(), CONFIG_DOMAIN_MAP);
             }
         }
     }

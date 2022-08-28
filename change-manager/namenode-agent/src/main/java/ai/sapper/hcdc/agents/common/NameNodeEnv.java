@@ -243,7 +243,7 @@ public class NameNodeEnv extends BaseEnv {
 
     public static ENameNEnvState dispose(@NonNull String name) throws NameNodeError {
         synchronized (__instances) {
-            NameNodeEnv env = __instances.get(name);
+            NameNodeEnv env = __instances.remove(name);
             if (env == null) {
                 throw new NameNodeError(String.format("NameNode Env instance not found. [name=%s]", name));
             }

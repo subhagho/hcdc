@@ -26,5 +26,9 @@ public class AvroChangeType {
         EChangeType(int opCode) {
             this.opCode = opCode;
         }
+
+        public static boolean isSchemaChange(EChangeType type) {
+            return (type == EntityCreate || type == EntityDelete || type == EntityUpdate);
+        }
     }
 }
