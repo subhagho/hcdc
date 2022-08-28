@@ -93,13 +93,18 @@ public  final class DFSSchemaChange extends
             bitField0_ |= 0x00000004;
             break;
           }
-          case 34: {
+          case 32: {
             bitField0_ |= 0x00000008;
-            currentSchema_ = input.readBytes();
+            op_ = input.readInt32();
             break;
           }
           case 42: {
             bitField0_ |= 0x00000010;
+            currentSchema_ = input.readBytes();
+            break;
+          }
+          case 50: {
+            bitField0_ |= 0x00000020;
             updatedSchema_ = input.readBytes();
             break;
           }
@@ -209,17 +214,33 @@ public  final class DFSSchemaChange extends
     return schema_;
   }
 
-  // required string currentSchema = 4;
-  public static final int CURRENTSCHEMA_FIELD_NUMBER = 4;
-  private java.lang.Object currentSchema_;
+  // required int32 op = 4;
+  public static final int OP_FIELD_NUMBER = 4;
+  private int op_;
   /**
-   * <code>required string currentSchema = 4;</code>
+   * <code>required int32 op = 4;</code>
    */
-  public boolean hasCurrentSchema() {
+  public boolean hasOp() {
     return ((bitField0_ & 0x00000008) == 0x00000008);
   }
   /**
-   * <code>required string currentSchema = 4;</code>
+   * <code>required int32 op = 4;</code>
+   */
+  public int getOp() {
+    return op_;
+  }
+
+  // required string currentSchema = 5;
+  public static final int CURRENTSCHEMA_FIELD_NUMBER = 5;
+  private java.lang.Object currentSchema_;
+  /**
+   * <code>required string currentSchema = 5;</code>
+   */
+  public boolean hasCurrentSchema() {
+    return ((bitField0_ & 0x00000010) == 0x00000010);
+  }
+  /**
+   * <code>required string currentSchema = 5;</code>
    */
   public java.lang.String getCurrentSchema() {
     java.lang.Object ref = currentSchema_;
@@ -236,7 +257,7 @@ public  final class DFSSchemaChange extends
     }
   }
   /**
-   * <code>required string currentSchema = 4;</code>
+   * <code>required string currentSchema = 5;</code>
    */
   public com.google.protobuf.ByteString
       getCurrentSchemaBytes() {
@@ -252,17 +273,17 @@ public  final class DFSSchemaChange extends
     }
   }
 
-  // required string updatedSchema = 5;
-  public static final int UPDATEDSCHEMA_FIELD_NUMBER = 5;
+  // required string updatedSchema = 6;
+  public static final int UPDATEDSCHEMA_FIELD_NUMBER = 6;
   private java.lang.Object updatedSchema_;
   /**
-   * <code>required string updatedSchema = 5;</code>
+   * <code>required string updatedSchema = 6;</code>
    */
   public boolean hasUpdatedSchema() {
-    return ((bitField0_ & 0x00000010) == 0x00000010);
+    return ((bitField0_ & 0x00000020) == 0x00000020);
   }
   /**
-   * <code>required string updatedSchema = 5;</code>
+   * <code>required string updatedSchema = 6;</code>
    */
   public java.lang.String getUpdatedSchema() {
     java.lang.Object ref = updatedSchema_;
@@ -279,7 +300,7 @@ public  final class DFSSchemaChange extends
     }
   }
   /**
-   * <code>required string updatedSchema = 5;</code>
+   * <code>required string updatedSchema = 6;</code>
    */
   public com.google.protobuf.ByteString
       getUpdatedSchemaBytes() {
@@ -299,6 +320,7 @@ public  final class DFSSchemaChange extends
     transaction_ = ai.sapper.hcdc.common.model.DFSTransaction.getDefaultInstance();
     file_ = ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance();
     schema_ = ai.sapper.hcdc.common.model.DFSSchema.getDefaultInstance();
+    op_ = 0;
     currentSchema_ = "";
     updatedSchema_ = "";
   }
@@ -316,6 +338,10 @@ public  final class DFSSchemaChange extends
       return false;
     }
     if (!hasSchema()) {
+      memoizedIsInitialized = 0;
+      return false;
+    }
+    if (!hasOp()) {
       memoizedIsInitialized = 0;
       return false;
     }
@@ -356,10 +382,13 @@ public  final class DFSSchemaChange extends
       output.writeMessage(3, schema_);
     }
     if (((bitField0_ & 0x00000008) == 0x00000008)) {
-      output.writeBytes(4, getCurrentSchemaBytes());
+      output.writeInt32(4, op_);
     }
     if (((bitField0_ & 0x00000010) == 0x00000010)) {
-      output.writeBytes(5, getUpdatedSchemaBytes());
+      output.writeBytes(5, getCurrentSchemaBytes());
+    }
+    if (((bitField0_ & 0x00000020) == 0x00000020)) {
+      output.writeBytes(6, getUpdatedSchemaBytes());
     }
     getUnknownFields().writeTo(output);
   }
@@ -384,11 +413,15 @@ public  final class DFSSchemaChange extends
     }
     if (((bitField0_ & 0x00000008) == 0x00000008)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(4, getCurrentSchemaBytes());
+        .computeInt32Size(4, op_);
     }
     if (((bitField0_ & 0x00000010) == 0x00000010)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(5, getUpdatedSchemaBytes());
+        .computeBytesSize(5, getCurrentSchemaBytes());
+    }
+    if (((bitField0_ & 0x00000020) == 0x00000020)) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBytesSize(6, getUpdatedSchemaBytes());
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSerializedSize = size;
@@ -527,10 +560,12 @@ public  final class DFSSchemaChange extends
         schemaBuilder_.clear();
       }
       bitField0_ = (bitField0_ & ~0x00000004);
-      currentSchema_ = "";
+      op_ = 0;
       bitField0_ = (bitField0_ & ~0x00000008);
-      updatedSchema_ = "";
+      currentSchema_ = "";
       bitField0_ = (bitField0_ & ~0x00000010);
+      updatedSchema_ = "";
+      bitField0_ = (bitField0_ & ~0x00000020);
       return this;
     }
 
@@ -586,9 +621,13 @@ public  final class DFSSchemaChange extends
       if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
         to_bitField0_ |= 0x00000008;
       }
-      result.currentSchema_ = currentSchema_;
+      result.op_ = op_;
       if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
         to_bitField0_ |= 0x00000010;
+      }
+      result.currentSchema_ = currentSchema_;
+      if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
+        to_bitField0_ |= 0x00000020;
       }
       result.updatedSchema_ = updatedSchema_;
       result.bitField0_ = to_bitField0_;
@@ -616,13 +655,16 @@ public  final class DFSSchemaChange extends
       if (other.hasSchema()) {
         mergeSchema(other.getSchema());
       }
+      if (other.hasOp()) {
+        setOp(other.getOp());
+      }
       if (other.hasCurrentSchema()) {
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000010;
         currentSchema_ = other.currentSchema_;
         onChanged();
       }
       if (other.hasUpdatedSchema()) {
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000020;
         updatedSchema_ = other.updatedSchema_;
         onChanged();
       }
@@ -640,6 +682,10 @@ public  final class DFSSchemaChange extends
         return false;
       }
       if (!hasSchema()) {
+        
+        return false;
+      }
+      if (!hasOp()) {
         
         return false;
       }
@@ -1036,16 +1082,49 @@ public  final class DFSSchemaChange extends
       return schemaBuilder_;
     }
 
-    // required string currentSchema = 4;
-    private java.lang.Object currentSchema_ = "";
+    // required int32 op = 4;
+    private int op_ ;
     /**
-     * <code>required string currentSchema = 4;</code>
+     * <code>required int32 op = 4;</code>
      */
-    public boolean hasCurrentSchema() {
+    public boolean hasOp() {
       return ((bitField0_ & 0x00000008) == 0x00000008);
     }
     /**
-     * <code>required string currentSchema = 4;</code>
+     * <code>required int32 op = 4;</code>
+     */
+    public int getOp() {
+      return op_;
+    }
+    /**
+     * <code>required int32 op = 4;</code>
+     */
+    public Builder setOp(int value) {
+      bitField0_ |= 0x00000008;
+      op_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>required int32 op = 4;</code>
+     */
+    public Builder clearOp() {
+      bitField0_ = (bitField0_ & ~0x00000008);
+      op_ = 0;
+      onChanged();
+      return this;
+    }
+
+    // required string currentSchema = 5;
+    private java.lang.Object currentSchema_ = "";
+    /**
+     * <code>required string currentSchema = 5;</code>
+     */
+    public boolean hasCurrentSchema() {
+      return ((bitField0_ & 0x00000010) == 0x00000010);
+    }
+    /**
+     * <code>required string currentSchema = 5;</code>
      */
     public java.lang.String getCurrentSchema() {
       java.lang.Object ref = currentSchema_;
@@ -1059,7 +1138,7 @@ public  final class DFSSchemaChange extends
       }
     }
     /**
-     * <code>required string currentSchema = 4;</code>
+     * <code>required string currentSchema = 5;</code>
      */
     public com.google.protobuf.ByteString
         getCurrentSchemaBytes() {
@@ -1075,51 +1154,51 @@ public  final class DFSSchemaChange extends
       }
     }
     /**
-     * <code>required string currentSchema = 4;</code>
+     * <code>required string currentSchema = 5;</code>
      */
     public Builder setCurrentSchema(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000008;
+  bitField0_ |= 0x00000010;
       currentSchema_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>required string currentSchema = 4;</code>
+     * <code>required string currentSchema = 5;</code>
      */
     public Builder clearCurrentSchema() {
-      bitField0_ = (bitField0_ & ~0x00000008);
+      bitField0_ = (bitField0_ & ~0x00000010);
       currentSchema_ = getDefaultInstance().getCurrentSchema();
       onChanged();
       return this;
     }
     /**
-     * <code>required string currentSchema = 4;</code>
+     * <code>required string currentSchema = 5;</code>
      */
     public Builder setCurrentSchemaBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000008;
+  bitField0_ |= 0x00000010;
       currentSchema_ = value;
       onChanged();
       return this;
     }
 
-    // required string updatedSchema = 5;
+    // required string updatedSchema = 6;
     private java.lang.Object updatedSchema_ = "";
     /**
-     * <code>required string updatedSchema = 5;</code>
+     * <code>required string updatedSchema = 6;</code>
      */
     public boolean hasUpdatedSchema() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
+      return ((bitField0_ & 0x00000020) == 0x00000020);
     }
     /**
-     * <code>required string updatedSchema = 5;</code>
+     * <code>required string updatedSchema = 6;</code>
      */
     public java.lang.String getUpdatedSchema() {
       java.lang.Object ref = updatedSchema_;
@@ -1133,7 +1212,7 @@ public  final class DFSSchemaChange extends
       }
     }
     /**
-     * <code>required string updatedSchema = 5;</code>
+     * <code>required string updatedSchema = 6;</code>
      */
     public com.google.protobuf.ByteString
         getUpdatedSchemaBytes() {
@@ -1149,36 +1228,36 @@ public  final class DFSSchemaChange extends
       }
     }
     /**
-     * <code>required string updatedSchema = 5;</code>
+     * <code>required string updatedSchema = 6;</code>
      */
     public Builder setUpdatedSchema(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000010;
+  bitField0_ |= 0x00000020;
       updatedSchema_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>required string updatedSchema = 5;</code>
+     * <code>required string updatedSchema = 6;</code>
      */
     public Builder clearUpdatedSchema() {
-      bitField0_ = (bitField0_ & ~0x00000010);
+      bitField0_ = (bitField0_ & ~0x00000020);
       updatedSchema_ = getDefaultInstance().getUpdatedSchema();
       onChanged();
       return this;
     }
     /**
-     * <code>required string updatedSchema = 5;</code>
+     * <code>required string updatedSchema = 6;</code>
      */
     public Builder setUpdatedSchemaBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000010;
+  bitField0_ |= 0x00000020;
       updatedSchema_ = value;
       onChanged();
       return this;

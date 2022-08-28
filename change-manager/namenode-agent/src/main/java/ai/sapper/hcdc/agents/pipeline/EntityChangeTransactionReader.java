@@ -684,6 +684,8 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                                         schema.version(),
                                         rState, data.getTransaction(),
                                         message, txId);
+                            } else {
+
                             }
                             rState.setSchemaVersion(schema.version());
                         }
@@ -736,19 +738,31 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
     }
 
     private void compareSchemaVersions(SchemaVersion current,
-                                       SchemaVersion updated,
-                                       DFSFileReplicaState replicaState,
-                                       DFSTransaction tnx,
-                                       MessageObject<String, DFSChangeDelta> message,
+                                       @NonNull SchemaVersion updated,
+                                       @NonNull DFSFileReplicaState replicaState,
+                                       @NonNull DFSTransaction tnx,
+                                       @NonNull MessageObject<String, DFSChangeDelta> message,
                                        long txId) throws Exception {
-        if (current.equals(updated) || current.compare(updated) <= 0) return;
-        MessageObject<String, DFSChangeDelta> m = HCDCChangeDeltaSerDe
-                .createSchemaChange(message.value().getNamespace(),
-                        tnx, current, updated, replicaState, MessageObject.MessageMode.Schema
-                );
-        m.correlationId(message.id());
+        AvroChangeType.EChangeType op = null;
+        boolean changed = false;
+        if (current == null) {
+            changed = true;
+            op = AvroChangeType.EChangeType.EntityCreate;
+        } else if ((current.equals(updated) || current.compare(updated) <= 0)) {
+            changed = false;
+        } else {
+            op = AvroChangeType.EChangeType.EntityUpdate;
+            changed = true;
+        }
+        if (changed) {
+            MessageObject<String, DFSChangeDelta> m = HCDCChangeDeltaSerDe
+                    .createSchemaChange(message.value().getNamespace(),
+                            tnx, current, updated, op, replicaState, MessageObject.MessageMode.Schema
+                    );
+            m.correlationId(message.id());
 
-        sender.send(m);
+            sender.send(m);
+        }
     }
 
     private DFSFileReplicaState snapshotDone(DFSFileState fileState,

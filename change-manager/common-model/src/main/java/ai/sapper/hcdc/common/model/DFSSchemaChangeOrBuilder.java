@@ -48,32 +48,42 @@ public interface DFSSchemaChangeOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSSchemaOrBuilder getSchemaOrBuilder();
 
-  // required string currentSchema = 4;
+  // required int32 op = 4;
   /**
-   * <code>required string currentSchema = 4;</code>
+   * <code>required int32 op = 4;</code>
+   */
+  boolean hasOp();
+  /**
+   * <code>required int32 op = 4;</code>
+   */
+  int getOp();
+
+  // required string currentSchema = 5;
+  /**
+   * <code>required string currentSchema = 5;</code>
    */
   boolean hasCurrentSchema();
   /**
-   * <code>required string currentSchema = 4;</code>
+   * <code>required string currentSchema = 5;</code>
    */
   java.lang.String getCurrentSchema();
   /**
-   * <code>required string currentSchema = 4;</code>
+   * <code>required string currentSchema = 5;</code>
    */
   com.google.protobuf.ByteString
       getCurrentSchemaBytes();
 
-  // required string updatedSchema = 5;
+  // required string updatedSchema = 6;
   /**
-   * <code>required string updatedSchema = 5;</code>
+   * <code>required string updatedSchema = 6;</code>
    */
   boolean hasUpdatedSchema();
   /**
-   * <code>required string updatedSchema = 5;</code>
+   * <code>required string updatedSchema = 6;</code>
    */
   java.lang.String getUpdatedSchema();
   /**
-   * <code>required string updatedSchema = 5;</code>
+   * <code>required string updatedSchema = 6;</code>
    */
   com.google.protobuf.ByteString
       getUpdatedSchemaBytes();
