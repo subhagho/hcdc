@@ -172,14 +172,23 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     @Accessors(fluent = true)
     @ToString
     public static class DFSFileType {
+        private String namespace;
         private String path;
         private long inodeId = Long.MIN_VALUE;
 
         public DFSFile getProto() {
-            return DFSFile.newBuilder().setPath(path).setInodeId(inodeId).build();
+            Preconditions.checkState(!Strings.isNullOrEmpty(namespace));
+            Preconditions.checkState(!Strings.isNullOrEmpty(path));
+            Preconditions.checkState(inodeId >= 0);
+            return DFSFile.newBuilder()
+                    .setNamespace(namespace)
+                    .setPath(path)
+                    .setInodeId(inodeId)
+                    .build();
         }
 
         public void parse(@NonNull DFSFile file) {
+            this.namespace = file.getNamespace();
             this.path = file.getPath();
             this.inodeId = file.getInodeId();
         }

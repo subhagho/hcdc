@@ -26,6 +26,7 @@ message DFSTransaction {
 }
 
 message DFSFile {
+  required string namespace = 1;
   required string path = 2;
   required int64 inodeId = 3;
   optional string fileType = 4;

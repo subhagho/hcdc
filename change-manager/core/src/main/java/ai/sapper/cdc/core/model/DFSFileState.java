@@ -12,6 +12,7 @@ import java.util.Map;
 @Getter
 @Setter
 public class DFSFileState {
+    private String namespace;
     private long id;
     private String zkPath;
     private String hdfsFilePath;

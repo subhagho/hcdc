@@ -1,5 +1,6 @@
 package ai.sapper.cdc.common.schema;
 
+import ai.sapper.cdc.common.model.AvroChangeRecord;
 import lombok.NonNull;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
@@ -10,22 +11,33 @@ import org.apache.avro.io.*;
 import java.io.*;
 
 public class AvroUtils {
-
-    private static final String AVRO_SCHEMA_WRAPPER = "{\n" +
-            "\t\"type\" : \"record\",\n" +
-            "\t\"namespace\" : \"ai.sapper.cdc.deltas\", \n" +
-            "\t\"name\" : \"ChangeDelta\", \n" +
-            "\t\"fields\" : [\n" +
-            "\t\t{ \"name\" : \"txId\", \"type\" : \"long\" }, \n" +
-            "\t\t{ \"name\" : \"op\", \"type\" : \"int\" }, \n" +
-            "\t\t{ \"name\" : \"domain\", \"type\" : \"string\" }, \n" +
-            "\t\t{ \"name\" : \"entity\", \"type\" : \"string\" }, \n" +
-            "\t\t{ \"name\" : \"timestamp\", \"type\" : \"long\" }, \n" +
-            "\t\t{ \"name\" : \"data\", \"type\" : %s \n }\n] \n" +
-            "}";
+    private static final String SCHEMA_REPLACE = "__SCHEMA__";
+    private static final String AVRO_SCHEMA_WRAPPER = String.format("{\n" +
+                    "\t\"type\" : \"record\",\n" +
+                    "\t\"namespace\" : \"ai.sapper.cdc.deltas\", \n" +
+                    "\t\"name\" : \"ChangeDelta\", \n" +
+                    "\t\"fields\" : [\n" +
+                    "\t\t{ \"name\" : \"%s\", \"type\" : \"long\" }, \n" +
+                    "\t\t{ \"name\" : \"%s\", \"type\" : \"int\" }, \n" +
+                    "\t\t{ \"name\" : \"%s\", \"type\" : \"string\" }, \n" +
+                    "\t\t{ \"name\" : \"%s\", \"type\" : \"string\" }, \n" +
+                    "\t\t{ \"name\" : \"%s\", \"type\" : \"string\" }, \n" +
+                    "\t\t{ \"name\" : \"%s\", \"type\" : \"string\" }, \n" +
+                    "\t\t{ \"name\" : \"%s\", \"type\" : \"long\" }, \n" +
+                    "\t\t{ \"name\" : \"%s\", \"type\" : %s \n }\n] \n" +
+                    "}",
+            AvroChangeRecord.AVRO_FIELD_TXID,
+            AvroChangeRecord.AVRO_FIELD_OP,
+            AvroChangeRecord.AVRO_FIELD_TARGET_DOMAIN,
+            AvroChangeRecord.AVRO_FIELD_TARGET_ENTITY,
+            AvroChangeRecord.AVRO_FIELD_SOURCE_DOMAIN,
+            AvroChangeRecord.AVRO_FIELD_SOURCE_ENTITY,
+            AvroChangeRecord.AVRO_FIELD_TIMESTAMP,
+            AvroChangeRecord.AVRO_FIELD_DATA,
+            SCHEMA_REPLACE);
 
     public static Schema createSchema(@NonNull Schema schema) throws Exception {
-        String scStr = String.format(AVRO_SCHEMA_WRAPPER, schema.toString(false));
+        String scStr = AVRO_SCHEMA_WRAPPER.replace(SCHEMA_REPLACE, schema.toString(false));
         return new Schema.Parser().parse(scStr);
     }
 

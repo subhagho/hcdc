@@ -135,7 +135,10 @@ public class EditsLogReader implements Runnable {
             for (DFSEditsFileFinder.EditsLogFile file : files) {
                 LOGGER.debug(getClass(), state.getCurrentTxId(),
                         String.format("Reading edits file [path=%s][startTx=%d]", file, state.getCurrentTxId()));
-                reader.run(file, state.getCurrentTxId(), file.endTxId());
+                reader.run(file,
+                        state.getCurrentTxId(),
+                        file.endTxId(),
+                        NameNodeEnv.get(name));
                 DFSEditLogBatch batch = reader.batch();
                 if (batch.transactions() != null && !batch.transactions().isEmpty()) {
                     long tid = processBatch(batch, txId);

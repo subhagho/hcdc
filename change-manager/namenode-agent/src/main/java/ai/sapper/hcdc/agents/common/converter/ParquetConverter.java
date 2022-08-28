@@ -81,7 +81,11 @@ public class ParquetConverter extends FormatConverter {
                 while (true) {
                     GenericRecord record = reader.read();
                     if (record == null) break;
-                    GenericRecord wrapped = wrap(wrapper, schemaEntity, record, op, txId);
+                    GenericRecord wrapped = wrap(wrapper,
+                            schemaEntity,
+                            fileState.getNamespace(),
+                            fileState.getHdfsFilePath(),
+                            record, op, txId);
                     fos.append(wrapped);
                 }
             }

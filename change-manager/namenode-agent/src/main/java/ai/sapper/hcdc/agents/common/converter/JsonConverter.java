@@ -79,7 +79,11 @@ public class JsonConverter extends FormatConverter {
                         line = line.trim();
                         if (Strings.isNullOrEmpty(line)) continue;
                         GenericRecord record = AvroUtils.jsonToAvroRecord(line, schema.schema());
-                        GenericRecord wrapped = wrap(wrapper, schemaEntity, record, op, txId);
+                        GenericRecord wrapped = wrap(wrapper,
+                                schemaEntity,
+                                fileState.getNamespace(),
+                                fileState.getHdfsFilePath(),
+                                record, op, txId);
                         fos.append(wrapped);
                     }
                 }
@@ -111,8 +115,8 @@ public class JsonConverter extends FormatConverter {
     }
 
     private EntityDef parseSchema(File file,
-                               DFSFileState fileState,
-                               SchemaEntity schemaEntity) throws Exception {
+                                  DFSFileState fileState,
+                                  SchemaEntity schemaEntity) throws Exception {
         Schema schema = null;
         ObjectMapper mapper = new ObjectMapper();
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
@@ -160,8 +164,8 @@ public class JsonConverter extends FormatConverter {
      */
     @Override
     public EntityDef extractSchema(@NonNull HDFSBlockReader reader,
-                                @NonNull DFSFileState fileState,
-                                @NonNull SchemaEntity schemaEntity) throws IOException {
+                                   @NonNull DFSFileState fileState,
+                                   @NonNull SchemaEntity schemaEntity) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
             EntityDef schema = hasSchema(fileState, schemaEntity);

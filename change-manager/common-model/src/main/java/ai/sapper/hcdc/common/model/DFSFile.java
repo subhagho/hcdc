@@ -54,23 +54,28 @@ public  final class DFSFile extends
             }
             break;
           }
-          case 18: {
+          case 10: {
             bitField0_ |= 0x00000001;
+            namespace_ = input.readBytes();
+            break;
+          }
+          case 18: {
+            bitField0_ |= 0x00000002;
             path_ = input.readBytes();
             break;
           }
           case 24: {
-            bitField0_ |= 0x00000002;
+            bitField0_ |= 0x00000004;
             inodeId_ = input.readInt64();
             break;
           }
           case 34: {
-            bitField0_ |= 0x00000004;
+            bitField0_ |= 0x00000008;
             fileType_ = input.readBytes();
             break;
           }
           case 42: {
-            bitField0_ |= 0x00000008;
+            bitField0_ |= 0x00000010;
             schemaLocation_ = input.readBytes();
             break;
           }
@@ -114,6 +119,49 @@ public  final class DFSFile extends
   }
 
   private int bitField0_;
+  // required string namespace = 1;
+  public static final int NAMESPACE_FIELD_NUMBER = 1;
+  private java.lang.Object namespace_;
+  /**
+   * <code>required string namespace = 1;</code>
+   */
+  public boolean hasNamespace() {
+    return ((bitField0_ & 0x00000001) == 0x00000001);
+  }
+  /**
+   * <code>required string namespace = 1;</code>
+   */
+  public java.lang.String getNamespace() {
+    java.lang.Object ref = namespace_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      if (bs.isValidUtf8()) {
+        namespace_ = s;
+      }
+      return s;
+    }
+  }
+  /**
+   * <code>required string namespace = 1;</code>
+   */
+  public com.google.protobuf.ByteString
+      getNamespaceBytes() {
+    java.lang.Object ref = namespace_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      namespace_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
   // required string path = 2;
   public static final int PATH_FIELD_NUMBER = 2;
   private java.lang.Object path_;
@@ -121,7 +169,7 @@ public  final class DFSFile extends
    * <code>required string path = 2;</code>
    */
   public boolean hasPath() {
-    return ((bitField0_ & 0x00000001) == 0x00000001);
+    return ((bitField0_ & 0x00000002) == 0x00000002);
   }
   /**
    * <code>required string path = 2;</code>
@@ -164,7 +212,7 @@ public  final class DFSFile extends
    * <code>required int64 inodeId = 3;</code>
    */
   public boolean hasInodeId() {
-    return ((bitField0_ & 0x00000002) == 0x00000002);
+    return ((bitField0_ & 0x00000004) == 0x00000004);
   }
   /**
    * <code>required int64 inodeId = 3;</code>
@@ -180,7 +228,7 @@ public  final class DFSFile extends
    * <code>optional string fileType = 4;</code>
    */
   public boolean hasFileType() {
-    return ((bitField0_ & 0x00000004) == 0x00000004);
+    return ((bitField0_ & 0x00000008) == 0x00000008);
   }
   /**
    * <code>optional string fileType = 4;</code>
@@ -223,7 +271,7 @@ public  final class DFSFile extends
    * <code>optional string schemaLocation = 5;</code>
    */
   public boolean hasSchemaLocation() {
-    return ((bitField0_ & 0x00000008) == 0x00000008);
+    return ((bitField0_ & 0x00000010) == 0x00000010);
   }
   /**
    * <code>optional string schemaLocation = 5;</code>
@@ -260,6 +308,7 @@ public  final class DFSFile extends
   }
 
   private void initFields() {
+    namespace_ = "";
     path_ = "";
     inodeId_ = 0L;
     fileType_ = "";
@@ -270,6 +319,10 @@ public  final class DFSFile extends
     byte isInitialized = memoizedIsInitialized;
     if (isInitialized != -1) return isInitialized == 1;
 
+    if (!hasNamespace()) {
+      memoizedIsInitialized = 0;
+      return false;
+    }
     if (!hasPath()) {
       memoizedIsInitialized = 0;
       return false;
@@ -286,15 +339,18 @@ public  final class DFSFile extends
                       throws java.io.IOException {
     getSerializedSize();
     if (((bitField0_ & 0x00000001) == 0x00000001)) {
-      output.writeBytes(2, getPathBytes());
+      output.writeBytes(1, getNamespaceBytes());
     }
     if (((bitField0_ & 0x00000002) == 0x00000002)) {
-      output.writeInt64(3, inodeId_);
+      output.writeBytes(2, getPathBytes());
     }
     if (((bitField0_ & 0x00000004) == 0x00000004)) {
-      output.writeBytes(4, getFileTypeBytes());
+      output.writeInt64(3, inodeId_);
     }
     if (((bitField0_ & 0x00000008) == 0x00000008)) {
+      output.writeBytes(4, getFileTypeBytes());
+    }
+    if (((bitField0_ & 0x00000010) == 0x00000010)) {
       output.writeBytes(5, getSchemaLocationBytes());
     }
     getUnknownFields().writeTo(output);
@@ -308,17 +364,21 @@ public  final class DFSFile extends
     size = 0;
     if (((bitField0_ & 0x00000001) == 0x00000001)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(2, getPathBytes());
+        .computeBytesSize(1, getNamespaceBytes());
     }
     if (((bitField0_ & 0x00000002) == 0x00000002)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeInt64Size(3, inodeId_);
+        .computeBytesSize(2, getPathBytes());
     }
     if (((bitField0_ & 0x00000004) == 0x00000004)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(4, getFileTypeBytes());
+        .computeInt64Size(3, inodeId_);
     }
     if (((bitField0_ & 0x00000008) == 0x00000008)) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeBytesSize(4, getFileTypeBytes());
+    }
+    if (((bitField0_ & 0x00000010) == 0x00000010)) {
       size += com.google.protobuf.CodedOutputStream
         .computeBytesSize(5, getSchemaLocationBytes());
     }
@@ -438,14 +498,16 @@ public  final class DFSFile extends
 
     public Builder clear() {
       super.clear();
-      path_ = "";
+      namespace_ = "";
       bitField0_ = (bitField0_ & ~0x00000001);
-      inodeId_ = 0L;
+      path_ = "";
       bitField0_ = (bitField0_ & ~0x00000002);
-      fileType_ = "";
+      inodeId_ = 0L;
       bitField0_ = (bitField0_ & ~0x00000004);
-      schemaLocation_ = "";
+      fileType_ = "";
       bitField0_ = (bitField0_ & ~0x00000008);
+      schemaLocation_ = "";
+      bitField0_ = (bitField0_ & ~0x00000010);
       return this;
     }
 
@@ -477,17 +539,21 @@ public  final class DFSFile extends
       if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
         to_bitField0_ |= 0x00000001;
       }
-      result.path_ = path_;
+      result.namespace_ = namespace_;
       if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
         to_bitField0_ |= 0x00000002;
       }
-      result.inodeId_ = inodeId_;
+      result.path_ = path_;
       if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
         to_bitField0_ |= 0x00000004;
       }
-      result.fileType_ = fileType_;
+      result.inodeId_ = inodeId_;
       if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
         to_bitField0_ |= 0x00000008;
+      }
+      result.fileType_ = fileType_;
+      if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
+        to_bitField0_ |= 0x00000010;
       }
       result.schemaLocation_ = schemaLocation_;
       result.bitField0_ = to_bitField0_;
@@ -506,8 +572,13 @@ public  final class DFSFile extends
 
     public Builder mergeFrom(ai.sapper.hcdc.common.model.DFSFile other) {
       if (other == ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance()) return this;
-      if (other.hasPath()) {
+      if (other.hasNamespace()) {
         bitField0_ |= 0x00000001;
+        namespace_ = other.namespace_;
+        onChanged();
+      }
+      if (other.hasPath()) {
+        bitField0_ |= 0x00000002;
         path_ = other.path_;
         onChanged();
       }
@@ -515,12 +586,12 @@ public  final class DFSFile extends
         setInodeId(other.getInodeId());
       }
       if (other.hasFileType()) {
-        bitField0_ |= 0x00000004;
+        bitField0_ |= 0x00000008;
         fileType_ = other.fileType_;
         onChanged();
       }
       if (other.hasSchemaLocation()) {
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000010;
         schemaLocation_ = other.schemaLocation_;
         onChanged();
       }
@@ -529,6 +600,10 @@ public  final class DFSFile extends
     }
 
     public final boolean isInitialized() {
+      if (!hasNamespace()) {
+        
+        return false;
+      }
       if (!hasPath()) {
         
         return false;
@@ -559,13 +634,87 @@ public  final class DFSFile extends
     }
     private int bitField0_;
 
+    // required string namespace = 1;
+    private java.lang.Object namespace_ = "";
+    /**
+     * <code>required string namespace = 1;</code>
+     */
+    public boolean hasNamespace() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>required string namespace = 1;</code>
+     */
+    public java.lang.String getNamespace() {
+      java.lang.Object ref = namespace_;
+      if (!(ref instanceof java.lang.String)) {
+        java.lang.String s = ((com.google.protobuf.ByteString) ref)
+            .toStringUtf8();
+        namespace_ = s;
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>required string namespace = 1;</code>
+     */
+    public com.google.protobuf.ByteString
+        getNamespaceBytes() {
+      java.lang.Object ref = namespace_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        namespace_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>required string namespace = 1;</code>
+     */
+    public Builder setNamespace(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+      namespace_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>required string namespace = 1;</code>
+     */
+    public Builder clearNamespace() {
+      bitField0_ = (bitField0_ & ~0x00000001);
+      namespace_ = getDefaultInstance().getNamespace();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>required string namespace = 1;</code>
+     */
+    public Builder setNamespaceBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+      namespace_ = value;
+      onChanged();
+      return this;
+    }
+
     // required string path = 2;
     private java.lang.Object path_ = "";
     /**
      * <code>required string path = 2;</code>
      */
     public boolean hasPath() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
+      return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
      * <code>required string path = 2;</code>
@@ -605,7 +754,7 @@ public  final class DFSFile extends
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000001;
+  bitField0_ |= 0x00000002;
       path_ = value;
       onChanged();
       return this;
@@ -614,7 +763,7 @@ public  final class DFSFile extends
      * <code>required string path = 2;</code>
      */
     public Builder clearPath() {
-      bitField0_ = (bitField0_ & ~0x00000001);
+      bitField0_ = (bitField0_ & ~0x00000002);
       path_ = getDefaultInstance().getPath();
       onChanged();
       return this;
@@ -627,7 +776,7 @@ public  final class DFSFile extends
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000001;
+  bitField0_ |= 0x00000002;
       path_ = value;
       onChanged();
       return this;
@@ -639,7 +788,7 @@ public  final class DFSFile extends
      * <code>required int64 inodeId = 3;</code>
      */
     public boolean hasInodeId() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
+      return ((bitField0_ & 0x00000004) == 0x00000004);
     }
     /**
      * <code>required int64 inodeId = 3;</code>
@@ -651,7 +800,7 @@ public  final class DFSFile extends
      * <code>required int64 inodeId = 3;</code>
      */
     public Builder setInodeId(long value) {
-      bitField0_ |= 0x00000002;
+      bitField0_ |= 0x00000004;
       inodeId_ = value;
       onChanged();
       return this;
@@ -660,7 +809,7 @@ public  final class DFSFile extends
      * <code>required int64 inodeId = 3;</code>
      */
     public Builder clearInodeId() {
-      bitField0_ = (bitField0_ & ~0x00000002);
+      bitField0_ = (bitField0_ & ~0x00000004);
       inodeId_ = 0L;
       onChanged();
       return this;
@@ -672,7 +821,7 @@ public  final class DFSFile extends
      * <code>optional string fileType = 4;</code>
      */
     public boolean hasFileType() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
+      return ((bitField0_ & 0x00000008) == 0x00000008);
     }
     /**
      * <code>optional string fileType = 4;</code>
@@ -712,7 +861,7 @@ public  final class DFSFile extends
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000004;
+  bitField0_ |= 0x00000008;
       fileType_ = value;
       onChanged();
       return this;
@@ -721,7 +870,7 @@ public  final class DFSFile extends
      * <code>optional string fileType = 4;</code>
      */
     public Builder clearFileType() {
-      bitField0_ = (bitField0_ & ~0x00000004);
+      bitField0_ = (bitField0_ & ~0x00000008);
       fileType_ = getDefaultInstance().getFileType();
       onChanged();
       return this;
@@ -734,7 +883,7 @@ public  final class DFSFile extends
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000004;
+  bitField0_ |= 0x00000008;
       fileType_ = value;
       onChanged();
       return this;
@@ -746,7 +895,7 @@ public  final class DFSFile extends
      * <code>optional string schemaLocation = 5;</code>
      */
     public boolean hasSchemaLocation() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
+      return ((bitField0_ & 0x00000010) == 0x00000010);
     }
     /**
      * <code>optional string schemaLocation = 5;</code>
@@ -786,7 +935,7 @@ public  final class DFSFile extends
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000008;
+  bitField0_ |= 0x00000010;
       schemaLocation_ = value;
       onChanged();
       return this;
@@ -795,7 +944,7 @@ public  final class DFSFile extends
      * <code>optional string schemaLocation = 5;</code>
      */
     public Builder clearSchemaLocation() {
-      bitField0_ = (bitField0_ & ~0x00000008);
+      bitField0_ = (bitField0_ & ~0x00000010);
       schemaLocation_ = getDefaultInstance().getSchemaLocation();
       onChanged();
       return this;
@@ -808,7 +957,7 @@ public  final class DFSFile extends
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000008;
+  bitField0_ |= 0x00000010;
       schemaLocation_ = value;
       onChanged();
       return this;

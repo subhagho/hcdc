@@ -187,16 +187,17 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
                                                                          DFSFileReplicaState rState,
                                                                          long txId) throws Exception {
         DFSTransactionType.DFSFileType file = new DFSTransactionType.DFSFileType();
-        file.path(fileState.getHdfsFilePath());
-        file.inodeId(fileState.getId());
+        file.namespace(NameNodeEnv.get(name()).source())
+                .path(fileState.getHdfsFilePath())
+                .inodeId(fileState.getId());
 
         DFSTransactionType.DFSCloseFileType closeFile = new DFSTransactionType.DFSCloseFileType();
-        closeFile.file(file);
-        closeFile.overwrite(false);
-        closeFile.blockSize(fileState.getBlockSize());
-        closeFile.modifiedTime(fileState.getUpdatedTime());
-        closeFile.accessedTime(fileState.getCreatedTime());
-        closeFile.length(fileState.getDataSize());
+        closeFile.file(file)
+                .overwrite(false)
+                .blockSize(fileState.getBlockSize())
+                .modifiedTime(fileState.getUpdatedTime())
+                .accessedTime(fileState.getCreatedTime())
+                .length(fileState.getDataSize());
 
         if (fileState.hasBlocks()) {
             for (DFSBlockState bs : fileState.getBlocks()) {

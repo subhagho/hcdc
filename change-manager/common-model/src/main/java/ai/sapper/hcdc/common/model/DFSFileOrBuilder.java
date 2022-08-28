@@ -6,6 +6,21 @@ package ai.sapper.hcdc.common.model;
 public interface DFSFileOrBuilder
     extends com.google.protobuf.MessageOrBuilder {
 
+  // required string namespace = 1;
+  /**
+   * <code>required string namespace = 1;</code>
+   */
+  boolean hasNamespace();
+  /**
+   * <code>required string namespace = 1;</code>
+   */
+  java.lang.String getNamespace();
+  /**
+   * <code>required string namespace = 1;</code>
+   */
+  com.google.protobuf.ByteString
+      getNamespaceBytes();
+
   // required string path = 2;
   /**
    * <code>required string path = 2;</code>

@@ -46,16 +46,18 @@ public class FileStateHelper {
         }
     }
 
-    public DFSFileState create(@NonNull String path,
+    public DFSFileState create(@NonNull String namespace,
+                               @NonNull String path,
                                long inodeId,
                                long createdTime,
                                long blockSize,
                                @NonNull EFileState state,
                                long txId) throws StateManagerError {
-        return create(path, inodeId, createdTime, blockSize, state, txId, false);
+        return create(namespace, path, inodeId, createdTime, blockSize, state, txId, false);
     }
 
-    public DFSFileState create(@NonNull String path,
+    public DFSFileState create(@NonNull String namespace,
+                               @NonNull String path,
                                long inodeId,
                                long createdTime,
                                long blockSize,
@@ -86,6 +88,7 @@ public class FileStateHelper {
                 if (fs == null) {
                     fs = new DFSFileState();
                 }
+                fs.setNamespace(namespace);
                 fs.setId(inodeId);
                 fs.setZkPath(zp);
                 fs.setHdfsFilePath(path);

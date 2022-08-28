@@ -9,6 +9,7 @@ import ai.sapper.cdc.core.model.DFSFileState;
 import ai.sapper.cdc.core.model.EBlockState;
 import ai.sapper.cdc.core.model.EFileState;
 import ai.sapper.hcdc.agents.common.InvalidTransactionError;
+import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ProtoBufUtils;
 import ai.sapper.hcdc.agents.common.TransactionProcessor;
 import ai.sapper.hcdc.common.model.*;
@@ -66,7 +67,8 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
 
         fileState = stateManager()
                 .fileStateHelper()
-                .create(data.getFile().getPath(),
+                .create(NameNodeEnv.get(name()).source(),
+                        data.getFile().getPath(),
                         data.getFile().getInodeId(),
                         data.getModifiedTime(),
                         data.getBlockSize(),
@@ -125,7 +127,8 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
         }
         fileState = stateManager()
                 .fileStateHelper()
-                .create(data.getFile().getPath(),
+                .create(data.getFile().getNamespace(),
+                        data.getFile().getPath(),
                         data.getFile().getInodeId(),
                         data.getModifiedTime(),
                         data.getBlockSize(),

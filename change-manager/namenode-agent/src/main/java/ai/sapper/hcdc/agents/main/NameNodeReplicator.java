@@ -201,7 +201,8 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
 
             DFSFileState fileState = stateManager
                     .fileStateHelper()
-                    .create(inode.path(),
+                    .create(NameNodeEnv.get(name()).source(),
+                            inode.path(),
                             inode.id,
                             inode.mTime,
                             inode.preferredBlockSize,

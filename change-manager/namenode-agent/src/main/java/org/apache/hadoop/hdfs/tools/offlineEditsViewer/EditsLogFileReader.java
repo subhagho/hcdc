@@ -3,6 +3,7 @@ package org.apache.hadoop.hdfs.tools.offlineEditsViewer;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.agents.common.DFSAgentError;
 import ai.sapper.hcdc.agents.common.DFSEditsFileFinder;
+import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.model.DFSEditLogBatch;
 import ai.sapper.hcdc.agents.model.DFSTransactionType;
 import com.google.common.base.Preconditions;
@@ -21,11 +22,16 @@ public class EditsLogFileReader {
     private DFSEditLogBatch batch;
     private CustomEditsVisitor visitor;
 
-    public void run(@NonNull DFSEditsFileFinder.EditsLogFile file, long startTxId, long endTxId) throws DFSAgentError {
+    public void run(@NonNull DFSEditsFileFinder.EditsLogFile file,
+                    long startTxId,
+                    long endTxId,
+                    @NonNull NameNodeEnv env) throws DFSAgentError {
         try {
             Preconditions.checkArgument(!Strings.isNullOrEmpty(file.path()));
 
-            visitor = new CustomEditsVisitor(file.path()).withStartTxId(startTxId).withEndTxId(endTxId);
+            visitor = new CustomEditsVisitor(file.path(), env)
+                    .withStartTxId(startTxId)
+                    .withEndTxId(endTxId);
             OfflineEditsLoader loader = OfflineEditsLoader.OfflineEditsLoaderFactory.
                     createLoader(visitor, file.path(), false, new OfflineEditsViewer.Flags());
             loader.loadEdits();
@@ -50,11 +56,14 @@ public class EditsLogFileReader {
         }
     }
 
-    public void run(@NonNull DFSEditsFileFinder.EditsLogFile file) throws DFSAgentError {
-        run(file, -1, -1);
+    public void run(@NonNull DFSEditsFileFinder.EditsLogFile file, @NonNull NameNodeEnv env) throws DFSAgentError {
+        run(file, -1, -1, env);
     }
 
-    public static List<DFSEditLogBatch> readEditsInRange(@NonNull String dir, long startTxId, long endTxId) throws DFSAgentError {
+    public static List<DFSEditLogBatch> readEditsInRange(@NonNull String dir,
+                                                         long startTxId,
+                                                         long endTxId,
+                                                         @NonNull NameNodeEnv env) throws DFSAgentError {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(dir));
 
         try {
@@ -66,7 +75,7 @@ public class EditsLogFileReader {
                             String.format("Reading transactions from edits file. [%s][startTx=%d, endTx=%d]",
                                     file.path(), startTxId, endTxId));
                     EditsLogFileReader viewer = new EditsLogFileReader();
-                    viewer.run(file, startTxId, endTxId);
+                    viewer.run(file, startTxId, endTxId, env);
 
                     if (viewer.batch != null) {
                         batches.add(viewer.batch);

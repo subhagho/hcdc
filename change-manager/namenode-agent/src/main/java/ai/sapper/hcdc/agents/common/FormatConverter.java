@@ -46,6 +46,8 @@ public abstract class FormatConverter {
 
     public GenericRecord wrap(@NonNull Schema schema,
                               @NonNull SchemaEntity schemaEntity,
+                              @NonNull String namespace,
+                              @NonNull String hdfsPath,
                               @NonNull GenericRecord record,
                               @NonNull AvroChangeType.EChangeType op,
                               long txId) throws IOException {
@@ -54,7 +56,8 @@ public abstract class FormatConverter {
                 .txId(txId)
                 .timestamp(System.currentTimeMillis())
                 .op(op)
-                .schemaEntity(schemaEntity)
+                .targetEntity(schemaEntity)
+                .sourceEntity(new SchemaEntity(namespace, hdfsPath))
                 .data(record);
 
         return avro.toAvro(schema);

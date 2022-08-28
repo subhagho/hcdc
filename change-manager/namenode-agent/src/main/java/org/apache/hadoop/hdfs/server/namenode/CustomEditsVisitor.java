@@ -2,6 +2,7 @@ package org.apache.hadoop.hdfs.server.namenode;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.agents.common.DFSAgentError;
+import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.model.DFSEditLogBatch;
 import lombok.Getter;
 import lombok.NonNull;
@@ -16,8 +17,10 @@ public class CustomEditsVisitor implements OfflineEditsVisitor {
     private long endTxId = -1;
     private final DFSEditLogBatch batch;
     private DFSEditLogParser parser;
+    private final NameNodeEnv env;
 
-    public CustomEditsVisitor(@NonNull String filename) {
+    public CustomEditsVisitor(@NonNull String filename, @NonNull NameNodeEnv env) {
+        this.env = env;
         batch = new DFSEditLogBatch(filename);
     }
 
@@ -44,7 +47,10 @@ public class CustomEditsVisitor implements OfflineEditsVisitor {
         batch.version(version);
         batch.setup();
 
-        parser = new DFSEditLogParser().withStartTxId(startTxId).withEndTxId(endTxId);
+        parser = new DFSEditLogParser()
+                .withStartTxId(startTxId)
+                .withEndTxId(endTxId)
+                .withEnv(env);
     }
 
     /**

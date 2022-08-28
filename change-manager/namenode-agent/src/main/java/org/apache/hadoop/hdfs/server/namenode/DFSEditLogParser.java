@@ -1,10 +1,12 @@
 package org.apache.hadoop.hdfs.server.namenode;
 
 import ai.sapper.hcdc.agents.common.DFSAgentError;
+import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.model.DFSEditLogBatch;
 import ai.sapper.hcdc.agents.model.DFSTransactionType;
 import ai.sapper.hcdc.common.model.DFSRenameFile;
 import ai.sapper.hcdc.common.model.DFSTransaction;
+import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -76,6 +78,7 @@ public class DFSEditLogParser {
      */
     private long startTxId = -1;
     private long endTxId = -1;
+    private NameNodeEnv env;
 
     public DFSEditLogParser withStartTxId(long startTxId) {
         this.startTxId = startTxId;
@@ -87,7 +90,13 @@ public class DFSEditLogParser {
         return this;
     }
 
+    public DFSEditLogParser withEnv(@NonNull NameNodeEnv env) {
+        this.env = env;
+        return this;
+    }
+
     public DFSTransactionType<?> parse(@NonNull FSEditLogOp op, @NonNull DFSEditLogBatch batch) throws DFSAgentError {
+        Preconditions.checkNotNull(env);
         if (op.opCode == FSEditLogOpCodes.OP_START_LOG_SEGMENT) {
             if (op.getTransactionId() != batch.startTnxId()) {
                 throw new DFSAgentError(
@@ -129,10 +138,18 @@ public class DFSEditLogParser {
         }
     }
 
+
     private boolean shouldLogTx(long txid) {
         if (startTxId > 0 && txid < startTxId) return false;
         if (endTxId > 0 && txid > endTxId) return false;
         return true;
+    }
+
+    private DFSTransactionType.DFSFileType fileType(@NonNull String path, long inodeId) {
+        return new DFSTransactionType.DFSFileType()
+                .namespace(env.source())
+                .path(path)
+                .inodeId(inodeId);
     }
 
     private DFSTransactionType<?> handleDefault(FSEditLogOp op, DFSEditLogBatch batch) throws DFSAgentError {
@@ -156,8 +173,8 @@ public class DFSEditLogParser {
 
             rft.id(rop.txid)
                     .op(DFSTransaction.Operation.RENAME);
-            rft.source(new DFSTransactionType.DFSFileType().path(rop.src))
-                    .dest(new DFSTransactionType.DFSFileType().path(rop.dst));
+            rft.source(fileType(rop.src, -1))
+                    .dest(fileType(rop.dst, -1));
             rft.length(rop.length);
             if (rop.options != null && rop.options.length > 0) {
                 for (Options.Rename rn : rop.options) {
@@ -187,8 +204,8 @@ public class DFSEditLogParser {
 
             rft.id(rop.txid)
                     .op(DFSTransaction.Operation.RENAME);
-            rft.source(new DFSTransactionType.DFSFileType().path(rop.src))
-                    .dest(new DFSTransactionType.DFSFileType().path(rop.dst));
+            rft.source(fileType(rop.src, -1))
+                    .dest(fileType(rop.dst, -1));
             rft.length(rop.length);
 
             batch.transactions().add(rft);
@@ -209,9 +226,7 @@ public class DFSEditLogParser {
             cft.id(cop.txid);
             cft.op(DFSTransaction.Operation.CLOSE)
                     .timestamp(cop.mtime);
-            cft.file(new DFSTransactionType.DFSFileType()
-                    .path(cop.path)
-                    .inodeId(cop.inodeId));
+            cft.file(fileType(cop.path, cop.inodeId));
             cft.length(cop.length)
                     .blockSize(cop.blockSize)
                     .modifiedTime(cop.mtime)
@@ -246,7 +261,7 @@ public class DFSEditLogParser {
             tr.id(top.txid)
                     .op(DFSTransaction.Operation.TRUNCATE)
                     .timestamp(top.timestamp);
-            tr.file(new DFSTransactionType.DFSFileType().path(top.src));
+            tr.file(fileType(top.src, -1));
             long trBlockId = -1;
             long trSize = 0;
             long trGStamp = -1;
@@ -279,7 +294,7 @@ public class DFSEditLogParser {
             del.id(dop.txid)
                     .op(DFSTransaction.Operation.DELETE)
                     .timestamp(dop.timestamp);
-            del.file(new DFSTransactionType.DFSFileType().path(dop.path));
+            del.file(fileType(dop.path, -1));
 
             batch.transactions().add(del);
 
@@ -297,7 +312,7 @@ public class DFSEditLogParser {
             DFSTransactionType.DFSUpdateBlocksType upd = new DFSTransactionType.DFSUpdateBlocksType();
 
             upd.id(ubop.txid).op(DFSTransaction.Operation.UPDATE_BLOCKS);
-            upd.file(new DFSTransactionType.DFSFileType().path(ubop.path));
+            upd.file(fileType(ubop.path, -1));
             if (ubop.blocks != null && ubop.blocks.length > 0) {
                 for (int ii = 0; ii < ubop.blocks.length; ii++) {
                     DFSTransactionType.DFSBlockType bt = new DFSTransactionType.DFSBlockType();
@@ -326,7 +341,7 @@ public class DFSEditLogParser {
 
             aft.id(aop.txid)
                     .op(DFSTransaction.Operation.APPEND);
-            aft.file(new DFSTransactionType.DFSFileType().path(aop.path));
+            aft.file(fileType(aop.path, -1));
             aft.newBlock(aop.newBlock);
 
             batch.transactions().add(aft);
@@ -346,7 +361,7 @@ public class DFSEditLogParser {
 
             abt.id(abop.txid)
                     .op(DFSTransaction.Operation.ADD_BLOCK);
-            abt.file(new DFSTransactionType.DFSFileType().path(abop.getPath()));
+            abt.file(fileType(abop.getPath(), -1));
 
             if (abop.getPenultimateBlock() != null) {
                 Block pb = abop.getPenultimateBlock();
@@ -391,7 +406,7 @@ public class DFSEditLogParser {
 
             aft.id(aop.txid)
                     .op(DFSTransaction.Operation.ADD_FILE);
-            aft.file(new DFSTransactionType.DFSFileType().path(aop.path).inodeId(aop.inodeId));
+            aft.file(fileType(aop.path, aop.inodeId));
             aft.length(aop.length)
                     .blockSize(aop.blockSize)
                     .modifiedTime(aop.mtime)

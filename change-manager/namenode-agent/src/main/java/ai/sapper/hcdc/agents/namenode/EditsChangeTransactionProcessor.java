@@ -7,6 +7,7 @@ import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.MessageSender;
 import ai.sapper.cdc.core.model.*;
 import ai.sapper.hcdc.agents.common.InvalidTransactionError;
+import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ProtoBufUtils;
 import ai.sapper.hcdc.agents.common.TransactionProcessor;
 import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
@@ -97,7 +98,8 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
         }
         fileState = stateManager()
                 .fileStateHelper()
-                .create(data.getFile().getPath(),
+                .create(NameNodeEnv.get(name()).source(),
+                        data.getFile().getPath(),
                         data.getFile().getInodeId(),
                         data.getModifiedTime(),
                         data.getBlockSize(),

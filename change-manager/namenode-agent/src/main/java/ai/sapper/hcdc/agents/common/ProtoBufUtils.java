@@ -11,7 +11,8 @@ import org.apache.parquet.Strings;
 public class ProtoBufUtils {
     public static DFSFile build(@NonNull DFSFileState fileState) throws Exception {
         DFSFile.Builder builder = DFSFile.newBuilder();
-        builder.setInodeId(fileState.getId())
+        builder.setNamespace(fileState.getNamespace())
+                .setInodeId(fileState.getId())
                 .setPath(fileState.getHdfsFilePath());
         if (fileState.getFileType() != null
                 && fileState.getFileType() != EFileType.UNKNOWN) {
