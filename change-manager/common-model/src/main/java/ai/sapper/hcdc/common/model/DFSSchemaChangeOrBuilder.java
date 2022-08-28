@@ -34,62 +34,46 @@ public interface DFSSchemaChangeOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSFileOrBuilder getFileOrBuilder();
 
-  // required string domain = 3;
+  // required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;
   /**
-   * <code>required string domain = 3;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;</code>
    */
-  boolean hasDomain();
+  boolean hasSchema();
   /**
-   * <code>required string domain = 3;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;</code>
    */
-  java.lang.String getDomain();
+  ai.sapper.hcdc.common.model.DFSSchema getSchema();
   /**
-   * <code>required string domain = 3;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;</code>
    */
-  com.google.protobuf.ByteString
-      getDomainBytes();
+  ai.sapper.hcdc.common.model.DFSSchemaOrBuilder getSchemaOrBuilder();
 
-  // required string entityName = 4;
+  // required string currentSchema = 4;
   /**
-   * <code>required string entityName = 4;</code>
-   */
-  boolean hasEntityName();
-  /**
-   * <code>required string entityName = 4;</code>
-   */
-  java.lang.String getEntityName();
-  /**
-   * <code>required string entityName = 4;</code>
-   */
-  com.google.protobuf.ByteString
-      getEntityNameBytes();
-
-  // required string currentSchema = 5;
-  /**
-   * <code>required string currentSchema = 5;</code>
+   * <code>required string currentSchema = 4;</code>
    */
   boolean hasCurrentSchema();
   /**
-   * <code>required string currentSchema = 5;</code>
+   * <code>required string currentSchema = 4;</code>
    */
   java.lang.String getCurrentSchema();
   /**
-   * <code>required string currentSchema = 5;</code>
+   * <code>required string currentSchema = 4;</code>
    */
   com.google.protobuf.ByteString
       getCurrentSchemaBytes();
 
-  // required string updatedSchema = 6;
+  // required string updatedSchema = 5;
   /**
-   * <code>required string updatedSchema = 6;</code>
+   * <code>required string updatedSchema = 5;</code>
    */
   boolean hasUpdatedSchema();
   /**
-   * <code>required string updatedSchema = 6;</code>
+   * <code>required string updatedSchema = 5;</code>
    */
   java.lang.String getUpdatedSchema();
   /**
-   * <code>required string updatedSchema = 6;</code>
+   * <code>required string updatedSchema = 5;</code>
    */
   com.google.protobuf.ByteString
       getUpdatedSchemaBytes();

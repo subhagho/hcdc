@@ -81,22 +81,25 @@ public  final class DFSSchemaChange extends
             break;
           }
           case 26: {
+            ai.sapper.hcdc.common.model.DFSSchema.Builder subBuilder = null;
+            if (((bitField0_ & 0x00000004) == 0x00000004)) {
+              subBuilder = schema_.toBuilder();
+            }
+            schema_ = input.readMessage(ai.sapper.hcdc.common.model.DFSSchema.PARSER, extensionRegistry);
+            if (subBuilder != null) {
+              subBuilder.mergeFrom(schema_);
+              schema_ = subBuilder.buildPartial();
+            }
             bitField0_ |= 0x00000004;
-            domain_ = input.readBytes();
             break;
           }
           case 34: {
             bitField0_ |= 0x00000008;
-            entityName_ = input.readBytes();
+            currentSchema_ = input.readBytes();
             break;
           }
           case 42: {
             bitField0_ |= 0x00000010;
-            currentSchema_ = input.readBytes();
-            break;
-          }
-          case 50: {
-            bitField0_ |= 0x00000020;
             updatedSchema_ = input.readBytes();
             break;
           }
@@ -184,103 +187,39 @@ public  final class DFSSchemaChange extends
     return file_;
   }
 
-  // required string domain = 3;
-  public static final int DOMAIN_FIELD_NUMBER = 3;
-  private java.lang.Object domain_;
+  // required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;
+  public static final int SCHEMA_FIELD_NUMBER = 3;
+  private ai.sapper.hcdc.common.model.DFSSchema schema_;
   /**
-   * <code>required string domain = 3;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;</code>
    */
-  public boolean hasDomain() {
+  public boolean hasSchema() {
     return ((bitField0_ & 0x00000004) == 0x00000004);
   }
   /**
-   * <code>required string domain = 3;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;</code>
    */
-  public java.lang.String getDomain() {
-    java.lang.Object ref = domain_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        domain_ = s;
-      }
-      return s;
-    }
+  public ai.sapper.hcdc.common.model.DFSSchema getSchema() {
+    return schema_;
   }
   /**
-   * <code>required string domain = 3;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;</code>
    */
-  public com.google.protobuf.ByteString
-      getDomainBytes() {
-    java.lang.Object ref = domain_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      domain_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
+  public ai.sapper.hcdc.common.model.DFSSchemaOrBuilder getSchemaOrBuilder() {
+    return schema_;
   }
 
-  // required string entityName = 4;
-  public static final int ENTITYNAME_FIELD_NUMBER = 4;
-  private java.lang.Object entityName_;
+  // required string currentSchema = 4;
+  public static final int CURRENTSCHEMA_FIELD_NUMBER = 4;
+  private java.lang.Object currentSchema_;
   /**
-   * <code>required string entityName = 4;</code>
+   * <code>required string currentSchema = 4;</code>
    */
-  public boolean hasEntityName() {
+  public boolean hasCurrentSchema() {
     return ((bitField0_ & 0x00000008) == 0x00000008);
   }
   /**
-   * <code>required string entityName = 4;</code>
-   */
-  public java.lang.String getEntityName() {
-    java.lang.Object ref = entityName_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        entityName_ = s;
-      }
-      return s;
-    }
-  }
-  /**
-   * <code>required string entityName = 4;</code>
-   */
-  public com.google.protobuf.ByteString
-      getEntityNameBytes() {
-    java.lang.Object ref = entityName_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      entityName_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
-  }
-
-  // required string currentSchema = 5;
-  public static final int CURRENTSCHEMA_FIELD_NUMBER = 5;
-  private java.lang.Object currentSchema_;
-  /**
-   * <code>required string currentSchema = 5;</code>
-   */
-  public boolean hasCurrentSchema() {
-    return ((bitField0_ & 0x00000010) == 0x00000010);
-  }
-  /**
-   * <code>required string currentSchema = 5;</code>
+   * <code>required string currentSchema = 4;</code>
    */
   public java.lang.String getCurrentSchema() {
     java.lang.Object ref = currentSchema_;
@@ -297,7 +236,7 @@ public  final class DFSSchemaChange extends
     }
   }
   /**
-   * <code>required string currentSchema = 5;</code>
+   * <code>required string currentSchema = 4;</code>
    */
   public com.google.protobuf.ByteString
       getCurrentSchemaBytes() {
@@ -313,17 +252,17 @@ public  final class DFSSchemaChange extends
     }
   }
 
-  // required string updatedSchema = 6;
-  public static final int UPDATEDSCHEMA_FIELD_NUMBER = 6;
+  // required string updatedSchema = 5;
+  public static final int UPDATEDSCHEMA_FIELD_NUMBER = 5;
   private java.lang.Object updatedSchema_;
   /**
-   * <code>required string updatedSchema = 6;</code>
+   * <code>required string updatedSchema = 5;</code>
    */
   public boolean hasUpdatedSchema() {
-    return ((bitField0_ & 0x00000020) == 0x00000020);
+    return ((bitField0_ & 0x00000010) == 0x00000010);
   }
   /**
-   * <code>required string updatedSchema = 6;</code>
+   * <code>required string updatedSchema = 5;</code>
    */
   public java.lang.String getUpdatedSchema() {
     java.lang.Object ref = updatedSchema_;
@@ -340,7 +279,7 @@ public  final class DFSSchemaChange extends
     }
   }
   /**
-   * <code>required string updatedSchema = 6;</code>
+   * <code>required string updatedSchema = 5;</code>
    */
   public com.google.protobuf.ByteString
       getUpdatedSchemaBytes() {
@@ -359,8 +298,7 @@ public  final class DFSSchemaChange extends
   private void initFields() {
     transaction_ = ai.sapper.hcdc.common.model.DFSTransaction.getDefaultInstance();
     file_ = ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance();
-    domain_ = "";
-    entityName_ = "";
+    schema_ = ai.sapper.hcdc.common.model.DFSSchema.getDefaultInstance();
     currentSchema_ = "";
     updatedSchema_ = "";
   }
@@ -377,11 +315,7 @@ public  final class DFSSchemaChange extends
       memoizedIsInitialized = 0;
       return false;
     }
-    if (!hasDomain()) {
-      memoizedIsInitialized = 0;
-      return false;
-    }
-    if (!hasEntityName()) {
+    if (!hasSchema()) {
       memoizedIsInitialized = 0;
       return false;
     }
@@ -401,6 +335,10 @@ public  final class DFSSchemaChange extends
       memoizedIsInitialized = 0;
       return false;
     }
+    if (!getSchema().isInitialized()) {
+      memoizedIsInitialized = 0;
+      return false;
+    }
     memoizedIsInitialized = 1;
     return true;
   }
@@ -415,16 +353,13 @@ public  final class DFSSchemaChange extends
       output.writeMessage(2, file_);
     }
     if (((bitField0_ & 0x00000004) == 0x00000004)) {
-      output.writeBytes(3, getDomainBytes());
+      output.writeMessage(3, schema_);
     }
     if (((bitField0_ & 0x00000008) == 0x00000008)) {
-      output.writeBytes(4, getEntityNameBytes());
+      output.writeBytes(4, getCurrentSchemaBytes());
     }
     if (((bitField0_ & 0x00000010) == 0x00000010)) {
-      output.writeBytes(5, getCurrentSchemaBytes());
-    }
-    if (((bitField0_ & 0x00000020) == 0x00000020)) {
-      output.writeBytes(6, getUpdatedSchemaBytes());
+      output.writeBytes(5, getUpdatedSchemaBytes());
     }
     getUnknownFields().writeTo(output);
   }
@@ -445,19 +380,15 @@ public  final class DFSSchemaChange extends
     }
     if (((bitField0_ & 0x00000004) == 0x00000004)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(3, getDomainBytes());
+        .computeMessageSize(3, schema_);
     }
     if (((bitField0_ & 0x00000008) == 0x00000008)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(4, getEntityNameBytes());
+        .computeBytesSize(4, getCurrentSchemaBytes());
     }
     if (((bitField0_ & 0x00000010) == 0x00000010)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(5, getCurrentSchemaBytes());
-    }
-    if (((bitField0_ & 0x00000020) == 0x00000020)) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(6, getUpdatedSchemaBytes());
+        .computeBytesSize(5, getUpdatedSchemaBytes());
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSerializedSize = size;
@@ -569,6 +500,7 @@ public  final class DFSSchemaChange extends
       if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
         getTransactionFieldBuilder();
         getFileFieldBuilder();
+        getSchemaFieldBuilder();
       }
     }
     private static Builder create() {
@@ -589,14 +521,16 @@ public  final class DFSSchemaChange extends
         fileBuilder_.clear();
       }
       bitField0_ = (bitField0_ & ~0x00000002);
-      domain_ = "";
+      if (schemaBuilder_ == null) {
+        schema_ = ai.sapper.hcdc.common.model.DFSSchema.getDefaultInstance();
+      } else {
+        schemaBuilder_.clear();
+      }
       bitField0_ = (bitField0_ & ~0x00000004);
-      entityName_ = "";
-      bitField0_ = (bitField0_ & ~0x00000008);
       currentSchema_ = "";
-      bitField0_ = (bitField0_ & ~0x00000010);
+      bitField0_ = (bitField0_ & ~0x00000008);
       updatedSchema_ = "";
-      bitField0_ = (bitField0_ & ~0x00000020);
+      bitField0_ = (bitField0_ & ~0x00000010);
       return this;
     }
 
@@ -644,17 +578,17 @@ public  final class DFSSchemaChange extends
       if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
         to_bitField0_ |= 0x00000004;
       }
-      result.domain_ = domain_;
+      if (schemaBuilder_ == null) {
+        result.schema_ = schema_;
+      } else {
+        result.schema_ = schemaBuilder_.build();
+      }
       if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
         to_bitField0_ |= 0x00000008;
       }
-      result.entityName_ = entityName_;
+      result.currentSchema_ = currentSchema_;
       if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
         to_bitField0_ |= 0x00000010;
-      }
-      result.currentSchema_ = currentSchema_;
-      if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
-        to_bitField0_ |= 0x00000020;
       }
       result.updatedSchema_ = updatedSchema_;
       result.bitField0_ = to_bitField0_;
@@ -679,23 +613,16 @@ public  final class DFSSchemaChange extends
       if (other.hasFile()) {
         mergeFile(other.getFile());
       }
-      if (other.hasDomain()) {
-        bitField0_ |= 0x00000004;
-        domain_ = other.domain_;
-        onChanged();
-      }
-      if (other.hasEntityName()) {
-        bitField0_ |= 0x00000008;
-        entityName_ = other.entityName_;
-        onChanged();
+      if (other.hasSchema()) {
+        mergeSchema(other.getSchema());
       }
       if (other.hasCurrentSchema()) {
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000008;
         currentSchema_ = other.currentSchema_;
         onChanged();
       }
       if (other.hasUpdatedSchema()) {
-        bitField0_ |= 0x00000020;
+        bitField0_ |= 0x00000010;
         updatedSchema_ = other.updatedSchema_;
         onChanged();
       }
@@ -712,11 +639,7 @@ public  final class DFSSchemaChange extends
         
         return false;
       }
-      if (!hasDomain()) {
-        
-        return false;
-      }
-      if (!hasEntityName()) {
+      if (!hasSchema()) {
         
         return false;
       }
@@ -733,6 +656,10 @@ public  final class DFSSchemaChange extends
         return false;
       }
       if (!getFile().isInitialized()) {
+        
+        return false;
+      }
+      if (!getSchema().isInitialized()) {
         
         return false;
       }
@@ -992,164 +919,133 @@ public  final class DFSSchemaChange extends
       return fileBuilder_;
     }
 
-    // required string domain = 3;
-    private java.lang.Object domain_ = "";
+    // required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;
+    private ai.sapper.hcdc.common.model.DFSSchema schema_ = ai.sapper.hcdc.common.model.DFSSchema.getDefaultInstance();
+    private com.google.protobuf.SingleFieldBuilder<
+        ai.sapper.hcdc.common.model.DFSSchema, ai.sapper.hcdc.common.model.DFSSchema.Builder, ai.sapper.hcdc.common.model.DFSSchemaOrBuilder> schemaBuilder_;
     /**
-     * <code>required string domain = 3;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;</code>
      */
-    public boolean hasDomain() {
+    public boolean hasSchema() {
       return ((bitField0_ & 0x00000004) == 0x00000004);
     }
     /**
-     * <code>required string domain = 3;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;</code>
      */
-    public java.lang.String getDomain() {
-      java.lang.Object ref = domain_;
-      if (!(ref instanceof java.lang.String)) {
-        java.lang.String s = ((com.google.protobuf.ByteString) ref)
-            .toStringUtf8();
-        domain_ = s;
-        return s;
+    public ai.sapper.hcdc.common.model.DFSSchema getSchema() {
+      if (schemaBuilder_ == null) {
+        return schema_;
       } else {
-        return (java.lang.String) ref;
+        return schemaBuilder_.getMessage();
       }
     }
     /**
-     * <code>required string domain = 3;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;</code>
      */
-    public com.google.protobuf.ByteString
-        getDomainBytes() {
-      java.lang.Object ref = domain_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        domain_ = b;
-        return b;
+    public Builder setSchema(ai.sapper.hcdc.common.model.DFSSchema value) {
+      if (schemaBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        schema_ = value;
+        onChanged();
       } else {
-        return (com.google.protobuf.ByteString) ref;
+        schemaBuilder_.setMessage(value);
       }
-    }
-    /**
-     * <code>required string domain = 3;</code>
-     */
-    public Builder setDomain(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000004;
-      domain_ = value;
-      onChanged();
+      bitField0_ |= 0x00000004;
       return this;
     }
     /**
-     * <code>required string domain = 3;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;</code>
      */
-    public Builder clearDomain() {
+    public Builder setSchema(
+        ai.sapper.hcdc.common.model.DFSSchema.Builder builderForValue) {
+      if (schemaBuilder_ == null) {
+        schema_ = builderForValue.build();
+        onChanged();
+      } else {
+        schemaBuilder_.setMessage(builderForValue.build());
+      }
+      bitField0_ |= 0x00000004;
+      return this;
+    }
+    /**
+     * <code>required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;</code>
+     */
+    public Builder mergeSchema(ai.sapper.hcdc.common.model.DFSSchema value) {
+      if (schemaBuilder_ == null) {
+        if (((bitField0_ & 0x00000004) == 0x00000004) &&
+            schema_ != ai.sapper.hcdc.common.model.DFSSchema.getDefaultInstance()) {
+          schema_ =
+            ai.sapper.hcdc.common.model.DFSSchema.newBuilder(schema_).mergeFrom(value).buildPartial();
+        } else {
+          schema_ = value;
+        }
+        onChanged();
+      } else {
+        schemaBuilder_.mergeFrom(value);
+      }
+      bitField0_ |= 0x00000004;
+      return this;
+    }
+    /**
+     * <code>required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;</code>
+     */
+    public Builder clearSchema() {
+      if (schemaBuilder_ == null) {
+        schema_ = ai.sapper.hcdc.common.model.DFSSchema.getDefaultInstance();
+        onChanged();
+      } else {
+        schemaBuilder_.clear();
+      }
       bitField0_ = (bitField0_ & ~0x00000004);
-      domain_ = getDefaultInstance().getDomain();
-      onChanged();
       return this;
     }
     /**
-     * <code>required string domain = 3;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;</code>
      */
-    public Builder setDomainBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000004;
-      domain_ = value;
+    public ai.sapper.hcdc.common.model.DFSSchema.Builder getSchemaBuilder() {
+      bitField0_ |= 0x00000004;
       onChanged();
-      return this;
+      return getSchemaFieldBuilder().getBuilder();
+    }
+    /**
+     * <code>required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;</code>
+     */
+    public ai.sapper.hcdc.common.model.DFSSchemaOrBuilder getSchemaOrBuilder() {
+      if (schemaBuilder_ != null) {
+        return schemaBuilder_.getMessageOrBuilder();
+      } else {
+        return schema_;
+      }
+    }
+    /**
+     * <code>required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;</code>
+     */
+    private com.google.protobuf.SingleFieldBuilder<
+        ai.sapper.hcdc.common.model.DFSSchema, ai.sapper.hcdc.common.model.DFSSchema.Builder, ai.sapper.hcdc.common.model.DFSSchemaOrBuilder> 
+        getSchemaFieldBuilder() {
+      if (schemaBuilder_ == null) {
+        schemaBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+            ai.sapper.hcdc.common.model.DFSSchema, ai.sapper.hcdc.common.model.DFSSchema.Builder, ai.sapper.hcdc.common.model.DFSSchemaOrBuilder>(
+                schema_,
+                getParentForChildren(),
+                isClean());
+        schema_ = null;
+      }
+      return schemaBuilder_;
     }
 
-    // required string entityName = 4;
-    private java.lang.Object entityName_ = "";
+    // required string currentSchema = 4;
+    private java.lang.Object currentSchema_ = "";
     /**
-     * <code>required string entityName = 4;</code>
+     * <code>required string currentSchema = 4;</code>
      */
-    public boolean hasEntityName() {
+    public boolean hasCurrentSchema() {
       return ((bitField0_ & 0x00000008) == 0x00000008);
     }
     /**
-     * <code>required string entityName = 4;</code>
-     */
-    public java.lang.String getEntityName() {
-      java.lang.Object ref = entityName_;
-      if (!(ref instanceof java.lang.String)) {
-        java.lang.String s = ((com.google.protobuf.ByteString) ref)
-            .toStringUtf8();
-        entityName_ = s;
-        return s;
-      } else {
-        return (java.lang.String) ref;
-      }
-    }
-    /**
-     * <code>required string entityName = 4;</code>
-     */
-    public com.google.protobuf.ByteString
-        getEntityNameBytes() {
-      java.lang.Object ref = entityName_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        entityName_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-    /**
-     * <code>required string entityName = 4;</code>
-     */
-    public Builder setEntityName(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000008;
-      entityName_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>required string entityName = 4;</code>
-     */
-    public Builder clearEntityName() {
-      bitField0_ = (bitField0_ & ~0x00000008);
-      entityName_ = getDefaultInstance().getEntityName();
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>required string entityName = 4;</code>
-     */
-    public Builder setEntityNameBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000008;
-      entityName_ = value;
-      onChanged();
-      return this;
-    }
-
-    // required string currentSchema = 5;
-    private java.lang.Object currentSchema_ = "";
-    /**
-     * <code>required string currentSchema = 5;</code>
-     */
-    public boolean hasCurrentSchema() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
-    }
-    /**
-     * <code>required string currentSchema = 5;</code>
+     * <code>required string currentSchema = 4;</code>
      */
     public java.lang.String getCurrentSchema() {
       java.lang.Object ref = currentSchema_;
@@ -1163,7 +1059,7 @@ public  final class DFSSchemaChange extends
       }
     }
     /**
-     * <code>required string currentSchema = 5;</code>
+     * <code>required string currentSchema = 4;</code>
      */
     public com.google.protobuf.ByteString
         getCurrentSchemaBytes() {
@@ -1179,51 +1075,51 @@ public  final class DFSSchemaChange extends
       }
     }
     /**
-     * <code>required string currentSchema = 5;</code>
+     * <code>required string currentSchema = 4;</code>
      */
     public Builder setCurrentSchema(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000010;
+  bitField0_ |= 0x00000008;
       currentSchema_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>required string currentSchema = 5;</code>
+     * <code>required string currentSchema = 4;</code>
      */
     public Builder clearCurrentSchema() {
-      bitField0_ = (bitField0_ & ~0x00000010);
+      bitField0_ = (bitField0_ & ~0x00000008);
       currentSchema_ = getDefaultInstance().getCurrentSchema();
       onChanged();
       return this;
     }
     /**
-     * <code>required string currentSchema = 5;</code>
+     * <code>required string currentSchema = 4;</code>
      */
     public Builder setCurrentSchemaBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000010;
+  bitField0_ |= 0x00000008;
       currentSchema_ = value;
       onChanged();
       return this;
     }
 
-    // required string updatedSchema = 6;
+    // required string updatedSchema = 5;
     private java.lang.Object updatedSchema_ = "";
     /**
-     * <code>required string updatedSchema = 6;</code>
+     * <code>required string updatedSchema = 5;</code>
      */
     public boolean hasUpdatedSchema() {
-      return ((bitField0_ & 0x00000020) == 0x00000020);
+      return ((bitField0_ & 0x00000010) == 0x00000010);
     }
     /**
-     * <code>required string updatedSchema = 6;</code>
+     * <code>required string updatedSchema = 5;</code>
      */
     public java.lang.String getUpdatedSchema() {
       java.lang.Object ref = updatedSchema_;
@@ -1237,7 +1133,7 @@ public  final class DFSSchemaChange extends
       }
     }
     /**
-     * <code>required string updatedSchema = 6;</code>
+     * <code>required string updatedSchema = 5;</code>
      */
     public com.google.protobuf.ByteString
         getUpdatedSchemaBytes() {
@@ -1253,36 +1149,36 @@ public  final class DFSSchemaChange extends
       }
     }
     /**
-     * <code>required string updatedSchema = 6;</code>
+     * <code>required string updatedSchema = 5;</code>
      */
     public Builder setUpdatedSchema(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000020;
+  bitField0_ |= 0x00000010;
       updatedSchema_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>required string updatedSchema = 6;</code>
+     * <code>required string updatedSchema = 5;</code>
      */
     public Builder clearUpdatedSchema() {
-      bitField0_ = (bitField0_ & ~0x00000020);
+      bitField0_ = (bitField0_ & ~0x00000010);
       updatedSchema_ = getDefaultInstance().getUpdatedSchema();
       onChanged();
       return this;
     }
     /**
-     * <code>required string updatedSchema = 6;</code>
+     * <code>required string updatedSchema = 5;</code>
      */
     public Builder setUpdatedSchemaBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000020;
+  bitField0_ |= 0x00000010;
       updatedSchema_ = value;
       onChanged();
       return this;

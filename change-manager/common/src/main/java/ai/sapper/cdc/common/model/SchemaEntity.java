@@ -10,6 +10,7 @@ import java.util.Objects;
 @Setter
 public class SchemaEntity {
     private String domain;
+    private String group;
     private String entity;
 
     public SchemaEntity() {
@@ -25,11 +26,11 @@ public class SchemaEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         SchemaEntity that = (SchemaEntity) o;
-        return domain.equals(that.domain) && entity.equals(that.entity);
+        return domain.equals(that.domain) && Objects.equals(group, that.group) && entity.equals(that.entity);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(domain, entity);
+        return Objects.hash(domain, group, entity);
     }
 }

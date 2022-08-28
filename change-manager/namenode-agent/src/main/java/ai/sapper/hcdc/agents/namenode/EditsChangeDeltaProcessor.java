@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.agents.namenode;
 
+import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.filters.DomainManager;
@@ -17,6 +18,7 @@ import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.agents.model.DFSTransactionType;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSCloseFile;
+import ai.sapper.hcdc.common.utils.SchemaEntityHelper;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -166,12 +168,15 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
                                     long txId) throws Exception {
         DFSTransactionType.DFSCloseFileType tnx = buildBacklogTransactions(fileState, rState, txId + 1);
         if (tnx != null) {
+            SchemaEntity schemaEntity = null;
+            if (message.value().hasSchema()) {
+                schemaEntity = SchemaEntityHelper.parse(message.value().getSchema());
+            }
             DFSCloseFile closeFile = tnx.convertToProto();
             MessageObject<String, DFSChangeDelta> mesg = ChangeDeltaSerDe.create(message.value().getNamespace(),
                     closeFile,
                     DFSCloseFile.class,
-                    message.value().getDomain(),
-                    message.value().getEntityName(),
+                    schemaEntity,
                     MessageObject.MessageMode.Backlog);
             sender().send(mesg);
 

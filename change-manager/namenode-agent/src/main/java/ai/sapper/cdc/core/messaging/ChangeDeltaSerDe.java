@@ -5,6 +5,7 @@ import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.model.*;
+import ai.sapper.hcdc.common.utils.SchemaEntityHelper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.protobuf.MessageOrBuilder;
@@ -30,7 +31,7 @@ public class ChangeDeltaSerDe {
         MessageObject<String, DFSChangeDelta> m = create(namespace,
                 error.build(),
                 DFSError.class,
-                null, null, MessageObject.MessageMode.Error);
+                null, MessageObject.MessageMode.Error);
         m.correlationId(messageId);
 
         return m;
@@ -43,7 +44,7 @@ public class ChangeDeltaSerDe {
                 .setOpCode(tnx.getOp().name())
                 .setTransaction(tnx)
                 .build();
-        return create(namespace, ignoreTx, DFSIgnoreTx.class, null, null, mode);
+        return create(namespace, ignoreTx, DFSIgnoreTx.class, null, mode);
     }
 
     public static MessageObject<String, DFSChangeDelta> createSchemaChange(@NonNull String namespace,
@@ -59,23 +60,20 @@ public class ChangeDeltaSerDe {
         DFSSchemaChange change = DFSSchemaChange.newBuilder()
                 .setTransaction(tnx)
                 .setFile(file)
-                .setDomain(rState.getEntity().getDomain())
-                .setEntityName(rState.getEntity().getEntity())
+                .setSchema(SchemaEntityHelper.proto(rState.getEntity()))
                 .setCurrentSchema(current.toString())
                 .setUpdatedSchema(updated.toString())
                 .build();
         return create(namespace, change,
                 DFSSchemaChange.class,
-                rState.getEntity().getDomain(),
-                rState.getEntity().getEntity(),
+                rState.getEntity(),
                 mode);
     }
 
     public static <T> MessageObject<String, DFSChangeDelta> create(@NonNull String namespace,
                                                                    @NonNull T data,
                                                                    @NonNull Class<? extends T> type,
-                                                                   String domain,
-                                                                   String entity,
+                                                                   SchemaEntity schemaEntity,
                                                                    @NonNull MessageObject.MessageMode mode) throws Exception {
         DFSChangeDelta delta = null;
         DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
@@ -108,11 +106,8 @@ public class ChangeDeltaSerDe {
         } else {
             throw new MessagingError(String.format("Invalid Message DataType. [type=%s]", type.getCanonicalName()));
         }
-        if (!Strings.isNullOrEmpty(domain)) {
-            builder.setDomain(domain);
-        }
-        if (!Strings.isNullOrEmpty(entity)) {
-            builder.setEntityName(entity);
+        if (schemaEntity != null) {
+            builder.setSchema(SchemaEntityHelper.proto(schemaEntity));
         }
         delta = builder.build();
         key = delta.getEntity();
@@ -129,7 +124,9 @@ public class ChangeDeltaSerDe {
             StringBuilder mesg = new StringBuilder();
             mesg.append("Message: [").append(message.id()).append("]\n");
             mesg.append("Key: [").append(message.key()).append("]\n");
-            mesg.append("Domain: [").append(delta.getDomain()).append(":").append(delta.getEntityName()).append("]\n");
+            mesg.append("Domain: [").append(delta.getSchema()
+                            .getDomain()).append(":")
+                    .append(delta.getSchema().getEntity()).append("]\n");
             mesg.append("Data: [\n").append(printer.print((MessageOrBuilder) data)).append("\n]");
 
             DefaultLogger.LOGGER.debug(mesg.toString());
@@ -142,8 +139,7 @@ public class ChangeDeltaSerDe {
                                                                @NonNull MessageObject.MessageMode mode) throws Exception {
         DFSChangeDelta delta = message.value();
         delta = delta.toBuilder()
-                .setEntityName(schemaEntity.getEntity())
-                .setDomain(schemaEntity.getDomain())
+                .setSchema(SchemaEntityHelper.proto(schemaEntity))
                 .build();
         MessageObject<String, DFSChangeDelta> m = new KafkaMessage<>(message);
         m.correlationId(message.correlationId());
@@ -306,8 +302,7 @@ public class ChangeDeltaSerDe {
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
                 .setEntity(data.getFile().getPath())
                 .setType(data.getClass().getCanonicalName())
-                .setDomain(data.getDomain())
-                .setEntityName(data.getEntityName())
+                .setSchema(data.getSchema())
                 .setBody(data.toByteString());
         return UUID.randomUUID().toString();
     }

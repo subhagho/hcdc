@@ -169,7 +169,6 @@ public class EditsLogReader implements Runnable {
                         proto,
                         proto.getClass(),
                         null,
-                        null,
                         MessageObject.MessageMode.New);
                 sender.send(message);
                 txid = tnx.id();

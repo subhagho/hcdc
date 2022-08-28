@@ -86,33 +86,17 @@ public interface DFSChangeDeltaOrBuilder
    */
   com.google.protobuf.ByteString getBody();
 
-  // optional string domain = 7;
+  // optional .ai_sapper_hcdc_common_model.DFSSchema schema = 7;
   /**
-   * <code>optional string domain = 7;</code>
+   * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 7;</code>
    */
-  boolean hasDomain();
+  boolean hasSchema();
   /**
-   * <code>optional string domain = 7;</code>
+   * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 7;</code>
    */
-  java.lang.String getDomain();
+  ai.sapper.hcdc.common.model.DFSSchema getSchema();
   /**
-   * <code>optional string domain = 7;</code>
+   * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 7;</code>
    */
-  com.google.protobuf.ByteString
-      getDomainBytes();
-
-  // optional string entityName = 8;
-  /**
-   * <code>optional string entityName = 8;</code>
-   */
-  boolean hasEntityName();
-  /**
-   * <code>optional string entityName = 8;</code>
-   */
-  java.lang.String getEntityName();
-  /**
-   * <code>optional string entityName = 8;</code>
-   */
-  com.google.protobuf.ByteString
-      getEntityNameBytes();
+  ai.sapper.hcdc.common.model.DFSSchemaOrBuilder getSchemaOrBuilder();
 }

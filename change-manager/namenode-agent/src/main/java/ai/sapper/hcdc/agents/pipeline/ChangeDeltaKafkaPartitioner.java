@@ -1,7 +1,9 @@
 package ai.sapper.hcdc.agents.pipeline;
 
+import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.core.messaging.KafkaPartitioner;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
+import ai.sapper.hcdc.common.utils.SchemaEntityHelper;
 import lombok.NonNull;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
@@ -36,9 +38,12 @@ public class ChangeDeltaKafkaPartitioner implements KafkaPartitioner<DFSChangeDe
      */
     @Override
     public int partition(@NonNull DFSChangeDelta key) {
-        String entity = key.getEntityName();
-        String domain = key.getDomain();
-        String pk = String.format("%s::%s", domain, entity);
+        SchemaEntity schemaEntity = SchemaEntityHelper.parse(key.getSchema());
+        String entity = schemaEntity.getEntity();
+        if (!Strings.isNullOrEmpty(schemaEntity.getGroup())) {
+            entity = schemaEntity.getGroup();
+        }
+        String pk = String.format("%s::%s", schemaEntity.getDomain(), entity);
         int hash = pk.hashCode();
         if (hash < 0) {
             hash *= -1;

@@ -238,8 +238,7 @@ public class HDFSSnapshotProcessor {
             MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get(name).source(),
                     closeFile,
                     DFSCloseFile.class,
-                    entity.getDomain(),
-                    entity.getEntity(),
+                    entity,
                     MessageObject.MessageMode.Snapshot);
             sender.send(message);
 
@@ -289,8 +288,7 @@ public class HDFSSnapshotProcessor {
                 MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get(name).source(),
                         closeFile,
                         DFSCloseFile.class,
-                        entity.getDomain(),
-                        entity.getEntity(),
+                        entity,
                         MessageObject.MessageMode.Backlog);
                 tnxSender.send(message);
                 lastTxId = fileState.getLastTnxId();

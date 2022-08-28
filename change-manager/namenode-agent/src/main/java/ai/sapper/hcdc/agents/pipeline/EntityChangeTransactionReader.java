@@ -21,6 +21,7 @@ import ai.sapper.hcdc.agents.common.TransactionProcessor;
 import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.common.model.*;
+import ai.sapper.hcdc.common.utils.SchemaEntityHelper;
 import com.google.common.base.Strings;
 import lombok.NonNull;
 import org.apache.hadoop.hdfs.HDFSBlockReader;
@@ -82,9 +83,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
     public void processAddFileTxMessage(DFSAddFile data,
                                         MessageObject<String, DFSChangeDelta> message,
                                         long txId) throws Exception {
-        SchemaEntity schemaEntity = new SchemaEntity();
-        schemaEntity.setDomain(message.value().getDomain());
-        schemaEntity.setEntity(message.value().getEntityName());
+        SchemaEntity schemaEntity = SchemaEntityHelper.parse(message.value().getSchema());
         if (Strings.isNullOrEmpty(schemaEntity.getDomain()) || Strings.isNullOrEmpty(schemaEntity.getEntity())) {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
@@ -164,9 +163,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
 
         checkStaleInode(message, fileState, data.getFile());
 
-        SchemaEntity schemaEntity = new SchemaEntity();
-        schemaEntity.setDomain(message.value().getDomain());
-        schemaEntity.setEntity(message.value().getEntityName());
+        SchemaEntity schemaEntity = SchemaEntityHelper.parse(message.value().getSchema());
 
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
@@ -238,10 +235,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                             data.getFile().getPath()));
         }
 
-        SchemaEntity schemaEntity = new SchemaEntity();
-        schemaEntity.setDomain(message.value().getDomain());
-        schemaEntity.setEntity(message.value().getEntityName());
-
+        SchemaEntity schemaEntity = SchemaEntityHelper.parse(message.value().getSchema());
 
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
@@ -295,8 +289,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     message.value().getNamespace(),
                     delta,
                     DFSChangeData.class,
-                    schemaEntity.getDomain(),
-                    schemaEntity.getEntity(),
+                    schemaEntity,
                     message.mode());
             sender.send(m);
 
@@ -354,9 +347,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         }
 
         checkStaleInode(message, fileState, data.getFile());
-        SchemaEntity schemaEntity = new SchemaEntity();
-        schemaEntity.setDomain(message.value().getDomain());
-        schemaEntity.setEntity(message.value().getEntityName());
+        SchemaEntity schemaEntity = SchemaEntityHelper.parse(message.value().getSchema());
 
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
@@ -450,9 +441,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     String.format("File State out of sync, no block to update. [path=%s]",
                             fileState.getHdfsFilePath()));
         }
-        SchemaEntity schemaEntity = new SchemaEntity();
-        schemaEntity.setDomain(message.value().getDomain());
-        schemaEntity.setEntity(message.value().getEntityName());
+        SchemaEntity schemaEntity = SchemaEntityHelper.parse(message.value().getSchema());
 
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
@@ -579,9 +568,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                                           long txId) throws Exception {
 
         if (message.mode() == MessageObject.MessageMode.Snapshot) {
-            SchemaEntity schemaEntity = new SchemaEntity();
-            schemaEntity.setDomain(message.value().getDomain());
-            schemaEntity.setEntity(message.value().getEntityName());
+            SchemaEntity schemaEntity = SchemaEntityHelper.parse(message.value().getSchema());
             if (Strings.isNullOrEmpty(schemaEntity.getDomain()) || Strings.isNullOrEmpty(schemaEntity.getEntity())) {
                 throw new InvalidTransactionError(txId,
                         DFSError.ErrorCode.SYNC_STOPPED,
@@ -705,8 +692,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                             message.value().getNamespace(),
                             delta,
                             DFSChangeData.class,
-                            schemaEntity.getDomain(),
-                            schemaEntity.getEntity(),
+                            schemaEntity,
                             message.mode());
                     sender.send(m);
                 } catch (IOException ex) {
