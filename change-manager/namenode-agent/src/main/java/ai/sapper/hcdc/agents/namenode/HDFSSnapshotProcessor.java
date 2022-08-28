@@ -118,9 +118,17 @@ public class HDFSSnapshotProcessor {
     }
 
     public DomainFilters addFilter(@NonNull String domain,
-                                   @NonNull Filter filter) throws Exception {
+                                   @NonNull Filter filter,
+                                   String group) throws Exception {
         DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
-        return domainManager.add(domain, filter.getEntity(), filter.getPath(), filter.getRegex());
+        return domainManager.add(domain, filter.getEntity(), filter.getPath(), filter.getRegex(), group);
+    }
+
+    public DomainFilter updateGroup(@NonNull String domain,
+                                    @NonNull String entity,
+                                    @NonNull String group) {
+        DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
+        return domainManager.updateGroup(domain, entity, group);
     }
 
     public DomainFilter removeFilter(@NonNull String domain,

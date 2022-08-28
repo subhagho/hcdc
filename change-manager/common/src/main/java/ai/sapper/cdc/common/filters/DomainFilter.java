@@ -17,6 +17,7 @@ import java.util.Objects;
 public class DomainFilter {
     private String domain;
     private String entity;
+    private String group;
     private List<Filter> filters;
     private long createdTime;
     private long updatedTime;
@@ -29,6 +30,11 @@ public class DomainFilter {
         this.entity = entity;
         this.createdTime = System.currentTimeMillis();
         this.updatedTime = this.createdTime;
+    }
+
+    public DomainFilter withGroup(String group) {
+        this.group = group;
+        return this;
     }
 
     public synchronized Filter add(@NonNull String path, @NonNull String regex) {

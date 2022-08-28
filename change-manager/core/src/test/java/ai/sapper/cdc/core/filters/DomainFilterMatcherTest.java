@@ -15,7 +15,7 @@ class DomainFilterMatcherTest {
             DomainFilters filters = new DomainFilters();
             filters.setDomain("TEST-FILTERS");
             for (int ii = 0; ii < 5; ii++) {
-                filters.add( String.format("ENTITY:%d", ii), "/a/b/c", "(.*)/d/(.*)\\.log");
+                filters.add( String.format("ENTITY:%d", ii), "/a/b/c", "(.*)/d/(.*)\\.log", "default");
             }
             DomainFilterMatcher matcher = new DomainFilterMatcher(filters.getDomain(), filters);
             String mf = "/a/b/c/e/d/test.log";

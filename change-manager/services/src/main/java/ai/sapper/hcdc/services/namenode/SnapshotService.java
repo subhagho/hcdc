@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -23,34 +24,39 @@ public class SnapshotService {
     private static SnapshotRunner processor;
 
     @RequestMapping(value = "/snapshot/filters/add/{domain}", method = RequestMethod.PUT)
-    public ResponseEntity<DomainFilters> addFilter(@PathVariable("domain") String domain,
-                                                   @RequestBody Filter filter) {
+    public ResponseEntity<List<DomainFilters>> addFilter(@PathVariable("domain") String domain,
+                                                         @RequestBody DomainFilterAddRequest request) {
         try {
             ServiceHelper.checkService(processor.name(), processor);
-            DomainFilters filters = processor.getProcessor().addFilter(domain, filter);
+            if (request.getFilters() == null || request.getFilters().isEmpty()) {
+                throw new Exception("No filters specified...");
+            }
+            List<DomainFilters> filters = new ArrayList<>();
+            for (int ii = 0; ii < request.getFilters().size(); ii++) {
+                DomainFilters dfs = processor.getProcessor().addFilter(domain,
+                        request.getFilters().get(ii),
+                        request.getGroup());
+                filters.add(dfs);
+            }
             return new ResponseEntity<>(filters,
                     HttpStatus.OK);
         } catch (Throwable t) {
-            return new ResponseEntity<>((DomainFilters) null,
+            return new ResponseEntity<>((List<DomainFilters>) null,
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @RequestMapping(value = "/snapshot/filters/add/{domain}/batch", method = RequestMethod.PUT)
-    public ResponseEntity<DomainFilters> addFilter(@PathVariable("domain") String domain,
-                                                   @RequestBody Map<String, List<Filter>> filters) {
+    @RequestMapping(value = "/snapshot/filters/update/{domain}/{entity}/{group}", method = RequestMethod.PUT)
+    public ResponseEntity<DomainFilter> updateGroup(@PathVariable("domain") String domain,
+                                                    @PathVariable("domain") String entity,
+                                                    @PathVariable("domain") String group) {
         try {
             ServiceHelper.checkService(processor.name(), processor);
-            DomainFilters dfs = null;
-            for (String entity : filters.keySet()) {
-                List<Filter> fs = filters.get(entity);
-                for (Filter filter : fs) {
-                    dfs = processor.getProcessor().addFilter(domain, filter);
-                }
-            }
-            return new ResponseEntity<>(dfs, HttpStatus.OK);
+            DomainFilter filter = processor.getProcessor().updateGroup(domain, entity, group);
+            return new ResponseEntity<>(filter,
+                    HttpStatus.OK);
         } catch (Throwable t) {
-            return new ResponseEntity<>((DomainFilters) null,
+            return new ResponseEntity<>((DomainFilter) null,
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

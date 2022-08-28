@@ -149,10 +149,21 @@ public class DomainManager {
         return null;
     }
 
+    public DomainFilter updateGroup(@NonNull String domain,
+                                    @NonNull String entity,
+                                    @NonNull String group) {
+        if (matchers.containsKey(domain)) {
+            DomainFilterMatcher matcher = matchers.get(domain);
+            return matcher.updateGroup(entity, group);
+        }
+        return null;
+    }
+
     public DomainFilters add(@NonNull String domain,
                              @NonNull String entity,
                              @NonNull String path,
-                             @NonNull String regex) throws Exception {
+                             @NonNull String regex,
+                             String group) throws Exception {
         Preconditions.checkNotNull(zkConnection);
         Preconditions.checkState(zkConnection.isConnected());
 
@@ -161,7 +172,7 @@ public class DomainManager {
         if (!matchers.containsKey(domain)) {
             DomainFilters df = new DomainFilters();
             df.setDomain(domain);
-            Filter f = df.add(entity, path, regex);
+            Filter f = df.add(entity, path, regex, group);
 
             matcher = new DomainFilterMatcher(domain, df)
                     .withIgnoreRegex(ignorePattern);
@@ -169,7 +180,7 @@ public class DomainManager {
             filter = matcher.find(f);
         } else {
             matcher = matchers.get(domain);
-            filter = matcher.add(entity, path, regex);
+            filter = matcher.add(entity, path, regex, group);
         }
 
         CuratorFramework client = zkConnection.client();

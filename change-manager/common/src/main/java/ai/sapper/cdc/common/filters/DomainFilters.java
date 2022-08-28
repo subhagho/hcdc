@@ -14,13 +14,22 @@ public class DomainFilters {
 
     public synchronized Filter add(@NonNull String entity,
                                    @NonNull String path,
-                                   @NonNull String regex) {
+                                   @NonNull String regex,
+                                   String group) {
         DomainFilter filter = filters.get(entity);
         if (filter == null) {
-            filter = new DomainFilter(domain, entity);
+            filter = new DomainFilter(domain, entity).withGroup(group);
             filters.put(entity, filter);
         }
         return filter.add(path, regex);
+    }
+
+    public DomainFilter updateGroup(@NonNull String entity, @NonNull String group) {
+        DomainFilter filter = filters.get(entity);
+        if (filter != null) {
+            return filter.withGroup(group);
+        }
+        return null;
     }
 
     public DomainFilter getDomainFilter(@NonNull String entity) {

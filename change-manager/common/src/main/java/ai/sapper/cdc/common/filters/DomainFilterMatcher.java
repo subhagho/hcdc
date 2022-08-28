@@ -96,8 +96,9 @@ public class DomainFilterMatcher {
 
     public PathFilter add(@NonNull String entity,
                           @NonNull String path,
-                          @NonNull String regex) {
-        Filter df = filters.add(entity, path, regex);
+                          @NonNull String regex,
+                          String group) {
+        Filter df = filters.add(entity, path, regex, group);
 
         PathFilter pf = new PathFilter();
         pf.path = path;
@@ -106,6 +107,11 @@ public class DomainFilterMatcher {
         patterns.add(pf);
 
         return pf;
+    }
+
+    public DomainFilter updateGroup(@NonNull String entity,
+                                    @NonNull String group) {
+        return filters.updateGroup(entity, group);
     }
 
     public DomainFilter remove(@NonNull String entity) {
