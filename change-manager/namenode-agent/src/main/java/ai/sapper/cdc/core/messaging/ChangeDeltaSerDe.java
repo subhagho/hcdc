@@ -124,7 +124,7 @@ public class ChangeDeltaSerDe {
         message.mode(mode);
         message.key(key);
         message.value(delta);
-        if (DefaultLogger.LOG.isDebugEnabled()) {
+        if (DefaultLogger.LOGGER.isDebugEnabled()) {
             JsonFormat.Printer printer = JsonFormat.printer().preservingProtoFieldNames();
             StringBuilder mesg = new StringBuilder();
             mesg.append("Message: [").append(message.id()).append("]\n");
@@ -132,7 +132,7 @@ public class ChangeDeltaSerDe {
             mesg.append("Domain: [").append(delta.getDomain()).append(":").append(delta.getEntityName()).append("]\n");
             mesg.append("Data: [\n").append(printer.print((MessageOrBuilder) data)).append("\n]");
 
-            DefaultLogger.LOG.debug(mesg.toString());
+            DefaultLogger.LOGGER.debug(mesg.toString());
         }
         return message;
     }

@@ -27,7 +27,8 @@ public class EntityDeltaRunnerService {
 
             processor.init();
             processor.start();
-            DefaultLogger.LOG.info(String.format("Edits Delta processor started. [config=%s]", config.toString()));
+            DefaultLogger.info(processor.getEnv().LOG,
+                    String.format("Edits Delta processor started. [config=%s]", config.toString()));
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
                     processor.status()),
                     HttpStatus.OK);

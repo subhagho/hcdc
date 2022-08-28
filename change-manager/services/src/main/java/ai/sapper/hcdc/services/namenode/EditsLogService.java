@@ -26,7 +26,8 @@ public class EditsLogService {
                     .setConfigSource(config.getType().name());
             processor.init();
             processor.start();
-            DefaultLogger.LOG.info(String.format("EditsLog processor started. [config=%s]", config.toString()));
+            DefaultLogger.info(processor.getEnv().LOG,
+                    String.format("EditsLog processor started. [config=%s]", config.toString()));
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
                     processor.status()),
                     HttpStatus.OK);

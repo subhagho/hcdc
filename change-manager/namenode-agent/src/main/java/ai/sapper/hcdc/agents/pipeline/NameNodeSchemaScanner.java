@@ -11,6 +11,7 @@ import ai.sapper.cdc.core.schema.SchemaManager;
 import ai.sapper.hcdc.agents.common.CDCDataConverter;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
+import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -35,6 +36,7 @@ public class NameNodeSchemaScanner {
     private SchemaManager schemaManager;
 
     private ThreadPoolExecutor executorService;
+    private NameNodeEnv env;
 
     public NameNodeSchemaScanner(@NonNull ZkStateManager stateManager, @NonNull String name) {
         this.stateManager = stateManager;
@@ -46,6 +48,9 @@ public class NameNodeSchemaScanner {
         try {
             config = new NameNodeFileScannerConfig(xmlConfig);
             config.read();
+
+            env = NameNodeEnv.get(name);
+            Preconditions.checkNotNull(env);
 
             connection = manger.getConnection(config.hdfsConnection, HdfsConnection.class);
             if (connection == null) {
@@ -89,7 +94,7 @@ public class NameNodeSchemaScanner {
                             Thread.sleep(THREAD_SLEEP_INTERVAL);
                         }
                     } else {
-                        DefaultLogger.LOG.debug(String.format("Skipped file: [%s]", fs.getHdfsFilePath()));
+                        DefaultLogger.debug(env.LOG, String.format("Skipped file: [%s]", fs.getHdfsFilePath()));
                     }
                 }
             }
@@ -97,7 +102,8 @@ public class NameNodeSchemaScanner {
                 Thread.sleep(THREAD_SLEEP_INTERVAL);
             }
         } catch (Exception ex) {
-            DefaultLogger.LOG.error(ex.getLocalizedMessage());
+            DefaultLogger.error(env.LOG, ex.getLocalizedMessage());
+            DefaultLogger.stacktrace(env.LOG, ex);
             throw ex;
         } finally {
             executorService.shutdown();
@@ -132,31 +138,38 @@ public class NameNodeSchemaScanner {
         @Override
         public void run() {
             try {
-                CDCDataConverter converter = new CDCDataConverter()
-                        .withHdfsConnection(hdfsConnection)
-                        .withSchemaManager(schemaManager);
-                SchemaEntity schemaEntity = new SchemaEntity(SchemaManager.DEFAULT_DOMAIN, fileState.getHdfsFilePath());
-                CDCDataConverter.ExtractSchemaResponse response = converter.extractSchema(fileState, schemaEntity);
-                if (response != null) {
-                    if (response.schema() != null) {
-                        String path = schemaManager().schemaPath(schemaEntity);
-                        if (!Strings.isNullOrEmpty(path)) {
-                            fileState.setSchemaLocation(path);
+                NameNodeEnv env = NameNodeEnv.get(name);
+                Preconditions.checkNotNull(env);
+                try {
+                    CDCDataConverter converter = new CDCDataConverter()
+                            .withHdfsConnection(hdfsConnection)
+                            .withSchemaManager(schemaManager);
+                    SchemaEntity schemaEntity = new SchemaEntity(SchemaManager.DEFAULT_DOMAIN, fileState.getHdfsFilePath());
+                    CDCDataConverter.ExtractSchemaResponse response = converter.extractSchema(fileState, schemaEntity);
+                    if (response != null) {
+                        if (response.schema() != null) {
+                            String path = schemaManager().schemaPath(schemaEntity);
+                            if (!Strings.isNullOrEmpty(path)) {
+                                fileState.setSchemaLocation(path);
+                            }
+                        }
+                        fileState.setFileType(response.fileType());
+                        try (DistributedLock lock = NameNodeEnv.get(name).globalLock()) {
+                            lock.lock();
+                            try {
+                                stateManager.fileStateHelper().update(fileState);
+                            } finally {
+                                lock.unlock();
+                            }
                         }
                     }
-                    fileState.setFileType(response.fileType());
-                    try (DistributedLock lock = NameNodeEnv.get(name).globalLock()) {
-                        lock.lock();
-                        try {
-                            stateManager.fileStateHelper().update(fileState);
-                        } finally {
-                            lock.unlock();
-                        }
-                    }
+                } catch (Exception ex) {
+                    DefaultLogger.error(env.LOG, ex.getLocalizedMessage());
+                    DefaultLogger.stacktrace(env.LOG, ex);
                 }
-            } catch (Exception ex) {
-                DefaultLogger.LOG.error(ex.getLocalizedMessage());
-                DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
+            } catch (Throwable t) {
+                DefaultLogger.stacktrace(t);
+                DefaultLogger.LOGGER.error(t.getLocalizedMessage());
             }
         }
     }

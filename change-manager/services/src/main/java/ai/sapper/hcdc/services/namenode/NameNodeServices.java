@@ -34,7 +34,8 @@ public class NameNodeServices {
             replicator.init();
             replicator.start();
             replicator.stop();
-            DefaultLogger.LOG.info(String.format("Edits Delta processor started. [config=%s]", config.toString()));
+            DefaultLogger.info(replicator.getEnv().LOG,
+                    String.format("Edits Delta processor started. [config=%s]", config.toString()));
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
                     replicator.status()),
                     HttpStatus.OK);
@@ -54,7 +55,8 @@ public class NameNodeServices {
             scanner.init();
             scanner.start();
             scanner.stop();
-            DefaultLogger.LOG.info(String.format("Edits Delta processor started. [config=%s]", config.toString()));
+            DefaultLogger.info(scanner.getEnv().LOG,
+                    String.format("Edits Delta processor started. [config=%s]", config.toString()));
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
                     scanner.status()),
                     HttpStatus.OK);

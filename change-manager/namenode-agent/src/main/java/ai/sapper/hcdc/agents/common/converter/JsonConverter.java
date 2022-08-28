@@ -136,7 +136,7 @@ public class JsonConverter extends FormatConverter {
                         }
 
                         if (maxLevel.isGreaterOrEqual(Level.ERROR)) {
-                            DefaultLogger.LOG.warn(
+                            DefaultLogger.LOGGER.warn(
                                     String.format("Found incompatible schema. [schema=%s][entity=%s]",
                                             _schema.toString(true), schemaEntity.toString()));
                         } else {

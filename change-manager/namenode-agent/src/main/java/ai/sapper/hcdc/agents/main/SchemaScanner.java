@@ -29,6 +29,8 @@ public class SchemaScanner implements Service<NameNodeEnv.ENameNEnvState> {
     private HierarchicalConfiguration<ImmutableNode> config;
     @Setter(AccessLevel.NONE)
     private NameNodeSchemaScanner scanner;
+    @Setter(AccessLevel.NONE)
+    private NameNodeEnv env;
 
     @Override
     public Service<NameNodeEnv.ENameNEnvState> setConfigFile(@NonNull String path) {
@@ -50,7 +52,7 @@ public class SchemaScanner implements Service<NameNodeEnv.ENameNEnvState> {
             }
             Preconditions.checkNotNull(fileSource);
             config = ConfigReader.read(configFile, fileSource);
-            NameNodeEnv.setup(name(), config);
+            env = NameNodeEnv.setup(name(), getClass(), config);
             scanner = new NameNodeSchemaScanner(NameNodeEnv.get(name()).stateManager(), name());
             scanner
                     .withSchemaManager(NameNodeEnv.get(name()).schemaManager())
@@ -58,8 +60,8 @@ public class SchemaScanner implements Service<NameNodeEnv.ENameNEnvState> {
 
             return this;
         } catch (Throwable t) {
-            DefaultLogger.LOG.error(t.getLocalizedMessage());
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOGGER.error(t.getLocalizedMessage());
+            DefaultLogger.stacktrace(t);
             throw new NameNodeError(t);
         }
     }
@@ -71,6 +73,8 @@ public class SchemaScanner implements Service<NameNodeEnv.ENameNEnvState> {
             scanner.run();
             return this;
         } catch (Throwable t) {
+            DefaultLogger.stacktrace(env.LOG, t);
+            DefaultLogger.error(env.LOG, t.getLocalizedMessage());
             NameNodeEnv.get(name()).error(t);
             throw t;
         }
@@ -104,8 +108,8 @@ public class SchemaScanner implements Service<NameNodeEnv.ENameNEnvState> {
             runner.start();
             runner.stop();
         } catch (Exception ex) {
-            DefaultLogger.LOG.error(ex.getLocalizedMessage());
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
+            DefaultLogger.LOGGER.error(ex.getLocalizedMessage());
+            DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(ex));
         }
     }
 }

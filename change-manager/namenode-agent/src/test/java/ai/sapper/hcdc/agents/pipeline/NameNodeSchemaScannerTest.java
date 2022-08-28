@@ -19,7 +19,7 @@ class NameNodeSchemaScannerTest {
         try {
             HierarchicalConfiguration<ImmutableNode> config = ConfigReader.read(CONFIG_FILE, EConfigFileType.File);
             String name = NameNodeSchemaScanner.class.getSimpleName();
-            NameNodeEnv.setup(name, config);
+            NameNodeEnv.setup(name, getClass(), config);
 
             Preconditions.checkNotNull(NameNodeEnv.get(name).schemaManager());
             NameNodeSchemaScanner scanner = new NameNodeSchemaScanner(NameNodeEnv.get(name).stateManager(), name);
@@ -30,7 +30,7 @@ class NameNodeSchemaScannerTest {
 
             NameNodeEnv.dispose(name);
         } catch (Throwable t) {
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.stacktrace(t);
             fail(t);
         }
     }

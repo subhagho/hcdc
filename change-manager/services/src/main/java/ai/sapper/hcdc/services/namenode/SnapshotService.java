@@ -146,13 +146,14 @@ public class SnapshotService {
             processor.setConfigFile(config.getPath())
                     .setConfigSource(config.getType().name());
             processor.init();
-            DefaultLogger.LOG.info(String.format("EditsLog processor started. [config=%s]", config.toString()));
+            DefaultLogger.info(processor.getEnv().LOG,
+                    String.format("EditsLog processor started. [config=%s]", config.toString()));
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
                     processor.status()),
                     HttpStatus.OK);
         } catch (Throwable t) {
-            DefaultLogger.LOG.error("Error starting service.", t);
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.error(processor.getEnv().LOG, "Error starting service.", t);
+            DefaultLogger.stacktrace(processor.getEnv().LOG, t);
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
                     processor.status()).withError(t),
                     HttpStatus.INTERNAL_SERVER_ERROR);

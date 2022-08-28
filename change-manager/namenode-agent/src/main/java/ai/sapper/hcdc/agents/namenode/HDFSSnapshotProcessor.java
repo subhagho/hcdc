@@ -32,6 +32,7 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.Strings;
+import org.slf4j.Logger;
 
 import java.net.URI;
 import java.util.List;
@@ -39,6 +40,7 @@ import java.util.List;
 @Getter
 @Accessors(fluent = true)
 public class HDFSSnapshotProcessor {
+    private Logger LOG;
     private final String name;
     private final ZkStateManager stateManager;
     private MessageSender<String, DFSChangeDelta> sender;
@@ -79,6 +81,7 @@ public class HDFSSnapshotProcessor {
                         .domainManager()
                         .withFilterAddCallback(new SnapshotCallBack(this));
             }
+            LOG = NameNodeEnv.get(name).LOG;
             return this;
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
@@ -89,6 +92,7 @@ public class HDFSSnapshotProcessor {
         Preconditions.checkState(stateManager instanceof ProcessorStateManager);
         DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
         Preconditions.checkNotNull(domainManager.hdfsConnection());
+
         int count = 0;
         long txId = stateManager.getModuleState().getCurrentTxId();
         try (DistributedLock lock = NameNodeEnv.get(name).globalLock()
@@ -197,12 +201,12 @@ public class HDFSSnapshotProcessor {
         Preconditions.checkState(sender != null);
         stateManager.replicationLock().lock();
         try {
-            DefaultLogger.LOG.debug(String.format("Generating snapshot for file. [path=%s]", hdfsPath));
+            DefaultLogger.debug(LOG, String.format("Generating snapshot for file. [path=%s]", hdfsPath));
             DFSFileState fileState = stateManager
                     .fileStateHelper()
                     .get(hdfsPath);
             if (fileState == null) {
-                DefaultLogger.LOG.info(String.format("HDFS File State not found. [path=%s]", hdfsPath));
+                DefaultLogger.info(LOG, String.format("HDFS File State not found. [path=%s]", hdfsPath));
                 return;
             }
             if (txId < 0) {
@@ -245,7 +249,8 @@ public class HDFSSnapshotProcessor {
             stateManager
                     .replicaStateHelper()
                     .update(rState);
-            DefaultLogger.LOG.info(String.format("Snapshot generated for path. [path=%s][inode=%d]", fileState.getHdfsFilePath(), fileState.getId()));
+            DefaultLogger.info(LOG, String.format("Snapshot generated for path. [path=%s][inode=%d]",
+                    fileState.getHdfsFilePath(), fileState.getId()));
         } catch (SnapshotError se) {
             throw se;
         } catch (Exception ex) {
@@ -275,7 +280,7 @@ public class HDFSSnapshotProcessor {
                 throw new SnapshotError(String.format("Snapshot transaction mismatch. [expected=%d][actual=%d]", rState.getSnapshotTxId(), tnxId));
             }
             if (rState.isSnapshotReady()) {
-                DefaultLogger.LOG.warn(String.format("Duplicate Call: Snapshot Done: [path=%s]", rState.getHdfsPath()));
+                DefaultLogger.warn(LOG, String.format("Duplicate Call: Snapshot Done: [path=%s]", rState.getHdfsPath()));
                 return rState;
             }
             long lastTxId = tnxId;
@@ -444,11 +449,13 @@ public class HDFSSnapshotProcessor {
                             @NonNull String path) {
             try {
                 int count = processor.processFilterWithLock(filter, matcher.domain(), -1);
-                DefaultLogger.LOG.info(String.format("Processed filer: [filter=%s][files=%d]",
-                        JSONUtils.asString(filter.filter(), Filter.class), count));
+                DefaultLogger.info(processor.LOG,
+                        String.format("Processed filer: [filter=%s][files=%d]",
+                                JSONUtils.asString(filter.filter(), Filter.class), count));
             } catch (Exception ex) {
-                DefaultLogger.LOG.error(String.format("Error processing filter: %s", filter.filter().toString()), ex);
-                DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
+                DefaultLogger.error(processor.LOG,
+                        String.format("Error processing filter: %s", filter.filter().toString()), ex);
+                DefaultLogger.debug(processor.LOG, DefaultLogger.stacktrace(ex));
             }
         }
 

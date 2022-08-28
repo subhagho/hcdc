@@ -39,7 +39,7 @@ public class HeartbeatThread implements Runnable {
                 Thread.sleep(sleepInterval);
             }
         } catch (Exception ex) {
-            DefaultLogger.LOG.error(
+            DefaultLogger.LOGGER.error(
                     String.format("Heartbeat thread terminated. [module=%s]", stateManager.module()), ex);
         }
     }

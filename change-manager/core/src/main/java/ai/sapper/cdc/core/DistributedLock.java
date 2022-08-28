@@ -120,7 +120,7 @@ public class DistributedLock extends ReentrantLock implements Closeable {
         try {
             return tryLock(lockTimeout, TimeUnit.MILLISECONDS);
         } catch (InterruptedException ie) {
-            DefaultLogger.LOG.debug(String.format("Lock Timeout: [name=%s]", id.toString()));
+            DefaultLogger.LOGGER.debug(String.format("Lock Timeout: [name=%s]", id.toString()));
             return false;
         }
     }

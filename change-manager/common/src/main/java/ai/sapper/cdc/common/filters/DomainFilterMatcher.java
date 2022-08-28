@@ -77,7 +77,7 @@ public class DomainFilterMatcher {
                 if (part.startsWith("/")) {
                     part = part.substring(1);
                 }
-                DefaultLogger.LOG.debug(String.format("[dir=%s][part=%s]", pf.path, part));
+                DefaultLogger.LOGGER.debug(String.format("[dir=%s][part=%s]", pf.path, part));
                 if (pf.matches(part)) {
                     if (ignoreRegex != null) {
                         Matcher ignore = ignoreRegex.matcher(source);
@@ -87,7 +87,7 @@ public class DomainFilterMatcher {
                         return pf;
                     }
                 } else {
-                    DefaultLogger.LOG.debug(String.format("Match failed: [dir=%s][part=%s]", pf.path, part));
+                    DefaultLogger.LOGGER.debug(String.format("Match failed: [dir=%s][part=%s]", pf.path, part));
                 }
             }
         }

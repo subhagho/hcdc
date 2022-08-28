@@ -179,7 +179,7 @@ public class DomainManager {
             client.create().creatingParentContainersIfNeeded().forPath(zp);
         }
         Stat stat = client.setData().forPath(zp, json.getBytes(StandardCharsets.UTF_8));
-        DefaultLogger.LOG.debug(String.format("Added Domain Filter: [path=%s][filter=%s]", zp, json));
+        DefaultLogger.LOGGER.debug(String.format("Added Domain Filter: [path=%s][filter=%s]", zp, json));
         if (!callbacks.isEmpty()) {
             for (FilterAddCallback callback : callbacks) {
                 callback.process(matcher, filter, path);
@@ -247,7 +247,7 @@ public class DomainManager {
             client.create().creatingParentContainersIfNeeded().forPath(zp);
         }
         Stat stat = client.setData().forPath(zp, json.getBytes(StandardCharsets.UTF_8));
-        DefaultLogger.LOG.debug(String.format("Removed Domain Filter: [path=%s][filter=%s]", zp, json));
+        DefaultLogger.LOGGER.debug(String.format("Removed Domain Filter: [path=%s][filter=%s]", zp, json));
     }
 
     @Getter

@@ -43,7 +43,7 @@ public class FileWatcher implements Runnable {
         Preconditions.checkState(callback != null);
         running = true;
         final Path path = Paths.get(directory);
-        DefaultLogger.LOG.info(String.format("Starting file watcher. [directory=%s][regex=%s]", directory, regex));
+        DefaultLogger.LOGGER.info(String.format("Starting file watcher. [directory=%s][regex=%s]", directory, regex));
         try (final WatchService watchService = FileSystems.getDefault().newWatchService()) {
             final WatchKey watchKey = path.register(watchService,
                     StandardWatchEventKinds.ENTRY_MODIFY,

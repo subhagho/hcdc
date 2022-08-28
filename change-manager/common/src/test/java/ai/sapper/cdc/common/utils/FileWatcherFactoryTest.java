@@ -23,7 +23,7 @@ class FileWatcherFactoryTest {
                 d.mkdirs();
             }
             String fname = String.format("%s/%s.dat", d.getAbsolutePath(), UUID.randomUUID().toString());
-            DefaultLogger.LOG.info(String.format("Using temp file [path=%s]", fname));
+            DefaultLogger.LOGGER.info(String.format("Using temp file [path=%s]", fname));
 
             File file = new File(fname);
             if (file.exists()) {
@@ -54,9 +54,9 @@ class FileWatcherFactoryTest {
         public void handle(@NonNull String path, WatchEvent.Kind<?> eventKind) throws IOException {
             Path fp = Paths.get(path);
             if (eventKind.equals(StandardWatchEventKinds.ENTRY_DELETE)) {
-                DefaultLogger.LOG.info(String.format("[%d] [%s] [%s]", count++, eventKind.name(), fp.toString()));
+                DefaultLogger.LOGGER.info(String.format("[%d] [%s] [%s]", count++, eventKind.name(), fp.toString()));
             } else {
-                DefaultLogger.LOG.info(String.format("[%d] [%s] [%s] [size=%d]", count++, eventKind.name(), fp.toString(), Files.size(fp)));
+                DefaultLogger.LOGGER.info(String.format("[%d] [%s] [%s] [size=%d]", count++, eventKind.name(), fp.toString(), Files.size(fp)));
             }
         }
     }
@@ -90,13 +90,13 @@ class FileWatcherFactoryTest {
                     for (int ii = 0; ii < 10; ii++) {
                         String msg = String.format("[LINE=%d] %s\n", ii, mesg);
                         fos.write(msg.getBytes(StandardCharsets.UTF_8));
-                        DefaultLogger.LOG.info(String.format("[LINE %d] written...", ii));
+                        DefaultLogger.LOGGER.info(String.format("[LINE %d] written...", ii));
                         Thread.sleep(1000);
                     }
                 }
                 file.delete();
             } catch (Throwable t) {
-                DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
+                DefaultLogger.LOGGER.error(DefaultLogger.stacktrace(t));
             }
         }
     }

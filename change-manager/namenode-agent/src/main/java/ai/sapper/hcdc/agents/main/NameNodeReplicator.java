@@ -49,6 +49,7 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
     private HierarchicalConfiguration<ImmutableNode> config;
     private ReplicatorConfig replicatorConfig;
     private ZkStateManager stateManager;
+    private NameNodeEnv env;
 
     @Parameter(names = {"--image", "-i"}, required = true, description = "Path to the FS Image file.")
     private String fsImageFile;
@@ -95,7 +96,7 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
             }
             Preconditions.checkNotNull(fileSource);
             config = ConfigReader.read(configFile, fileSource);
-            NameNodeEnv.setup(name(), config);
+            env = NameNodeEnv.setup(name(), getClass(), config);
             replicatorConfig = new ReplicatorConfig(config);
             replicatorConfig.read();
 
@@ -119,8 +120,8 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
 
             return this;
         } catch (Throwable t) {
-            DefaultLogger.LOG.error(t.getLocalizedMessage());
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.stacktrace(t);
+            DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(t));
             throw new NameNodeError(t);
         }
     }
@@ -131,8 +132,8 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
             run();
             return this;
         } catch (Throwable t) {
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
-            DefaultLogger.LOG.error(t.getLocalizedMessage());
+            DefaultLogger.stacktrace(env.LOG, t);
+            DefaultLogger.error(env.LOG, t.getLocalizedMessage());
             NameNodeEnv.get(name()).error(t);
             throw t;
         }
@@ -164,9 +165,9 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
                 lock.lock();
                 try {
                     String output = generateFSImageSnapshot();
-                    DefaultLogger.LOG.info(String.format("Generated FS Image XML. [path=%s]", output));
+                    DefaultLogger.info(env.LOG, String.format("Generated FS Image XML. [path=%s]", output));
                     readFSImageXml(output);
-                    DefaultLogger.LOG.warn(
+                    DefaultLogger.warn(env.LOG,
                             String.format("WARNING: Will delete existing file structure, if present. [path=%s]",
                                     stateManager.fileStateHelper().getFilePath(null)));
                     stateManager.deleteAll();
@@ -177,15 +178,16 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
                     ModuleTxState mTx = stateManager.updateSnapshotTxId(txnId);
                     mTx = stateManager.updateCurrentTx(txnId);
 
-                    DefaultLogger.LOG.info(String.format("NameNode replication done. [state=%s][module state=%s]", nnTxState, mTx));
+                    DefaultLogger.info(env.LOG,
+                            String.format("NameNode replication done. [state=%s][module state=%s]", nnTxState, mTx));
 
                 } finally {
                     lock.unlock();
                 }
             }
         } catch (Throwable t) {
-            DefaultLogger.LOG.error(t.getLocalizedMessage());
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.stacktrace(env.LOG, t);
+            DefaultLogger.error(env.LOG, t.getLocalizedMessage());
             throw new NameNodeError(t);
         }
     }
@@ -194,7 +196,7 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
         for (long id : inodes.keySet()) {
             DFSInode inode = inodes.get(id);
             if (inode.type == EInodeType.DIRECTORY) continue;
-            DefaultLogger.LOG.debug(String.format("Copying HDFS file entry. [path=%s]", inode.path()));
+            DefaultLogger.debug(env.LOG, String.format("Copying HDFS file entry. [path=%s]", inode.path()));
 
             DFSFileState fileState = stateManager
                     .fileStateHelper()

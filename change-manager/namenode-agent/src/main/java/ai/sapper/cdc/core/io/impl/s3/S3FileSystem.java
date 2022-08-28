@@ -388,7 +388,7 @@ public class S3FileSystem extends LocalFileSystem {
     }
 
     private void debug(Object mesg) {
-        DefaultLogger.LOG.debug("RESPONSE: %s", mesg);
+        DefaultLogger.LOGGER.debug("RESPONSE: %s", mesg);
     }
 
     /**

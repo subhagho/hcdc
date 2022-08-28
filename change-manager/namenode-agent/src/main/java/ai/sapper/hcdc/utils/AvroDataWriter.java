@@ -58,7 +58,7 @@ public class AvroDataWriter extends OutputDataWriter<List<String>> {
 
             writeToAvro(schema, data, path);
         } catch (Exception ex) {
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
+            DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(ex));
             throw new IOException(ex);
         }
     }

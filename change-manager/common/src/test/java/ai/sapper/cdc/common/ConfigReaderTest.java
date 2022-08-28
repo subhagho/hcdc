@@ -18,67 +18,67 @@ class ConfigReaderTest {
 
     @Test
     void get() {
-        DefaultLogger.LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "get"));
+        DefaultLogger.LOGGER.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "get"));
         try {
             ConfigReader reader = new ConfigReader(readFile(), "database");
             HierarchicalConfiguration<ImmutableNode> node = reader.get();
             assertNotNull(node);
         } catch (Throwable t) {
-            DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOGGER.error(DefaultLogger.stacktrace(t));
             fail(t);
         }
     }
 
     @Test
     void testGet() {
-        DefaultLogger.LOG.debug(String.format("Running [%s].%s(name)", getClass().getCanonicalName(), "get"));
+        DefaultLogger.LOGGER.debug(String.format("Running [%s].%s(name)", getClass().getCanonicalName(), "get"));
         try {
             ConfigReader reader = new ConfigReader(readFile(), "database");
             HierarchicalConfiguration<ImmutableNode> node = reader.get("header.name");
             assertNotNull(node);
         } catch (Throwable t) {
-            DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOGGER.error(DefaultLogger.stacktrace(t));
             fail(t);
         }
     }
 
     @Test
     void getCollection() {
-        DefaultLogger.LOG.debug(String.format("Running [%s].%s(name)", getClass().getCanonicalName(), "getCollection"));
+        DefaultLogger.LOGGER.debug(String.format("Running [%s].%s(name)", getClass().getCanonicalName(), "getCollection"));
         try {
             ConfigReader reader = new ConfigReader(readFile(), "database");
             List<HierarchicalConfiguration<ImmutableNode>> nodes = reader.getCollection("tables.table");
             assertNotNull(nodes);
             assertEquals(2, nodes.size());
         } catch (Throwable t) {
-            DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOGGER.error(DefaultLogger.stacktrace(t));
             fail(t);
         }
     }
 
     @Test
     void readParameters() {
-        DefaultLogger.LOG.debug(String.format("Running [%s].%s(name)", getClass().getCanonicalName(), "getCollection"));
+        DefaultLogger.LOGGER.debug(String.format("Running [%s].%s(name)", getClass().getCanonicalName(), "getCollection"));
         try {
             ConfigReader reader = new ConfigReader(readFile(), "database");
             Map<String, String> params = reader.readParameters();
             assertNotNull(params);
             assertEquals(2, params.size());
         } catch (Throwable t) {
-            DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOGGER.error(DefaultLogger.stacktrace(t));
             fail(t);
         }
     }
 
     @Test
     void read() {
-        DefaultLogger.LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "read"));
+        DefaultLogger.LOGGER.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "read"));
         try {
             ConfigReader reader = new ConfigReader(readFile(), "database");
             HierarchicalConfiguration<ImmutableNode> node = reader.get();
             assertNotNull(node);
         } catch (Throwable t) {
-            DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOGGER.error(DefaultLogger.stacktrace(t));
             fail(t);
         }
     }
@@ -94,7 +94,7 @@ class ConfigReaderTest {
 
     @Test
     void map() {
-        DefaultLogger.LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "map"));
+        DefaultLogger.LOGGER.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "map"));
         try {
             ConfigReader reader = new ConfigReader(readFile(), "database");
             HierarchicalConfiguration<ImmutableNode> node = reader.get();
@@ -106,7 +106,7 @@ class ConfigReaderTest {
             Map<String, String> map = ConfigReader.readAsMap(node, "domains.mapping");
             assertTrue(map.size() > 0);
         } catch (Throwable t) {
-            DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOGGER.error(DefaultLogger.stacktrace(t));
             fail(t);
         }
     }

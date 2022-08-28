@@ -285,11 +285,11 @@ public class FileStateHelper {
                 DFSFileState fileState = get(hdfsPath);
                 if (fileState != null) {
                     client.delete().forPath(fileState.getZkPath());
-                    DefaultLogger.LOG.debug(String.format("Deleted file: [path=%s]", hdfsPath));
+                    DefaultLogger.LOGGER.debug(String.format("Deleted file: [path=%s]", hdfsPath));
                 } else if (checkIsDirectoryPath(hdfsPath)) {
                     String path = getFilePath(hdfsPath);
                     client.delete().deletingChildrenIfNeeded().forPath(path);
-                    DefaultLogger.LOG.debug(String.format("Deleted directory: [path=%s]", hdfsPath));
+                    DefaultLogger.LOGGER.debug(String.format("Deleted directory: [path=%s]", hdfsPath));
                 }
                 return fileState;
             } catch (Exception ex) {
@@ -433,11 +433,11 @@ public class FileStateHelper {
             if (client.checkExists().forPath(path) != null) {
                 byte[] data = client.getData().forPath(path);
                 if (data != null && data.length > 0) {
-                    DefaultLogger.LOG.debug(
+                    DefaultLogger.LOGGER.debug(
                             String.format("Specified path is a file. [path=%s]", hdfsPath));
                     return false;
                 }
-                DefaultLogger.LOG.debug(
+                DefaultLogger.LOGGER.debug(
                         String.format("Specified path found. [path=%s]", hdfsPath));
                 return true;
             }

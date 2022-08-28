@@ -10,6 +10,7 @@ import ai.sapper.cdc.core.messaging.MessagingConfig;
 import ai.sapper.hcdc.agents.model.AgentTxState;
 import ai.sapper.hcdc.agents.model.NameNodeAgentState;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
@@ -32,6 +33,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     private MessageSender<String, DFSChangeDelta> errorSender;
     private MessageReceiver<String, DFSChangeDelta> receiver;
     private long receiveBatchTimeout = 1000;
+    private NameNodeEnv env;
 
     public ChangeDeltaProcessor(@NonNull ZkStateManager stateManager, @NonNull String name) {
         this.stateManager = stateManager;
@@ -41,6 +43,9 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     public ChangeDeltaProcessor init(@NonNull ChangeDeltaProcessorConfig config,
                                      @NonNull ConnectionManager manger) throws ConfigurationException {
         try {
+            env = NameNodeEnv.get(name);
+            Preconditions.checkNotNull(env);
+
             this.processorConfig = config;
             processorConfig.read();
 
@@ -107,9 +112,9 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
         } catch (Throwable t) {
             try {
                 NameNodeEnv.get(name).agentState().error(t);
-                DefaultLogger.LOG.error(t.getLocalizedMessage(), t);
+                env.LOG.error(t.getLocalizedMessage(), t);
             } catch (Exception ex) {
-                DefaultLogger.LOG.error(ex.getLocalizedMessage(), ex);
+                env.LOG.error(ex.getLocalizedMessage(), ex);
             }
         }
     }

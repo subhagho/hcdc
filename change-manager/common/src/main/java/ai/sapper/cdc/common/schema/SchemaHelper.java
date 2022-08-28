@@ -712,7 +712,7 @@ public class SchemaHelper {
             ObjectMapper mapper = new ObjectMapper();
             String json = mapper.writeValueAsString(data);
             Map<String, Object> map = mapper.readValue(json, Map.class);
-            DefaultLogger.LOG.debug(String.format("\nJSON: [\n%s\n]", json));
+            DefaultLogger.LOGGER.debug(String.format("\nJSON: [\n%s\n]", json));
             SchemaHelper.ObjectField field =
                     SchemaHelper.ObjectField.parse(data.getClass().getSimpleName(), map);
             field.namespace(data.getClass().getCanonicalName());

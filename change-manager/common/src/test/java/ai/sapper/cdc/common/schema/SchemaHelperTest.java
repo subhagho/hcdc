@@ -48,9 +48,9 @@ class SchemaHelperTest {
             assertNotNull(map);
             SchemaHelper.Field field = SchemaHelper.ObjectField.parse("", map);
             assertNotNull(field);
-            DefaultLogger.LOG.info(String.format("\nSCHEMA: [%s]\n", field.avroSchema()));
+            DefaultLogger.LOGGER.info(String.format("\nSCHEMA: [%s]\n", field.avroSchema()));
         } catch (Exception ex) {
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
+            DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(ex));
             fail(ex);
         }
     }
@@ -86,9 +86,9 @@ class SchemaHelperTest {
             profile.contact.residence.zipCode = "990104";
 
             Schema schema = SchemaHelper.POJOToAvroSchema.convert(profile);
-            DefaultLogger.LOG.info(String.format("\nSCHEMA: [%s]\n", schema.toString()));
+            DefaultLogger.LOGGER.info(String.format("\nSCHEMA: [%s]\n", schema.toString()));
         } catch (Exception ex) {
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
+            DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(ex));
             fail(ex);
         }
     }
@@ -107,16 +107,16 @@ class SchemaHelperTest {
                 mt.map.put(UUID.randomUUID().toString(), rnd.nextDouble());
             }
             String json = JSONUtils.asString(mt, MapTest.class);
-            DefaultLogger.LOG.debug(json);
+            DefaultLogger.LOGGER.debug(json);
 
             Map<String, Object> jsonMap = JSONUtils.read(json, Map.class);
             SchemaHelper.Field field = SchemaHelper.ObjectField.parse("", jsonMap);
             assertNotNull(field);
 
             String schema = field.avroSchema();
-            DefaultLogger.LOG.info(String.format("\nSCHEMA: [%s]\n", schema));
+            DefaultLogger.LOGGER.info(String.format("\nSCHEMA: [%s]\n", schema));
         } catch (Exception ex) {
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
+            DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(ex));
             fail(ex);
         }
     }

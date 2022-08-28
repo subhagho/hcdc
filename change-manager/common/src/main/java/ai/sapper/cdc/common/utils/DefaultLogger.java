@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class DefaultLogger {
-    public static Logger LOG = LoggerFactory.getLogger(DefaultLogger.class);
+    public static Logger LOGGER = LoggerFactory.getLogger(DefaultLogger.class);
 
     public static String error(Throwable err, String format, Object... args) {
         String mesg = String.format(format, args);
@@ -15,21 +15,73 @@ public final class DefaultLogger {
     public static String stacktrace(@NonNull Throwable error) {
         StringBuilder buff = new StringBuilder(String.format("ERROR: %s", error.getLocalizedMessage()));
         Throwable e = error;
-        while(e != null) {
-            buff.append("\n********************************BEGIN TRACE********************************\n");
-            buff.append(String.format("ERROR: %s\n", e.getLocalizedMessage()));
+        while (e != null) {
+            buff.append("\n\t********************************BEGIN TRACE********************************\n");
+            buff.append(String.format("\tERROR: %s\n", e.getLocalizedMessage()));
             for (StackTraceElement se : e.getStackTrace()) {
-                buff.append(String.format("%s[%d] : %s.%s()\n", se.getFileName(), se.getLineNumber(), se.getClassName(), se.getMethodName()));
+                buff.append(String.format("\t%s\n", se.toString()));
             }
-            buff.append("********************************END   TRACE********************************\n");
+            buff.append("\t********************************END   TRACE********************************\n");
             e = e.getCause();
         }
         return buff.toString();
     }
 
-    public static void stacktrace(@NonNull Logger logger, @NonNull Throwable error) {
+    public static void stacktrace(Logger logger, @NonNull Throwable error) {
+        if (logger == null) {
+            logger = LOGGER;
+        }
         if (logger.isDebugEnabled()) {
             logger.debug(stacktrace(error));
         }
+    }
+
+    public static void error(Logger logger, @NonNull String msg) {
+        if (logger == null) {
+            logger = LOGGER;
+        }
+        logger.error(msg);
+    }
+
+    public static void error(Logger logger, @NonNull String msg, @NonNull Throwable error) {
+        if (logger == null) {
+            logger = LOGGER;
+        }
+        logger.error(msg, error);
+    }
+
+    public static void warn(Logger logger, @NonNull String msg) {
+        if (logger == null) {
+            logger = LOGGER;
+        }
+        logger.warn(msg);
+    }
+
+    public static void warn(Logger logger, @NonNull String msg, @NonNull Throwable error) {
+        if (logger == null) {
+            logger = LOGGER;
+        }
+        logger.warn(msg, error);
+    }
+
+    public static void info(Logger logger, @NonNull String msg) {
+        if (logger == null) {
+            logger = LOGGER;
+        }
+        logger.warn(msg);
+    }
+
+    public static void debug(Logger logger, @NonNull String msg, @NonNull Throwable error) {
+        if (logger == null) {
+            logger = LOGGER;
+        }
+        logger.debug(msg, error);
+    }
+
+    public static void debug(Logger logger, @NonNull String msg) {
+        if (logger == null) {
+            logger = LOGGER;
+        }
+        logger.warn(msg);
     }
 }

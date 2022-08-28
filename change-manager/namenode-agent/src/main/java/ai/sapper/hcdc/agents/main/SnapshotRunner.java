@@ -23,6 +23,7 @@ public class SnapshotRunner implements Service<NameNodeEnv.ENameNEnvState> {
     private EConfigFileType fileSource = EConfigFileType.File;
     private HierarchicalConfiguration<ImmutableNode> config;
     private HDFSSnapshotProcessor processor;
+    private NameNodeEnv env;
 
     @Override
     public Service<NameNodeEnv.ENameNEnvState> setConfigFile(@NonNull String path) {
@@ -44,7 +45,7 @@ public class SnapshotRunner implements Service<NameNodeEnv.ENameNEnvState> {
             }
             Preconditions.checkNotNull(fileSource);
             config = ConfigReader.read(configFile, fileSource);
-            NameNodeEnv.setup(name(), config);
+            env = NameNodeEnv.setup(name(), getClass(), config);
             processor = new HDFSSnapshotProcessor(NameNodeEnv.get(name()).stateManager(), name());
             processor.init(NameNodeEnv.get(name())
                             .configNode(),
@@ -52,8 +53,8 @@ public class SnapshotRunner implements Service<NameNodeEnv.ENameNEnvState> {
                             .connectionManager());
             return this;
         } catch (Throwable t) {
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
-            DefaultLogger.LOG.error(t.getLocalizedMessage());
+            DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOGGER.error(t.getLocalizedMessage());
             NameNodeEnv.get(name()).error(t);
             throw t;
         }
@@ -65,8 +66,8 @@ public class SnapshotRunner implements Service<NameNodeEnv.ENameNEnvState> {
             processor.run();
             return this;
         } catch (Throwable t) {
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
-            DefaultLogger.LOG.error(t.getLocalizedMessage());
+            DefaultLogger.stacktrace(env.LOG, t);
+            DefaultLogger.error(env.LOG, t.getLocalizedMessage());
             NameNodeEnv.get(name()).error(t);
             throw t;
         }
@@ -79,7 +80,7 @@ public class SnapshotRunner implements Service<NameNodeEnv.ENameNEnvState> {
     }
 
     @Override
-    public NameNodeEnv.NameNEnvState status()  {
+    public NameNodeEnv.NameNEnvState status() {
         try {
             return NameNodeEnv.status(name());
         } catch (Exception ex) {
@@ -102,15 +103,15 @@ public class SnapshotRunner implements Service<NameNodeEnv.ENameNEnvState> {
                 runner.start();
             } catch (Throwable t) {
                 t.printStackTrace();
-                DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
-                DefaultLogger.LOG.error(t.getLocalizedMessage());
+                DefaultLogger.stacktrace(t);
+                DefaultLogger.LOGGER.error(t.getLocalizedMessage());
             } finally {
                 runner.stop();
             }
         } catch (Throwable t) {
             t.printStackTrace();
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
-            DefaultLogger.LOG.error(t.getLocalizedMessage());
+            DefaultLogger.stacktrace(t);
+            DefaultLogger.LOGGER.error(t.getLocalizedMessage());
         }
     }
 }

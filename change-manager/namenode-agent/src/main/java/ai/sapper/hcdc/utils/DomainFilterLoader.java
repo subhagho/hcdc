@@ -51,7 +51,7 @@ public class DomainFilterLoader {
                                 !Strings.isNullOrEmpty(p) &&
                                 !Strings.isNullOrEmpty(r)) {
                             domainManager.add(d, e, p, r);
-                            DefaultLogger.LOG.info(String.format("Registered Filter: [DOMAIN=%s][PATH=%s][REGEX=%s]", d, p, r));
+                            DefaultLogger.LOGGER.info(String.format("Registered Filter: [DOMAIN=%s][PATH=%s][REGEX=%s]", d, p, r));
                         }
                     }
                 }
@@ -65,7 +65,7 @@ public class DomainFilterLoader {
             DomainFilterLoader loader = new DomainFilterLoader();
             JCommander.newBuilder().addObject(loader).build().parse(args);
             XMLConfiguration config = ConfigReader.read(loader.configfile, EConfigFileType.File);
-            NameNodeEnv.setup(name, config);
+            NameNodeEnv.setup(name, DomainFilterLoader.class, config);
             if (!(NameNodeEnv.get(name).stateManager() instanceof ProcessorStateManager)) {
                 throw new Exception(
                         String.format("Invalid StateManager instance. [expected=%s]",
@@ -73,8 +73,8 @@ public class DomainFilterLoader {
             }
             loader.read(loader.filters, ((ProcessorStateManager) NameNodeEnv.get(name).stateManager()).domainManager());
         } catch (Throwable t) {
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
-            DefaultLogger.LOG.error(t.getLocalizedMessage());
+            DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOGGER.error(t.getLocalizedMessage());
             t.printStackTrace();
         }
     }

@@ -23,7 +23,7 @@ class NameNodeReplicatorTest {
             NameNodeReplicator.main(args);
 
         } catch (Throwable t) {
-            DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
+            DefaultLogger.stacktrace(t);
             fail(t);
         }
     }

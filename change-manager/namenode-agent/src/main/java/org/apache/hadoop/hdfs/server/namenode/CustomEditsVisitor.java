@@ -71,7 +71,7 @@ public class CustomEditsVisitor implements OfflineEditsVisitor {
         try {
             parser.parse(op, batch);
         } catch (DFSAgentError e) {
-            DefaultLogger.LOG.error(String.format("Error parsing OP Code [%s]", op.opCode.name()), e);
+            DefaultLogger.LOGGER.error(String.format("Error parsing OP Code [%s]", op.opCode.name()), e);
             throw new IOException(e);
         }
     }

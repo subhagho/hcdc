@@ -33,11 +33,11 @@ class EditLogViewerTest {
                 if (lastTxId > 0) {
                     assertEquals((lastTxId + 1), tnx.id());
                 }
-                DefaultLogger.LOG.info(tnx.toString());
+                DefaultLogger.LOGGER.info(tnx.toString());
                 lastTxId = tnx.id();
             }
         } catch (Throwable t) {
-            t.printStackTrace();
+            DefaultLogger.stacktrace(t);
             fail(t);
         }
     }
@@ -51,16 +51,18 @@ class EditLogViewerTest {
                 List<DFSTransactionType<?>> transactions = batch.transactions();
                 assertNotNull(transactions);
                 if (transactions.size() > 0) {
-                    DefaultLogger.LOG.info(String.format("Transactions found in edits file. [file=%s]", batch.filename()));
+                    DefaultLogger.LOGGER.info(
+                            String.format("Transactions found in edits file. [file=%s]", batch.filename()));
                     for (DFSTransactionType<?> tnx : transactions) {
-                        DefaultLogger.LOG.info(tnx.toString());
+                        DefaultLogger.LOGGER.info(tnx.toString());
                     }
                 } else {
-                    DefaultLogger.LOG.warn(String.format("No Transactions found in edits file. [file=%s]", batch.filename()));
+                    DefaultLogger.LOGGER.warn(
+                            String.format("No Transactions found in edits file. [file=%s]", batch.filename()));
                 }
             }
         } catch (Throwable t) {
-            t.printStackTrace();
+            DefaultLogger.stacktrace(t);
             fail(t);
         }
     }

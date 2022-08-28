@@ -23,7 +23,7 @@ class DomainFilterMatcherTest {
             mf = "/a/b/c/e/x/test.log";
             assertNull(matcher.matches(mf));
         } catch (Throwable t) {
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(t));
             fail(t);
         }
     }

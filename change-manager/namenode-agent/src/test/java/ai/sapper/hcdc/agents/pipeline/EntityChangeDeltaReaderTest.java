@@ -38,7 +38,7 @@ class EntityChangeDeltaReaderTest {
             s3Client.createBucket(CreateBucketRequest.builder().bucket(DEFAULT_BUCKET_NAME).build());
 
             HierarchicalConfiguration<ImmutableNode> config = ConfigReader.read(CONFIG_FILE, EConfigFileType.File);
-            NameNodeEnv.setup(name, config);
+            NameNodeEnv.setup(name, getClass(), config);
 
             EntityChangeDeltaReader processor
                     = new EntityChangeDeltaReader(NameNodeEnv.get(name).stateManager(), name)
@@ -46,7 +46,7 @@ class EntityChangeDeltaReaderTest {
             processor.init(NameNodeEnv.get(name).configNode(), NameNodeEnv.get(name).connectionManager());
             processor.run();
         } catch (Throwable t) {
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.stacktrace(t);
             fail(t);
         }
     }

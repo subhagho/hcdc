@@ -29,15 +29,16 @@ class NameNodeEnvTest {
         try {
             String name = getClass().getSimpleName();
 
-            NameNodeEnv.setup(name, xmlConfiguration);
-            DefaultLogger.LOG.info(String.format("Name Node Agent environment initialized. [source=%s]", NameNodeEnv.get(name).source()));
+            NameNodeEnv.setup(name, getClass(), xmlConfiguration);
+            DefaultLogger.LOGGER.info(String.format("Name Node Agent environment initialized. [source=%s]",
+                    NameNodeEnv.get(name).source()));
             assertNotNull(NameNodeEnv.get(name).hdfsConnection());
             assertNotNull(NameNodeEnv.get(name).stateManager().connection());
 
             NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose(name);
             assertEquals(NameNodeEnv.ENameNEnvState.Disposed, state);
         } catch (Throwable t) {
-            DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
+            DefaultLogger.stacktrace(t);
             fail(t);
         }
     }
@@ -47,8 +48,9 @@ class NameNodeEnvTest {
         try {
             String name = getClass().getSimpleName();
 
-            NameNodeEnv.setup(name, xmlConfiguration);
-            DefaultLogger.LOG.info(String.format("Name Node Agent environment initialized. [source=%s]", NameNodeEnv.get(name).source()));
+            NameNodeEnv.setup(name, getClass(), xmlConfiguration);
+            DefaultLogger.LOGGER.info(String.format("Name Node Agent environment initialized. [source=%s]",
+                    NameNodeEnv.get(name).source()));
             assertNotNull(NameNodeEnv.get(name).hdfsConnection());
             assertNotNull(NameNodeEnv.get(name).stateManager().connection());
             Thread[] threads = new Thread[5];
@@ -60,7 +62,7 @@ class NameNodeEnvTest {
                 threads[ii].join();
             }
         } catch (Throwable t) {
-            DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
+            DefaultLogger.stacktrace(t);
             fail(t);
         }
     }
@@ -84,7 +86,7 @@ class NameNodeEnvTest {
                                 lock.lock();
                                 try {
                                     lock.lock(); // Checking re-entrance
-                                    DefaultLogger.LOG.info(String.format("LOCK COUNTER=%d", lockCounter++));
+                                    DefaultLogger.LOGGER.info(String.format("LOCK COUNTER=%d", lockCounter++));
                                 } finally {
                                     lock.unlock();
                                 }
@@ -95,7 +97,7 @@ class NameNodeEnvTest {
                     }
                 }
             } catch (Throwable t) {
-                DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
+                DefaultLogger.stacktrace(t);
                 fail(t);
             }
         }

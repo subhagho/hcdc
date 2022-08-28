@@ -43,7 +43,7 @@ class KafkaConnectionTest {
 
     @Test
     void test() {
-        DefaultLogger.LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "connect"));
+        DefaultLogger.LOGGER.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "connect"));
         try {
             BasicKafkaProducer producer = manager.getConnection(__PRODUCER_NAME, BasicKafkaProducer.class);
             producer.connect();
@@ -70,7 +70,7 @@ class KafkaConnectionTest {
                 String mesg = String.format("[%s] %s", mid, text.toString());
                 ProducerRecord<String, byte[]> record = new ProducerRecord<>(producer.topic(), mid, mesg.getBytes(StandardCharsets.UTF_8));
                 RecordMetadata metadata = producer.producer().send(record).get();
-                DefaultLogger.LOG.debug("Record sent with key " + mid + " to partition " + metadata.partition()
+                DefaultLogger.LOGGER.debug("Record sent with key " + mid + " to partition " + metadata.partition()
                         + " with offset " + metadata.offset());
 
                 sentIds.put(mid, mesg.length());
@@ -79,7 +79,7 @@ class KafkaConnectionTest {
             thread.join();
 
         } catch (Throwable t) {
-            DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOGGER.error(DefaultLogger.stacktrace(t));
             fail(t);
         }
     }
@@ -112,7 +112,7 @@ class KafkaConnectionTest {
                     for (ConsumerRecord<String, byte[]> record : records) {
                         String mid = record.key();
                         String mesg = new String(record.value());
-                        DefaultLogger.LOG.debug(String.format("[TOPIC=%s, PARTITION=%d][KEY=%s, OFFSET=%d]: %s", record.topic(),
+                        DefaultLogger.LOGGER.debug(String.format("[TOPIC=%s, PARTITION=%d][KEY=%s, OFFSET=%d]: %s", record.topic(),
                                 record.partition(),
                                 record.key(),
                                 record.offset(),
@@ -120,11 +120,11 @@ class KafkaConnectionTest {
                         System.out.printf("[KEY=%s]: %s%n", record.key(), mesg);
 
                     }
-                    DefaultLogger.LOG.info(String.format("Fetched [%d] messages...", records.count()));
+                    DefaultLogger.LOGGER.info(String.format("Fetched [%d] messages...", records.count()));
                     if (records.count() <= 0) break;
                 }
             } catch (Throwable t) {
-                DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
+                DefaultLogger.LOGGER.error(DefaultLogger.stacktrace(t));
             }
         }
     }

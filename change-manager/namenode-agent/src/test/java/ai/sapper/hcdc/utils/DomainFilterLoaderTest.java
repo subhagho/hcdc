@@ -29,8 +29,10 @@ class DomainFilterLoaderTest {
     void read() {
         try {
             String name = getClass().getSimpleName();
-            NameNodeEnv.setup(name, xmlConfiguration);
-            DefaultLogger.LOG.info(String.format("Name Node Agent environment initialized. [namespace=%s]", NameNodeEnv.get(name).module()));
+            NameNodeEnv.setup(name, getClass(), xmlConfiguration);
+            DefaultLogger.LOGGER.info(
+                    String.format("Name Node Agent environment initialized. [namespace=%s]",
+                            NameNodeEnv.get(name).module()));
             assertNotNull(NameNodeEnv.get(name).stateManager());
             assertTrue(NameNodeEnv.get(name).stateManager() instanceof ProcessorStateManager);
             DomainManager domainManager = ((ProcessorStateManager) NameNodeEnv.get(name).stateManager()).domainManager();
@@ -39,7 +41,7 @@ class DomainFilterLoaderTest {
             new DomainFilterLoader().read(TEST_DOMAIN_FILE, domainManager);
             NameNodeEnv.dispose(name);
         } catch (Throwable t) {
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.stacktrace(t);
             fail(t);
         }
     }

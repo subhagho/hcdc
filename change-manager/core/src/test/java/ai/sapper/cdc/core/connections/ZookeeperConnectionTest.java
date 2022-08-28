@@ -33,7 +33,7 @@ class ZookeeperConnectionTest {
 
     @Test
     void connect() {
-        DefaultLogger.LOG.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "connect"));
+        DefaultLogger.LOGGER.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "connect"));
         try {
             ZookeeperConnection connection = manager.getConnection(__CONNECTION_NAME, ZookeeperConnection.class);
             assertNotNull(connection);
@@ -43,12 +43,12 @@ class ZookeeperConnectionTest {
 
             List<String> paths = connection.client().getChildren().forPath(__BASE_PATH);
             assertNotNull(paths);
-            DefaultLogger.LOG.debug(String.format("PATHS : [%s]", paths));
+            DefaultLogger.LOGGER.debug(String.format("PATHS : [%s]", paths));
 
             connection.close();
             assertEquals(Connection.EConnectionState.Closed, connection.connectionState());
         } catch (Throwable t) {
-            DefaultLogger.LOG.error(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOGGER.error(DefaultLogger.stacktrace(t));
             fail(t);
         }
     }

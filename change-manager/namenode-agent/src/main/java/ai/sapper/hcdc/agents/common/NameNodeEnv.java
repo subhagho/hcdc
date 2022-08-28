@@ -35,7 +35,7 @@ import java.util.Map;
 @Getter
 @Accessors(fluent = true)
 public class NameNodeEnv extends BaseEnv {
-    public static Logger LOG = LoggerFactory.getLogger(NameNodeEnv.class);
+    public Logger LOG = LoggerFactory.getLogger(NameNodeEnv.class);
 
     public static final String NN_IGNORE_TNX = "%s.IGNORE";
 
@@ -59,11 +59,17 @@ public class NameNodeEnv extends BaseEnv {
         this.name = name;
     }
 
-    public synchronized NameNodeEnv init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws NameNodeError {
+    public synchronized NameNodeEnv init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                                         @NonNull Class<?> caller) throws NameNodeError {
         try {
             if (state.isAvailable()) return this;
 
-            Runtime.getRuntime().addShutdownHook(new Thread(new ShutdownThread().name(name)));
+            LOG = LoggerFactory.getLogger(caller);
+            
+            Runtime.getRuntime().addShutdownHook(
+                    new Thread(new ShutdownThread()
+                            .name(name)
+                            .env(this)));
             configNode = xmlConfig.configurationAt(NameNEnvConfig.Constants.__CONFIG_PATH);
 
             this.config = new NameNEnvConfig(xmlConfig);
@@ -166,8 +172,8 @@ public class NameNodeEnv extends BaseEnv {
                 try {
                     stateManager.heartbeat(moduleInstance.getInstanceId(), agentState);
                 } catch (Exception ex) {
-                    DefaultLogger.LOG.error(ex.getLocalizedMessage());
-                    DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
+                    LOG.error(ex.getLocalizedMessage());
+                    LOG.debug(DefaultLogger.stacktrace(ex));
                 }
                 state.state(ENameNEnvState.Disposed);
             }
@@ -176,7 +182,7 @@ public class NameNodeEnv extends BaseEnv {
                 heartbeatThread.join();
             }
         } catch (Exception ex) {
-            DefaultLogger.LOG.error("Error disposing NameNodeEnv...", ex);
+            LOG.error("Error disposing NameNodeEnv...", ex);
         }
         return state.state();
     }
@@ -223,6 +229,7 @@ public class NameNodeEnv extends BaseEnv {
     private static final Map<String, NameNodeEnv> __instances = new HashMap<>();
 
     public static NameNodeEnv setup(@NonNull String name,
+                                    @NonNull Class<?> caller,
                                     @NonNull HierarchicalConfiguration<ImmutableNode> config) throws NameNodeError {
         synchronized (__instances) {
             NameNodeEnv env = __instances.get(name);
@@ -230,7 +237,7 @@ public class NameNodeEnv extends BaseEnv {
                 env = new NameNodeEnv(name);
                 __instances.put(name, env);
             }
-            return env.init(config);
+            return env.init(config, caller);
         }
     }
 
@@ -267,8 +274,8 @@ public class NameNodeEnv extends BaseEnv {
                 NameNodeEnv.get(name).auditLogger.audit(caller, System.currentTimeMillis(), data);
             }
         } catch (Exception ex) {
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
-            DefaultLogger.LOG.error(ex.getLocalizedMessage());
+            DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(ex));
+            DefaultLogger.LOGGER.error(ex.getLocalizedMessage());
         }
     }
 
@@ -278,8 +285,8 @@ public class NameNodeEnv extends BaseEnv {
                 NameNodeEnv.get(name).auditLogger.audit(caller, System.currentTimeMillis(), data);
             }
         } catch (Exception ex) {
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
-            DefaultLogger.LOG.error(ex.getLocalizedMessage());
+            DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(ex));
+            DefaultLogger.LOGGER.error(ex.getLocalizedMessage());
         }
     }
 
@@ -292,15 +299,16 @@ public class NameNodeEnv extends BaseEnv {
     @Accessors(fluent = true)
     private static class ShutdownThread implements Runnable {
         private String name;
+        private NameNodeEnv env;
 
         @Override
         public void run() {
             try {
                 NameNodeEnv.dispose(name);
-                DefaultLogger.LOG.warn(String.format("NameNode environment shutdown. [name=%s]", name));
+                env.LOG.warn(String.format("NameNode environment shutdown. [name=%s]", name));
             } catch (Exception ex) {
-                DefaultLogger.LOG.debug(DefaultLogger.stacktrace(ex));
-                DefaultLogger.LOG.error(ex.getLocalizedMessage());
+                env.LOG.debug(DefaultLogger.stacktrace(ex));
+                env.LOG.error(ex.getLocalizedMessage());
             }
         }
     }

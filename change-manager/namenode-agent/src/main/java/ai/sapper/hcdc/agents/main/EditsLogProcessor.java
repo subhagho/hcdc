@@ -24,13 +24,10 @@ public class EditsLogProcessor implements Service<NameNodeEnv.ENameNEnvState> {
     @Parameter(names = {"--type", "-t"}, description = "Configuration file type. (File, Resource, Remote)")
     private String configSource;
     private EConfigFileType fileSource = EConfigFileType.File;
-    @Setter(AccessLevel.NONE)
     private HierarchicalConfiguration<ImmutableNode> config;
-    @Setter(AccessLevel.NONE)
     private EditsLogReader processor;
-    @Setter(AccessLevel.NONE)
     private Thread runner;
-
+    private NameNodeEnv env;
     @Override
     public Service<NameNodeEnv.ENameNEnvState> setConfigFile(@NonNull String path) {
         configFile = path;
@@ -51,7 +48,7 @@ public class EditsLogProcessor implements Service<NameNodeEnv.ENameNEnvState> {
             }
             Preconditions.checkNotNull(fileSource);
             config = ConfigReader.read(configFile, fileSource);
-            NameNodeEnv.setup(name(), config);
+            env = NameNodeEnv.setup(name(), getClass(), config);
 
             processor = new EditsLogReader(NameNodeEnv.get(getClass().getSimpleName()).stateManager(), name());
             processor.init(NameNodeEnv.get(name()).configNode(),
@@ -59,8 +56,8 @@ public class EditsLogProcessor implements Service<NameNodeEnv.ENameNEnvState> {
                             .connectionManager());
             return this;
         } catch (Throwable t) {
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
-            DefaultLogger.LOG.error(t.getLocalizedMessage());
+            DefaultLogger.stacktrace(t);
+            DefaultLogger.LOGGER.error(t.getLocalizedMessage());
             NameNodeEnv.get(name()).error(t);
             throw t;
         }
@@ -73,8 +70,8 @@ public class EditsLogProcessor implements Service<NameNodeEnv.ENameNEnvState> {
 
             return this;
         } catch (Throwable t) {
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
-            DefaultLogger.LOG.error(t.getLocalizedMessage());
+            DefaultLogger.stacktrace(env.LOG, t);
+            DefaultLogger.error(env.LOG, t.getLocalizedMessage());
             NameNodeEnv.get(name()).error(t);
             throw t;
         }
@@ -121,6 +118,8 @@ public class EditsLogProcessor implements Service<NameNodeEnv.ENameNEnvState> {
             runner.init();
             runner.start();
         } catch (Throwable t) {
+            DefaultLogger.stacktrace(t);
+            DefaultLogger.LOGGER.error(t.getLocalizedMessage());
             t.printStackTrace();
         }
     }

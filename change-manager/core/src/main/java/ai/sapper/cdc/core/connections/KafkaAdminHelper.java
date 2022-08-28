@@ -34,8 +34,8 @@ public class KafkaAdminHelper {
 
             kafkaAdmin = AdminClient.create(props);
         } catch (Exception e) {
-            DefaultLogger.LOG.error(e.getLocalizedMessage());
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(e));
+            DefaultLogger.LOGGER.error(e.getLocalizedMessage());
+            DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(e));
             throw new MessagingError(e);
         }
     }
@@ -57,7 +57,7 @@ public class KafkaAdminHelper {
             KafkaFuture<Void> future = result.values().get(name);
             future.get();
 
-            DefaultLogger.LOG.info(String.format("Created new Kafka Topic. [name=%s]", name));
+            DefaultLogger.LOGGER.info(String.format("Created new Kafka Topic. [name=%s]", name));
         } catch (Exception e) {
             throw new MessagingError(String.format("Error creating topic. [name=%s]", name), e);
         }
@@ -71,7 +71,7 @@ public class KafkaAdminHelper {
             KafkaFuture<Void> future = result.topicNameValues().get(name);
             future.get();
 
-            DefaultLogger.LOG.info(String.format("Created new Kafka Topic. [name=%s]", name));
+            DefaultLogger.LOGGER.info(String.format("Created new Kafka Topic. [name=%s]", name));
         } catch (Exception e) {
             throw new MessagingError(String.format("Error deleting topic. [name=%s]", name), e);
         }

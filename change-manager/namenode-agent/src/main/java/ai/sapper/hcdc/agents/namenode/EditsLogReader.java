@@ -88,31 +88,38 @@ public class EditsLogReader implements Runnable {
      */
     @Override
     public void run() {
-        Preconditions.checkState(sender != null);
         try {
-            NameNodeEnv.get(name).agentState().state(NameNodeAgentState.EAgentState.Active);
-            while (NameNodeEnv.get(name).state().isAvailable()) {
-                try (DistributedLock lock = NameNodeEnv.get(name).globalLock()
-                        .withLockTimeout(processorConfig.defaultLockTimeout())) {
-                    lock.lock();
-                    try {
-                        long txid = doRun();
-                        LOGGER.info(getClass(), txid, String.format("Last Processed TXID = %d", txid));
-                    } finally {
-                        lock.unlock();
-                    }
-                }
-                Thread.sleep(processorConfig.pollingInterval);
-            }
-            NameNodeEnv.get(name).agentState().state(NameNodeAgentState.EAgentState.Stopped);
-        } catch (Throwable t) {
+            NameNodeEnv env = NameNodeEnv.get(name);
+            Preconditions.checkNotNull(env);
+            Preconditions.checkState(sender != null);
             try {
-                DefaultLogger.LOG.error("Edits Log Processor terminated with error", t);
-                DefaultLogger.stacktrace(DefaultLogger.LOG, t);
-                NameNodeEnv.get(name).agentState().error(t);
-            } catch (Exception ex) {
-                DefaultLogger.LOG.error(ex.getLocalizedMessage());
+                NameNodeEnv.get(name).agentState().state(NameNodeAgentState.EAgentState.Active);
+                while (NameNodeEnv.get(name).state().isAvailable()) {
+                    try (DistributedLock lock = NameNodeEnv.get(name).globalLock()
+                            .withLockTimeout(processorConfig.defaultLockTimeout())) {
+                        lock.lock();
+                        try {
+                            long txid = doRun();
+                            LOGGER.info(getClass(), txid, String.format("Last Processed TXID = %d", txid));
+                        } finally {
+                            lock.unlock();
+                        }
+                    }
+                    Thread.sleep(processorConfig.pollingInterval);
+                }
+                NameNodeEnv.get(name).agentState().state(NameNodeAgentState.EAgentState.Stopped);
+            } catch (Throwable t) {
+                try {
+                    DefaultLogger.error(env.LOG, "Edits Log Processor terminated with error", t);
+                    DefaultLogger.stacktrace(env.LOG, t);
+                    NameNodeEnv.get(name).agentState().error(t);
+                } catch (Exception ex) {
+                    DefaultLogger.error(env.LOG, ex.getLocalizedMessage());
+                }
             }
+        } catch (Throwable t) {
+            DefaultLogger.stacktrace(t);
+            DefaultLogger.LOGGER.error(t.getLocalizedMessage());
         }
     }
 

@@ -14,7 +14,7 @@ class EditsLogProcessorTest {
             EditsLogProcessor runner = new EditsLogProcessor();
             runner.runOnce(__CONFIG_FILE);
         } catch (Throwable t) {
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.stacktrace(t);
             fail(t);
         }
     }

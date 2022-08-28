@@ -40,7 +40,7 @@ public class CSVDataReader extends InputDataReader<List<String>> {
             return read(reader);
 
         } catch (Throwable t) {
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(t));
             throw new IOException(t);
         }
     }
@@ -57,7 +57,7 @@ public class CSVDataReader extends InputDataReader<List<String>> {
                 readCount++;
                 if (batchSize() > 0 && readCount >= batchSize()) break;
             } catch (IOException ex) {
-                DefaultLogger.LOG.error(ex.getLocalizedMessage());
+                DefaultLogger.LOGGER.error(ex.getLocalizedMessage());
                 readCount++;
                 continue;
             }

@@ -69,8 +69,8 @@ public class HadoopDataLoader {
             read(new File(dataFolder));
 
         } catch (Throwable t) {
-            DefaultLogger.LOG.error(t.getLocalizedMessage());
-            DefaultLogger.LOG.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.LOGGER.error(t.getLocalizedMessage());
+            DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(t));
             throw new Exception(t);
         }
     }
@@ -112,7 +112,7 @@ public class HadoopDataLoader {
                     if (!td.exists()) {
                         td.mkdirs();
                     }
-                    DefaultLogger.LOG.debug(String.format("Writing local files to [%s]", td.getAbsolutePath()));
+                    DefaultLogger.LOGGER.debug(String.format("Writing local files to [%s]", td.getAbsolutePath()));
                     int arrayIndex = 0;
                     OutputDataWriter<List<String>> writer = null;
                     while (true) {
