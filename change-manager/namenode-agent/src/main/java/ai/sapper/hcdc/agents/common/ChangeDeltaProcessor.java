@@ -1,14 +1,13 @@
 package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.cdc.common.ConfigReader;
-import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.messaging.HCDCMessagingBuilders;
 import ai.sapper.cdc.core.messaging.MessageReceiver;
 import ai.sapper.cdc.core.messaging.MessageSender;
 import ai.sapper.cdc.core.messaging.MessagingConfig;
-import ai.sapper.hcdc.agents.model.AgentTxState;
-import ai.sapper.hcdc.agents.model.NameNodeAgentState;
+import ai.sapper.cdc.core.model.AgentTxState;
+import ai.sapper.cdc.core.model.CDCAgentState;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -106,9 +105,9 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     @Override
     public void run() {
         try {
-            NameNodeEnv.get(name).agentState().state(NameNodeAgentState.EAgentState.Active);
+            NameNodeEnv.get(name).agentState().state(CDCAgentState.EAgentState.Active);
             doRun();
-            NameNodeEnv.get(name).agentState().state(NameNodeAgentState.EAgentState.Stopped);
+            NameNodeEnv.get(name).agentState().state(CDCAgentState.EAgentState.Stopped);
         } catch (Throwable t) {
             try {
                 NameNodeEnv.get(name).agentState().error(t);

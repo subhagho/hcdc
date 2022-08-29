@@ -9,6 +9,7 @@ import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.BaseStateManager;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.HdfsConnection;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
@@ -50,10 +51,10 @@ public class DomainManager {
             config = new DomainManagerConfig(xmlConfig);
             config.read();
 
-            zkConnection = manger.getConnection(config.zkConnection, ZookeeperConnection.class);
+            zkConnection = manger.getConnection(config.zkConnection(), ZookeeperConnection.class);
             if (zkConnection == null) {
                 throw new ConfigurationException(
-                        String.format("ZooKeeper connection not found. [name=%s]", config.zkConnection));
+                        String.format("ZooKeeper connection not found. [name=%s]", config.zkConnection()));
             }
             if (!zkConnection.isConnected()) zkConnection.connect();
 
@@ -122,7 +123,7 @@ public class DomainManager {
     }
 
     private String getZkPath() {
-        return PathUtils.formatZkPath(String.format("%s/%s", config.basePath, CONFIG_PATH));
+        return PathUtils.formatZkPath(String.format("%s/%s", config.basePath(), CONFIG_PATH));
     }
 
     private String getZkPath(String domain) {
@@ -263,19 +264,15 @@ public class DomainManager {
 
     @Getter
     @Accessors(fluent = true)
-    public static class DomainManagerConfig extends ConfigReader {
+    public static class DomainManagerConfig extends BaseStateManager.BaseStateManagerConfig {
         public static final class Constants {
-            public static final String CONFIG_ZK_BASE = "basePath";
-            public static final String CONFIG_ZK_CONNECTION = "connection";
             public static final String CONFIG_HDFS_CONNECTION = "hdfs";
             public static final String CONFIG_IGNORE_REGEX = "ignoreRegex";
         }
 
         private static final String __CONFIG_PATH = "managers.domain";
 
-        private String basePath;
-        private String zkConnection;
-        private String hdfsConnection;
+         private String hdfsConnection;
         private String ignoreRegex;
 
         public DomainManagerConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
@@ -287,22 +284,8 @@ public class DomainManager {
         }
 
         public void read() throws ConfigurationException {
-            if (get() == null) {
-                throw new ConfigurationException("Domain Manager Configuration not set or is NULL");
-            }
+            super.read();
             try {
-                basePath = get().getString(Constants.CONFIG_ZK_BASE);
-                if (Strings.isNullOrEmpty(basePath)) {
-                    throw new ConfigurationException(String.format("Domain Manager Configuration Error: missing [%s]", Constants.CONFIG_ZK_BASE));
-                }
-                basePath = basePath.trim();
-                if (basePath.endsWith("/")) {
-                    basePath = basePath.substring(0, basePath.length() - 2);
-                }
-                zkConnection = get().getString(Constants.CONFIG_ZK_CONNECTION);
-                if (Strings.isNullOrEmpty(zkConnection)) {
-                    throw new ConfigurationException(String.format("Domain Manager Configuration Error: missing [%s]", Constants.CONFIG_ZK_CONNECTION));
-                }
                 if (get().containsKey(Constants.CONFIG_HDFS_CONNECTION)) {
                     hdfsConnection = get().getString(Constants.CONFIG_HDFS_CONNECTION);
                 }

@@ -6,11 +6,12 @@ import ai.sapper.cdc.common.audit.AuditLogger;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.NetUtils;
 import ai.sapper.cdc.core.BaseEnv;
+import ai.sapper.cdc.core.BaseStateManager;
 import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.cdc.core.connections.HdfsConnection;
+import ai.sapper.cdc.core.model.CDCAgentState;
 import ai.sapper.cdc.core.model.ModuleInstance;
 import ai.sapper.cdc.core.schema.SchemaManager;
-import ai.sapper.hcdc.agents.model.NameNodeAgentState;
 import ai.sapper.hcdc.agents.model.NameNodeStatus;
 import ai.sapper.hcdc.agents.namenode.HadoopEnvConfig;
 import ai.sapper.hcdc.agents.namenode.NameNodeAdminClient;
@@ -53,7 +54,7 @@ public class NameNodeEnv extends BaseEnv {
     private HadoopEnvConfig hadoopConfig;
     private NameNodeAdminClient adminClient;
     private ModuleInstance moduleInstance;
-    private final NameNodeAgentState.AgentState agentState = new NameNodeAgentState.AgentState();
+    private final CDCAgentState.AgentState agentState = new CDCAgentState.AgentState();
 
     public NameNodeEnv(@NonNull String name) {
         this.name = name;
@@ -65,7 +66,7 @@ public class NameNodeEnv extends BaseEnv {
             if (state.isAvailable()) return this;
 
             LOG = LoggerFactory.getLogger(caller);
-            
+
             Runtime.getRuntime().addShutdownHook(
                     new Thread(new ShutdownThread()
                             .name(name)
@@ -102,9 +103,6 @@ public class NameNodeEnv extends BaseEnv {
                 }
             }
 
-            stateManager = config.stateManagerClass.newInstance();
-            stateManager.withName(name)
-                    .init(configNode, connectionManager(), config.module, config.instance);
 
             moduleInstance = new ModuleInstance()
                     .withIp(NetUtils.getInetAddress(hostIPs))
@@ -112,18 +110,24 @@ public class NameNodeEnv extends BaseEnv {
             moduleInstance.setSource(config.source);
             moduleInstance.setModule(config.module());
             moduleInstance.setName(config.instance());
+            moduleInstance.setInstanceId(moduleInstance.id());
 
-            DistributedLock lock = createLock(ZkStateManager.Constants.LOCK_REPLICATION);
+            stateManager = config.stateManagerClass.newInstance();
+            stateManager.withName(name)
+                    .withModuleInstance(moduleInstance);
+            stateManager
+                    .init(configNode, connectionManager());
+
+            DistributedLock lock = createLock(BaseStateManager.Constants.LOCK_REPLICATION);
             if (lock == null) {
                 throw new ConfigurationException(
                         String.format("Replication Lock not defined. [name=%s]",
-                                ZkStateManager.Constants.LOCK_REPLICATION));
+                                BaseStateManager.Constants.LOCK_REPLICATION));
             }
 
             stateManager
                     .withReplicationLock(lock)
                     .withModuleInstance(moduleInstance);
-            moduleInstance.setInstanceId(moduleInstance.instanceId());
             stateManager.checkAgentState();
 
             if (ConfigReader.checkIfNodeExists(configNode,
@@ -164,9 +168,9 @@ public class NameNodeEnv extends BaseEnv {
 
     public synchronized ENameNEnvState stop() {
         try {
-            if (agentState.state() == NameNodeAgentState.EAgentState.Active
-                    || agentState.state() == NameNodeAgentState.EAgentState.StandBy) {
-                agentState.state(NameNodeAgentState.EAgentState.Stopped);
+            if (agentState.state() == CDCAgentState.EAgentState.Active
+                    || agentState.state() == CDCAgentState.EAgentState.StandBy) {
+                agentState.state(CDCAgentState.EAgentState.Stopped);
             }
             if (state.isAvailable()) {
                 try {

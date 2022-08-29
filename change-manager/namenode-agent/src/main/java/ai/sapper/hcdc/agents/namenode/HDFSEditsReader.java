@@ -7,9 +7,9 @@ import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.messaging.HCDCMessagingBuilders;
 import ai.sapper.cdc.core.messaging.MessageSender;
 import ai.sapper.cdc.core.messaging.MessagingConfig;
+import ai.sapper.cdc.core.model.CDCAgentState;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
-import ai.sapper.hcdc.agents.model.NameNodeAgentState;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
@@ -69,7 +69,7 @@ public abstract class HDFSEditsReader implements Runnable {
             Preconditions.checkNotNull(env);
             Preconditions.checkState(sender != null);
             try {
-                NameNodeEnv.get(name).agentState().state(NameNodeAgentState.EAgentState.Active);
+                NameNodeEnv.get(name).agentState().state(CDCAgentState.EAgentState.Active);
                 while (NameNodeEnv.get(name).state().isAvailable()) {
                     try (DistributedLock lock = NameNodeEnv.get(name).globalLock()
                             .withLockTimeout(processorConfig.defaultLockTimeout())) {
@@ -83,7 +83,7 @@ public abstract class HDFSEditsReader implements Runnable {
                     }
                     Thread.sleep(processorConfig.pollingInterval());
                 }
-                NameNodeEnv.get(name).agentState().state(NameNodeAgentState.EAgentState.Stopped);
+                NameNodeEnv.get(name).agentState().state(CDCAgentState.EAgentState.Stopped);
             } catch (Throwable t) {
                 try {
                     DefaultLogger.error(env.LOG, "Edits Log Processor terminated with error", t);

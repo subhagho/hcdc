@@ -32,7 +32,7 @@ public class ModuleInstance {
         return this;
     }
 
-    public String instanceId() {
+    public String id() {
         return String.format("%s/%s/%s", source, module, name);
     }
 }

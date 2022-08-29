@@ -40,7 +40,8 @@ public class HeartbeatThread implements Runnable {
             }
         } catch (Exception ex) {
             DefaultLogger.LOGGER.error(
-                    String.format("Heartbeat thread terminated. [module=%s]", stateManager.module()), ex);
+                    String.format("Heartbeat thread terminated. [module=%s]",
+                            stateManager.moduleInstance().getModule()), ex);
         }
     }
 }

@@ -1,6 +1,5 @@
-package ai.sapper.hcdc.agents.model;
+package ai.sapper.cdc.core.model;
 
-import ai.sapper.cdc.core.model.ModuleInstance;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

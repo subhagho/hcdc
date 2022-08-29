@@ -7,6 +7,7 @@ import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.cdc.core.Service;
 import ai.sapper.cdc.core.connections.HdfsConnection;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
+import ai.sapper.cdc.core.model.AgentTxState;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.NameNodeError;
 import ai.sapper.hcdc.agents.common.ZkStateManager;

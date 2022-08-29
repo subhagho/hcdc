@@ -1,9 +1,9 @@
-package ai.sapper.hcdc.agents.model;
+package ai.sapper.cdc.core.model;
 
 import ai.sapper.cdc.common.AbstractState;
 import lombok.NonNull;
 
-public class NameNodeAgentState {
+public class CDCAgentState {
     public enum EAgentState {
         Unknown, Active, StandBy, Error, Stopped
     }
