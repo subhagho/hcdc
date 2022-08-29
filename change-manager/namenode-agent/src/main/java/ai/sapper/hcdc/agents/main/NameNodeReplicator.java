@@ -26,13 +26,20 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.tools.offlineImageViewer.PBImageXmlWriter;
 
 import javax.naming.ConfigurationException;
-import java.io.File;
-import java.io.PrintStream;
-import java.io.RandomAccessFile;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Getter
 public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
+    private static final String FS_IMAGE_REGEX = "fsimage_(\\d+)$";
+
     private static class Constants {
         private static final String NODE_INODES = "INodeSection.inode";
         private static final String NODE_TX_ID = "NameSection.txid";
@@ -48,8 +55,8 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
     private ZkStateManager stateManager;
     private NameNodeEnv env;
 
-    @Parameter(names = {"--image", "-i"}, required = true, description = "Path to the FS Image file.")
-    private String fsImageFile;
+    @Parameter(names = {"--imageDir", "-d"}, required = true, description = "Path to the directory containing FS Image file.")
+    private String fsImageDir;
     @Parameter(names = {"--config", "-c"}, required = true, description = "Path to the configuration file.")
     private String configFile;
     @Parameter(names = {"--type", "-t"}, description = "Configuration file type. (File, Resource, Remote)")
@@ -62,8 +69,8 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
     private final Map<Long, DFSInode> inodes = new HashMap<>();
     private final Map<Long, DFSDirectory> directoryMap = new HashMap<>();
 
-    public NameNodeReplicator withFsImagePath(@NonNull String path) {
-        fsImageFile = path;
+    public NameNodeReplicator withFsImageDir(@NonNull String path) {
+        fsImageDir = path;
         return this;
     }
 
@@ -281,14 +288,49 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
         return new DFSInode().read(node);
     }
 
-    private String generateFSImageSnapshot() throws Exception {
-        File fsImage = new File(fsImageFile);
-        Preconditions.checkState(fsImage.exists());
+    private File findImageFile(File dir) throws Exception {
+        File[] files = dir.listFiles(new FilenameFilter() {
+            private final Pattern pattern = Pattern.compile(FS_IMAGE_REGEX);
 
-        String output = String.format("%s/%s.xml", tempDir, fsImage.getName());
+            @Override
+            public boolean accept(File file, String s) {
+                Matcher m = pattern.matcher(s);
+                if (m.matches()) {
+                    return !s.endsWith(".md5");
+                }
+                return false;
+            }
+        });
+        if (files != null && files.length > 0) {
+            long ts = 0;
+            File latest = null;
+            for (File file : files) {
+                DefaultLogger.info(env.LOG, String.format("Found FS Image File: %s", file.getAbsolutePath()));
+                Path path = Paths.get(file.toURI());
+                BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class);
+                FileTime ft = attr.lastModifiedTime();
+                long t = ft.toMillis();
+                if (t > ts) {
+                    ts = t;
+                    latest = file;
+                }
+            }
+            return latest;
+        }
+        return null;
+    }
+
+    private String generateFSImageSnapshot() throws Exception {
+        File fsImageDir = new File(this.fsImageDir);
+        Preconditions.checkState(fsImageDir.exists());
+        File fsImageFile = findImageFile(fsImageDir);
+        if (fsImageFile == null) {
+            throw new Exception(String.format("No FS Image file found. [path=%s]", fsImageDir.getAbsolutePath()));
+        }
+        String output = String.format("%s/%s.xml", tempDir, fsImageFile.getName());
         Configuration conf = new Configuration();
         try (PrintStream out = new PrintStream(output)) {
-            new PBImageXmlWriter(conf, out).visit(new RandomAccessFile(fsImage.getAbsolutePath(),
+            new PBImageXmlWriter(conf, out).visit(new RandomAccessFile(fsImageFile.getAbsolutePath(),
                     "r"));
         }
 

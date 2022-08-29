@@ -24,7 +24,7 @@ public class NameNodeServices {
         NameNodeReplicator replicator = new NameNodeReplicator();
         try {
 
-            replicator.withFsImagePath(config.getFsImagePath())
+            replicator.withFsImageDir(config.getFsImageDir())
                     .setConfigFile(config.getPath())
                     .setConfigSource(config.getType().name());
             if (!Strings.isNullOrEmpty(config.getTmpDir())) {

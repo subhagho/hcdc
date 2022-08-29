@@ -8,6 +8,6 @@ import lombok.ToString;
 @Setter
 @ToString
 public class ReplicatorConfigSource extends ConfigSource {
-    private String fsImagePath;
+    private String fsImageDir;
     private String tmpDir;
 }
