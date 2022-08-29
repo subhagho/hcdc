@@ -30,37 +30,24 @@ import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 
 @Getter
 @Accessors(fluent = true)
-public class EditsLogReader implements Runnable {
+public class EditsLogReader extends HDFSEditsReader {
     private static final String PATH_NN_CURRENT_DIR = "current";
 
-    private final String name;
-    private final ZkStateManager stateManager;
-    private MessageSender<String, DFSChangeDelta> sender;
-    private EditLogProcessorConfig processorConfig;
     private File editsDir;
 
     public EditsLogReader(@NonNull ZkStateManager stateManager, @NonNull String name) {
-        this.stateManager = stateManager;
-        this.name = name;
+        super(name, stateManager);
     }
 
+    @Override
     public EditsLogReader init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                                @NonNull ConnectionManager manger) throws ConfigurationException {
         try {
-            processorConfig = new EditLogProcessorConfig(xmlConfig);
+            processorConfig = new HDFSEditsReaderConfig(xmlConfig);
             processorConfig.read();
 
-            sender = new HCDCMessagingBuilders.SenderBuilder()
-                    .config(processorConfig.senderConfig.config())
-                    .manager(manger)
-                    .connection(processorConfig().senderConfig.connection())
-                    .type(processorConfig().senderConfig.type())
-                    .partitioner(processorConfig().senderConfig.partitionerClass())
-                    .auditLogger(NameNodeEnv.get(name).auditLogger())
-                    .build();
-            if (NameNodeEnv.get(name).hadoopConfig() == null) {
-                throw new ConfigurationException("Hadoop Configuration not initialized...");
-            }
+            setup(manger);
+
             String edir = NameNodeEnv.get(name).hadoopConfig().nameNodeEditsDir();
             editsDir = new File(edir);
             if (!editsDir.exists()) {
@@ -75,55 +62,7 @@ public class EditsLogReader implements Runnable {
         }
     }
 
-    /**
-     * When an object implementing interface <code>Runnable</code> is used
-     * to create a thread, starting the thread causes the object's
-     * <code>run</code> method to be called in that separately executing
-     * thread.
-     * <p>
-     * The general contract of the method <code>run</code> is that it may
-     * take any action whatsoever.
-     *
-     * @see Thread#run()
-     */
     @Override
-    public void run() {
-        try {
-            NameNodeEnv env = NameNodeEnv.get(name);
-            Preconditions.checkNotNull(env);
-            Preconditions.checkState(sender != null);
-            try {
-                NameNodeEnv.get(name).agentState().state(NameNodeAgentState.EAgentState.Active);
-                while (NameNodeEnv.get(name).state().isAvailable()) {
-                    try (DistributedLock lock = NameNodeEnv.get(name).globalLock()
-                            .withLockTimeout(processorConfig.defaultLockTimeout())) {
-                        lock.lock();
-                        try {
-                            long txid = doRun();
-                            LOGGER.info(getClass(), txid, String.format("Last Processed TXID = %d", txid));
-                        } finally {
-                            lock.unlock();
-                        }
-                    }
-                    Thread.sleep(processorConfig.pollingInterval);
-                }
-                NameNodeEnv.get(name).agentState().state(NameNodeAgentState.EAgentState.Stopped);
-            } catch (Throwable t) {
-                try {
-                    DefaultLogger.error(env.LOG, "Edits Log Processor terminated with error", t);
-                    DefaultLogger.stacktrace(env.LOG, t);
-                    NameNodeEnv.get(name).agentState().error(t);
-                } catch (Exception ex) {
-                    DefaultLogger.error(env.LOG, ex.getLocalizedMessage());
-                }
-            }
-        } catch (Throwable t) {
-            DefaultLogger.stacktrace(t);
-            DefaultLogger.LOGGER.error(t.getLocalizedMessage());
-        }
-    }
-
-
     public long doRun() throws Exception {
         ModuleTxState state = stateManager.getModuleState();
         EditsLogFileReader reader = new EditsLogFileReader();
@@ -183,53 +122,6 @@ public class EditsLogReader implements Runnable {
 
     private String getPathNnCurrentDir(String path) {
         return String.format("%s/%s", path, PATH_NN_CURRENT_DIR);
-    }
-
-    @Getter
-    @Accessors(fluent = true)
-    public static class EditLogProcessorConfig extends ConfigReader {
-        public static class Constants {
-            public static final String __CONFIG_PATH = "processor.edits";
-            public static final String CONFIG_Q_CONNECTION = "sender";
-            public static final String CONFIG_POLL_INTERVAL = "pollingInterval";
-            public static final String CONFIG_LOCK_TIMEOUT = "lockTimeout";
-        }
-
-        private MessagingConfig senderConfig;
-        private long pollingInterval = 60000; // By default, run every minute
-        private long defaultLockTimeout = 5 * 60 * 1000; // 5 mins.
-
-        public EditLogProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
-            super(config, Constants.__CONFIG_PATH);
-        }
-
-        public void read() throws ConfigurationException {
-            if (get() == null) {
-                throw new ConfigurationException("Kafka Configuration not drt or is NULL");
-            }
-            try {
-                HierarchicalConfiguration<ImmutableNode> config = get().configurationAt(Constants.CONFIG_Q_CONNECTION);
-                if (config == null) {
-                    throw new ConfigurationException(String.format("Sender configuration node not found. [path=%s]", Constants.CONFIG_Q_CONNECTION));
-                }
-                senderConfig = new MessagingConfig();
-                senderConfig.read(config);
-                if (get().containsKey(Constants.CONFIG_POLL_INTERVAL)) {
-                    String s = get().getString(Constants.CONFIG_POLL_INTERVAL);
-                    if (!Strings.isNullOrEmpty(s)) {
-                        pollingInterval = Long.parseLong(s);
-                    }
-                }
-                if (get().containsKey(Constants.CONFIG_LOCK_TIMEOUT)) {
-                    String s = get().getString(Constants.CONFIG_LOCK_TIMEOUT);
-                    if (!Strings.isNullOrEmpty(s)) {
-                        defaultLockTimeout = Long.parseLong(s);
-                    }
-                }
-            } catch (Exception ex) {
-                throw new ConfigurationException(ex);
-            }
-        }
     }
 
 }
