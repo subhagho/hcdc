@@ -3,11 +3,13 @@ package ai.sapper.cdc.common.model;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.util.Objects;
 
 @Getter
 @Setter
+@ToString
 public class SchemaEntity {
     private String domain;
     private String group;
