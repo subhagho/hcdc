@@ -23,17 +23,6 @@
             </state>
         </managers>
         <useSSL>false</useSSL>
-        <processor>
-            <edits>
-                <sender>
-                    <connectionType>kafka</connectionType>
-                    <connection>edits-kafka-queue</connection>
-                    <topic>ha-cluster-edits</topic>
-                    <!--partitioner></partitioner-->
-                </sender>
-                <pollingInterval>120000</pollingInterval>
-            </edits>
-        </processor>
         <audit>
             <class>ai.sapper.cdc.common.audit.DefaultAuditLogger</class>
         </audit>
@@ -102,17 +91,6 @@
                     <connectionTimeout>10000</connectionTimeout>
                 </zookeeper>
             </connection>
-            <!--connection>
-                <type>ai.sapper.cdc.core.connections.impl.BasicKafkaProducer</type>
-                <kafka>
-                    <name>edits-kafka-queue</name>
-                    <mode>Producer</mode>
-                    <producer>
-                        <config>src/test/resources/configs/kafka/producer-editlog.properties</config>
-                    </producer>
-                    <topic>ha-cluster.edits</topic>
-                </kafka>
-            </connection -->
         </connections>
     </config>
 </configuration>
