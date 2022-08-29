@@ -1,4 +1,5 @@
-package ai.sapper.cdc.core.model;
+package ai.sapper.hcdc.agents.model;
+
 
 import java.util.Comparator;
 

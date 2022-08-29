@@ -1,7 +1,7 @@
 package ai.sapper.cdc.core.io.impl.local;
 
 import ai.sapper.cdc.common.utils.PathUtils;
-import ai.sapper.cdc.core.io.HCDCFileSystem;
+import ai.sapper.cdc.core.io.CDCFileSystem;
 import ai.sapper.cdc.core.io.PathInfo;
 import ai.sapper.cdc.core.io.Reader;
 import ai.sapper.cdc.core.io.Writer;
@@ -30,7 +30,7 @@ import java.util.Map;
 @Getter
 @Setter
 @Accessors(fluent = true)
-public class LocalFileSystem extends HCDCFileSystem {
+public class LocalFileSystem extends CDCFileSystem {
     public static final String TEMP_PATH = String.format("%s/HCDC/LOCAL",
             System.getProperty("java.io.tmpdir"));
     private FileSystemConfig fsConfig = null;
@@ -42,7 +42,7 @@ public class LocalFileSystem extends HCDCFileSystem {
      * @throws IOException
      */
     @Override
-    public HCDCFileSystem init(@NonNull HierarchicalConfiguration<ImmutableNode> config, String pathPrefix) throws IOException {
+    public CDCFileSystem init(@NonNull HierarchicalConfiguration<ImmutableNode> config, String pathPrefix) throws IOException {
         try {
             if (fsConfig == null) {
                 fsConfig = new LocalFileSystemConfig(config, pathPrefix);

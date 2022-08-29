@@ -1,5 +1,7 @@
-package ai.sapper.cdc.core.model;
+package ai.sapper.hcdc.agents.model;
 
+import ai.sapper.cdc.core.model.BlockTransactionDelta;
+import ai.sapper.cdc.core.model.EFileType;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -12,10 +14,8 @@ import java.util.Map;
 @Getter
 @Setter
 public class DFSFileState {
-    private String namespace;
-    private long id;
+    private DFSFileInfo fileInfo;
     private String zkPath;
-    private String hdfsFilePath;
     private long createdTime;
     private long updatedTime;
     private long numBlocks;
@@ -23,8 +23,7 @@ public class DFSFileState {
     private long dataSize;
     private long lastTnxId;
     private long timestamp;
-    private String schemaLocation;
-    private EFileType fileType = EFileType.UNKNOWN;
+
     private EFileState state = EFileState.Unknown;
 
     private List<DFSBlockState> blocks;
@@ -87,10 +86,10 @@ public class DFSFileState {
     public void reset() {
         blocks.clear();
         numBlocks = 0;
-        schemaLocation = null;
+        fileInfo.setSchemaLocation(null);
+        fileInfo.setFileType(EFileType.UNKNOWN);
         dataSize = 0;
         blockSize = 0;
-        fileType = EFileType.UNKNOWN;
     }
 
     public boolean checkDeleted() {

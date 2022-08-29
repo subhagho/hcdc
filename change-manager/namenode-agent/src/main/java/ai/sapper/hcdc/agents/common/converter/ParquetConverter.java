@@ -5,11 +5,11 @@ import ai.sapper.cdc.common.model.EntityDef;
 import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.schema.AvroUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
-import ai.sapper.cdc.core.model.DFSBlockState;
-import ai.sapper.cdc.core.model.DFSFileState;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.model.HDFSBlockData;
 import ai.sapper.hcdc.agents.common.FormatConverter;
+import ai.sapper.hcdc.agents.model.DFSBlockState;
+import ai.sapper.hcdc.agents.model.DFSFileState;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import org.apache.avro.Schema;
@@ -83,8 +83,8 @@ public class ParquetConverter extends FormatConverter {
                     if (record == null) break;
                     GenericRecord wrapped = wrap(wrapper,
                             schemaEntity,
-                            fileState.getNamespace(),
-                            fileState.getHdfsFilePath(),
+                            fileState.getFileInfo().getNamespace(),
+                            fileState.getFileInfo().getHdfsPath(),
                             record, op, txId);
                     fos.append(wrapped);
                 }
@@ -157,7 +157,7 @@ public class ParquetConverter extends FormatConverter {
 
                 if (data == null) {
                     throw new IOException(String.format("Error reading block from HDFS. [path=%s][block ID=%d]",
-                            fileState.getHdfsFilePath(), lastBlock.getBlockId()));
+                            fileState.getFileInfo().getHdfsPath(), lastBlock.getBlockId()));
                 }
                 File tempf = PathUtils.getTempFileWithExt("parquet");
                 try (FileOutputStream fos = new FileOutputStream(tempf)) {

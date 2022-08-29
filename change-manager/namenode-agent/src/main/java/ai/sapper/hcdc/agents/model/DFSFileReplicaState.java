@@ -2,9 +2,6 @@ package ai.sapper.hcdc.agents.model;
 
 import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.schema.SchemaVersion;
-import ai.sapper.cdc.core.model.DFSBlockState;
-import ai.sapper.cdc.core.model.DFSFileState;
-import ai.sapper.cdc.core.model.EFileState;
 import ai.sapper.cdc.core.model.EFileType;
 import lombok.Getter;
 import lombok.NonNull;
@@ -18,8 +15,7 @@ import java.util.Map;
 @Getter
 @Setter
 public class DFSFileReplicaState {
-    private long inode;
-    private String hdfsPath;
+    private DFSFileInfo fileInfo;
     private SchemaEntity entity;
     private String zkPath;
     private boolean enabled = false;
@@ -32,9 +28,6 @@ public class DFSFileReplicaState {
     private EFileState state = EFileState.Unknown;
     private Map<String, String> storagePath;
     private Map<Long, Map<String, String>> tnxDeltaPaths;
-    private EFileType fileType = EFileType.UNKNOWN;
-    private String schemaLocation;
-    private SchemaVersion schemaVersion;
 
     private List<DFSBlockReplicaState> blocks = new ArrayList<>();
 

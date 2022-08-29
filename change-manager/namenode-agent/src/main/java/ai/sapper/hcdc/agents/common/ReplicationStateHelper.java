@@ -4,6 +4,7 @@ import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
+import ai.sapper.hcdc.agents.model.DFSFileInfo;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
@@ -47,22 +48,20 @@ public class ReplicationStateHelper {
         }
     }
 
-    public DFSFileReplicaState create(long inodeId,
-                                      @NonNull String hdfsPath,
+    public DFSFileReplicaState create(@NonNull DFSFileInfo file,
                                       @NonNull SchemaEntity schemaEntity,
                                       boolean enable) throws StateManagerError {
         checkState();
         try {
             CuratorFramework client = connection().client();
-            DFSFileReplicaState state = get(inodeId);
+            DFSFileReplicaState state = get(file.getInodeId());
             if (state == null) {
-                String path = PathUtils.formatZkPath(String.format("%s/%d", zkReplicationPath, inodeId));
+                String path = PathUtils.formatZkPath(String.format("%s/%d", zkReplicationPath, file.getInodeId()));
                 if (client.checkExists().forPath(path) == null) {
                     client.create().creatingParentContainersIfNeeded().forPath(path);
                 }
                 state = new DFSFileReplicaState();
-                state.setInode(inodeId);
-                state.setHdfsPath(hdfsPath);
+                state.setFileInfo(new DFSFileInfo(file));
                 state.setEntity(schemaEntity);
                 state.setZkPath(path);
                 state.setEnabled(enable);
@@ -84,11 +83,13 @@ public class ReplicationStateHelper {
         checkState();
         try {
             CuratorFramework client = connection().client();
-            DFSFileReplicaState nstate = get(state.getInode());
+            DFSFileReplicaState nstate = get(state.getFileInfo().getInodeId());
             if (nstate.getUpdateTime() > 0 && nstate.getUpdateTime() != state.getUpdateTime()) {
-                throw new StaleDataException(String.format("Replication state changed. [path=%s]", state.getHdfsPath()));
+                throw new StaleDataException(String.format("Replication state changed. [path=%s]",
+                        state.getFileInfo().getHdfsPath()));
             }
-            String path = PathUtils.formatZkPath(String.format("%s/%d", zkReplicationPath, state.getInode()));
+            String path = PathUtils.formatZkPath(
+                    String.format("%s/%d", zkReplicationPath, state.getFileInfo().getInodeId()));
 
             state.setUpdateTime(System.currentTimeMillis());
             String json = JSONUtils.asString(state, DFSFileReplicaState.class);

@@ -1,41 +1,26 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.cdc.core.model.DFSFileState;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
+import ai.sapper.hcdc.agents.model.DFSFileState;
 import ai.sapper.hcdc.common.model.DFSFile;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import org.apache.parquet.Strings;
 
 public class ProtoBufUtils {
-    public static DFSFile build(@NonNull DFSFileState fileState) throws Exception {
-        DFSFile.Builder builder = DFSFile.newBuilder();
-        builder.setNamespace(fileState.getNamespace())
-                .setInodeId(fileState.getId())
-                .setPath(fileState.getHdfsFilePath());
-        if (fileState.getFileType() != null
-                && fileState.getFileType() != EFileType.UNKNOWN) {
-            builder.setFileType(fileState.getFileType().name());
-        }
-        if (!Strings.isNullOrEmpty(fileState.getSchemaLocation())) {
-            builder.setSchemaLocation(fileState.getSchemaLocation());
-        }
-        return builder.build();
-    }
-
     public static boolean update(@NonNull DFSFileState fileState, @NonNull DFSFile file) throws Exception {
-        Preconditions.checkArgument(fileState.getId() == file.getInodeId());
+        Preconditions.checkArgument(fileState.getFileInfo().getInodeId() == file.getInodeId());
         boolean updated = false;
         if (file.hasFileType()) {
             EFileType fileType = EFileType.parse(file.getFileType());
             if (fileType != null && fileType != EFileType.UNKNOWN) {
-                fileState.setFileType(fileType);
+                fileState.getFileInfo().setFileType(fileType);
                 updated = true;
             }
         }
         if (file.hasSchemaLocation()) {
-            fileState.setSchemaLocation(file.getSchemaLocation());
+            fileState.getFileInfo().setSchemaLocation(file.getSchemaLocation());
             updated = true;
         }
         return updated;
@@ -43,16 +28,16 @@ public class ProtoBufUtils {
 
     public static boolean update(@NonNull DFSFileReplicaState replicaState, @NonNull DFSFile file) throws Exception {
         boolean updated = false;
-        Preconditions.checkArgument(replicaState.getInode() == file.getInodeId());
+        Preconditions.checkArgument(replicaState.getFileInfo().getInodeId() == file.getInodeId());
         if (file.hasFileType()) {
             EFileType fileType = EFileType.parse(file.getFileType());
             if (fileType != null && fileType != EFileType.UNKNOWN) {
-                replicaState.setFileType(fileType);
+                replicaState.getFileInfo().setFileType(fileType);
                 updated = true;
             }
         }
         if (file.hasSchemaLocation()) {
-            replicaState.setSchemaLocation(file.getSchemaLocation());
+            replicaState.getFileInfo().setSchemaLocation(file.getSchemaLocation());
             updated = true;
         }
         return updated;
@@ -60,13 +45,13 @@ public class ProtoBufUtils {
 
     public static boolean update(@NonNull DFSFileState fileState, @NonNull DFSFileReplicaState replicaState) {
         boolean updated = false;
-        if (fileState.getFileType() != null
-                && fileState.getFileType() != EFileType.UNKNOWN) {
-            replicaState.setFileType(fileState.getFileType());
+        if (fileState.getFileInfo().getFileType() != null
+                && fileState.getFileInfo().getFileType() != EFileType.UNKNOWN) {
+            replicaState.getFileInfo().setFileType(fileState.getFileInfo().getFileType());
             updated = true;
         }
-        if (!Strings.isNullOrEmpty(fileState.getSchemaLocation())) {
-            replicaState.setSchemaLocation(fileState.getSchemaLocation());
+        if (!Strings.isNullOrEmpty(fileState.getFileInfo().getSchemaLocation())) {
+            replicaState.getFileInfo().setSchemaLocation(fileState.getFileInfo().getSchemaLocation());
             updated = true;
         }
         return updated;

@@ -6,11 +6,11 @@ import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.HdfsConnection;
-import ai.sapper.cdc.core.model.DFSFileState;
 import ai.sapper.cdc.core.schema.SchemaManager;
 import ai.sapper.hcdc.agents.common.CDCDataConverter;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
+import ai.sapper.hcdc.agents.model.DFSFileState;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -82,7 +82,7 @@ public class NameNodeSchemaScanner {
                     .listFiles(null);
             if (files != null && !files.isEmpty()) {
                 for (DFSFileState fs : files) {
-                    long inode = fs.getId();
+                    long inode = fs.getFileInfo().getInodeId();
                     if (inode % config.shardCount == config.shardId) {
                         FileScannerTask task = new FileScannerTask(name)
                                 .fileState(fs)
@@ -94,7 +94,8 @@ public class NameNodeSchemaScanner {
                             Thread.sleep(THREAD_SLEEP_INTERVAL);
                         }
                     } else {
-                        DefaultLogger.debug(env.LOG, String.format("Skipped file: [%s]", fs.getHdfsFilePath()));
+                        DefaultLogger.debug(env.LOG,
+                                String.format("Skipped file: [%s]", fs.getFileInfo().getHdfsPath()));
                     }
                 }
             }
@@ -144,16 +145,17 @@ public class NameNodeSchemaScanner {
                     CDCDataConverter converter = new CDCDataConverter()
                             .withHdfsConnection(hdfsConnection)
                             .withSchemaManager(schemaManager);
-                    SchemaEntity schemaEntity = new SchemaEntity(SchemaManager.DEFAULT_DOMAIN, fileState.getHdfsFilePath());
+                    SchemaEntity schemaEntity = new SchemaEntity(SchemaManager.DEFAULT_DOMAIN,
+                            fileState.getFileInfo().getHdfsPath());
                     CDCDataConverter.ExtractSchemaResponse response = converter.extractSchema(fileState, schemaEntity);
                     if (response != null) {
                         if (response.schema() != null) {
                             String path = schemaManager().schemaPath(schemaEntity);
                             if (!Strings.isNullOrEmpty(path)) {
-                                fileState.setSchemaLocation(path);
+                                fileState.getFileInfo().setSchemaLocation(path);
                             }
                         }
-                        fileState.setFileType(response.fileType());
+                        fileState.getFileInfo().setFileType(response.fileType());
                         try (DistributedLock lock = NameNodeEnv.get(name).globalLock()) {
                             lock.lock();
                             try {

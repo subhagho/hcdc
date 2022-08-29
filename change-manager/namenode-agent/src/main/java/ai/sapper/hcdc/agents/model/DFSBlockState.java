@@ -1,5 +1,6 @@
-package ai.sapper.cdc.core.model;
+package ai.sapper.hcdc.agents.model;
 
+import ai.sapper.cdc.core.model.BlockTransactionDelta;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;

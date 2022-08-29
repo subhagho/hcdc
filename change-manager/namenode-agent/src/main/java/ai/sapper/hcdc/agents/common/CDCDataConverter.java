@@ -6,16 +6,16 @@ import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.connections.HdfsConnection;
-import ai.sapper.cdc.core.io.HCDCFileSystem;
+import ai.sapper.cdc.core.io.CDCFileSystem;
 import ai.sapper.cdc.core.io.PathInfo;
-import ai.sapper.cdc.core.model.DFSBlockState;
-import ai.sapper.cdc.core.model.DFSFileState;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.model.HDFSBlockData;
 import ai.sapper.cdc.core.schema.SchemaManager;
 import ai.sapper.hcdc.agents.common.converter.AvroConverter;
 import ai.sapper.hcdc.agents.common.converter.ParquetConverter;
+import ai.sapper.hcdc.agents.model.DFSBlockState;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
+import ai.sapper.hcdc.agents.model.DFSFileState;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -33,10 +33,10 @@ import java.io.IOException;
 public class CDCDataConverter {
     private final FormatConverter[] CONVERTERS = {new ParquetConverter(), new AvroConverter()};
 
-    private HCDCFileSystem fs;
+    private CDCFileSystem fs;
     private HdfsConnection hdfsConnection;
 
-    public CDCDataConverter withFileSystem(@NonNull HCDCFileSystem fs) {
+    public CDCDataConverter withFileSystem(@NonNull CDCFileSystem fs) {
         this.fs = fs;
         return this;
     }
@@ -74,7 +74,8 @@ public class CDCDataConverter {
         Preconditions.checkArgument(replicaState.getStoragePath() != null);
         try {
             for (FormatConverter converter : CONVERTERS) {
-                if (converter.canParse(fileState.getHdfsFilePath(), replicaState.getFileType())) {
+                if (converter.canParse(fileState.getFileInfo().getHdfsPath(),
+                        replicaState.getFileInfo().getFileType())) {
                     File output = convert(converter, fileState, replicaState, startTxId, currentTxId, op);
                     return upload(output, fileState, replicaState, currentTxId);
                 }
@@ -89,13 +90,13 @@ public class CDCDataConverter {
                                                @NonNull SchemaEntity schemaEntity) throws IOException {
         Preconditions.checkNotNull(hdfsConnection);
         try {
-            try (HDFSBlockReader reader = new HDFSBlockReader(hdfsConnection.dfsClient(), fileState.getHdfsFilePath())) {
+            try (HDFSBlockReader reader = new HDFSBlockReader(hdfsConnection.dfsClient(), fileState.getFileInfo().getHdfsPath())) {
                 reader.init();
                 DFSBlockState blockState = fileState.findFirstBlock();
                 if (blockState == null) {
                     throw new Exception(
                             String.format("Error fetching first block from FileState. [path=%s]",
-                                    fileState.getHdfsFilePath()));
+                                    fileState.getFileInfo().getHdfsPath()));
                 }
                 HDFSBlockData data = reader.read(blockState.getBlockId(),
                         blockState.getGenerationStamp(),
@@ -103,7 +104,7 @@ public class CDCDataConverter {
                         -1);
                 if (data != null) {
                     for (FormatConverter converter : CONVERTERS) {
-                        if (converter.detect(fileState.getHdfsFilePath(),
+                        if (converter.detect(fileState.getFileInfo().getHdfsPath(),
                                 data.data().array(),
                                 (int) data.dataSize())) {
                             EFileType fileType = converter.fileType();
@@ -141,7 +142,7 @@ public class CDCDataConverter {
         String uploadPath = String.format("%s/%s/%d/%d",
                 replicaState.getEntity().getDomain(),
                 replicaState.getEntity().getEntity(),
-                replicaState.getInode(),
+                replicaState.getFileInfo().getInodeId(),
                 txId);
         PathInfo path = fs.get(uploadPath, replicaState.getEntity().getDomain());
         fs.mkdirs(path);
@@ -161,7 +162,7 @@ public class CDCDataConverter {
         } else {
             source = createSourceFile(fileState, replicaState, currentTxId);
         }
-        String fname = FilenameUtils.getName(replicaState.getHdfsPath());
+        String fname = FilenameUtils.getName(replicaState.getFileInfo().getHdfsPath());
         fname = FilenameUtils.removeExtension(fname);
         String path = PathUtils.formatPath(String.format("%s/%s-%d.avro", fs.tempPath(), fname, currentTxId));
         return converter.convert(source, new File(path), fileState, replicaState.getEntity(), currentTxId, op);
@@ -174,7 +175,7 @@ public class CDCDataConverter {
         if (!source.exists()) {
             throw new IOException(String.format("Change Set not found. [path=%s]", source.toString()));
         }
-        String fname = FilenameUtils.getName(replicaState.getHdfsPath());
+        String fname = FilenameUtils.getName(replicaState.getFileInfo().getHdfsPath());
         String path = String.format("%s/%s", fs.tempPath(), fname);
         File file = new File(path);
 
@@ -197,7 +198,7 @@ public class CDCDataConverter {
         if (!source.exists()) {
             throw new IOException(String.format("Change Set not found. [path=%s]", source.toString()));
         }
-        String fname = FilenameUtils.getName(replicaState.getHdfsPath());
+        String fname = FilenameUtils.getName(replicaState.getFileInfo().getHdfsPath());
         String path = String.format("%s/%s", fs.tempPath(), fname);
         File file = new File(path);
 

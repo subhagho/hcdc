@@ -58,17 +58,17 @@ public interface DFSSchemaChangeOrBuilder
    */
   int getOp();
 
-  // required string currentSchema = 5;
+  // optional string currentSchema = 5;
   /**
-   * <code>required string currentSchema = 5;</code>
+   * <code>optional string currentSchema = 5;</code>
    */
   boolean hasCurrentSchema();
   /**
-   * <code>required string currentSchema = 5;</code>
+   * <code>optional string currentSchema = 5;</code>
    */
   java.lang.String getCurrentSchema();
   /**
-   * <code>required string currentSchema = 5;</code>
+   * <code>optional string currentSchema = 5;</code>
    */
   com.google.protobuf.ByteString
       getCurrentSchemaBytes();

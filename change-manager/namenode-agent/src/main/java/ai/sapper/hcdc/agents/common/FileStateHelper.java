@@ -5,7 +5,10 @@ import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import ai.sapper.cdc.core.model.*;
+import ai.sapper.hcdc.agents.main.NameNodeReplicator;
+import ai.sapper.hcdc.agents.model.*;
 import ai.sapper.hcdc.common.model.DFSError;
+import ai.sapper.hcdc.common.model.DFSFile;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -46,19 +49,15 @@ public class FileStateHelper {
         }
     }
 
-    public DFSFileState create(@NonNull String namespace,
-                               @NonNull String path,
-                               long inodeId,
+    public DFSFileState create(@NonNull DFSFile file,
                                long createdTime,
                                long blockSize,
                                @NonNull EFileState state,
                                long txId) throws StateManagerError {
-        return create(namespace, path, inodeId, createdTime, blockSize, state, txId, false);
+        return create(file, createdTime, blockSize, state, txId, false);
     }
 
-    public DFSFileState create(@NonNull String namespace,
-                               @NonNull String path,
-                               long inodeId,
+    public DFSFileState create(@NonNull DFSFile file,
                                long createdTime,
                                long blockSize,
                                @NonNull EFileState state,
@@ -70,16 +69,16 @@ public class FileStateHelper {
             try {
                 CuratorFramework client = connection().client();
 
-                String zp = getFilePath(path);
+                String zp = getFilePath(file.getPath());
                 DFSFileState fs = null;
                 if (client.checkExists().forPath(zp) != null) {
-                    fs = get(path);
+                    fs = get(file.getPath());
                     if (!updateIfExists) {
                         if (!fs.checkDeleted()) {
                             throw new InvalidTransactionError(txId,
                                     DFSError.ErrorCode.SYNC_STOPPED,
-                                    path,
-                                    String.format("Valid File already exists. [path=%s]", path));
+                                    file.getPath(),
+                                    String.format("Valid File already exists. [path=%s]", file.getPath()));
                         } else {
                             client.delete().forPath(zp);
                         }
@@ -88,10 +87,8 @@ public class FileStateHelper {
                 if (fs == null) {
                     fs = new DFSFileState();
                 }
-                fs.setNamespace(namespace);
-                fs.setId(inodeId);
+                fs.setFileInfo(new DFSFileInfo().parse(file));
                 fs.setZkPath(zp);
-                fs.setHdfsFilePath(path);
                 fs.setCreatedTime(createdTime);
                 fs.setUpdatedTime(createdTime);
                 fs.setBlockSize(blockSize);
@@ -103,7 +100,56 @@ public class FileStateHelper {
                 client.create().creatingParentContainersIfNeeded().forPath(zp, data);
                 return fs;
             } catch (Exception ex) {
-                throw new StateManagerError(String.format("Error creating new file entry. [path=%s]", path));
+                throw new StateManagerError(String.format("Error creating new file entry. [path=%s]", file.getPath()));
+            }
+        }
+    }
+
+    public DFSFileState create(@NonNull String namespace,
+                               @NonNull NameNodeReplicator.DFSInode inode,
+                               @NonNull EFileState state,
+                               long txId) throws StateManagerError {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
+        synchronized (this) {
+            try {
+                CuratorFramework client = connection().client();
+
+                String zp = getFilePath(inode.path());
+                DFSFileState fs = null;
+                if (client.checkExists().forPath(zp) != null) {
+                    fs = get(inode.path());
+                    if (!fs.checkDeleted()) {
+                        throw new InvalidTransactionError(txId,
+                                DFSError.ErrorCode.SYNC_STOPPED,
+                                inode.path(),
+                                String.format("Valid File already exists. [path=%s]", inode.path()));
+                    } else {
+                        client.delete().forPath(zp);
+                    }
+
+                }
+                if (fs == null) {
+                    fs = new DFSFileState();
+                }
+                DFSFileInfo fi = new DFSFileInfo();
+                fi.setNamespace(namespace);
+                fi.setHdfsPath(inode.path());
+                fi.setInodeId(inode.id());
+                fs.setFileInfo(fi);
+                fs.setZkPath(zp);
+                fs.setCreatedTime(inode.mTime());
+                fs.setUpdatedTime(inode.mTime());
+                fs.setBlockSize(inode.preferredBlockSize());
+                fs.setTimestamp(System.currentTimeMillis());
+                fs.setLastTnxId(txId);
+                fs.setState(state);
+
+                byte[] data = JSONUtils.asBytes(fs, DFSFileState.class);
+                client.create().creatingParentContainersIfNeeded().forPath(zp, data);
+                return fs;
+            } catch (Exception ex) {
+                throw new StateManagerError(String.format("Error creating new file entry. [path=%s]", inode.path()));
             }
         }
     }
@@ -183,18 +229,18 @@ public class FileStateHelper {
                         if (fs.hasBlocks()) {
                             throw new InvalidTransactionError(txId,
                                     DFSError.ErrorCode.SYNC_STOPPED,
-                                    fs.getHdfsFilePath(),
+                                    fs.getFileInfo().getHdfsPath(),
                                     String.format("Invalid Block Data: Previous Block ID not specified. [path=%s][blockID=%d]",
-                                            fs.getHdfsFilePath(), bs.getBlockId()));
+                                            fs.getFileInfo().getHdfsPath(), bs.getBlockId()));
                         }
                     } else {
                         DFSBlockState pb = fs.get(prevBlockId);
                         if (pb == null) {
                             throw new InvalidTransactionError(txId,
                                     DFSError.ErrorCode.SYNC_STOPPED,
-                                    fs.getHdfsFilePath(),
+                                    fs.getFileInfo().getHdfsPath(),
                                     String.format("Invalid Block Data: Previous Block not found. [path=%s][blockID=%d]",
-                                            fs.getHdfsFilePath(), bs.getBlockId()));
+                                            fs.getFileInfo().getHdfsPath(), bs.getBlockId()));
                         }
                     }
                     fs.add(bs);
@@ -232,14 +278,16 @@ public class FileStateHelper {
     public DFSFileState update(@NonNull DFSFileState fileState) throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(fileState.getHdfsFilePath()));
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(fileState.getFileInfo().getHdfsPath()));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(fileState.getZkPath()));
         synchronized (this) {
             try {
                 CuratorFramework client = connection().client();
                 String path = fileState.getZkPath();
                 if (client.checkExists().forPath(path) == null) {
-                    throw new StateManagerError(String.format("File record not found. [path=%s]", fileState.getHdfsFilePath()));
+                    throw new StateManagerError(
+                            String.format("File record not found. [path=%s]",
+                                    fileState.getFileInfo().getHdfsPath()));
                 }
                 fileState.setTimestamp(System.currentTimeMillis());
                 String json = JSONUtils.asString(fileState, DFSFileState.class);

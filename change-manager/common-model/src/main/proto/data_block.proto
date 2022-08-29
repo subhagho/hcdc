@@ -152,7 +152,7 @@ message DFSSchemaChange {
   required DFSFile file = 2;
   required DFSSchema schema = 3;
   required int32 op = 4;
-  required string currentSchema = 5;
+  optional string currentSchema = 5;
   required string updatedSchema = 6;
 }
 

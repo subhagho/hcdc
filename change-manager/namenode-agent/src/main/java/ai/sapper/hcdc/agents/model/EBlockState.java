@@ -1,4 +1,4 @@
-package ai.sapper.cdc.core.model;
+package ai.sapper.hcdc.agents.model;
 
 public enum EBlockState {
     Unknown, New, Updating, Finalized;

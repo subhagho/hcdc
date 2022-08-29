@@ -4,11 +4,11 @@ import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
-import ai.sapper.cdc.core.model.DFSFileState;
-import ai.sapper.cdc.core.model.EFileState;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
+import ai.sapper.hcdc.agents.model.DFSFileState;
+import ai.sapper.hcdc.agents.model.EFileState;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
@@ -136,11 +136,11 @@ public class EntityChangeDeltaProcessor extends ChangeDeltaProcessor {
         List<DFSFileState> files = stateManager().fileStateHelper().listFiles(null, EFileState.Deleted);
         if (files != null && !files.isEmpty()) {
             for (DFSFileState file : files) {
-                DFSFileState f = stateManager().fileStateHelper().delete(file.getHdfsFilePath());
+                DFSFileState f = stateManager().fileStateHelper().delete(file.getFileInfo().getHdfsPath());
                 if (f != null) {
-                    LOG.debug(String.format("File node deleted. [path=%s]", f.getHdfsFilePath()));
+                    LOG.debug(String.format("File node deleted. [path=%s]", f.getFileInfo().getHdfsPath()));
                 } else {
-                    LOG.error(String.format("Failed to delete file node. [path=%s]", file.getHdfsFilePath()));
+                    LOG.error(String.format("Failed to delete file node. [path=%s]", file.getFileInfo().getHdfsPath()));
                 }
             }
         }

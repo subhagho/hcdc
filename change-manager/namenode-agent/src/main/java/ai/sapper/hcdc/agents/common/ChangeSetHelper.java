@@ -1,12 +1,12 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.cdc.core.io.HCDCFileSystem;
+import ai.sapper.cdc.core.io.CDCFileSystem;
 import ai.sapper.cdc.core.io.PathInfo;
 import ai.sapper.cdc.core.io.Reader;
 import ai.sapper.cdc.core.model.BlockTransactionDelta;
-import ai.sapper.cdc.core.model.DFSFileState;
 import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
+import ai.sapper.hcdc.agents.model.DFSFileState;
 import lombok.NonNull;
 
 import java.io.File;
@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.Map;
 
 public class ChangeSetHelper {
-    public static boolean createChangeSet(@NonNull HCDCFileSystem fs,
+    public static boolean createChangeSet(@NonNull CDCFileSystem fs,
                                           @NonNull DFSFileState fileState,
                                           @NonNull DFSFileReplicaState replicaState,
                                           @NonNull File dest,

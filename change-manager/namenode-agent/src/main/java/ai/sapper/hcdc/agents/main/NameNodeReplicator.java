@@ -7,14 +7,10 @@ import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.cdc.core.Service;
 import ai.sapper.cdc.core.connections.HdfsConnection;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
-import ai.sapper.cdc.core.model.DFSFileState;
-import ai.sapper.cdc.core.model.EBlockState;
-import ai.sapper.cdc.core.model.EFileState;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.NameNodeError;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
-import ai.sapper.hcdc.agents.model.AgentTxState;
-import ai.sapper.hcdc.agents.model.ModuleTxState;
+import ai.sapper.hcdc.agents.model.*;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.base.Preconditions;
@@ -202,19 +198,15 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
             DFSFileState fileState = stateManager
                     .fileStateHelper()
                     .create(NameNodeEnv.get(name()).source(),
-                            inode.path(),
-                            inode.id,
-                            inode.mTime,
-                            inode.preferredBlockSize,
+                            inode,
                             EFileState.Finalized,
-                            txnId,
-                            true);
+                            txnId);
             if (inode.blocks != null && !inode.blocks.isEmpty()) {
                 long prevBlockId = -1;
                 for (DFSInodeBlock block : inode.blocks) {
                     fileState = stateManager
                             .fileStateHelper()
-                            .addOrUpdateBlock(fileState.getHdfsFilePath(),
+                            .addOrUpdateBlock(fileState.getFileInfo().getHdfsPath(),
                                     block.id,
                                     prevBlockId,
                                     inode.mTime,

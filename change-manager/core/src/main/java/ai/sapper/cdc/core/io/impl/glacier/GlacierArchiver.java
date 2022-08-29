@@ -4,7 +4,6 @@ import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.utils.ChecksumUtils;
 import ai.sapper.cdc.core.io.Archiver;
-import ai.sapper.cdc.core.io.FSFile;
 import ai.sapper.cdc.core.io.FileSystem;
 import ai.sapper.cdc.core.io.PathInfo;
 import com.google.common.base.Preconditions;
@@ -47,12 +46,9 @@ public class GlacierArchiver extends Archiver {
     }
 
     @Override
-    public PathInfo archive(@NonNull FSFile source, @NonNull PathInfo target, @NonNull FileSystem sourceFS) throws IOException {
+    public PathInfo archive(@NonNull PathInfo source, @NonNull PathInfo target, @NonNull FileSystem sourceFS) throws IOException {
         Preconditions.checkArgument(target instanceof GlacierPathInfo);
-        File zip = source.archive();
-        if (zip == null) {
-            throw new IOException(String.format("Error archiving file: [source=%s]", source.directory().path()));
-        }
+        File zip = new File(source.path());
         try {
             String checkVal = ChecksumUtils.computeSHA256(zip);
 

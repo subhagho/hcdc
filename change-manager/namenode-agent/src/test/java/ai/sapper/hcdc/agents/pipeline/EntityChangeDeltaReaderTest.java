@@ -3,7 +3,7 @@ package ai.sapper.hcdc.agents.pipeline;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.cdc.core.io.HCDCFileSystem;
+import ai.sapper.cdc.core.io.CDCFileSystem;
 import ai.sapper.cdc.core.io.impl.s3.S3FileSystem;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import com.adobe.testing.s3mock.junit5.S3MockExtension;
@@ -51,7 +51,7 @@ class EntityChangeDeltaReaderTest {
         }
     }
 
-    public static class S3Mocker implements HCDCFileSystem.FileSystemMocker {
+    public static class S3Mocker implements CDCFileSystem.FileSystemMocker {
         private final S3Client s3Client;
 
         public S3Mocker(@NonNull S3Client s3Client) {
@@ -64,7 +64,7 @@ class EntityChangeDeltaReaderTest {
          * @throws Exception
          */
         @Override
-        public HCDCFileSystem create(@NonNull HierarchicalConfiguration<ImmutableNode> config) throws Exception {
+        public CDCFileSystem create(@NonNull HierarchicalConfiguration<ImmutableNode> config) throws Exception {
             return (S3FileSystem) new S3FileSystem()
                     .withClient(s3Client)
                     .init(config, EntityChangeDeltaReader.FileDeltaProcessorConfig.Constants.CONFIG_PATH_FS);

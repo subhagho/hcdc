@@ -8,13 +8,13 @@ import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.model.BlockTransactionDelta;
-import ai.sapper.cdc.core.model.DFSBlockState;
-import ai.sapper.cdc.core.model.DFSFileState;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ProcessorStateManager;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
+import ai.sapper.hcdc.agents.model.DFSBlockState;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
+import ai.sapper.hcdc.agents.model.DFSFileState;
 import ai.sapper.hcdc.agents.model.DFSTransactionType;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSCloseFile;
@@ -142,21 +142,21 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
         }
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
-                .get(fileState.getId());
+                .get(fileState.getFileInfo().getInodeId());
         if (rState == null || !rState.isEnabled()) {
             throw new InvalidMessageError(message.id(),
                     String.format("HDFS File not registered for snapshot. [path=%s][inode=%d]",
-                            closeFile.getFile().getPath(), fileState.getId()));
+                            closeFile.getFile().getPath(), fileState.getFileInfo().getInodeId()));
         }
         if (rState.isSnapshotReady()) {
             throw new InvalidMessageError(message.id(),
                     String.format("Snapshot already completed for file. [path=%s][inode=%d]",
-                            closeFile.getFile().getPath(), fileState.getId()));
+                            closeFile.getFile().getPath(), fileState.getFileInfo().getInodeId()));
         }
         if (rState.getSnapshotTxId() != txId) {
             throw new InvalidMessageError(message.id(),
                     String.format("Snapshot transaction mismatch. [path=%s][inode=%d] [expected=%d][actual=%d]",
-                            closeFile.getFile().getPath(), fileState.getId(), rState.getSnapshotTxId(), txId));
+                            closeFile.getFile().getPath(), fileState.getFileInfo().getInodeId(), rState.getSnapshotTxId(), txId));
         }
         if (fileState.getLastTnxId() > txId)
             sendBackLogMessage(message, fileState, rState, txId);
@@ -187,9 +187,9 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
                                                                          DFSFileReplicaState rState,
                                                                          long txId) throws Exception {
         DFSTransactionType.DFSFileType file = new DFSTransactionType.DFSFileType();
-        file.namespace(NameNodeEnv.get(name()).source())
-                .path(fileState.getHdfsFilePath())
-                .inodeId(fileState.getId());
+        file.namespace(fileState.getFileInfo().getNamespace())
+                .path(fileState.getFileInfo().getHdfsPath())
+                .inodeId(fileState.getFileInfo().getInodeId());
 
         DFSTransactionType.DFSCloseFileType closeFile = new DFSTransactionType.DFSCloseFileType();
         closeFile.file(file)

@@ -230,17 +230,17 @@ public  final class DFSSchemaChange extends
     return op_;
   }
 
-  // required string currentSchema = 5;
+  // optional string currentSchema = 5;
   public static final int CURRENTSCHEMA_FIELD_NUMBER = 5;
   private java.lang.Object currentSchema_;
   /**
-   * <code>required string currentSchema = 5;</code>
+   * <code>optional string currentSchema = 5;</code>
    */
   public boolean hasCurrentSchema() {
     return ((bitField0_ & 0x00000010) == 0x00000010);
   }
   /**
-   * <code>required string currentSchema = 5;</code>
+   * <code>optional string currentSchema = 5;</code>
    */
   public java.lang.String getCurrentSchema() {
     java.lang.Object ref = currentSchema_;
@@ -257,7 +257,7 @@ public  final class DFSSchemaChange extends
     }
   }
   /**
-   * <code>required string currentSchema = 5;</code>
+   * <code>optional string currentSchema = 5;</code>
    */
   public com.google.protobuf.ByteString
       getCurrentSchemaBytes() {
@@ -342,10 +342,6 @@ public  final class DFSSchemaChange extends
       return false;
     }
     if (!hasOp()) {
-      memoizedIsInitialized = 0;
-      return false;
-    }
-    if (!hasCurrentSchema()) {
       memoizedIsInitialized = 0;
       return false;
     }
@@ -686,10 +682,6 @@ public  final class DFSSchemaChange extends
         return false;
       }
       if (!hasOp()) {
-        
-        return false;
-      }
-      if (!hasCurrentSchema()) {
         
         return false;
       }
@@ -1115,16 +1107,16 @@ public  final class DFSSchemaChange extends
       return this;
     }
 
-    // required string currentSchema = 5;
+    // optional string currentSchema = 5;
     private java.lang.Object currentSchema_ = "";
     /**
-     * <code>required string currentSchema = 5;</code>
+     * <code>optional string currentSchema = 5;</code>
      */
     public boolean hasCurrentSchema() {
       return ((bitField0_ & 0x00000010) == 0x00000010);
     }
     /**
-     * <code>required string currentSchema = 5;</code>
+     * <code>optional string currentSchema = 5;</code>
      */
     public java.lang.String getCurrentSchema() {
       java.lang.Object ref = currentSchema_;
@@ -1138,7 +1130,7 @@ public  final class DFSSchemaChange extends
       }
     }
     /**
-     * <code>required string currentSchema = 5;</code>
+     * <code>optional string currentSchema = 5;</code>
      */
     public com.google.protobuf.ByteString
         getCurrentSchemaBytes() {
@@ -1154,7 +1146,7 @@ public  final class DFSSchemaChange extends
       }
     }
     /**
-     * <code>required string currentSchema = 5;</code>
+     * <code>optional string currentSchema = 5;</code>
      */
     public Builder setCurrentSchema(
         java.lang.String value) {
@@ -1167,7 +1159,7 @@ public  final class DFSSchemaChange extends
       return this;
     }
     /**
-     * <code>required string currentSchema = 5;</code>
+     * <code>optional string currentSchema = 5;</code>
      */
     public Builder clearCurrentSchema() {
       bitField0_ = (bitField0_ & ~0x00000010);
@@ -1176,7 +1168,7 @@ public  final class DFSSchemaChange extends
       return this;
     }
     /**
-     * <code>required string currentSchema = 5;</code>
+     * <code>optional string currentSchema = 5;</code>
      */
     public Builder setCurrentSchemaBytes(
         com.google.protobuf.ByteString value) {

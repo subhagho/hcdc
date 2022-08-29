@@ -22,7 +22,7 @@ public abstract class Archiver implements Closeable {
     public abstract void init(@NonNull HierarchicalConfiguration<ImmutableNode> config,
                               String pathPrefix) throws IOException;
 
-    public abstract PathInfo archive(@NonNull FSFile source,
+    public abstract PathInfo archive(@NonNull PathInfo source,
                                      @NonNull PathInfo target,
                                      @NonNull FileSystem sourceFS) throws IOException;
 

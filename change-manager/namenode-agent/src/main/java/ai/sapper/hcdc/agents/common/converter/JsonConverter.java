@@ -7,12 +7,12 @@ import ai.sapper.cdc.common.schema.AvroUtils;
 import ai.sapper.cdc.common.schema.SchemaHelper;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.PathUtils;
-import ai.sapper.cdc.core.model.DFSBlockState;
-import ai.sapper.cdc.core.model.DFSFileState;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.model.HDFSBlockData;
 import ai.sapper.cdc.core.schema.SchemaEvolutionValidator;
 import ai.sapper.hcdc.agents.common.FormatConverter;
+import ai.sapper.hcdc.agents.model.DFSBlockState;
+import ai.sapper.hcdc.agents.model.DFSFileState;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
@@ -81,8 +81,8 @@ public class JsonConverter extends FormatConverter {
                         GenericRecord record = AvroUtils.jsonToAvroRecord(line, schema.schema());
                         GenericRecord wrapped = wrap(wrapper,
                                 schemaEntity,
-                                fileState.getNamespace(),
-                                fileState.getHdfsFilePath(),
+                                fileState.getFileInfo().getNamespace(),
+                                fileState.getFileInfo().getHdfsPath(),
                                 record, op, txId);
                         fos.append(wrapped);
                     }
@@ -181,7 +181,7 @@ public class JsonConverter extends FormatConverter {
 
                 if (data == null) {
                     throw new IOException(String.format("Error reading block from HDFS. [path=%s][block ID=%d]",
-                            fileState.getHdfsFilePath(), firstBlock.getBlockId()));
+                            fileState.getFileInfo().getHdfsPath(), firstBlock.getBlockId()));
                 }
                 File tempf = PathUtils.getTempFileWithExt("json");
                 try (FileOutputStream fos = new FileOutputStream(tempf)) {

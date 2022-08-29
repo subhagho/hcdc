@@ -1,6 +1,10 @@
-package ai.sapper.cdc.core.io;
+package ai.sapper.hcdc.io;
 
-import ai.sapper.cdc.core.model.DFSBlockState;
+import ai.sapper.cdc.core.io.FileSystem;
+import ai.sapper.cdc.core.io.PathInfo;
+import ai.sapper.cdc.core.io.Reader;
+import ai.sapper.cdc.core.io.Writer;
+import ai.sapper.hcdc.agents.model.DFSBlockState;
 import com.google.common.base.Preconditions;
 import lombok.AccessLevel;
 import lombok.Getter;

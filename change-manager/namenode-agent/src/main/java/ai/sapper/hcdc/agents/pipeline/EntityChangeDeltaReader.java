@@ -5,7 +5,7 @@ import ai.sapper.cdc.core.WebServiceClient;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.HdfsConnection;
 import ai.sapper.cdc.core.io.Archiver;
-import ai.sapper.cdc.core.io.HCDCFileSystem;
+import ai.sapper.cdc.core.io.CDCFileSystem;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
@@ -33,19 +33,19 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
     private static Logger LOG = LoggerFactory.getLogger(EntityChangeDeltaReader.class);
     private EntityChangeTransactionReader processor;
     private long receiveBatchTimeout = 1000;
-    private HCDCFileSystem fs;
+    private CDCFileSystem fs;
     private Archiver archiver;
 
     private FileDeltaProcessorConfig config;
     private HdfsConnection connection;
-    private HCDCFileSystem.FileSystemMocker fileSystemMocker;
+    private CDCFileSystem.FileSystemMocker fileSystemMocker;
     private WebServiceClient client;
 
     public EntityChangeDeltaReader(@NonNull ZkStateManager stateManager, @NonNull String name) {
         super(stateManager, name);
     }
 
-    public EntityChangeDeltaReader withMockFileSystem(@NonNull HCDCFileSystem.FileSystemMocker fileSystemMocker) {
+    public EntityChangeDeltaReader withMockFileSystem(@NonNull CDCFileSystem.FileSystemMocker fileSystemMocker) {
         this.fileSystemMocker = fileSystemMocker;
         return this;
     }
@@ -75,11 +75,11 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
             if (!connection.isConnected()) connection.connect();
 
             if (fileSystemMocker == null) {
-                Class<? extends HCDCFileSystem> fsc = (Class<? extends HCDCFileSystem>) Class.forName(config.fsType);
+                Class<? extends CDCFileSystem> fsc = (Class<? extends CDCFileSystem>) Class.forName(config.fsType);
                 fs = fsc.newInstance();
                 fs.init(config.config(), FileDeltaProcessorConfig.Constants.CONFIG_PATH_FS);
             } else {
-                fs = (HCDCFileSystem) fileSystemMocker.create(config.config());
+                fs = (CDCFileSystem) fileSystemMocker.create(config.config());
             }
             client = new WebServiceClient();
             client.init(config.config(),

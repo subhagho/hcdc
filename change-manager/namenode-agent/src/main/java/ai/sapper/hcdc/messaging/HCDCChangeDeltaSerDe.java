@@ -15,9 +15,8 @@ import lombok.NonNull;
 
 public class HCDCChangeDeltaSerDe extends ChangeDeltaSerDe {
 
-    public static MessageObject<String, DFSChangeDelta> createSchemaChange(@NonNull String namespace,
-                                                                           @NonNull DFSTransaction tnx,
-                                                                           @NonNull SchemaVersion current,
+    public static MessageObject<String, DFSChangeDelta> createSchemaChange(@NonNull DFSTransaction tnx,
+                                                                           SchemaVersion current,
                                                                            @NonNull SchemaVersion updated,
                                                                            @NonNull AvroChangeType.EChangeType op,
                                                                            @NonNull DFSFileReplicaState rState,
@@ -26,19 +25,18 @@ public class HCDCChangeDeltaSerDe extends ChangeDeltaSerDe {
                 op == AvroChangeType.EChangeType.EntityUpdate ||
                 op == AvroChangeType.EChangeType.EntityDelete);
 
-        DFSFile file = DFSFile.newBuilder()
-                .setPath(rState.getHdfsPath())
-                .setInodeId(rState.getInode())
-                .build();
-        DFSSchemaChange change = DFSSchemaChange.newBuilder()
+        DFSFile file = rState.getFileInfo().proto();
+        DFSSchemaChange.Builder builder = DFSSchemaChange.newBuilder()
                 .setTransaction(tnx)
                 .setFile(file)
                 .setSchema(SchemaEntityHelper.proto(rState.getEntity()))
-                .setCurrentSchema(current.toString())
                 .setUpdatedSchema(updated.toString())
-                .setOp(op.opCode())
-                .build();
-        return create(namespace, change,
+                .setOp(op.opCode());
+        if (current != null) {
+            builder.setCurrentSchema(current.toString());
+        }
+        return create(rState.getFileInfo().getNamespace(),
+                builder.build(),
                 DFSSchemaChange.class,
                 rState.getEntity(),
                 mode);

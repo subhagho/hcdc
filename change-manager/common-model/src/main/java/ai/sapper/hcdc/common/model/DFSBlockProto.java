@@ -189,7 +189,7 @@ public final class DFSBlockProto {
       "i_sapper_hcdc_common_model.DFSFile\0226\n\006sc" +
       "hema\030\003 \002(\0132&.ai_sapper_hcdc_common_model" +
       ".DFSSchema\022\n\n\002op\030\004 \002(\005\022\025\n\rcurrentSchema\030" +
-      "\005 \002(\t\022\025\n\rupdatedSchema\030\006 \002(\t\"\250\001\n\016DFSChan" +
+      "\005 \001(\t\022\025\n\rupdatedSchema\030\006 \002(\t\"\250\001\n\016DFSChan" +
       "geDelta\022\021\n\tnamespace\030\001 \002(\t\022\014\n\004txId\030\002 \002(\t" +
       "\022\016\n\006entity\030\003 \002(\t\022\014\n\004type\030\004 \002(\t\022\021\n\ttimest",
       "amp\030\005 \002(\004\022\014\n\004body\030\006 \002(\014\0226\n\006schema\030\007 \001(\0132" +

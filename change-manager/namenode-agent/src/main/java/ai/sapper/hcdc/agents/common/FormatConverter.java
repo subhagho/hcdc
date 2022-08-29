@@ -4,9 +4,9 @@ import ai.sapper.cdc.common.model.AvroChangeRecord;
 import ai.sapper.cdc.common.model.AvroChangeType;
 import ai.sapper.cdc.common.model.EntityDef;
 import ai.sapper.cdc.common.model.SchemaEntity;
-import ai.sapper.cdc.core.model.DFSFileState;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.schema.SchemaManager;
+import ai.sapper.hcdc.agents.model.DFSFileState;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -37,8 +37,8 @@ public abstract class FormatConverter {
     public EntityDef hasSchema(DFSFileState fileState, SchemaEntity schemaEntity) throws Exception {
         EntityDef schema = schemaManager().get(schemaEntity);
         if (schema == null) {
-            if (!Strings.isNullOrEmpty(fileState.getSchemaLocation())) {
-                schema = schemaManager().get(fileState.getSchemaLocation());
+            if (!Strings.isNullOrEmpty(fileState.getFileInfo().getSchemaLocation())) {
+                schema = schemaManager().get(fileState.getFileInfo().getSchemaLocation());
             }
         }
         return schema;

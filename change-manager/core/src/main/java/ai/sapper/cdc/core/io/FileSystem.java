@@ -2,8 +2,6 @@ package ai.sapper.cdc.core.io;
 
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.SchemaEntity;
-import ai.sapper.cdc.core.model.DFSBlockState;
-import ai.sapper.cdc.core.model.DFSFileState;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -88,28 +86,6 @@ public abstract class FileSystem implements Closeable {
 
     public Writer writer(@NonNull PathInfo path) throws IOException {
         return writer(path, false, false);
-    }
-
-    public FSFile create(@NonNull DFSFileState fileState,
-                         @NonNull SchemaEntity entity) throws IOException {
-        return new FSFile(fileState, entity.getDomain(), this, true);
-    }
-
-    public FSBlock create(@NonNull PathInfo dir,
-                          @NonNull DFSBlockState blockState,
-                          @NonNull SchemaEntity entity) throws IOException {
-        return new FSBlock(blockState, dir, this, entity.getDomain(), true);
-    }
-
-    public FSFile get(@NonNull DFSFileState fileState,
-                      @NonNull SchemaEntity entity) throws IOException {
-        return new FSFile(fileState, entity.getDomain(), this, false);
-    }
-
-    public FSBlock get(@NonNull PathInfo dir,
-                       @NonNull DFSBlockState blockState,
-                       @NonNull SchemaEntity entity) throws IOException {
-        return new FSBlock(blockState, dir, this, entity.getDomain(), false);
     }
 
     public abstract Reader reader(@NonNull PathInfo path) throws IOException;

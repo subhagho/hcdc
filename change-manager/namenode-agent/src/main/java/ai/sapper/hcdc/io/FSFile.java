@@ -1,8 +1,10 @@
-package ai.sapper.cdc.core.io;
+package ai.sapper.hcdc.io;
 
 import ai.sapper.cdc.common.utils.PathUtils;
-import ai.sapper.cdc.core.model.DFSBlockState;
-import ai.sapper.cdc.core.model.DFSFileState;
+import ai.sapper.cdc.core.io.FileSystem;
+import ai.sapper.cdc.core.io.PathInfo;
+import ai.sapper.hcdc.agents.model.DFSBlockState;
+import ai.sapper.hcdc.agents.model.DFSFileState;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
@@ -46,7 +48,7 @@ public class FSFile implements Closeable {
                   boolean create) throws IOException {
         this.domain = domain;
         this.fs = fs;
-        String p = PathUtils.formatPath(String.format("%s/", fileState.getHdfsFilePath()));
+        String p = PathUtils.formatPath(String.format("%s/", fileState.getFileInfo().getHdfsPath()));
         directory = fs.get(p, domain);
         setup(create, fileState);
     }
@@ -56,7 +58,7 @@ public class FSFile implements Closeable {
                   @NonNull FileSystem fs) throws IOException {
         this.domain = domain;
         this.fs = fs;
-        String p = PathUtils.formatPath(String.format("%s/", fileState.getHdfsFilePath()));
+        String p = PathUtils.formatPath(String.format("%s/", fileState.getFileInfo().getHdfsPath()));
         directory = fs.get(p, domain);
         setup(false, fileState);
     }
