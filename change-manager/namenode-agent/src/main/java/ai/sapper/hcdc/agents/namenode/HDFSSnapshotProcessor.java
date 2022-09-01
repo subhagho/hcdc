@@ -100,6 +100,7 @@ public class HDFSSnapshotProcessor {
             lock.lock();
             try {
                 for (String domain : domainManager.matchers().keySet()) {
+                    DefaultLogger.LOGGER.info(String.format("Running snapshot for domain. [domain=%s]", domain));
                     DomainFilterMatcher matcher = domainManager.matchers().get(domain);
                     if (matcher != null) {
                         List<DomainFilterMatcher.PathFilter> filters = matcher.patterns();
@@ -174,6 +175,8 @@ public class HDFSSnapshotProcessor {
         List<Path> paths = FileSystemUtils.list(filter.path(), fs);
         int count = 0;
         if (paths != null) {
+            DefaultLogger.LOGGER.debug(
+                    String.format("Files returned for path. [path=%s][count=%d]", filter.path(), paths.size()));
             for (Path path : paths) {
                 URI uri = path.toUri();
                 String hdfsPath = uri.getPath();
@@ -217,7 +220,7 @@ public class HDFSSnapshotProcessor {
                 DefaultLogger.info(LOG, String.format("HDFS File State not found. [path=%s]", hdfsPath));
                 return;
             }
-            if (txId < 0) {
+            if (txId < fileState.getLastTnxId()) {
                 txId = fileState.getLastTnxId();
             }
             DFSFileReplicaState rState = stateManager

@@ -104,6 +104,7 @@ public class SnapshotService {
     @RequestMapping(value = "/snapshot/run", method = RequestMethod.POST)
     public ResponseEntity<BasicResponse<Integer>> run() {
         try {
+            DefaultLogger.LOGGER.info("Snapshot run called...");
             ServiceHelper.checkService(processor.name(), processor);
             int count = processor.getProcessor().run();
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
