@@ -3,6 +3,7 @@
     <agent>
         <module>EDITS-LOG-PROCESSORS</module>
         <instance>EditsLogProcessor</instance>
+        <env>DEV</env>
         <source>ha-cluster</source>
         <hadoop>
             <namespace>ha-cluster</namespace>

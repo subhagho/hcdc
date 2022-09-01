@@ -3,6 +3,7 @@
     <agent>
         <module>EDITS-LOG-PROCESSORS</module>
         <instance>HDFSSchemaScanner/0</instance>
+        <env>DEV</env>
         <source>ha-cluster</source>
         <needHadoop>false</needHadoop>
         <connections>

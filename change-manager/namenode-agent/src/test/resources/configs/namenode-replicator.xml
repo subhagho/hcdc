@@ -2,6 +2,7 @@
 <configuration>
     <agent>
         <module>EDITS-LOG-PROCESSORS</module>
+        <env>DEV</env>
         <instance>NameNodeReplicator</instance>
         <source>ha-cluster</source>
         <hadoop>

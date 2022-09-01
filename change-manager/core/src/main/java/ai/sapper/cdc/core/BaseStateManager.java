@@ -38,9 +38,13 @@ public abstract class BaseStateManager {
     private AgentTxState agentTxState;
     private ModuleInstance moduleInstance;
     private String name;
+    private String environment;
 
-    public BaseStateManager withName(@NonNull String name) {
+    public BaseStateManager withEnvironment(@NonNull String environment,
+                                            @NonNull String name) {
+        this.environment = environment;
         this.name = name;
+
         return this;
     }
 
@@ -63,14 +67,16 @@ public abstract class BaseStateManager {
         try {
             Preconditions.checkNotNull(moduleInstance);
             Preconditions.checkNotNull(config);
+            Preconditions.checkState(!Strings.isNullOrEmpty(environment));
 
             connection = manger.getConnection(config.zkConnection(), ZookeeperConnection.class);
             Preconditions.checkNotNull(connection);
             if (!connection.isConnected()) connection.connect();
             CuratorFramework client = connection().client();
 
-            zkPath = PathUtils.formatZkPath(String.format("%s/%s/%s",
+            zkPath = PathUtils.formatZkPath(String.format("%s/%s/%s/%s",
                     basePath(),
+                    environment,
                     moduleInstance.getModule(),
                     moduleInstance.getName()));
             if (client.checkExists().forPath(zkPath) == null) {

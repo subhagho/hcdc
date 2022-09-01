@@ -61,6 +61,11 @@ public class EditsLogReader extends HDFSEditsReader {
         ModuleTxState state = stateManager.getModuleState();
         EditsLogFileReader reader = new EditsLogFileReader();
         long txId = state.getCurrentTxId();
+        if (txId < 0) {
+            LOGGER.warn(getClass(), txId,
+                    String.format("Name Node replication not initialized. [source=%s]",
+                            NameNodeEnv.get(name).source()));
+        }
         List<DFSEditsFileFinder.EditsLogFile> files = DFSEditsFileFinder
                 .findEditsFiles(getPathNnCurrentDir(editsDir.getAbsolutePath()),
                         state.getCurrentTxId() + 1, -1);

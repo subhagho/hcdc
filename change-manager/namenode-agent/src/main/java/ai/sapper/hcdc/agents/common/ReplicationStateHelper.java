@@ -30,11 +30,19 @@ public class ReplicationStateHelper {
         return this;
     }
 
-    public DFSFileReplicaState get(long inodeId) throws StateManagerError {
+    private String getReplicationPath(SchemaEntity schemaEntity, long inodeId) {
+        return PathUtils.formatZkPath(String.format("%s/%s/%s/%d",
+                zkReplicationPath,
+                schemaEntity.getDomain(),
+                schemaEntity.getEntity(), inodeId));
+    }
+
+    public DFSFileReplicaState get(@NonNull SchemaEntity schemaEntity,
+                                   long inodeId) throws StateManagerError {
         checkState();
         try {
             CuratorFramework client = connection().client();
-            String path = PathUtils.formatZkPath(String.format("%s/%d", zkReplicationPath, inodeId));
+            String path = getReplicationPath(schemaEntity, inodeId);
             if (client.checkExists().forPath(path) != null) {
                 byte[] data = client.getData().forPath(path);
                 if (data != null && data.length > 0) {
@@ -54,9 +62,9 @@ public class ReplicationStateHelper {
         checkState();
         try {
             CuratorFramework client = connection().client();
-            DFSFileReplicaState state = get(file.getInodeId());
+            DFSFileReplicaState state = get(schemaEntity, file.getInodeId());
             if (state == null) {
-                String path = PathUtils.formatZkPath(String.format("%s/%d", zkReplicationPath, file.getInodeId()));
+                String path = getReplicationPath(schemaEntity, file.getInodeId());
                 if (client.checkExists().forPath(path) == null) {
                     client.create().creatingParentContainersIfNeeded().forPath(path);
                 }
@@ -83,7 +91,7 @@ public class ReplicationStateHelper {
         checkState();
         try {
             CuratorFramework client = connection().client();
-            DFSFileReplicaState nstate = get(state.getFileInfo().getInodeId());
+            DFSFileReplicaState nstate = get(state.getEntity(), state.getFileInfo().getInodeId());
             if (nstate.getUpdateTime() > 0 && nstate.getUpdateTime() != state.getUpdateTime()) {
                 throw new StaleDataException(String.format("Replication state changed. [path=%s]",
                         state.getFileInfo().getHdfsPath()));
@@ -103,11 +111,12 @@ public class ReplicationStateHelper {
         }
     }
 
-    public boolean delete(long inodeId) throws StateManagerError {
+    public boolean delete(@NonNull SchemaEntity schemaEntity,
+                          long inodeId) throws StateManagerError {
         checkState();
         try {
             CuratorFramework client = connection().client();
-            DFSFileReplicaState state = get(inodeId);
+            DFSFileReplicaState state = get(schemaEntity, inodeId);
             if (state != null) {
                 client.delete().deletingChildrenIfNeeded().forPath(state.getZkPath());
                 return true;

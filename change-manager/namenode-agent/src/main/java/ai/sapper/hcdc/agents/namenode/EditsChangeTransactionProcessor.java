@@ -77,7 +77,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                 } else if (fileState.checkDeleted()) {
                     stateManager()
                             .replicaStateHelper()
-                            .delete(fileState.getFileInfo().getInodeId());
+                            .delete(schemaEntity, fileState.getFileInfo().getInodeId());
                 }
             }
         } else if (fileState != null) {
@@ -172,10 +172,14 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
         fileState = stateManager()
                 .fileStateHelper()
                 .updateState(fileState.getFileInfo().getHdfsPath(), EFileState.Updating);
-
+        SchemaEntity schemaEntity = isRegistered(fileState.getFileInfo().getHdfsPath());
+        if (schemaEntity == null) {
+            throw new InvalidMessageError(message.id(),
+                    String.format("HDFS File Not registered. [path=%s]", data.getFile().getPath()));
+        }
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
-                .get(fileState.getFileInfo().getInodeId());
+                .get(schemaEntity, fileState.getFileInfo().getInodeId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
             DFSFile df = fileState.getFileInfo().proto();
             data = data.toBuilder().setFile(df).build();
@@ -285,9 +289,15 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                                               MessageObject<String, DFSChangeDelta> message,
                                               DFSDeleteFile deleteFile,
                                               long txId) throws Exception {
+        SchemaEntity schemaEntity = isRegistered(fileState.getFileInfo().getHdfsPath());
+        if (schemaEntity == null) {
+            LOGGER.warn(getClass(), txId,
+                    String.format("HDFS File Not registered. [path=%s]", fileState.getFileInfo().getHdfsPath()));
+            return true;
+        }
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
-                .get(fileState.getFileInfo().getInodeId());
+                .get(schemaEntity, fileState.getFileInfo().getInodeId());
         if (rState != null) {
             DFSFile df = fileState.getFileInfo().proto();
             DFSDeleteFile data = DFSDeleteFile.newBuilder()
@@ -307,7 +317,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
 
             stateManager()
                     .replicaStateHelper()
-                    .delete(rState.getFileInfo().getInodeId());
+                    .delete(schemaEntity, rState.getFileInfo().getInodeId());
         }
         return true;
     }
@@ -353,14 +363,18 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
         fileState = stateManager()
                 .fileStateHelper()
                 .delete(fileState.getFileInfo().getHdfsPath());
-
+        SchemaEntity schemaEntity = isRegistered(fileState.getFileInfo().getHdfsPath());
+        if (schemaEntity == null) {
+            throw new InvalidMessageError(message.id(),
+                    String.format("HDFS File Not registered. [path=%s]", fileState.getFileInfo().getHdfsPath()));
+        }
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
-                .get(fileState.getFileInfo().getInodeId());
+                .get(schemaEntity, fileState.getFileInfo().getInodeId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
             stateManager()
                     .replicaStateHelper()
-                    .delete(fileState.getFileInfo().getInodeId());
+                    .delete(schemaEntity, fileState.getFileInfo().getInodeId());
 
             DFSFile df = fileState.getFileInfo().proto();
             data = data.toBuilder().setFile(df).build();
@@ -373,7 +387,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
 
             sender.send(message);
 
-            stateManager().replicaStateHelper().delete(rState.getFileInfo().getInodeId());
+            stateManager().replicaStateHelper().delete(schemaEntity, rState.getFileInfo().getInodeId());
         } else if (fileState.hasError()) {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
@@ -428,9 +442,14 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                         EBlockState.New,
                         data.getTransaction().getTransactionId());
 
+        SchemaEntity schemaEntity = isRegistered(fileState.getFileInfo().getHdfsPath());
+        if (schemaEntity == null) {
+            throw new InvalidMessageError(message.id(),
+                    String.format("HDFS File Not registered. [path=%s]", fileState.getFileInfo().getHdfsPath()));
+        }
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
-                .get(fileState.getFileInfo().getInodeId());
+                .get(schemaEntity, fileState.getFileInfo().getInodeId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
             if (fileState.hasBlocks()) {
                 for (DFSBlockState bs : fileState.getBlocks()) {
@@ -522,9 +541,14 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                             bs.getBlockId(),
                             EBlockState.Updating);
         }
+        SchemaEntity schemaEntity = isRegistered(fileState.getFileInfo().getHdfsPath());
+        if (schemaEntity == null) {
+            throw new InvalidMessageError(message.id(),
+                    String.format("HDFS File Not registered. [path=%s]", fileState.getFileInfo().getHdfsPath()));
+        }
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
-                .get(fileState.getFileInfo().getInodeId());
+                .get(schemaEntity, fileState.getFileInfo().getInodeId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
             if (fileState.hasBlocks()) {
                 for (DFSBlockState bs : fileState.getBlocks()) {
@@ -651,10 +675,14 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
         fileState = stateManager()
                 .fileStateHelper()
                 .updateState(fileState.getFileInfo().getHdfsPath(), EFileState.Finalized);
-
+        SchemaEntity schemaEntity = isRegistered(fileState.getFileInfo().getHdfsPath());
+        if (schemaEntity == null) {
+            throw new InvalidMessageError(message.id(),
+                    String.format("HDFS File Not registered. [path=%s]", fileState.getFileInfo().getHdfsPath()));
+        }
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
-                .get(fileState.getFileInfo().getInodeId());
+                .get(schemaEntity, fileState.getFileInfo().getInodeId());
         if (!fileState.hasError() && rState != null && rState.isEnabled()) {
             DFSFile df = fileState.getFileInfo().proto();
 

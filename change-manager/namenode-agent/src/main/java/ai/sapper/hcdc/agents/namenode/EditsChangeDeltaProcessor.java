@@ -140,9 +140,14 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
             throw new InvalidMessageError(message.id(),
                     String.format("HDFS File Not found. [path=%s]", closeFile.getFile().getPath()));
         }
+        SchemaEntity schemaEntity = processor.isRegistered(fileState.getFileInfo().getHdfsPath());
+        if (schemaEntity == null) {
+            throw new InvalidMessageError(message.id(),
+                    String.format("HDFS File Not registered. [path=%s]", closeFile.getFile().getPath()));
+        }
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
-                .get(fileState.getFileInfo().getInodeId());
+                .get(schemaEntity, fileState.getFileInfo().getInodeId());
         if (rState == null || !rState.isEnabled()) {
             throw new InvalidMessageError(message.id(),
                     String.format("HDFS File not registered for snapshot. [path=%s][inode=%d]",

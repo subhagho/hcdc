@@ -222,14 +222,14 @@ public class HDFSSnapshotProcessor {
             }
             DFSFileReplicaState rState = stateManager
                     .replicaStateHelper()
-                    .get(fileState.getFileInfo().getInodeId());
+                    .get(entity, fileState.getFileInfo().getInodeId());
             if (rState != null) {
                 if (rState.getSnapshotTxId() > txId) {
                     return;
                 }
                 stateManager
                         .replicaStateHelper()
-                        .delete(rState.getFileInfo().getInodeId());
+                        .delete(entity, rState.getFileInfo().getInodeId());
             }
             rState = stateManager
                     .replicaStateHelper()
@@ -275,7 +275,7 @@ public class HDFSSnapshotProcessor {
             }
             DFSFileReplicaState rState = stateManager
                     .replicaStateHelper()
-                    .get(fileState.getFileInfo().getInodeId());
+                    .get(entity, fileState.getFileInfo().getInodeId());
             if (rState == null) {
                 throw new SnapshotError(String.format("HDFS File replication record not found. [path=%s]", hdfsPath));
             }

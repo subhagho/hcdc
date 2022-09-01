@@ -3,6 +3,7 @@
     <agent>
         <module>EDITS-LOG-PROCESSORS</module>
         <instance>EditsChangeConsumer</instance>
+        <env>DEV</env>
         <source>ha-cluster</source>
         <enableHeartbeat>true</enableHeartbeat>
         <needHadoop>false</needHadoop>
