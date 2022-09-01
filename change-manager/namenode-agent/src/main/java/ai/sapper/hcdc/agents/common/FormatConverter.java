@@ -40,7 +40,7 @@ public abstract class FormatConverter {
             EntityDef schema = schemaManager().get(schemaEntity);
             if (schema == null) {
                 if (!Strings.isNullOrEmpty(fileState.getFileInfo().getSchemaLocation())) {
-                    schema = schemaManager().get(fileState.getFileInfo().getSchemaLocation());
+                    schema = schemaManager().get(schemaEntity, fileState.getFileInfo().getSchemaLocation());
                 }
             }
             return schema;

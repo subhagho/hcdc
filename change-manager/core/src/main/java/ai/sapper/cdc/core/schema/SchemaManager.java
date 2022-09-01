@@ -1,6 +1,7 @@
 package ai.sapper.cdc.core.schema;
 
 import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.cache.LRUCache;
 import ai.sapper.cdc.common.model.EntityDef;
 import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.model.services.PathOrSchema;
@@ -14,6 +15,7 @@ import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.avro.Schema;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
@@ -23,14 +25,50 @@ import org.apache.curator.framework.CuratorFramework;
 import org.apache.log4j.Level;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Getter
 @Accessors(fluent = true)
 public class SchemaManager {
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    private static class SchemaElement {
+        private EntityDef entityDef;
+        private long readtime;
+    }
+
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    private static class CacheEntity {
+        private Map<SchemaVersion, SchemaElement> versions = new HashMap<>();
+
+        public EntityDef get(SchemaVersion version, long timeout) {
+            if (versions.containsKey(version)) {
+                SchemaElement se = versions.get(version);
+                long t = System.currentTimeMillis() - se.readtime;
+                if (t < timeout) return se.entityDef;
+                else {
+                    versions.remove(version);
+                }
+            }
+            return null;
+        }
+
+        public void put(SchemaVersion version, EntityDef entityDef) {
+            SchemaElement se = versions.get(version);
+            if (se == null) {
+                se = new SchemaElement();
+                versions.put(version, se);
+            }
+            se.entityDef(entityDef);
+            se.readtime(System.currentTimeMillis());
+        }
+    }
+
     public static final String REGEX_PATH_VERSION = "(/.*)/(\\d+)/(\\d+)$";
     public static final String DEFAULT_DOMAIN = "default";
     public static final String SCHEMA_PATH = "schemas";
@@ -41,6 +79,7 @@ public class SchemaManager {
     private String environment;
     private String source;
     private String zkPath;
+    private LRUCache<SchemaEntity, CacheEntity> cache = null;
 
     public SchemaManager() {
     }
@@ -88,9 +127,36 @@ public class SchemaManager {
                     SchemaManagerConfig.Constants.CONST_LOCK_NAME,
                     config.basePath)
                     .withConnection(zkConnection);
+            if (config.cached) {
+                cache = new LRUCache<>(config.cacheSize);
+            }
             return this;
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
+        }
+    }
+
+    private EntityDef checkCache(SchemaEntity schemaEntity, SchemaVersion version) {
+        if (cache != null) {
+            Optional<CacheEntity> ce = cache.get(schemaEntity);
+            if (ce.isPresent()) {
+                return ce.get().get(version, config.cacheTimeout);
+            }
+        }
+        return null;
+    }
+
+    private void putInCache(SchemaEntity schemaEntity, SchemaVersion version, EntityDef entityDef) {
+        if (cache != null) {
+            CacheEntity c = null;
+            Optional<CacheEntity> ce = cache.get(schemaEntity);
+            if (ce.isPresent()) {
+                c = ce.get();
+            } else {
+                c = new CacheEntity();
+                cache.put(schemaEntity, c);
+            }
+            c.put(version, entityDef);
         }
     }
 
@@ -132,10 +198,12 @@ public class SchemaManager {
             String json = JSONUtils.asString(version, SchemaVersion.class);
             client.setData().forPath(p, json.getBytes(StandardCharsets.UTF_8));
 
-            return new EntityDef()
+            EntityDef en = new EntityDef()
                     .schemaPath(p)
                     .schema(schema)
                     .version(version);
+            putInCache(schemaEntity, version, en);
+            return en;
         } finally {
             lock.unlock();
         }
@@ -143,7 +211,7 @@ public class SchemaManager {
 
     public EntityDef copySchema(@NonNull String source,
                                 @NonNull SchemaEntity schemaEntity) throws Exception {
-        EntityDef schema = get(source);
+        EntityDef schema = get(schemaEntity, source);
         if (schema != null) {
             return checkAndSave(schema.schema(), schemaEntity);
         }
@@ -213,15 +281,19 @@ public class SchemaManager {
 
     public EntityDef get(@NonNull SchemaEntity schemaEntity,
                          @NonNull SchemaVersion version) throws Exception {
+        EntityDef en = checkCache(schemaEntity, version);
+        if (en != null) return en;
+
         String path = getZkPath(schemaEntity, version);
-        return get(path);
+        return get(schemaEntity, path);
     }
 
     public String schemaPath(@NonNull SchemaEntity schemaEntity) throws Exception {
         return getZkPath(schemaEntity, currentVersion(schemaEntity));
     }
 
-    public EntityDef get(@NonNull String path) throws Exception {
+    public EntityDef get(@NonNull SchemaEntity schemaEntity,
+                         @NonNull String path) throws Exception {
         CuratorFramework client = zkConnection().client();
         if (client.checkExists().forPath(path) != null) {
             byte[] data = client.getData().forPath(path);
@@ -240,9 +312,11 @@ public class SchemaManager {
                 }
 
                 String schemaStr = new String(data, StandardCharsets.UTF_8);
-                return new EntityDef().schemaPath(path)
+                EntityDef en = new EntityDef().schemaPath(path)
                         .version(version)
                         .schema(new Schema.Parser().parse(schemaStr));
+                putInCache(schemaEntity, version, en);
+                return en;
             }
         }
         return null;
@@ -401,10 +475,17 @@ public class SchemaManager {
             public static final String __CONFIG_PATH = "managers.schema";
             public static final String CONFIG_CONNECTION = "connection";
             public static final String CONFIG_BASE_PATH = "basePath";
+            public static final String CONFIG_CACHE = "cache";
+            public static final String CONFIG_CACHED = String.format("%s.enable", CONFIG_CACHE);
+            public static final String CONFIG_CACHE_EXPIRY = String.format("%s.expire", CONFIG_CACHE);
+            public static final String CONFIG_CACHE_SIZE = String.format("%s.size", CONFIG_CACHE);
         }
 
         private String connection;
         private String basePath;
+        private boolean cached = true;
+        private long cacheTimeout = 1000 * 60 * 30; // 30 mins
+        private int cacheSize = 1024;
 
         public SchemaManagerConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, Constants.__CONFIG_PATH);
@@ -423,6 +504,20 @@ public class SchemaManager {
             if (Strings.isNullOrEmpty(basePath)) {
                 throw new ConfigurationException(
                         String.format("Domain Manager Configuration Error: missing [%s]", Constants.CONFIG_BASE_PATH));
+            }
+            if (ConfigReader.checkIfNodeExists(get(), Constants.CONFIG_CACHE)) {
+                String s = get().getString(Constants.CONFIG_CACHED);
+                if (!Strings.isNullOrEmpty(s)) {
+                    cached = Boolean.parseBoolean(s);
+                }
+                s = get().getString(Constants.CONFIG_CACHE_EXPIRY);
+                if (!Strings.isNullOrEmpty(s)) {
+                    cacheTimeout = Long.parseLong(s);
+                }
+                s = get().getString(Constants.CONFIG_CACHE_SIZE);
+                if (!Strings.isNullOrEmpty(s)) {
+                    cacheSize = Integer.parseInt(s);
+                }
             }
         }
     }
