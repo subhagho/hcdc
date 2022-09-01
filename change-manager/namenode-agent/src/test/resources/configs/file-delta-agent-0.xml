@@ -17,11 +17,11 @@
                 <connection>zk-state-connection</connection>
             </state>
             <domain>
-                <basePath>/ai/sapper/cdc/registry</basePath>
+                <basePath>/ai/sapper/cdc/registry/output</basePath>
                 <connection>zk-state-connection</connection>
             </domain>
             <schema>
-                <basePath>/ai/sapper/cdc/registry</basePath>
+                <basePath>/ai/sapper/cdc/registry/output</basePath>
                 <connection>zk-state-connection</connection>
             </schema>
         </managers>
