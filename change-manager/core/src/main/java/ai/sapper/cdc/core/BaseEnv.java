@@ -69,6 +69,21 @@ public abstract class BaseEnv {
         }
     }
 
+
+    public DistributedLock createLock(@NonNull String path, @NonNull String name) throws Exception {
+        if (lockDefs().containsKey(name)) {
+            LockDef def = lockDefs().get(name);
+            if (def == null) {
+                throw new Exception(String.format("No lock definition found: [name=%s]", name));
+            }
+            return new DistributedLock(def.module(),
+                    def.path(),
+                    path)
+                    .withConnection(def.connection());
+        }
+        return null;
+    }
+
     public void close() throws Exception {
         if (connectionManager != null) {
             connectionManager.close();

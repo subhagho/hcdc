@@ -45,8 +45,7 @@ public class ZkStateManager extends BaseStateManager {
             super.init(manger);
 
             CuratorFramework client = connection().client();
-            String zkFSPath = new PathUtils.ZkPathBuilder(basePath())
-                    .withPath(moduleInstance().getModule())
+            String zkFSPath = new PathUtils.ZkPathBuilder(zkModulePath())
                     .withPath(Constants.ZK_PATH_FILES)
                     .build();
             if (client.checkExists().forPath(zkFSPath) == null) {
@@ -58,8 +57,7 @@ public class ZkStateManager extends BaseStateManager {
             fileStateHelper
                     .withZkPath(zkFSPath)
                     .withZkConnection(connection());
-            String zkPathReplication = new PathUtils.ZkPathBuilder(basePath())
-                    .withPath(moduleInstance().getModule())
+            String zkPathReplication = new PathUtils.ZkPathBuilder(zkModulePath())
                     .withPath(Constants.ZK_PATH_REPLICATION)
                     .build();
             if (client.checkExists().forPath(zkPathReplication) == null) {
@@ -89,8 +87,7 @@ public class ZkStateManager extends BaseStateManager {
         checkState();
         synchronized (this) {
             if (moduleTxState == null) {
-                zkModuleStatePath = new PathUtils.ZkPathBuilder(basePath())
-                        .withPath(moduleInstance().getModule())
+                zkModuleStatePath = new PathUtils.ZkPathBuilder(zkModulePath())
                         .withPath(BaseStateManager.Constants.ZK_PATH_PROCESS_STATE)
                         .build();
                 moduleTxState = checkModuleState();

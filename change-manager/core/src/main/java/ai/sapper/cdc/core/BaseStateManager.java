@@ -35,6 +35,9 @@ public abstract class BaseStateManager {
     private BaseStateManagerConfig config;
     private String zkPath;
     private String zkAgentStatePath;
+    private String zkModulePath;
+    private String zkAgentPath;
+
     private AgentTxState agentTxState;
     private ModuleInstance moduleInstance;
     private String name;
@@ -73,20 +76,25 @@ public abstract class BaseStateManager {
             Preconditions.checkNotNull(connection);
             if (!connection.isConnected()) connection.connect();
             CuratorFramework client = connection().client();
+            zkPath = new PathUtils.ZkPathBuilder(basePath())
+                    .withPath(environment)
+                    .build();
+            zkModulePath = new PathUtils.ZkPathBuilder(zkPath)
+                    .withPath(moduleInstance.getModule())
+                    .build();
+            zkAgentPath = new PathUtils.ZkPathBuilder(zkModulePath)
+                    .withPath(moduleInstance.getName())
+                    .build();
 
-            zkPath = PathUtils.formatZkPath(String.format("%s/%s/%s/%s",
-                    basePath(),
-                    environment,
-                    moduleInstance.getModule(),
-                    moduleInstance.getName()));
-            if (client.checkExists().forPath(zkPath) == null) {
-                String path = client.create().creatingParentContainersIfNeeded().forPath(zkPath);
+            if (client.checkExists().forPath(zkAgentPath) == null) {
+                String path = client.create().creatingParentContainersIfNeeded().forPath(zkAgentPath);
                 if (Strings.isNullOrEmpty(path)) {
                     throw new ManagerStateError(String.format("Error creating ZK base path. [path=%s]", basePath()));
                 }
             }
-            zkAgentStatePath = PathUtils.formatZkPath(
-                    String.format("%s/%s", zkPath, Constants.ZK_PATH_PROCESS_STATE));
+            zkAgentStatePath = new PathUtils.ZkPathBuilder(zkAgentPath)
+                    .withPath(Constants.ZK_PATH_PROCESS_STATE)
+                    .build();
             return this;
         } catch (Exception ex) {
             throw new ManagerStateError(ex);

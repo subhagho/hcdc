@@ -203,20 +203,13 @@ public class NameNodeEnv extends BaseEnv {
         return config.source;
     }
 
-    public DistributedLock createLock(String name) throws NameNodeError {
-        if (lockDefs().containsKey(name)) {
-            LockDef def = lockDefs().get(name);
-            if (def == null) {
-                throw new NameNodeError(String.format("No lock definition found: [name=%s]", name));
-            }
-            return new DistributedLock(def.module(),
-                    def.path(),
-                    stateManager.basePath())
-                    .withConnection(def.connection());
+    public DistributedLock createLock(@NonNull String name) throws NameNodeError {
+        try {
+            return createLock(stateManager.zkPath(), name);
+        } catch (Exception ex) {
+            throw new NameNodeError(ex);
         }
-        return null;
     }
-
 
     public DistributedLock globalLock() throws NameNodeError {
         return createLock(NameNEnvConfig.Constants.LOCK_GLOBAL);
