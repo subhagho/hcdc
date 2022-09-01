@@ -13,11 +13,11 @@
         <managers>
             <state>
                 <stateManagerClass>ai.sapper.hcdc.agents.common.ProcessorStateManager</stateManagerClass>
-                <basePath>/CDC/state</basePath>
+                <basePath>/ai/sapper/cdc/processors</basePath>
                 <connection>zk-state-connection</connection>
             </state>
             <domain>
-                <basePath>/hCDC/registry/files</basePath>
+                <basePath>/ai/sapper/cdc/registry/hdfs</basePath>
                 <connection>zk-state-connection</connection>
             </domain>
         </managers>

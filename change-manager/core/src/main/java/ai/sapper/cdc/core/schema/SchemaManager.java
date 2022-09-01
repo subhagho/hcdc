@@ -33,6 +33,8 @@ import java.util.regex.Pattern;
 public class SchemaManager {
     public static final String REGEX_PATH_VERSION = "(/.*)/(\\d+)/(\\d+)$";
     public static final String DEFAULT_DOMAIN = "default";
+    public static final String SCHEMA_PATH = "schemas";
+
     private SchemaManagerConfig config;
     private ZookeeperConnection zkConnection;
     private DistributedLock lock;
@@ -270,22 +272,36 @@ public class SchemaManager {
         return null;
     }
 
+    private String getZkPath() {
+        return new PathUtils.ZkPathBuilder(config.basePath)
+                .withPath(SCHEMA_PATH)
+                .build();
+    }
+
+    private String getZkDomainPath(String domain) {
+        return new PathUtils.ZkPathBuilder(getZkPath())
+                .withPath(domain)
+                .build();
+    }
+
     private String getZkPath(SchemaEntity schema) {
-        String path = String.format("%s/%s/%s", config.basePath, schema.getDomain(), schema.getEntity());
-        return PathUtils.formatZkPath(path);
+        return new PathUtils.ZkPathBuilder(getZkPath())
+                .withPath(schema.getDomain())
+                .withPath(schema.getEntity())
+                .build();
     }
 
     private String getZkPath(SchemaEntity schema, SchemaVersion version) {
-        String path = String.format("%s/%s/%s/%s",
-                config.basePath, schema.getDomain(), schema.getEntity(), version.path());
-        return PathUtils.formatZkPath(path);
+        return new PathUtils.ZkPathBuilder(getZkPath(schema))
+                .withPath(version.path())
+                .build();
     }
 
     public List<PathOrSchema> domainNodes(String domain) throws Exception {
         if (Strings.isNullOrEmpty(domain)) {
             domain = DEFAULT_DOMAIN;
         }
-        String path = String.format("%s/%s", config.basePath, domain);
+        String path = getZkDomainPath(domain);
         CuratorFramework client = zkConnection().client();
         if (client.checkExists().forPath(path) != null) {
             List<PathOrSchema> paths = new ArrayList<>();

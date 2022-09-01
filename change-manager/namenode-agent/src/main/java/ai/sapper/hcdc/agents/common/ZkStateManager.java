@@ -45,10 +45,10 @@ public class ZkStateManager extends BaseStateManager {
             super.init(manger);
 
             CuratorFramework client = connection().client();
-            String zkFSPath = PathUtils.formatZkPath(String.format("%s/%s/%s",
-                    basePath(),
-                    moduleInstance().getModule(),
-                    Constants.ZK_PATH_FILES));
+            String zkFSPath = new PathUtils.ZkPathBuilder(basePath())
+                    .withPath(moduleInstance().getModule())
+                    .withPath(Constants.ZK_PATH_FILES)
+                    .build();
             if (client.checkExists().forPath(zkFSPath) == null) {
                 String path = client.create().creatingParentContainersIfNeeded().forPath(zkFSPath);
                 if (Strings.isNullOrEmpty(path)) {
@@ -58,8 +58,10 @@ public class ZkStateManager extends BaseStateManager {
             fileStateHelper
                     .withZkPath(zkFSPath)
                     .withZkConnection(connection());
-            String zkPathReplication = PathUtils.formatZkPath(
-                    String.format("%s/%s/%s", basePath(), moduleInstance().getModule(), Constants.ZK_PATH_REPLICATION));
+            String zkPathReplication = new PathUtils.ZkPathBuilder(basePath())
+                    .withPath(moduleInstance().getModule())
+                    .withPath(Constants.ZK_PATH_REPLICATION)
+                    .build();
             if (client.checkExists().forPath(zkPathReplication) == null) {
                 String path = client.create().creatingParentContainersIfNeeded().forPath(zkPathReplication);
                 if (Strings.isNullOrEmpty(path)) {
@@ -87,11 +89,10 @@ public class ZkStateManager extends BaseStateManager {
         checkState();
         synchronized (this) {
             if (moduleTxState == null) {
-                zkModuleStatePath = PathUtils.formatZkPath(
-                        String.format("%s/%s/%s",
-                                basePath(),
-                                moduleInstance().getModule(),
-                                BaseStateManager.Constants.ZK_PATH_PROCESS_STATE));
+                zkModuleStatePath = new PathUtils.ZkPathBuilder(basePath())
+                        .withPath(moduleInstance().getModule())
+                        .withPath(BaseStateManager.Constants.ZK_PATH_PROCESS_STATE)
+                        .build();
                 moduleTxState = checkModuleState();
                 if (moduleTxState == null) {
                     moduleTxState = new ModuleTxState();

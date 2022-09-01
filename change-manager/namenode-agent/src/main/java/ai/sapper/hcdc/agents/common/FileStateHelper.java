@@ -45,7 +45,9 @@ public class FileStateHelper {
         if (Strings.isNullOrEmpty(hdfsPath)) {
             return zkStatePath;
         } else {
-            return PathUtils.formatZkPath(String.format("%s/%s", zkStatePath, hdfsPath));
+            return new PathUtils.ZkPathBuilder(zkStatePath)
+                    .withPath(hdfsPath)
+                    .build();
         }
     }
 

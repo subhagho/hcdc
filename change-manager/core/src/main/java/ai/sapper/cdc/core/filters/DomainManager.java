@@ -39,17 +39,20 @@ public class DomainManager {
     private static final String IGNORE_REGEX = "(.*)\\.(_*)COPYING(_*)|/tmp/(.*)|(.*)\\.hive-staging(.*)";
     private ZookeeperConnection zkConnection;
     private HdfsConnection hdfsConnection;
-
+    private String environment;
     private DomainManagerConfig config;
     private Map<String, DomainFilterMatcher> matchers = new HashMap<>();
     private final List<FilterAddCallback> callbacks = new ArrayList<>();
     private Pattern ignorePattern = Pattern.compile(IGNORE_REGEX);
 
     public DomainManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                              @NonNull ConnectionManager manger) throws ConfigurationException {
+                              @NonNull ConnectionManager manger,
+                              @NonNull String environment) throws ConfigurationException {
         try {
             config = new DomainManagerConfig(xmlConfig);
             config.read();
+
+            this.environment = environment;
 
             zkConnection = manger.getConnection(config.zkConnection(), ZookeeperConnection.class);
             if (zkConnection == null) {
@@ -123,11 +126,16 @@ public class DomainManager {
     }
 
     private String getZkPath() {
-        return PathUtils.formatZkPath(String.format("%s/%s", config.basePath(), CONFIG_PATH));
+        return new PathUtils.ZkPathBuilder(config.basePath())
+                .withPath(environment)
+                .withPath(CONFIG_PATH)
+                .build();
     }
 
     private String getZkPath(String domain) {
-        return PathUtils.formatZkPath(String.format("%s/%s", getZkPath(), domain));
+        return new PathUtils.ZkPathBuilder(getZkPath())
+                .withPath(domain)
+                .build();
     }
 
     public SchemaEntity matches(@NonNull String path) {

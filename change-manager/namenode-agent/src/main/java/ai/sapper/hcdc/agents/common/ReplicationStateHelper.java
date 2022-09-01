@@ -31,10 +31,11 @@ public class ReplicationStateHelper {
     }
 
     private String getReplicationPath(SchemaEntity schemaEntity, long inodeId) {
-        return PathUtils.formatZkPath(String.format("%s/%s/%s/%d",
-                zkReplicationPath,
-                schemaEntity.getDomain(),
-                schemaEntity.getEntity(), inodeId));
+        return new PathUtils.ZkPathBuilder(zkReplicationPath)
+                .withPath(schemaEntity.getDomain())
+                .withPath(schemaEntity.getEntity())
+                .withPath(String.valueOf(inodeId))
+                .build();
     }
 
     public DFSFileReplicaState get(@NonNull SchemaEntity schemaEntity,
@@ -96,8 +97,7 @@ public class ReplicationStateHelper {
                 throw new StaleDataException(String.format("Replication state changed. [path=%s]",
                         state.getFileInfo().getHdfsPath()));
             }
-            String path = PathUtils.formatZkPath(
-                    String.format("%s/%d", zkReplicationPath, state.getFileInfo().getInodeId()));
+            String path = getReplicationPath(state.getEntity(), state.getFileInfo().getInodeId());
 
             state.setUpdateTime(System.currentTimeMillis());
             String json = JSONUtils.asString(state, DFSFileReplicaState.class);

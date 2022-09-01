@@ -19,7 +19,7 @@
         </connections>
         <managers>
             <state>
-                <basePath>/hCDC/state</basePath>
+                <basePath>/ai/sapper/cdc/edits</basePath>
                 <connection>zk-state-connection</connection>
             </state>
         </managers>

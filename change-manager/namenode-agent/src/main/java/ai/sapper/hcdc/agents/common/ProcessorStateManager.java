@@ -25,7 +25,7 @@ public class ProcessorStateManager extends ZkStateManager {
         super.init(xmlConfig, manger);
         try {
             domainManager = new DomainManager();
-            domainManager.init(xmlConfig, manger);
+            domainManager.init(xmlConfig, manger, environment());
 
             return this;
         } catch (Exception ex) {

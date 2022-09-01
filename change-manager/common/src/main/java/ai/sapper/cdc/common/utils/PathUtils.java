@@ -3,6 +3,8 @@ package ai.sapper.cdc.common.utils;
 import lombok.NonNull;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class PathUtils {
@@ -64,5 +66,30 @@ public class PathUtils {
         return getTempFile(UUID.randomUUID().toString(), ext);
     }
 
+    public static class ZkPathBuilder {
+        private final List<String> paths = new ArrayList<>();
 
+        public ZkPathBuilder() {
+        }
+
+        public ZkPathBuilder(@NonNull String base) {
+            paths.add(base);
+        }
+
+        public ZkPathBuilder withPath(@NonNull String path) {
+            paths.add(path);
+            return this;
+        }
+
+        public String build() {
+            if (!paths.isEmpty()) {
+                StringBuilder fmt = new StringBuilder();
+                for (String path : paths) {
+                    fmt.append("/").append(path);
+                }
+                return formatPath(fmt.toString());
+            }
+            return null;
+        }
+    }
 }
