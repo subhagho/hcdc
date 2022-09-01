@@ -26,6 +26,7 @@ public class ZkStateManager extends BaseStateManager {
         public static final String ZK_PATH_REPLICATION = "/replication";
     }
 
+    private String source;
     private String zkModuleStatePath;
     private ModuleTxState moduleTxState;
     private DistributedLock replicationLock;
@@ -35,7 +36,8 @@ public class ZkStateManager extends BaseStateManager {
 
 
     public ZkStateManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                               @NonNull ConnectionManager manger) throws StateManagerError {
+                               @NonNull ConnectionManager manger,
+                               @NonNull String source) throws StateManagerError {
         Preconditions.checkState(!Strings.isNullOrEmpty(name()));
         try {
             ZkStateManagerConfig config = new ZkStateManagerConfig(xmlConfig);
@@ -44,9 +46,11 @@ public class ZkStateManager extends BaseStateManager {
             withConfig(config);
             super.init(manger);
 
+            this.source = source;
             CuratorFramework client = connection().client();
             String zkFSPath = new PathUtils.ZkPathBuilder(zkModulePath())
                     .withPath(Constants.ZK_PATH_FILES)
+                    .withPath(source)
                     .build();
             if (client.checkExists().forPath(zkFSPath) == null) {
                 String path = client.create().creatingParentContainersIfNeeded().forPath(zkFSPath);
@@ -59,6 +63,7 @@ public class ZkStateManager extends BaseStateManager {
                     .withZkConnection(connection());
             String zkPathReplication = new PathUtils.ZkPathBuilder(zkModulePath())
                     .withPath(Constants.ZK_PATH_REPLICATION)
+                    .withPath(source)
                     .build();
             if (client.checkExists().forPath(zkPathReplication) == null) {
                 String path = client.create().creatingParentContainersIfNeeded().forPath(zkPathReplication);

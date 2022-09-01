@@ -10,6 +10,7 @@ import ai.sapper.hcdc.agents.model.DFSFileState;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
@@ -35,13 +36,16 @@ public abstract class FormatConverter {
     }
 
     public EntityDef hasSchema(DFSFileState fileState, SchemaEntity schemaEntity) throws Exception {
-        EntityDef schema = schemaManager().get(schemaEntity);
-        if (schema == null) {
-            if (!Strings.isNullOrEmpty(fileState.getFileInfo().getSchemaLocation())) {
-                schema = schemaManager().get(fileState.getFileInfo().getSchemaLocation());
+        if (schemaEntity != null) {
+            EntityDef schema = schemaManager().get(schemaEntity);
+            if (schema == null) {
+                if (!Strings.isNullOrEmpty(fileState.getFileInfo().getSchemaLocation())) {
+                    schema = schemaManager().get(fileState.getFileInfo().getSchemaLocation());
+                }
             }
+            return schema;
         }
-        return schema;
+        return null;
     }
 
     public GenericRecord wrap(@NonNull Schema schema,
@@ -65,12 +69,12 @@ public abstract class FormatConverter {
 
     public abstract boolean canParse(@NonNull String path, EFileType fileType) throws IOException;
 
-    public abstract File convert(@NonNull File source,
-                                 @NonNull File output,
-                                 @NonNull DFSFileState fileState,
-                                 @NonNull SchemaEntity schemaEntity,
-                                 long txId,
-                                 @NonNull AvroChangeType.EChangeType op) throws IOException;
+    public abstract Response convert(@NonNull File source,
+                                     @NonNull File output,
+                                     @NonNull DFSFileState fileState,
+                                     @NonNull SchemaEntity schemaEntity,
+                                     long txId,
+                                     @NonNull AvroChangeType.EChangeType op) throws IOException;
 
     public abstract boolean supportsPartial();
 
@@ -79,4 +83,17 @@ public abstract class FormatConverter {
     public abstract EntityDef extractSchema(@NonNull HDFSBlockReader reader,
                                             @NonNull DFSFileState fileState,
                                             @NonNull SchemaEntity schemaEntity) throws IOException;
+
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    public static class Response {
+        private File file;
+        private long recordCount;
+
+        public Response(@NonNull File file, long recordCount) {
+            this.file = file;
+            this.recordCount = recordCount;
+        }
+    }
 }

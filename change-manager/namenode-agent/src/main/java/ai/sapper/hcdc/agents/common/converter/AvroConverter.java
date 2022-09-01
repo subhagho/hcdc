@@ -56,14 +56,15 @@ public class AvroConverter extends FormatConverter {
      * @throws IOException
      */
     @Override
-    public File convert(@NonNull File source,
-                        @NonNull File output,
-                        @NonNull DFSFileState fileState,
-                        @NonNull SchemaEntity schemaEntity,
-                        long txId,
-                        @NonNull AvroChangeType.EChangeType op) throws IOException {
+    public Response convert(@NonNull File source,
+                            @NonNull File output,
+                            @NonNull DFSFileState fileState,
+                            @NonNull SchemaEntity schemaEntity,
+                            long txId,
+                            @NonNull AvroChangeType.EChangeType op) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
+            long count = 0;
             EntityDef schema = parseSchema(source, fileState, schemaEntity);
             Schema wrapper = AvroUtils.createSchema(schema.schema());
             final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(wrapper);
@@ -80,10 +81,11 @@ public class AvroConverter extends FormatConverter {
                                 fileState.getFileInfo().getHdfsPath(),
                                 record, op, txId);
                         fos.append(wrapped);
+                        count++;
                     }
                 }
             }
-            return output;
+            return new Response(output, count);
         } catch (Exception ex) {
             throw new IOException(ex);
         }

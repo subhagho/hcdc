@@ -25,29 +25,31 @@ public class DFSFileReplicaState {
     private boolean snapshotReady = false;
     private long lastReplicationTime;
     private long updateTime = 0;
+    private long recordCount = 0;
+
     private EFileState state = EFileState.Unknown;
     private Map<String, String> storagePath;
-    private Map<Long, Map<String, String>> tnxDeltaPaths;
+    private Map<Long, DFSReplicationDelta> replicationDeltas;
 
     private List<DFSBlockReplicaState> blocks = new ArrayList<>();
 
-    public void addDelta(long tnxId, @NonNull Map<String, String> fsPath) {
-        if (tnxDeltaPaths == null) {
-            tnxDeltaPaths = new HashMap<>();
+    public void addDelta(@NonNull DFSReplicationDelta delta) {
+        if (replicationDeltas == null) {
+            replicationDeltas = new HashMap<>();
         }
-        tnxDeltaPaths.put(tnxId, fsPath);
+        replicationDeltas.put(delta.getTransactionId(), delta);
     }
 
-    public Map<String, String> getDelta(long txId) {
-        if (tnxDeltaPaths != null) {
-            return tnxDeltaPaths.get(txId);
+    public DFSReplicationDelta getDelta(long txId) {
+        if (replicationDeltas != null) {
+            return replicationDeltas.get(txId);
         }
         return null;
     }
 
-    public Map<String, String> removeDelta(long txId) {
-        if (tnxDeltaPaths != null && tnxDeltaPaths.containsKey(txId)) {
-            return tnxDeltaPaths.remove(txId);
+    public DFSReplicationDelta removeDelta(long txId) {
+        if (replicationDeltas != null && replicationDeltas.containsKey(txId)) {
+            return replicationDeltas.remove(txId);
         }
         return null;
     }

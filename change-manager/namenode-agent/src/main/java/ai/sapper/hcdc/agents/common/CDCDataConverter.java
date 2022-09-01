@@ -64,11 +64,11 @@ public class CDCDataConverter {
         }
     }
 
-    public PathInfo convert(@NonNull DFSFileState fileState,
-                            @NonNull DFSFileReplicaState replicaState,
-                            @NonNull AvroChangeType.EChangeType op,
-                            long startTxId,
-                            long currentTxId) throws IOException {
+    public ConversionResponse convert(@NonNull DFSFileState fileState,
+                                      @NonNull DFSFileReplicaState replicaState,
+                                      @NonNull AvroChangeType.EChangeType op,
+                                      long startTxId,
+                                      long currentTxId) throws IOException {
         Preconditions.checkNotNull(fs);
         Preconditions.checkArgument(replicaState.getEntity() != null);
         Preconditions.checkArgument(replicaState.getStoragePath() != null);
@@ -76,8 +76,13 @@ public class CDCDataConverter {
             for (FormatConverter converter : CONVERTERS) {
                 if (converter.canParse(fileState.getFileInfo().getHdfsPath(),
                         replicaState.getFileInfo().getFileType())) {
-                    File output = convert(converter, fileState, replicaState, startTxId, currentTxId, op);
-                    return upload(output, fileState, replicaState, currentTxId);
+                    FormatConverter.Response response = convert(converter, fileState, replicaState, startTxId, currentTxId, op);
+                    PathInfo uploaded = upload(response.file(), fileState, replicaState, currentTxId);
+                    ConversionResponse cr = new ConversionResponse();
+                    cr.path = uploaded;
+                    cr.recordCount = response.recordCount();
+                    cr.overwrite = !converter.supportsPartial();
+                    return cr;
                 }
             }
             return null;
@@ -150,12 +155,12 @@ public class CDCDataConverter {
         return fs.upload(source, path);
     }
 
-    private File convert(FormatConverter converter,
-                         DFSFileState fileState,
-                         DFSFileReplicaState replicaState,
-                         long startTxId,
-                         long currentTxId,
-                         @NonNull AvroChangeType.EChangeType op) throws Exception {
+    private FormatConverter.Response convert(FormatConverter converter,
+                                             DFSFileState fileState,
+                                             DFSFileReplicaState replicaState,
+                                             long startTxId,
+                                             long currentTxId,
+                                             @NonNull AvroChangeType.EChangeType op) throws Exception {
         File source = null;
         if (converter.supportsPartial()) {
             source = createDeltaFile(fileState, replicaState, startTxId, currentTxId);
@@ -220,5 +225,14 @@ public class CDCDataConverter {
         private EFileType fileType;
         private Schema schema;
         private SchemaVersion version;
+    }
+
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    public static class ConversionResponse {
+        private PathInfo path;
+        private long recordCount;
+        private boolean overwrite = false;
     }
 }

@@ -21,8 +21,9 @@ public class ProcessorStateManager extends ZkStateManager {
      */
     @Override
     public ZkStateManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                               @NonNull ConnectionManager manger) throws StateManagerError {
-        super.init(xmlConfig, manger);
+                               @NonNull ConnectionManager manger,
+                               @NonNull String source) throws StateManagerError {
+        super.init(xmlConfig, manger, source);
         try {
             domainManager = new DomainManager();
             domainManager.init(xmlConfig, manger, environment());

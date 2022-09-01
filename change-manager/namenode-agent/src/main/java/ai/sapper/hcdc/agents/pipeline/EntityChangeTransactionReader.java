@@ -268,26 +268,33 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             CDCDataConverter converter = new CDCDataConverter()
                     .withFileSystem(fs)
                     .withSchemaManager(NameNodeEnv.get(name()).schemaManager());
-            PathInfo outPath = converter.convert(fileState,
+            CDCDataConverter.ConversionResponse response = converter.convert(fileState,
                     rState,
                     AvroChangeType.EChangeType.RecordDelete,
                     0,
                     txId);
-            if (outPath == null) {
+            if (response.path() == null) {
                 throw new InvalidTransactionError(txId,
                         DFSError.ErrorCode.SYNC_STOPPED,
                         data.getFile().getPath(),
                         String.format("Failed to generate transaction delta. [path=%s]",
                                 data.getFile().getPath()));
             }
-            rState.addDelta(txId, outPath.pathConfig());
+            DFSReplicationDelta rDelta = new DFSReplicationDelta();
+            rDelta.setOp(AvroChangeType.EChangeType.RecordDelete);
+            rDelta.setTransactionId(txId);
+            rDelta.setInodeId(rState.getFileInfo().getInodeId());
+            rDelta.setFsPath(response.path().pathConfig());
+            rDelta.setRecordCount(response.recordCount());
+            rState.addDelta(rDelta);
+
             DFSChangeData delta = DFSChangeData.newBuilder()
                     .setTransaction(data.getTransaction())
                     .setFile(data.getFile())
                     .setDomain(schemaEntity.getDomain())
                     .setEntityName(schemaEntity.getEntity())
                     .setFileSystem(fs.fileSystemCode())
-                    .setOutputPath(outPath.path())
+                    .setOutputPath(response.path().path())
                     .build();
             MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(
                     message.value().getNamespace(),
@@ -655,26 +662,37 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     }
                 }
                 try {
-                    PathInfo outPath = converter.convert(fileState,
+                    CDCDataConverter.ConversionResponse response = converter.convert(fileState,
                             rState,
                             AvroChangeType.EChangeType.RecordInsert,
                             startTxId,
                             txId);
-                    if (outPath == null) {
+                    if (response == null) {
                         throw new InvalidTransactionError(txId,
                                 DFSError.ErrorCode.SYNC_STOPPED,
                                 data.getFile().getPath(),
                                 String.format("Failed to generate transaction delta. [path=%s]",
                                         data.getFile().getPath()));
                     }
-                    rState.addDelta(txId, outPath.pathConfig());
+                    DFSReplicationDelta rDelta = new DFSReplicationDelta();
+                    rDelta.setOp(AvroChangeType.EChangeType.RecordDelete);
+                    rDelta.setTransactionId(txId);
+                    rDelta.setInodeId(rState.getFileInfo().getInodeId());
+                    rDelta.setFsPath(response.path().pathConfig());
+                    rDelta.setRecordCount(response.recordCount());
+                    rState.addDelta(rDelta);
+                    if (response.overwrite()) {
+                        rState.setRecordCount(response.recordCount());
+                    } else {
+                        rState.setRecordCount(rState.getRecordCount() + response.recordCount());
+                    }
                     DFSChangeData delta = DFSChangeData.newBuilder()
                             .setTransaction(data.getTransaction())
                             .setFile(data.getFile())
                             .setDomain(schemaEntity.getDomain())
                             .setEntityName(schemaEntity.getEntity())
                             .setFileSystem(fs.fileSystemCode())
-                            .setOutputPath(outPath.path())
+                            .setOutputPath(response.path().path())
                             .build();
 
                     EntityDef schema = schemaManager.get(rState.getEntity());

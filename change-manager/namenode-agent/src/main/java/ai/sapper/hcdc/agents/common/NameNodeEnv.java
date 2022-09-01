@@ -116,7 +116,7 @@ public class NameNodeEnv extends BaseEnv {
             stateManager.withEnvironment(config.env, name)
                     .withModuleInstance(moduleInstance);
             stateManager
-                    .init(configNode, connectionManager());
+                    .init(configNode, connectionManager(), config.source);
 
             DistributedLock lock = createLock(BaseStateManager.Constants.LOCK_REPLICATION);
             if (lock == null) {
@@ -133,7 +133,7 @@ public class NameNodeEnv extends BaseEnv {
             if (ConfigReader.checkIfNodeExists(configNode,
                     SchemaManager.SchemaManagerConfig.Constants.__CONFIG_PATH)) {
                 schemaManager = new SchemaManager();
-                schemaManager.init(configNode, connectionManager());
+                schemaManager.init(configNode, connectionManager(), config.env, config.source);
             }
 
             if (ConfigReader.checkIfNodeExists(configNode,

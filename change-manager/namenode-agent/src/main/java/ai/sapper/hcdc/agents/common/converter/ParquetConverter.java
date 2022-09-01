@@ -61,16 +61,17 @@ public class ParquetConverter extends FormatConverter {
      * @throws IOException
      */
     @Override
-    public File convert(@NonNull File source,
-                        @NonNull File output,
-                        @NonNull DFSFileState fileState,
-                        @NonNull SchemaEntity schemaEntity,
-                        long txId,
-                        @NonNull AvroChangeType.EChangeType op) throws IOException {
+    public Response convert(@NonNull File source,
+                            @NonNull File output,
+                            @NonNull DFSFileState fileState,
+                            @NonNull SchemaEntity schemaEntity,
+                            long txId,
+                            @NonNull AvroChangeType.EChangeType op) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         Configuration conf = new Configuration();
         conf.set(AvroReadSupport.READ_INT96_AS_FIXED, "true");
         ParquetReader<GenericRecord> reader = new AvroParquetReader(conf, new Path(source.toURI()));
+        long count = 0;
         try {
             EntityDef schema = parseSchema(source, fileState, schemaEntity);
 
@@ -87,9 +88,10 @@ public class ParquetConverter extends FormatConverter {
                             fileState.getFileInfo().getHdfsPath(),
                             record, op, txId);
                     fos.append(wrapped);
+                    count++;
                 }
             }
-            return output;
+            return new Response(output, count);
         } catch (Exception ex) {
             throw new IOException(ex);
         }

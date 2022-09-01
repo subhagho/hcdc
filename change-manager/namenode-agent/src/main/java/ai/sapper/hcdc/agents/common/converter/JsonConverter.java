@@ -57,18 +57,19 @@ public class JsonConverter extends FormatConverter {
      * @throws IOException
      */
     @Override
-    public File convert(@NonNull File source,
-                        @NonNull File output,
-                        @NonNull DFSFileState fileState,
-                        @NonNull SchemaEntity schemaEntity,
-                        long txId,
-                        @NonNull AvroChangeType.EChangeType op) throws IOException {
+    public Response convert(@NonNull File source,
+                            @NonNull File output,
+                            @NonNull DFSFileState fileState,
+                            @NonNull SchemaEntity schemaEntity,
+                            long txId,
+                            @NonNull AvroChangeType.EChangeType op) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
             EntityDef schema = hasSchema(fileState, schemaEntity);
             if (schema == null) {
                 schema = parseSchema(source, fileState, schemaEntity);
             }
+            long count = 0;
             Schema wrapper = AvroUtils.createSchema(schema.schema());
             final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema.schema());
             try (DataFileWriter<GenericRecord> fos = new DataFileWriter<>(writer)) {
@@ -85,10 +86,11 @@ public class JsonConverter extends FormatConverter {
                                 fileState.getFileInfo().getHdfsPath(),
                                 record, op, txId);
                         fos.append(wrapped);
+                        count++;
                     }
                 }
             }
-            return output;
+            return new Response(output, count);
         } catch (Exception ex) {
             throw new IOException(ex);
         }

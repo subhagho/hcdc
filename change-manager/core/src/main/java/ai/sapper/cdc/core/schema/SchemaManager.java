@@ -38,6 +38,9 @@ public class SchemaManager {
     private SchemaManagerConfig config;
     private ZookeeperConnection zkConnection;
     private DistributedLock lock;
+    private String environment;
+    private String source;
+    private String zkPath;
 
     public SchemaManager() {
     }
@@ -45,6 +48,10 @@ public class SchemaManager {
     public SchemaManager(@NonNull SchemaManager schemaManager) {
         this.config = schemaManager.config;
         this.zkConnection = schemaManager.zkConnection;
+        this.zkPath = schemaManager.zkPath;
+        this.environment = schemaManager.environment;
+        this.source = schemaManager.source;
+
         lock = new DistributedLock(SchemaManagerConfig.Constants.CONST_LOCK_NAMESPACE,
                 SchemaManagerConfig.Constants.CONST_LOCK_NAME,
                 config.basePath)
@@ -52,10 +59,15 @@ public class SchemaManager {
     }
 
     public SchemaManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                              @NonNull ConnectionManager manger) throws ConfigurationException {
+                              @NonNull ConnectionManager manger,
+                              @NonNull String environment,
+                              @NonNull String source) throws ConfigurationException {
         try {
             config = new SchemaManagerConfig(xmlConfig);
             config.read();
+
+            this.environment = environment;
+            this.source = source;
 
             zkConnection = manger.getConnection(config.connection(), ZookeeperConnection.class);
             if (zkConnection == null) {
@@ -64,9 +76,13 @@ public class SchemaManager {
             }
             if (!zkConnection().isConnected()) zkConnection.connect();
 
+            zkPath = new PathUtils.ZkPathBuilder(config.basePath)
+                    .withPath(environment)
+                    .withPath(source)
+                    .build();
             CuratorFramework client = zkConnection().client();
-            if (client.checkExists().forPath(config().basePath) == null) {
-                client.create().creatingParentsIfNeeded().forPath(config.basePath);
+            if (client.checkExists().forPath(zkPath) == null) {
+                client.create().creatingParentsIfNeeded().forPath(zkPath);
             }
             lock = new DistributedLock(SchemaManagerConfig.Constants.CONST_LOCK_NAMESPACE,
                     SchemaManagerConfig.Constants.CONST_LOCK_NAME,
@@ -273,7 +289,7 @@ public class SchemaManager {
     }
 
     private String getZkPath() {
-        return new PathUtils.ZkPathBuilder(config.basePath)
+        return new PathUtils.ZkPathBuilder(zkPath)
                 .withPath(SCHEMA_PATH)
                 .build();
     }
