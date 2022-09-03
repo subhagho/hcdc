@@ -9,6 +9,8 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class JavaKeyStoreTest {
@@ -25,7 +27,7 @@ class JavaKeyStoreTest {
     @Test
     void read() {
         try {
-            String keyName = "test-key";
+            String keyName = UUID.randomUUID().toString();
             String keyValue = "This is a test key";
 
             HierarchicalConfiguration<ImmutableNode> configNode = xmlConfiguration.configurationAt(__CONFIG_PATH);
@@ -35,6 +37,8 @@ class JavaKeyStoreTest {
             store.save(keyName, keyValue);
             String v = store.read(keyName);
             assertEquals(keyValue, v);
+
+            store.delete();
         } catch (Exception ex) {
             DefaultLogger.stacktrace(ex);
             DefaultLogger.LOGGER.error(ex.getLocalizedMessage());

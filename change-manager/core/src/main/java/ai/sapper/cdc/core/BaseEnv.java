@@ -1,7 +1,9 @@
 package ai.sapper.cdc.core;
 
+import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
+import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -36,15 +38,37 @@ public abstract class BaseEnv {
 
     private ConnectionManager connectionManager;
     private final Map<String, LockDef> lockDefs = new HashMap<>();
+    private String storeKey;
+    private KeyStore keyStore;
+
+    public BaseEnv withStoreKey(@NonNull String storeKey) {
+        this.storeKey = storeKey;
+        return this;
+    }
 
     public void init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                      @NonNull String module,
                      @NonNull String connectionsConfigPath) throws ConfigurationException {
         try {
-            connectionManager = new ConnectionManager();
+            if (ConfigReader.checkIfNodeExists(xmlConfig, KeyStore.__CONFIG_PATH)) {
+                String c = xmlConfig.getString(KeyStore.CONFIG_KEYSTORE_CLASS);
+                if (Strings.isNullOrEmpty(c)) {
+                    throw new ConfigurationException(
+                            String.format("Key Store class not defined. [config=%s]", KeyStore.CONFIG_KEYSTORE_CLASS));
+                }
+                Class<? extends KeyStore> cls = (Class<? extends KeyStore>) Class.forName(c);
+                keyStore = cls.getDeclaredConstructor().newInstance();
+                keyStore.withPassword(storeKey)
+                        .init(xmlConfig);
+            }
+            this.storeKey = null;
+
+            connectionManager = new ConnectionManager()
+                    .withKeyStore(keyStore);
             connectionManager.init(xmlConfig, connectionsConfigPath);
 
             readLocks(xmlConfig, module);
+
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
         }

@@ -5,6 +5,7 @@ import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.common.utils.ReflectionUtils;
+import ai.sapper.cdc.core.KeyStore;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -43,6 +44,7 @@ public class ConnectionManager implements Closeable {
     private Map<String, Connection> connections = new HashMap<>();
     private ZookeeperConnection connection;
     private String zkPath;
+    private KeyStore keyStore;
 
     public ConnectionManager init(@NonNull HierarchicalConfiguration<ImmutableNode> config,
                                   String pathPrefix) throws ConnectionError {
@@ -64,6 +66,15 @@ public class ConnectionManager implements Closeable {
             stacktrace(LOG, ex);
             throw new ConnectionError("Error Initializing connections.", ex);
         }
+    }
+
+    public ConnectionManager withKeyStore(KeyStore keyStore) {
+        this.keyStore = keyStore;
+        return this;
+    }
+
+    public KeyStore keyStore() {
+        return keyStore;
     }
 
     private int initSharedConnections() throws Exception {
@@ -236,5 +247,10 @@ public class ConnectionManager implements Closeable {
         } catch (Exception ex) {
             throw new ConnectionError(ex);
         }
+    }
+
+    public String getEncryptedValue(@NonNull String key) throws Exception {
+        Preconditions.checkNotNull(keyStore);
+        return keyStore.read(key);
     }
 }

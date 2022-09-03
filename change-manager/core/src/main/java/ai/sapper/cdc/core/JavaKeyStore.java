@@ -9,21 +9,29 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.security.Key;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.SecureRandom;
+import java.util.Enumeration;
 
 public class JavaKeyStore extends KeyStore {
-    public static final String __CONFIG_PATH = "keystore";
     public static final String CONFIG_KEYSTORE_FILE = "path";
-    public static final String CONFIG_CRYPTO_TYPE = "type";
+    public static final String CONFIG_CIPHER_ALGO = "cipher.algo";
+    public static final String CONFIG_KEYSTORE_TYPE = "type";
+    private static final String KEYSTORE_TYPE = "JCEKS";
+
 
     private java.security.KeyStore store;
     private String keyStoreFile;
     private HierarchicalConfiguration<ImmutableNode> config;
-    private String cryptoType = "AES";
-    private SecretKey secretKey;
+    private String cipherAlgo = CIPHER_TYPE;
+    private String keyStoreType = KEYSTORE_TYPE;
 
     @Override
     public void init(@NonNull HierarchicalConfiguration<ImmutableNode> configNode,
@@ -37,17 +45,20 @@ public class JavaKeyStore extends KeyStore {
                         String.format("Java Key Store: missing keystore file path. [config=%s]",
                                 CONFIG_KEYSTORE_FILE));
             }
-            String s = config.getString(CONFIG_CRYPTO_TYPE);
+            String s = config.getString(CONFIG_CIPHER_ALGO);
             if (!Strings.isNullOrEmpty(s)) {
-                cryptoType = s;
+                cipherAlgo = s;
             }
-            secretKey = KeyGenerator.getInstance(cryptoType).generateKey();
+            s = config.getString(CONFIG_KEYSTORE_TYPE);
+            if (!Strings.isNullOrEmpty(s)) {
+                keyStoreType = s;
+            }
 
             File kf = new File(keyStoreFile);
             if (!kf.exists()) {
                 createEmptyStore(kf.getAbsolutePath(), password);
             } else {
-                store = java.security.KeyStore.getInstance(java.security.KeyStore.getDefaultType());
+                store = java.security.KeyStore.getInstance(keyStoreType);
                 store.load(new FileInputStream(kf), password.toCharArray());
             }
         } catch (Exception ex) {
@@ -56,7 +67,7 @@ public class JavaKeyStore extends KeyStore {
     }
 
     private void createEmptyStore(String path, String password) throws Exception {
-        store = java.security.KeyStore.getInstance(java.security.KeyStore.getDefaultType());
+        store = java.security.KeyStore.getInstance(keyStoreType);
         store.load(null, password.toCharArray());
 
         // Save the keyStore
@@ -71,10 +82,11 @@ public class JavaKeyStore extends KeyStore {
                      @NonNull String password) throws Exception {
         Preconditions.checkNotNull(store);
         java.security.KeyStore.SecretKeyEntry secret
-                = new java.security.KeyStore.SecretKeyEntry(secretKey);
+                = new java.security.KeyStore.SecretKeyEntry(generate(value, cipherAlgo));
         java.security.KeyStore.ProtectionParameter parameter
-                = new java.security.KeyStore.PasswordProtection(value.toCharArray());
+                = new java.security.KeyStore.PasswordProtection(password.toCharArray());
         store.setEntry(name, secret, parameter);
+
     }
 
     @Override
@@ -83,7 +95,38 @@ public class JavaKeyStore extends KeyStore {
         Preconditions.checkNotNull(store);
         java.security.KeyStore.ProtectionParameter param
                 = new java.security.KeyStore.PasswordProtection(password.toCharArray());
-        java.security.KeyStore.Entry key = store.getEntry(name, param);
-        return key.toString();
+        if (store.containsAlias(name)) {
+            java.security.KeyStore.SecretKeyEntry key
+                    = (java.security.KeyStore.SecretKeyEntry) store.getEntry(name, param);
+            return extractValue(key.getSecretKey(), cipherAlgo);
+        }
+        return null;
+    }
+
+    @Override
+    public void delete(@NonNull String name) throws Exception {
+        Preconditions.checkNotNull(store);
+        store.deleteEntry(name);
+    }
+
+    @Override
+    public void delete() throws Exception {
+        Preconditions.checkNotNull(store);
+        Enumeration<String> aliases = store.aliases();
+        while (aliases.hasMoreElements()) {
+            String alias = aliases.nextElement();
+            store.deleteEntry(alias);
+        }
+        store = null;
+
+        Files.delete(Paths.get(keyStoreFile));
+    }
+
+    @Override
+    public String flush(@NonNull String password) throws Exception {
+        Preconditions.checkNotNull(store);
+        File file = new File(keyStoreFile);
+        store.store(new FileOutputStream(file), password.toCharArray());
+        return file.getAbsolutePath();
     }
 }
