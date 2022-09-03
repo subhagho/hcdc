@@ -11,6 +11,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.security.Key;
 
 public class JavaKeyStore extends KeyStore {
@@ -36,22 +37,32 @@ public class JavaKeyStore extends KeyStore {
                         String.format("Java Key Store: missing keystore file path. [config=%s]",
                                 CONFIG_KEYSTORE_FILE));
             }
-            File kf = new File(keyStoreFile);
-            if (!kf.exists()) {
-                throw new ConfigurationException(
-                        String.format("Java Key Store: KeyStore file not found. [path=%s]", keyStoreFile));
-            }
             String s = config.getString(CONFIG_CRYPTO_TYPE);
             if (!Strings.isNullOrEmpty(s)) {
                 cryptoType = s;
             }
             secretKey = KeyGenerator.getInstance(cryptoType).generateKey();
 
-            store = java.security.KeyStore.getInstance(java.security.KeyStore.getDefaultType());
-            store.load(new FileInputStream(kf), password.toCharArray());
+            File kf = new File(keyStoreFile);
+            if (!kf.exists()) {
+                createEmptyStore(kf.getAbsolutePath(), password);
+            } else {
+                store = java.security.KeyStore.getInstance(java.security.KeyStore.getDefaultType());
+                store.load(new FileInputStream(kf), password.toCharArray());
+            }
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
         }
+    }
+
+    private void createEmptyStore(String path, String password) throws Exception {
+        store = java.security.KeyStore.getInstance(java.security.KeyStore.getDefaultType());
+        store.load(null, password.toCharArray());
+
+        // Save the keyStore
+        FileOutputStream fos = new FileOutputStream(path);
+        store.store(fos, password.toCharArray());
+        fos.close();
     }
 
     @Override
@@ -70,7 +81,9 @@ public class JavaKeyStore extends KeyStore {
     public String read(@NonNull String name,
                        @NonNull String password) throws Exception {
         Preconditions.checkNotNull(store);
-        Key key = store.getKey(name, password.toCharArray());
+        java.security.KeyStore.ProtectionParameter param
+                = new java.security.KeyStore.PasswordProtection(password.toCharArray());
+        java.security.KeyStore.Entry key = store.getEntry(name, param);
         return key.toString();
     }
 }
