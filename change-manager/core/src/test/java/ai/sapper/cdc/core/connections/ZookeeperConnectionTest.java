@@ -38,6 +38,8 @@ class ZookeeperConnectionTest {
             ZookeeperConnection connection = manager.getConnection(__CONNECTION_NAME, ZookeeperConnection.class);
             assertNotNull(connection);
             connection.connect();
+
+            manager.save(connection);
             assertEquals(Connection.EConnectionState.Connected, connection.connectionState());
             ZKPaths.mkdirs(connection.client().getZookeeperClient().getZooKeeper(), __PATH);
 
@@ -47,6 +49,7 @@ class ZookeeperConnectionTest {
 
             connection.close();
             assertEquals(Connection.EConnectionState.Closed, connection.connectionState());
+
         } catch (Throwable t) {
             DefaultLogger.LOGGER.error(DefaultLogger.stacktrace(t));
             fail(t);

@@ -1,14 +1,20 @@
 package ai.sapper.cdc.core.connections;
 
 import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.utils.JSONUtils;
+import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.connections.settngs.WebServiceConnectionSettings;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
+import org.apache.curator.framework.CuratorFramework;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.JerseyClient;
 import org.glassfish.jersey.client.JerseyClientBuilder;
@@ -27,6 +33,7 @@ public class WebServiceConnection implements Connection {
     private WebServiceConnectionConfig config;
     private JerseyClient client;
     private String name;
+    private WebServiceConnectionSettings settings;
 
     public WebServiceConnection() {
     }
@@ -54,19 +61,56 @@ public class WebServiceConnection implements Connection {
      */
     @Override
     public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConnectionError {
-        try {
-            config = new WebServiceConnectionConfig(xmlConfig);
-            config.read();
-            client = new JerseyClientBuilder().build();
-            name = config.name;
-            endpoint = new URL(config.endpoint);
+        synchronized (state) {
+            try {
+                config = new WebServiceConnectionConfig(xmlConfig);
+                settings = config.read();
+                client = new JerseyClientBuilder().build();
+                name = settings.getName();
+                endpoint = new URL(settings.getEndpoint());
 
-            state.state(EConnectionState.Initialized);
-            return this;
-        } catch (Exception ex) {
-            state.error(ex);
-            throw new ConnectionError(ex);
+                state.state(EConnectionState.Initialized);
+                return this;
+            } catch (Exception ex) {
+                state.error(ex);
+                throw new ConnectionError(ex);
+            }
         }
+    }
+
+    @Override
+    public Connection init(@NonNull String name,
+                           @NonNull ZookeeperConnection connection,
+                           @NonNull String path) throws ConnectionError {
+        synchronized (state) {
+            try {
+                if (state.isConnected()) {
+                    close();
+                }
+                state.clear(EConnectionState.Unknown);
+
+                CuratorFramework client = connection.client();
+                String hpath = new PathUtils.ZkPathBuilder(path)
+                        .withPath(WebServiceConnectionConfig.__CONFIG_PATH)
+                        .build();
+                if (client.checkExists().forPath(hpath) == null) {
+                    throw new Exception(String.format("HDFS Settings path not found. [path=%s]", hpath));
+                }
+                byte[] data = client.getData().forPath(hpath);
+                settings = JSONUtils.read(data, WebServiceConnectionSettings.class);
+                Preconditions.checkNotNull(settings);
+                Preconditions.checkState(name.equals(settings.getName()));
+
+                this.client = new JerseyClientBuilder().build();
+                this.name = settings.getName();
+                endpoint = new URL(settings.getEndpoint());
+
+                state.state(EConnectionState.Initialized);
+            } catch (Exception ex) {
+                throw new ConnectionError(ex);
+            }
+        }
+        return this;
     }
 
     /**
@@ -110,12 +154,9 @@ public class WebServiceConnection implements Connection {
         return state.state() == EConnectionState.Initialized;
     }
 
-    /**
-     * @return
-     */
     @Override
-    public HierarchicalConfiguration<ImmutableNode> config() {
-        return config.config();
+    public String path() {
+        return WebServiceConnectionConfig.__CONFIG_PATH;
     }
 
     /**
@@ -136,6 +177,7 @@ public class WebServiceConnection implements Connection {
 
     }
 
+
     @Getter
     @Accessors(fluent = true)
     public static class WebServiceConnectionConfig extends ConfigReader {
@@ -146,27 +188,27 @@ public class WebServiceConnection implements Connection {
             public static final String CONFIG_URL = "endpoint";
         }
 
-        private String name;
-        private String endpoint;
+        private final WebServiceConnectionSettings settings = new WebServiceConnectionSettings();
 
         public WebServiceConnectionConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);
         }
 
-        public void read() throws ConfigurationException {
+        public WebServiceConnectionSettings read() throws ConfigurationException {
             if (get() == null) {
                 throw new ConfigurationException("WebService connection Configuration not set or is NULL");
             }
-            name = get().getString(Constants.CONFIG_NAME);
-            if (Strings.isNullOrEmpty(name)) {
+            settings.setName( get().getString(Constants.CONFIG_NAME));
+            if (Strings.isNullOrEmpty(settings.getName())) {
                 throw new ConfigurationException(String.format("WebService connection Configuration Error: missing [%s]",
                         Constants.CONFIG_NAME));
             }
-            endpoint = get().getString(Constants.CONFIG_URL);
-            if (Strings.isNullOrEmpty(endpoint)) {
+            settings.setEndpoint( get().getString(Constants.CONFIG_URL));
+            if (Strings.isNullOrEmpty(settings.getEndpoint())) {
                 throw new ConfigurationException(String.format("WebService connection Configuration Error: missing [%s]",
                         Constants.CONFIG_URL));
             }
+            return settings;
         }
     }
 }

@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <configuration>
     <connections>
+        <shared>
+            <connection>test-zk</connection>
+            <path>/test/env/connections</path>
+        </shared>
         <connection>
             <type>ai.sapper.cdc.core.connections.HdfsConnection</type>
             <hdfs>

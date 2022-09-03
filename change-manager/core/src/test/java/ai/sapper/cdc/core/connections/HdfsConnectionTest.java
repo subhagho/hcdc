@@ -57,6 +57,7 @@ class HdfsConnectionTest {
                 String hdfsPath = uri.getPath();
                 DefaultLogger.LOGGER.info(String.format("HDFS Path=[%s]", hdfsPath));
             }
+            manager.save(connection);
         } catch (Throwable t) {
             DefaultLogger.LOGGER.error(DefaultLogger.stacktrace(t));
             fail(t);

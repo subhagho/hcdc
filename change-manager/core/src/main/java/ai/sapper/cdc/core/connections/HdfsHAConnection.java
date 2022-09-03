@@ -1,7 +1,10 @@
 package ai.sapper.cdc.core.connections;
 
-import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.common.utils.JSONUtils;
+import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.connections.settngs.HdfsConnectionSettings;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
@@ -9,13 +12,13 @@ import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
+import org.apache.curator.framework.CuratorFramework;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.DFSClient;
 import org.apache.hadoop.hdfs.client.HdfsAdmin;
 
 import java.net.URI;
-import java.util.Map;
 
 @Getter
 @Accessors(fluent = true)
@@ -34,7 +37,7 @@ public class HdfsHAConnection extends HdfsConnection {
      */
     @Override
     public String name() {
-        return config.name;
+        return settings.getName();
     }
 
     /**
@@ -51,21 +54,10 @@ public class HdfsHAConnection extends HdfsConnection {
                 }
                 state.clear(EConnectionState.Unknown);
                 config = new HdfsHAConfig(xmlConfig);
-                config.read();
+                settings = config.read();
 
-                hdfsConfig = new Configuration();
-                hdfsConfig.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getCanonicalName());
-                hdfsConfig.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getCanonicalName());
-                hdfsConfig.set(Constants.DFS_NAME_SERVICES, config.nameService);
-                hdfsConfig.set(String.format(Constants.DFS_FAILOVER_PROVIDER, config.nameService), config.failoverProvider);
-                String nns = String.format("%s,%s", config.nameNodeAddresses[0][0], config.nameNodeAddresses[1][0]);
-                hdfsConfig.set(String.format(Constants.DFS_NAME_NODES, config.nameService), nns);
-                for (String[] nn : config.nameNodeAddresses) {
-                    hdfsConfig.set(String.format(Constants.DFS_NAME_NODE_ADDRESS, config.nameService, nn[0]), nn[1]);
-                }
-                if (config.isSecurityEnabled) {
-                    enableSecurity(hdfsConfig);
-                }
+                setupHadoopConfig();
+
                 state.state(EConnectionState.Initialized);
             } catch (Throwable t) {
                 state.error(t);
@@ -75,27 +67,86 @@ public class HdfsHAConnection extends HdfsConnection {
         return this;
     }
 
+
+    @Override
+    public Connection init(@NonNull String name, @NonNull ZookeeperConnection connection, @NonNull String path) throws ConnectionError {
+        synchronized (state) {
+            try {
+                if (state.isConnected()) {
+                    close();
+                }
+                state.clear(EConnectionState.Unknown);
+
+                CuratorFramework client = connection.client();
+                String hpath = new PathUtils.ZkPathBuilder(path)
+                        .withPath(HdfsHAConfig.__CONFIG_PATH)
+                        .build();
+                if (client.checkExists().forPath(hpath) == null) {
+                    throw new Exception(String.format("HDFS Settings path not found. [path=%s]", hpath));
+                }
+                byte[] data = client.getData().forPath(hpath);
+                settings = JSONUtils.read(data, HdfsConnectionSettings.HdfsHASettings.class);
+                Preconditions.checkNotNull(settings);
+                Preconditions.checkState(name.equals(settings.getName()));
+
+                setupHadoopConfig();
+
+                state.state(EConnectionState.Initialized);
+            } catch (Exception ex) {
+                throw new ConnectionError(ex);
+            }
+        }
+        return this;
+    }
+
+    private void setupHadoopConfig() throws Exception {
+        Preconditions.checkState(settings instanceof HdfsConnectionSettings.HdfsHASettings);
+        hdfsConfig = new Configuration();
+        hdfsConfig.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getCanonicalName());
+        hdfsConfig.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getCanonicalName());
+        hdfsConfig.set(Constants.DFS_NAME_SERVICES, ((HdfsConnectionSettings.HdfsHASettings) settings).getNameService());
+        hdfsConfig.set(String.format(Constants.DFS_FAILOVER_PROVIDER,
+                        ((HdfsConnectionSettings.HdfsHASettings) settings).getNameService()),
+                ((HdfsConnectionSettings.HdfsHASettings) settings).getFailoverProvider());
+        String nns = String.format("%s,%s",
+                ((HdfsConnectionSettings.HdfsHASettings) settings).getNameNodeAddresses()[0][0],
+                ((HdfsConnectionSettings.HdfsHASettings) settings).getNameNodeAddresses()[1][0]);
+        hdfsConfig.set(String.format(Constants.DFS_NAME_NODES,
+                ((HdfsConnectionSettings.HdfsHASettings) settings).getNameService()), nns);
+        for (String[] nn : ((HdfsConnectionSettings.HdfsHASettings) settings).getNameNodeAddresses()) {
+            hdfsConfig.set(String.format(Constants.DFS_NAME_NODE_ADDRESS,
+                    ((HdfsConnectionSettings.HdfsHASettings) settings).getNameService(), nn[0]), nn[1]);
+        }
+        if (settings.isSecurityEnabled()) {
+            enableSecurity(hdfsConfig);
+        }
+    }
+
     /**
      * @return
      * @throws ConnectionError
      */
     @Override
     public Connection connect() throws ConnectionError {
+        Preconditions.checkState(settings instanceof HdfsConnectionSettings.HdfsHASettings);
         synchronized (state) {
             if (!state.isConnected()
                     && (state.state() == EConnectionState.Initialized || state.state() == EConnectionState.Closed)) {
                 state.clear(EConnectionState.Initialized);
                 try {
-                    fileSystem = FileSystem.get(URI.create(String.format("hdfs://%s", config.nameService)), hdfsConfig);
-                    if (config.isAdminEnabled) {
-                        adminClient = new HdfsAdmin(URI.create(String.format("hdfs://%s", config.nameService)), hdfsConfig);
+                    fileSystem = FileSystem.get(URI.create(String.format("hdfs://%s",
+                            ((HdfsConnectionSettings.HdfsHASettings) settings).getNameService())), hdfsConfig);
+                    if (settings.isAdminEnabled()) {
+                        adminClient = new HdfsAdmin(URI.create(String.format("hdfs://%s",
+                                ((HdfsConnectionSettings.HdfsHASettings) settings).getNameService())), hdfsConfig);
                     }
-                    if (config.parameters != null && !config.parameters.isEmpty()) {
-                        for (String key : config.parameters.keySet()) {
-                            hdfsConfig.set(key, config.parameters.get(key));
+                    if (settings.getParameters() != null && !settings.getParameters().isEmpty()) {
+                        for (String key : settings.getParameters().keySet()) {
+                            hdfsConfig.set(key, settings.getParameters().get(key));
                         }
                     }
-                    dfsClient = new DFSClient(URI.create(String.format("hdfs://%s", config.nameService)), hdfsConfig);
+                    dfsClient = new DFSClient(URI.create(String.format("hdfs://%s",
+                            ((HdfsConnectionSettings.HdfsHASettings) settings).getNameService())), hdfsConfig);
 
                     state.state(EConnectionState.Connected);
                 } catch (Throwable t) {
@@ -107,17 +158,15 @@ public class HdfsHAConnection extends HdfsConnection {
         return this;
     }
 
-    /**
-     * @return
-     */
     @Override
-    public HierarchicalConfiguration<ImmutableNode> config() {
-        return config.get();
+    public String path() {
+        return HdfsHAConfig.__CONFIG_PATH;
     }
+
 
     @Getter
     @Accessors(fluent = true)
-    public static final class HdfsHAConfig extends ConfigReader {
+    public static final class HdfsHAConfig extends HdfsConfig {
         private static final String __CONFIG_PATH = "hdfs_ha";
 
         private static class Constants {
@@ -130,33 +179,27 @@ public class HdfsHAConnection extends HdfsConnection {
             private static final String CONN_ADMIN_CLIENT_ENABLED = "enableAdmin";
         }
 
-        private String name;
-        private String nameService;
-        private String failoverProvider;
-        private String[][] nameNodeAddresses;
-        private Map<String, String> parameters;
-        private boolean isSecurityEnabled = false;
-        private boolean isAdminEnabled = false;
-
         public HdfsHAConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
-            super(config, __CONFIG_PATH);
+            super(config, __CONFIG_PATH, new HdfsConnectionSettings.HdfsHASettings());
         }
 
-        public void read() throws ConfigurationException {
+        @Override
+        public HdfsConnectionSettings.HdfsBaseSettings read() throws ConfigurationException {
             if (get() == null) {
                 throw new ConfigurationException("HDFS Configuration not drt or is NULL");
             }
             try {
-                name = get().getString(Constants.CONN_NAME);
-                if (Strings.isNullOrEmpty(name)) {
+                HdfsConnectionSettings.HdfsHASettings settings = (HdfsConnectionSettings.HdfsHASettings) settings();
+                settings.setName(get().getString(Constants.CONN_NAME));
+                if (Strings.isNullOrEmpty(settings.getName())) {
                     throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.CONN_NAME));
                 }
-                nameService = get().getString(Constants.DFS_NAME_SERVICES);
-                if (Strings.isNullOrEmpty(nameService)) {
+                settings.setNameService(get().getString(Constants.DFS_NAME_SERVICES));
+                if (Strings.isNullOrEmpty(settings.getNameService())) {
                     throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.DFS_NAME_SERVICES));
                 }
-                failoverProvider = get().getString(Constants.DFS_FAILOVER_PROVIDER);
-                if (Strings.isNullOrEmpty(failoverProvider)) {
+                settings.setFailoverProvider(get().getString(Constants.DFS_FAILOVER_PROVIDER));
+                if (Strings.isNullOrEmpty(settings.getFailoverProvider())) {
                     throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.DFS_FAILOVER_PROVIDER));
                 }
                 String nn = get().getString(Constants.DFS_NAME_NODES);
@@ -167,7 +210,7 @@ public class HdfsHAConnection extends HdfsConnection {
                 if (nns.length != 2) {
                     throw new ConfigurationException(String.format("Invalid NameNode(s) specified. Expected count = 2, specified = %d", nns.length));
                 }
-                nameNodeAddresses = new String[2][2];
+                settings.setNameNodeAddresses(new String[2][2]);
 
                 for (int ii = 0; ii < nns.length; ii++) {
                     String n = nns[ii];
@@ -179,15 +222,17 @@ public class HdfsHAConnection extends HdfsConnection {
                     String address = parts[1].trim();
 
                     DefaultLogger.LOGGER.info(String.format("Registering namenode [%s -> %s]...", key, address));
-                    nameNodeAddresses[ii][0] = key;
-                    nameNodeAddresses[ii][1] = address;
+                    settings.getNameNodeAddresses()[ii][0] = key;
+                    settings.getNameNodeAddresses()[ii][1] = address;
                 }
                 if (checkIfNodeExists((String) null, Constants.CONN_SECURITY_ENABLED))
-                    isSecurityEnabled = get().getBoolean(Constants.CONN_SECURITY_ENABLED);
+                    settings.setSecurityEnabled(get().getBoolean(Constants.CONN_SECURITY_ENABLED));
                 if (checkIfNodeExists((String) null, Constants.CONN_ADMIN_CLIENT_ENABLED))
-                    isAdminEnabled = get().getBoolean(Constants.CONN_ADMIN_CLIENT_ENABLED);
+                    settings.setAdminEnabled(get().getBoolean(Constants.CONN_ADMIN_CLIENT_ENABLED));
 
-                parameters = readParameters();
+                settings.setParameters(readParameters());
+
+                return settings;
             } catch (Throwable t) {
                 throw new ConfigurationException("Error processing HDFS configuration.", t);
             }

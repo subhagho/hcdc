@@ -26,7 +26,26 @@ public class KafkaProducerConnection<K, V> extends KafkaConnection {
         synchronized (state) {
             super.init(xmlConfig);
             try {
-                if (kafkaConfig().mode() != EKafkaClientMode.Producer) {
+                if (settings().getMode() != EKafkaClientMode.Producer) {
+                    throw new ConfigurationException("Connection not initialized in Producer mode.");
+                }
+                state.state(EConnectionState.Initialized);
+            } catch (Throwable t) {
+                state.error(t);
+                throw new ConnectionError("Error opening HDFS connection.", t);
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Connection init(@NonNull String name,
+                           @NonNull ZookeeperConnection connection,
+                           @NonNull String path) throws ConnectionError {
+        synchronized (state) {
+            super.init(name, connection, path);
+            try {
+                if (settings().getMode() != EKafkaClientMode.Producer) {
                     throw new ConfigurationException("Connection not initialized in Producer mode.");
                 }
                 state.state(EConnectionState.Initialized);
@@ -48,7 +67,7 @@ public class KafkaProducerConnection<K, V> extends KafkaConnection {
             Preconditions.checkState(connectionState() == EConnectionState.Initialized);
             if (!state.isConnected()) {
                 try {
-                    producer = new KafkaProducer<K, V>(kafkaConfig().properties());
+                    producer = new KafkaProducer<K, V>(settings().getProperties());
 
                     state.state(EConnectionState.Connected);
                 } catch (Throwable t) {

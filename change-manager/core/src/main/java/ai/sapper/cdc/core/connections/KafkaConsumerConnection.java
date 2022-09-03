@@ -32,17 +32,10 @@ public class KafkaConsumerConnection<K, V> extends KafkaConnection {
         synchronized (state) {
             super.init(xmlConfig);
             try {
-                if (kafkaConfig().mode() != EKafkaClientMode.Consumer) {
+                if (settings().getMode() != EKafkaClientMode.Consumer) {
                     throw new ConfigurationException("Connection not initialized in Consumer mode.");
                 }
-                Properties props = kafkaConfig().properties();
-                if (props.containsKey(CONFIG_MAX_POLL_RECORDS)) {
-                    String s = props.getProperty(CONFIG_MAX_POLL_RECORDS);
-                    batchSize = Integer.parseInt(s);
-                } else {
-                    props.setProperty(CONFIG_MAX_POLL_RECORDS, String.valueOf(batchSize));
-                }
-
+                setup();
                 state.state(EConnectionState.Initialized);
             } catch (Throwable t) {
                 state.error(t);
@@ -50,6 +43,36 @@ public class KafkaConsumerConnection<K, V> extends KafkaConnection {
             }
         }
         return this;
+    }
+
+    @Override
+    public Connection init(@NonNull String name,
+                           @NonNull ZookeeperConnection connection,
+                           @NonNull String path) throws ConnectionError {
+        synchronized (state) {
+            super.init(name, connection, path);
+            try {
+                if (settings().getMode() != EKafkaClientMode.Consumer) {
+                    throw new ConfigurationException("Connection not initialized in Consumer mode.");
+                }
+                setup();
+                state.state(EConnectionState.Initialized);
+            } catch (Throwable t) {
+                state.error(t);
+                throw new ConnectionError("Error opening HDFS connection.", t);
+            }
+        }
+        return this;
+    }
+
+    private void setup() throws Exception {
+        Properties props = settings().getProperties();
+        if (props.containsKey(CONFIG_MAX_POLL_RECORDS)) {
+            String s = props.getProperty(CONFIG_MAX_POLL_RECORDS);
+            batchSize = Integer.parseInt(s);
+        } else {
+            props.setProperty(CONFIG_MAX_POLL_RECORDS, String.valueOf(batchSize));
+        }
     }
 
     /**
@@ -61,10 +84,10 @@ public class KafkaConsumerConnection<K, V> extends KafkaConnection {
         synchronized (state) {
             Preconditions.checkState(connectionState() == EConnectionState.Initialized);
             try {
-                consumer = new KafkaConsumer<K, V>(kafkaConfig().properties());
-                List<TopicPartition> parts = new ArrayList<>(kafkaConfig().partitions().size());
-                for (int part : kafkaConfig().partitions()) {
-                    TopicPartition tp = new TopicPartition(kafkaConfig().topic(), part);
+                consumer = new KafkaConsumer<K, V>(settings().getProperties());
+                List<TopicPartition> parts = new ArrayList<>(settings().getPartitions().size());
+                for (int part : settings().getPartitions()) {
+                    TopicPartition tp = new TopicPartition(settings().getTopic(), part);
                     parts.add(tp);
                 }
                 consumer.assign(parts);

@@ -45,7 +45,7 @@ class HdfsHAConnectionTest {
             if (!fs.exists(path)) {
                 fs.mkdirs(path);
             }
-
+            manager.save(connection);
         } catch (Throwable t) {
             DefaultLogger.LOGGER.error(DefaultLogger.stacktrace(t));
             fail(t);

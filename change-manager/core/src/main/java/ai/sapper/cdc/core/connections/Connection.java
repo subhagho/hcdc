@@ -1,6 +1,7 @@
 package ai.sapper.cdc.core.connections;
 
 import ai.sapper.cdc.common.AbstractState;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.NonNull;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.tree.ImmutableNode;
@@ -27,6 +28,9 @@ public interface Connection extends Closeable {
     String name();
 
     Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> config) throws ConnectionError;
+    Connection init(@NonNull String name,
+                    @NonNull ZookeeperConnection connection,
+                    @NonNull String path) throws ConnectionError;
 
     Connection connect() throws ConnectionError;
 
@@ -34,8 +38,10 @@ public interface Connection extends Closeable {
 
     EConnectionState connectionState();
 
+    @JsonIgnore
     boolean isConnected();
 
-    HierarchicalConfiguration<ImmutableNode> config();
+    String path();
 
+    Object settings();
 }

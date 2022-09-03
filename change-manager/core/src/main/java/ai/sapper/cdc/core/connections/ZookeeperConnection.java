@@ -1,6 +1,10 @@
 package ai.sapper.cdc.core.connections;
 
 import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.utils.JSONUtils;
+import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.connections.settngs.ZookeeperSettings;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -14,7 +18,6 @@ import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 
 import java.io.IOException;
-import java.util.Map;
 
 @Getter
 @Accessors(fluent = true)
@@ -24,13 +27,14 @@ public class ZookeeperConnection implements Connection {
     private CuratorFramework client;
     private CuratorFrameworkFactory.Builder builder;
     private ZookeeperConfig config;
+    private ZookeeperSettings settings;
 
     /**
      * @return
      */
     @Override
     public String name() {
-        return config.name;
+        return settings.getName();
     }
 
     /**
@@ -48,43 +52,70 @@ public class ZookeeperConnection implements Connection {
                 state.clear(EConnectionState.Unknown);
 
                 config = new ZookeeperConfig(xmlConfig);
-                config.read();
+                settings = config.read();
 
-                builder = CuratorFrameworkFactory.builder();
-                builder.connectString(config.connectionString);
-                if (config.isRetryEnabled) {
-                    builder.retryPolicy(new ExponentialBackoffRetry(config.retryInterval, config.retryCount));
-                }
-                if (!Strings.isNullOrEmpty(config.authenticationHandler)) {
-                    Class<? extends ZookeeperAuthHandler> cls
-                            = (Class<? extends ZookeeperAuthHandler>) Class.forName(config.authenticationHandler);
-                    ZookeeperAuthHandler authHandler = cls.newInstance();
-                    authHandler.setup(builder, config.config());
-                }
-                if (!Strings.isNullOrEmpty(config.namespace)) {
-                    builder.namespace(config.namespace);
-                }
-                if (config.connectionTimeout > 0) {
-                    builder.connectionTimeoutMs(config.connectionTimeout);
-                }
-                if (config.sessionTimeout > 0) {
-                    builder.sessionTimeoutMs(config.sessionTimeout);
-                }
-
-                /*
-                if (!Strings.isNullOrEmpty(config.zookeeperConfig)) {
-                    File zkf = new File(config.zookeeperConfig);
-                    if (!zkf.exists()) {
-                        throw new ConnectionError(String.format("Specified ZooKeeper configuration file not found. [path=%s]", zkf.getAbsolutePath()));
-                    }
-                    builder.zkClientConfig(new ZKClientConfig(zkf));
-                }
-                */
+                setup();
 
                 state.state(EConnectionState.Initialized);
             } catch (Throwable t) {
                 state.error(t);
                 throw new ConnectionError("Error opening HDFS connection.", t);
+            }
+        }
+        return this;
+    }
+
+    private void setup() throws Exception {
+        builder = CuratorFrameworkFactory.builder();
+        builder.connectString(settings.getConnectionString());
+        if (settings.isRetryEnabled()) {
+            builder.retryPolicy(new ExponentialBackoffRetry(settings.getRetryInterval(), settings.getRetryCount()));
+        }
+        if (!Strings.isNullOrEmpty(settings.getAuthenticationHandler())) {
+            Class<? extends ZookeeperAuthHandler> cls
+                    = (Class<? extends ZookeeperAuthHandler>) Class.forName(settings.getAuthenticationHandler());
+            ZookeeperAuthHandler authHandler = cls.newInstance();
+            authHandler.setup(builder, config.config());
+        }
+        if (!Strings.isNullOrEmpty(settings.getNamespace())) {
+            builder.namespace(settings.getNamespace());
+        }
+        if (settings.getConnectionTimeout() > 0) {
+            builder.connectionTimeoutMs(settings.getConnectionTimeout());
+        }
+        if (settings.getSessionTimeout() > 0) {
+            builder.sessionTimeoutMs(settings.getSessionTimeout());
+        }
+    }
+
+    @Override
+    public Connection init(@NonNull String name,
+                           @NonNull ZookeeperConnection connection,
+                           @NonNull String path) throws ConnectionError {
+        synchronized (state) {
+            try {
+                if (state.isConnected()) {
+                    close();
+                }
+                state.clear(EConnectionState.Unknown);
+
+                CuratorFramework client = connection.client();
+                String hpath = new PathUtils.ZkPathBuilder(path)
+                        .withPath(ZookeeperConfig.__CONFIG_PATH)
+                        .build();
+                if (client.checkExists().forPath(hpath) == null) {
+                    throw new Exception(String.format("HDFS Settings path not found. [path=%s]", hpath));
+                }
+                byte[] data = client.getData().forPath(hpath);
+                settings = JSONUtils.read(data, ZookeeperSettings.class);
+                Preconditions.checkNotNull(settings);
+                Preconditions.checkState(name.equals(settings.getName()));
+
+                setup();
+
+                state.state(EConnectionState.Initialized);
+            } catch (Exception ex) {
+                throw new ConnectionError(ex);
             }
         }
         return this;
@@ -139,12 +170,9 @@ public class ZookeeperConnection implements Connection {
         return state.isConnected();
     }
 
-    /**
-     * @return
-     */
     @Override
-    public HierarchicalConfiguration<ImmutableNode> config() {
-        return config.config();
+    public String path() {
+        return ZookeeperConfig.__CONFIG_PATH;
     }
 
     /**
@@ -169,6 +197,7 @@ public class ZookeeperConnection implements Connection {
         }
     }
 
+
     public static class ZookeeperConfig extends ConfigReader {
         private static final class Constants {
             private static final String CONFIG_NAME = "name";
@@ -184,57 +213,44 @@ public class ZookeeperConnection implements Connection {
         }
 
         private static final String __CONFIG_PATH = "zookeeper";
-        private String name;
-        private String connectionString;
-        private String authenticationHandler;
-        private String namespace;
-        private boolean isRetryEnabled = false;
-        private int retryInterval = 1000;
-        private int retryCount = 3;
-        private int connectionTimeout = -1;
-        private int sessionTimeout = -1;
-        private String zookeeperConfig;
 
-        private Map<String, String> parameters;
+        private final ZookeeperSettings settings = new ZookeeperSettings();
 
-        public void read() throws ConfigurationException {
+        public ZookeeperSettings read() throws ConfigurationException {
             if (get() == null) {
                 throw new ConfigurationException("HDFS Configuration not drt or is NULL");
             }
             try {
-                name = get().getString(Constants.CONFIG_NAME);
-                if (Strings.isNullOrEmpty(name)) {
+                settings.setName(get().getString(Constants.CONFIG_NAME));
+                if (Strings.isNullOrEmpty(settings.getName())) {
                     throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.CONFIG_NAME));
                 }
-                connectionString = get().getString(Constants.CONFIG_CONNECTION);
-                if (Strings.isNullOrEmpty(connectionString)) {
+                settings.setConnectionString(get().getString(Constants.CONFIG_CONNECTION));
+                if (Strings.isNullOrEmpty(settings.getConnectionString())) {
                     throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.CONFIG_CONNECTION));
                 }
                 if (checkIfNodeExists((String) null, Constants.CONFIG_AUTH_HANDLER)) {
-                    authenticationHandler = get().getString(Constants.CONFIG_AUTH_HANDLER);
+                    settings.setAuthenticationHandler(get().getString(Constants.CONFIG_AUTH_HANDLER));
                 }
                 if (checkIfNodeExists((String) null, Constants.CONFIG_NAMESPACE)) {
-                    namespace = get().getString(Constants.CONFIG_NAMESPACE);
+                    settings.setNamespace(get().getString(Constants.CONFIG_NAMESPACE));
                 }
                 if (checkIfNodeExists((String) null, Constants.CONFIG_RETRY)) {
-                    isRetryEnabled = true;
+                    settings.setRetryEnabled(true);
                     if (checkIfNodeExists((String) null, Constants.CONFIG_RETRY_INTERVAL)) {
-                        retryInterval = get().getInt(Constants.CONFIG_RETRY_INTERVAL);
+                        settings.setRetryInterval(get().getInt(Constants.CONFIG_RETRY_INTERVAL));
                     }
                     if (checkIfNodeExists((String) null, Constants.CONFIG_RETRY_TRIES)) {
-                        retryCount = get().getInt(Constants.CONFIG_RETRY_TRIES);
+                        settings.setRetryCount(get().getInt(Constants.CONFIG_RETRY_TRIES));
                     }
                 }
                 if (checkIfNodeExists((String) null, Constants.CONFIG_CONN_TIMEOUT)) {
-                    connectionTimeout = get().getInt(Constants.CONFIG_CONN_TIMEOUT);
+                    settings.setConnectionTimeout(get().getInt(Constants.CONFIG_CONN_TIMEOUT));
                 }
                 if (checkIfNodeExists((String) null, Constants.CONFIG_SESSION_TIMEOUT)) {
-                    sessionTimeout = get().getInt(Constants.CONFIG_SESSION_TIMEOUT);
+                    settings.setSessionTimeout(get().getInt(Constants.CONFIG_SESSION_TIMEOUT));
                 }
-                if (checkIfNodeExists((String) null, Constants.CONFIG_ZK_CONFIG)) {
-                    zookeeperConfig = get().getString(Constants.CONFIG_ZK_CONFIG);
-                }
-                parameters = readParameters();
+                return settings;
             } catch (Throwable t) {
                 throw new ConfigurationException("Error processing HDFS configuration.", t);
             }

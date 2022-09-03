@@ -19,8 +19,10 @@ public class BasicKafkaProducer extends KafkaProducerConnection<String, byte[]> 
     @Override
     public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConnectionError {
         super.init(xmlConfig);
-        kafkaConfig().properties().put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        kafkaConfig().properties().put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
+        settings().getProperties()
+                .put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        settings().getProperties()
+                .put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
 
         return this;
     }

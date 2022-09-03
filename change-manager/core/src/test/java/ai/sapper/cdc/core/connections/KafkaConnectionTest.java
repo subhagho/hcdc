@@ -51,6 +51,9 @@ class KafkaConnectionTest {
             BasicKafkaConsumer consumer = manager.getConnection(__CONSUMER_NAME, BasicKafkaConsumer.class);
             consumer.connect();
 
+            manager.save(producer);
+            manager.save(consumer);
+
             File mf = new File(__MESSAGE_FILE);
             assertTrue(mf.exists());
             StringBuilder text = new StringBuilder();

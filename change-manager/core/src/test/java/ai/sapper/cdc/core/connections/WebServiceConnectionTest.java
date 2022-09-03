@@ -42,6 +42,8 @@ class WebServiceConnectionTest {
             String data = response.readEntity(String.class);
             assertFalse(Strings.isNullOrEmpty(data));
             DefaultLogger.LOGGER.debug(String.format("DATA [%s]", data));
+
+            manager.save(ws);
         } catch (Throwable t) {
             DefaultLogger.LOGGER.error(DefaultLogger.stacktrace(t));
             fail(t);
