@@ -1,8 +1,7 @@
 package ai.sapper.cdc.core.connections.impl;
 
-import ai.sapper.cdc.core.connections.Connection;
-import ai.sapper.cdc.core.connections.ConnectionError;
-import ai.sapper.cdc.core.connections.KafkaProducerConnection;
+import ai.sapper.cdc.core.connections.*;
+import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import lombok.NonNull;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.tree.ImmutableNode;
@@ -17,8 +16,35 @@ public class BasicKafkaProducer extends KafkaProducerConnection<String, byte[]> 
      * @throws ConnectionError
      */
     @Override
-    public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConnectionError {
-        super.init(xmlConfig);
+    public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                           @NonNull ConnectionManager connectionManager) throws ConnectionError {
+        super.init(xmlConfig, connectionManager);
+        settings().getProperties()
+                .put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        settings().getProperties()
+                .put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
+
+        return this;
+    }
+
+    @Override
+    public Connection init(@NonNull String name,
+                           @NonNull ZookeeperConnection connection,
+                           @NonNull String path,
+                           @NonNull ConnectionManager connectionManager) throws ConnectionError {
+        super.init(name, connection, path, connectionManager);
+        settings().getProperties()
+                .put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        settings().getProperties()
+                .put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
+
+        return this;
+    }
+
+    @Override
+    public Connection setup(@NonNull ConnectionSettings settings,
+                            @NonNull ConnectionManager connectionManager) throws ConnectionError {
+        super.setup(settings, connectionManager);
         settings().getProperties()
                 .put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         settings().getProperties()

@@ -129,7 +129,7 @@ public class ConnectionManager implements Closeable {
         Class<? extends Connection> cClass = (Class<? extends Connection>) Class.forName(cls);
         Connection connection = cClass.getDeclaredConstructor().newInstance();
 
-        connection.init(name, zkc, path);
+        connection.init(name, zkc, path, this);
 
         addConnection(connection.name(), connection);
     }
@@ -154,7 +154,7 @@ public class ConnectionManager implements Closeable {
         }
         Class<? extends Connection> cls = (Class<? extends Connection>) Class.forName(type);
         Connection connection = cls.newInstance();
-        connection.init(node);
+        connection.init(node, this);
         Preconditions.checkState(!Strings.isNullOrEmpty(connection.name()));
         Preconditions.checkState(connection.connectionState() == Connection.EConnectionState.Initialized);
 
@@ -240,7 +240,7 @@ public class ConnectionManager implements Closeable {
             try (Connection connection = type
                     .getDeclaredConstructor()
                     .newInstance()
-                    .setup(settings)) {
+                    .setup(settings, this)) {
                 connection.connect();
                 save(connection);
             }

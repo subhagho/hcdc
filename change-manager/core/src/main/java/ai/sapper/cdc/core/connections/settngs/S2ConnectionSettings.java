@@ -10,6 +10,7 @@ public class S2ConnectionSettings extends ConnectionSettings {
     public static final String JDBC_S2_PREFIX = "jdbc:singlestore";
 
     private String jdbcUrl;
+    private String db;
     private String user;
     @Encrypted
     private String password;

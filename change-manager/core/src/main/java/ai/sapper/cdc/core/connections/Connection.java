@@ -28,13 +28,16 @@ public interface Connection extends Closeable {
 
     String name();
 
-    Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> config) throws ConnectionError;
+    Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> config,
+                    @NonNull ConnectionManager connectionManager) throws ConnectionError;
 
     Connection init(@NonNull String name,
                     @NonNull ZookeeperConnection connection,
-                    @NonNull String path) throws ConnectionError;
+                    @NonNull String path,
+                    @NonNull ConnectionManager connectionManager) throws ConnectionError;
 
-    Connection setup(@NonNull ConnectionSettings settings) throws ConnectionError;
+    Connection setup(@NonNull ConnectionSettings settings,
+                     @NonNull ConnectionManager connectionManager) throws ConnectionError;
 
     Connection connect() throws ConnectionError;
 

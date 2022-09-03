@@ -45,7 +45,8 @@ public abstract class KafkaConnection implements MessageConnection {
      * @throws ConnectionError
      */
     @Override
-    public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConnectionError {
+    public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                           @NonNull ConnectionManager connectionManager) throws ConnectionError {
         try {
             if (state.isConnected()) {
                 close();
@@ -64,7 +65,8 @@ public abstract class KafkaConnection implements MessageConnection {
     @Override
     public Connection init(@NonNull String name,
                            @NonNull ZookeeperConnection connection,
-                           @NonNull String path) throws ConnectionError {
+                           @NonNull String path,
+                           @NonNull ConnectionManager connectionManager) throws ConnectionError {
         try {
             if (state.isConnected()) {
                 close();
@@ -89,7 +91,8 @@ public abstract class KafkaConnection implements MessageConnection {
     }
 
     @Override
-    public Connection setup(@NonNull ConnectionSettings settings) throws ConnectionError {
+    public Connection setup(@NonNull ConnectionSettings settings,
+                            @NonNull ConnectionManager connectionManager) throws ConnectionError {
         Preconditions.checkArgument(settings instanceof KafkaSettings);
         try {
             if (state.isConnected()) {

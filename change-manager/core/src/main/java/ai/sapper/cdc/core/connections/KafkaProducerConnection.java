@@ -23,9 +23,10 @@ public class KafkaProducerConnection<K, V> extends KafkaConnection {
      * @throws ConnectionError
      */
     @Override
-    public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConnectionError {
+    public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                           @NonNull ConnectionManager connectionManager) throws ConnectionError {
         synchronized (state) {
-            super.init(xmlConfig);
+            super.init(xmlConfig, connectionManager);
             try {
                 setup();
                 state.state(EConnectionState.Initialized);
@@ -40,9 +41,10 @@ public class KafkaProducerConnection<K, V> extends KafkaConnection {
     @Override
     public Connection init(@NonNull String name,
                            @NonNull ZookeeperConnection connection,
-                           @NonNull String path) throws ConnectionError {
+                           @NonNull String path,
+                           @NonNull ConnectionManager connectionManager) throws ConnectionError {
         synchronized (state) {
-            super.init(name, connection, path);
+            super.init(name, connection, path, connectionManager);
             try {
                 setup();
                 state.state(EConnectionState.Initialized);
@@ -55,9 +57,10 @@ public class KafkaProducerConnection<K, V> extends KafkaConnection {
     }
 
     @Override
-    public Connection setup(@NonNull ConnectionSettings settings) throws ConnectionError {
+    public Connection setup(@NonNull ConnectionSettings settings,
+                            @NonNull ConnectionManager connectionManager) throws ConnectionError {
         synchronized (state) {
-            super.setup(settings);
+            super.setup(settings, connectionManager);
             try {
                 setup();
                 state.state(EConnectionState.Initialized);

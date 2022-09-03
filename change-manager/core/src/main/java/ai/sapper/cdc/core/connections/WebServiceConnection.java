@@ -61,7 +61,8 @@ public class WebServiceConnection implements Connection {
      * @throws ConnectionError
      */
     @Override
-    public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConnectionError {
+    public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                           @NonNull ConnectionManager connectionManager) throws ConnectionError {
         synchronized (state) {
             try {
                 config = new WebServiceConnectionConfig(xmlConfig);
@@ -82,7 +83,8 @@ public class WebServiceConnection implements Connection {
     @Override
     public Connection init(@NonNull String name,
                            @NonNull ZookeeperConnection connection,
-                           @NonNull String path) throws ConnectionError {
+                           @NonNull String path,
+                           @NonNull ConnectionManager connectionManager) throws ConnectionError {
         synchronized (state) {
             try {
                 if (state.isConnected()) {
@@ -115,7 +117,8 @@ public class WebServiceConnection implements Connection {
     }
 
     @Override
-    public Connection setup(@NonNull ConnectionSettings settings) throws ConnectionError {
+    public Connection setup(@NonNull ConnectionSettings settings,
+                            @NonNull ConnectionManager connectionManager) throws ConnectionError {
         Preconditions.checkArgument(settings instanceof WebServiceConnectionSettings);
         synchronized (state) {
             try {
