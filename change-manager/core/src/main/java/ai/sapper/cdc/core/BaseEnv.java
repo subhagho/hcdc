@@ -72,8 +72,10 @@ public abstract class BaseEnv {
     }
 
 
-    public DistributedLock createLock(@NonNull String path, @NonNull String name) throws Exception {
-        return lockBuilder.createLock(path, name);
+    public DistributedLock createLock(@NonNull String path,
+                                      @NonNull String module,
+                                      @NonNull String name) throws Exception {
+        return lockBuilder.createLock(path, module, name);
     }
 
     public void saveLocks() throws Exception {

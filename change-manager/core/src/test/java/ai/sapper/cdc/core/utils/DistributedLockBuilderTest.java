@@ -35,7 +35,7 @@ class DistributedLockBuilderTest {
     @Test
     void createLock() {
         try {
-            try (DistributedLock lock = env.createLock("/test/env/demo/locks", "LOCK_REPLICATION")) {
+            try (DistributedLock lock = env.createLock("/test/env/demo/locks", env.module(), "LOCK_REPLICATION")) {
                 assertNotNull(lock);
             }
             env.saveLocks();

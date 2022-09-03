@@ -58,8 +58,12 @@ public class DistributedLockBuilder {
         if (!connection.isConnected()) connection.connect();
 
         readLocks(configNode, module);
-        readLocks(configNode);
+        readZkLocks(configNode, module);
         return this;
+    }
+
+    private String getLockKey(String module, String name) {
+        return String.format("%s:%s", module, name);
     }
 
     private void readLocks(HierarchicalConfiguration<ImmutableNode> configNode,
@@ -76,11 +80,12 @@ public class DistributedLockBuilder {
             def.setModule(module);
             def.setPath(path);
 
-            lockDefs.put(name, def);
+            lockDefs.put(getLockKey(module, name), def);
         }
     }
 
-    private void readLocks(HierarchicalConfiguration<ImmutableNode> configNode) throws Exception {
+    private void readZkLocks(HierarchicalConfiguration<ImmutableNode> configNode,
+                             String module) throws Exception {
         zkPath = configNode.getString(Constants.CONFIG_ZK_NODE_PATH);
         if (Strings.isNullOrEmpty(zkPath)) return;
 
@@ -105,7 +110,7 @@ public class DistributedLockBuilder {
                         byte[] data = client.getData().forPath(lp);
                         if (data != null && data.length > 0) {
                             LockDef def = JSONUtils.read(data, LockDef.class);
-                            lockDefs.put(def.getName(), def);
+                            lockDefs.put(getLockKey(def.getModule(), def.getName()), def);
                         }
                     }
                 }
@@ -113,11 +118,14 @@ public class DistributedLockBuilder {
         }
     }
 
-    public DistributedLock createLock(@NonNull String path, @NonNull String name) throws Exception {
-        if (lockDefs().containsKey(name)) {
-            LockDef def = lockDefs().get(name);
+    public DistributedLock createLock(@NonNull String path,
+                                      @NonNull String module,
+                                      @NonNull String name) throws Exception {
+        String key = getLockKey(module, name);
+        if (lockDefs().containsKey(key)) {
+            LockDef def = lockDefs().get(key);
             if (def == null) {
-                throw new Exception(String.format("No lock definition found: [name=%s]", name));
+                throw new Exception(String.format("No lock definition found: [module=%s][name=%s]", module, name));
             }
             return new DistributedLock(def.getModule(),
                     def.getPath(),

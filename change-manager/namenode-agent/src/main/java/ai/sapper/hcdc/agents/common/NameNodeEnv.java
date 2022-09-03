@@ -205,7 +205,7 @@ public class NameNodeEnv extends BaseEnv {
 
     public DistributedLock createLock(@NonNull String name) throws NameNodeError {
         try {
-            return createLock(stateManager.zkPath(), name);
+            return createLock(stateManager.zkPath(), module(), name);
         } catch (Exception ex) {
             throw new NameNodeError(ex);
         }
