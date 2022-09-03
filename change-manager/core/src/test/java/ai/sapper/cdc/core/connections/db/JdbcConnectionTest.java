@@ -1,4 +1,4 @@
-package ai.sapper.cdc.core.connections;
+package ai.sapper.cdc.core.connections.db;
 
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
@@ -6,6 +6,7 @@ import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.DemoEnv;
 import com.google.common.base.Preconditions;
 import org.apache.commons.configuration2.XMLConfiguration;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +17,7 @@ import java.sql.Timestamp;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class S2ConnectionTest {
+class JdbcConnectionTest {
     private static final String __CONFIG_FILE = "src/test/resources/test-env.xml";
     private static XMLConfiguration xmlConfiguration = null;
     private static DemoEnv env = new DemoEnv();
@@ -28,10 +29,15 @@ class S2ConnectionTest {
         env.init(xmlConfiguration);
     }
 
+    @AfterAll
+    public static void stop() throws Exception {
+        env.close();
+    }
+
     @Test
     void connect() {
         try {
-            S2Connection connection = env.connectionManager().getConnection("test-s2", S2Connection.class);
+            JdbcConnection connection = env.connectionManager().getConnection("test-jdbc", JdbcConnection.class);
             assertNotNull(connection);
             connection.connect();
             assertTrue(connection.isConnected());
@@ -42,6 +48,7 @@ class S2ConnectionTest {
                 Timestamp ts = rs.getTimestamp(1);
                 System.out.println(ts);
             }
+            env.connectionManager().save();
         } catch (Throwable t) {
             DefaultLogger.stacktrace(t);
             fail(t);

@@ -8,7 +8,7 @@ import ai.sapper.cdc.common.utils.NetUtils;
 import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.BaseStateManager;
 import ai.sapper.cdc.core.DistributedLock;
-import ai.sapper.cdc.core.connections.HdfsConnection;
+import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.model.CDCAgentState;
 import ai.sapper.cdc.core.model.ModuleInstance;
 import ai.sapper.cdc.core.schema.SchemaManager;

@@ -1,8 +1,12 @@
-package ai.sapper.cdc.core.connections;
+package ai.sapper.cdc.core.connections.hadoop;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.connections.Connection;
+import ai.sapper.cdc.core.connections.ConnectionError;
+import ai.sapper.cdc.core.connections.ConnectionManager;
+import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import ai.sapper.cdc.core.connections.settngs.HdfsConnectionSettings;
 import com.google.common.base.Preconditions;

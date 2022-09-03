@@ -1,8 +1,6 @@
 package ai.sapper.hcdc.agents.model;
 
 import ai.sapper.cdc.common.model.SchemaEntity;
-import ai.sapper.cdc.common.schema.SchemaVersion;
-import ai.sapper.cdc.core.model.EFileType;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;

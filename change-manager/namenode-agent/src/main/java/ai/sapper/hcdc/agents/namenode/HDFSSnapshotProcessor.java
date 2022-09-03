@@ -13,7 +13,6 @@ import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.filters.DomainManager;
 import ai.sapper.cdc.core.filters.FilterAddCallback;
 import ai.sapper.cdc.core.messaging.*;
-import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.utils.FileSystemUtils;
 import ai.sapper.hcdc.agents.common.*;
 import ai.sapper.hcdc.agents.model.DFSBlockState;

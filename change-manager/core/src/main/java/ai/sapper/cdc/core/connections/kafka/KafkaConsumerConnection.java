@@ -1,5 +1,9 @@
-package ai.sapper.cdc.core.connections;
+package ai.sapper.cdc.core.connections.kafka;
 
+import ai.sapper.cdc.core.connections.Connection;
+import ai.sapper.cdc.core.connections.ConnectionError;
+import ai.sapper.cdc.core.connections.ConnectionManager;
+import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
@@ -7,15 +11,21 @@ import lombok.NonNull;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.tree.ImmutableNode;
-import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.TopicPartition;
 
 import javax.naming.ConfigurationException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
 
 @Getter
 @Accessors(fluent = true)
-public class KafkaProducerConnection<K, V> extends KafkaConnection {
-    private KafkaProducer<K, V> producer;
+public class KafkaConsumerConnection<K, V> extends KafkaConnection {
+    private static final String CONFIG_MAX_POLL_RECORDS = "max.poll.records";
+    private KafkaConsumer<K, V> consumer;
+    private int batchSize = 32; // Default BatchSize is 32
 
     /**
      * @param xmlConfig
@@ -28,7 +38,11 @@ public class KafkaProducerConnection<K, V> extends KafkaConnection {
         synchronized (state) {
             super.init(xmlConfig, connectionManager);
             try {
+                if (settings().getMode() != EKafkaClientMode.Consumer) {
+                    throw new ConfigurationException("Connection not initialized in Consumer mode.");
+                }
                 setup();
+
                 state.state(EConnectionState.Initialized);
             } catch (Throwable t) {
                 state.error(t);
@@ -46,6 +60,9 @@ public class KafkaProducerConnection<K, V> extends KafkaConnection {
         synchronized (state) {
             super.init(name, connection, path, connectionManager);
             try {
+                if (settings().getMode() != EKafkaClientMode.Consumer) {
+                    throw new ConfigurationException("Connection not initialized in Consumer mode.");
+                }
                 setup();
                 state.state(EConnectionState.Initialized);
             } catch (Throwable t) {
@@ -62,6 +79,9 @@ public class KafkaProducerConnection<K, V> extends KafkaConnection {
         synchronized (state) {
             super.setup(settings, connectionManager);
             try {
+                if (settings().getMode() != EKafkaClientMode.Consumer) {
+                    throw new ConfigurationException("Connection not initialized in Consumer mode.");
+                }
                 setup();
                 state.state(EConnectionState.Initialized);
             } catch (Throwable t) {
@@ -73,10 +93,14 @@ public class KafkaProducerConnection<K, V> extends KafkaConnection {
     }
 
     private void setup() throws Exception {
-        if (settings().getMode() != EKafkaClientMode.Producer) {
-            throw new ConfigurationException("Connection not initialized in Producer mode.");
-        }
         settings().setConnectionType(getClass());
+        Properties props = settings().getProperties();
+        if (props.containsKey(CONFIG_MAX_POLL_RECORDS)) {
+            String s = props.getProperty(CONFIG_MAX_POLL_RECORDS);
+            batchSize = Integer.parseInt(s);
+        } else {
+            props.setProperty(CONFIG_MAX_POLL_RECORDS, String.valueOf(batchSize));
+        }
     }
 
     /**
@@ -87,15 +111,18 @@ public class KafkaProducerConnection<K, V> extends KafkaConnection {
     public Connection connect() throws ConnectionError {
         synchronized (state) {
             Preconditions.checkState(connectionState() == EConnectionState.Initialized);
-            if (!state.isConnected()) {
-                try {
-                    producer = new KafkaProducer<K, V>(settings().getProperties());
-
-                    state.state(EConnectionState.Connected);
-                } catch (Throwable t) {
-                    state.error(t);
-                    throw new ConnectionError("Error opening HDFS connection.", t);
+            try {
+                consumer = new KafkaConsumer<K, V>(settings().getProperties());
+                List<TopicPartition> parts = new ArrayList<>(settings().getPartitions().size());
+                for (int part : settings().getPartitions()) {
+                    TopicPartition tp = new TopicPartition(settings().getTopic(), part);
+                    parts.add(tp);
                 }
+                consumer.assign(parts);
+                state.state(EConnectionState.Connected);
+            } catch (Throwable t) {
+                state.error(t);
+                throw new ConnectionError("Error opening HDFS connection.", t);
             }
         }
         return this;
@@ -120,9 +147,9 @@ public class KafkaProducerConnection<K, V> extends KafkaConnection {
             if (state.isConnected()) {
                 state.state(EConnectionState.Closed);
             }
-            if (producer != null) {
-                producer.close();
-                producer = null;
+            if (consumer != null) {
+                consumer.close();
+                consumer = null;
             }
         }
     }
@@ -132,7 +159,7 @@ public class KafkaProducerConnection<K, V> extends KafkaConnection {
      */
     @Override
     public boolean canSend() {
-        return true;
+        return false;
     }
 
     /**
@@ -140,6 +167,6 @@ public class KafkaProducerConnection<K, V> extends KafkaConnection {
      */
     @Override
     public boolean canReceive() {
-        return false;
+        return true;
     }
 }

@@ -1,12 +1,11 @@
 package ai.sapper.cdc.core.connections.settngs;
 
-import ai.sapper.cdc.core.connections.KafkaConnection;
+import ai.sapper.cdc.core.connections.kafka.KafkaConnection;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 @Getter

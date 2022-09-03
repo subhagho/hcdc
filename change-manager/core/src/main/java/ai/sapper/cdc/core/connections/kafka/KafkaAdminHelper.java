@@ -1,4 +1,4 @@
-package ai.sapper.cdc.core.connections;
+package ai.sapper.cdc.core.connections.kafka;
 
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.utils.DefaultLogger;

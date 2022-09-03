@@ -32,7 +32,7 @@
                 <path>/test/env/connections</path>
             </shared>
             <connection>
-                <type>ai.sapper.cdc.core.connections.HdfsConnection</type>
+                <type>ai.sapper.cdc.core.connections.hadoop.HdfsConnection</type>
                 <hdfs>
                     <name>test-hdfs</name>
                     <namenode>
@@ -50,7 +50,7 @@
                 </hdfs>
             </connection>
             <connection>
-                <type>ai.sapper.cdc.core.connections.HdfsHAConnection</type>
+                <type>ai.sapper.cdc.core.connections.hadoop.HdfsHAConnection</type>
                 <hdfs_ha>
                     <name>test-hdfs-ha</name>
                     <nameservice>ha-cluster</nameservice>
@@ -88,7 +88,7 @@
                 </rest>
             </connection>
             <connection>
-                <type>ai.sapper.cdc.core.connections.impl.BasicKafkaProducer</type>
+                <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer</type>
                 <kafka>
                     <name>test-kafka-producer</name>
                     <mode>Producer</mode>
@@ -99,7 +99,7 @@
                 </kafka>
             </connection>
             <connection>
-                <type>ai.sapper.cdc.core.connections.impl.BasicKafkaConsumer</type>
+                <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaConsumer</type>
                 <kafka>
                     <name>test-kafka-consumer</name>
                     <mode>Consumer</mode>
@@ -111,13 +111,23 @@
                 </kafka>
             </connection>
             <connection>
-                <type>ai.sapper.cdc.core.connections.S2Connection</type>
+                <type>ai.sapper.cdc.core.connections.db.S2Connection</type>
                 <s2>
                     <name>test-s2</name>
                     <jdbcUrl>jdbc:singlestore://localhost:3306</jdbcUrl>
                     <user>root</user>
                     <passwordKay>s2-test-password</passwordKay>
                 </s2>
+            </connection>
+            <connection>
+                <type>ai.sapper.cdc.core.connections.db.JdbcConnection</type>
+                <jdbc>
+                    <name>test-jdbc</name>
+                    <jdbcUrl>jdbc:mysql://localhost:3306</jdbcUrl>
+                    <user>root</user>
+                    <passwordKay>s2-test-password</passwordKay>
+                    <driver>com.mysql.jdbc.Driver</driver>
+                </jdbc>
             </connection>
         </connections>
     </config>

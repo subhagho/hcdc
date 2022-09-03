@@ -1,9 +1,9 @@
 package ai.sapper.cdc.core.io.impl.s3;
 
 import ai.sapper.cdc.core.io.PathInfo;
+import ai.sapper.cdc.core.io.impl.local.LocalPathInfo;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import ai.sapper.cdc.core.io.impl.local.LocalPathInfo;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;

@@ -1,7 +1,6 @@
 package ai.sapper.cdc.core.utils;
 
 import ai.sapper.cdc.common.utils.PathUtils;
-import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import ai.sapper.cdc.core.model.LockDef;

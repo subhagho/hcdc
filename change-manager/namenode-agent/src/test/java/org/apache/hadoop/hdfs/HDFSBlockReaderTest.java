@@ -2,7 +2,7 @@ package org.apache.hadoop.hdfs;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.connections.ConnectionManager;
-import ai.sapper.cdc.core.connections.HdfsHAConnection;
+import ai.sapper.cdc.core.connections.hadoop.HdfsHAConnection;
 import ai.sapper.cdc.core.model.HDFSBlockData;
 import ai.sapper.hcdc.agents.namenode.TestUtils;
 import com.google.common.base.Preconditions;

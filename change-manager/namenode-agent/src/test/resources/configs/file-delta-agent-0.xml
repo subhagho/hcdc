@@ -99,7 +99,7 @@
                 </rest>
             </connection>
             <connection>
-                <type>ai.sapper.cdc.core.connections.HdfsConnection</type>
+                <type>ai.sapper.cdc.core.connections.hadoop.HdfsConnection</type>
                 <hdfs>
                     <name>source-hdfs</name>
                     <namenode>
@@ -117,7 +117,7 @@
                 </hdfs>
             </connection>
             <connection>
-                <type>ai.sapper.cdc.core.connections.HdfsHAConnection</type>
+                <type>ai.sapper.cdc.core.connections.hadoop.HdfsHAConnection</type>
                 <hdfs_ha>
                     <name>source-hdfs-ha</name>
                     <nameservice>ha-cluster</nameservice>
@@ -144,7 +144,7 @@
                 </zookeeper>
             </connection>
             <connection>
-                <type>ai.sapper.cdc.core.connections.impl.BasicKafkaProducer</type>
+                <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer</type>
                 <kafka>
                     <name>delta-kafka-queue</name>
                     <mode>Producer</mode>
@@ -155,7 +155,7 @@
                 </kafka>
             </connection>
             <connection>
-                <type>ai.sapper.cdc.core.connections.impl.BasicKafkaProducer</type>
+                <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer</type>
                 <kafka>
                     <name>errors-kafka-queue</name>
                     <mode>Producer</mode>
@@ -166,7 +166,7 @@
                 </kafka>
             </connection>
             <connection>
-                <type>ai.sapper.cdc.core.connections.impl.BasicKafkaConsumer</type>
+                <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaConsumer</type>
                 <kafka>
                     <name>cdc-kafka-queue</name>
                     <mode>Consumer</mode>

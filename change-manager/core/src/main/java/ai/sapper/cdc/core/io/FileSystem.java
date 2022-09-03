@@ -1,7 +1,6 @@
 package ai.sapper.cdc.core.io;
 
 import ai.sapper.cdc.common.ConfigReader;
-import ai.sapper.cdc.common.model.SchemaEntity;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;

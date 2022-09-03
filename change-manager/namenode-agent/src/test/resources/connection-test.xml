@@ -2,7 +2,7 @@
 <configuration>
     <connections>
         <connection>
-            <type>ai.sapper.cdc.core.connections.HdfsConnection</type>
+            <type>ai.sapper.cdc.core.connections.hadoop.HdfsConnection</type>
             <hdfs>
                 <name>test-hdfs</name>
                 <namenode>
@@ -20,7 +20,7 @@
             </hdfs>
         </connection>
         <connection>
-            <type>ai.sapper.cdc.core.connections.HdfsHAConnection</type>
+            <type>ai.sapper.cdc.core.connections.hadoop.HdfsHAConnection</type>
             <hdfs_ha>
                 <name>test-hdfs-ha</name>
                 <nameservice>ha-cluster</nameservice>
@@ -58,7 +58,7 @@
             </rest>
         </connection>
         <connection>
-            <type>ai.sapper.cdc.core.connections.impl.BasicKafkaProducer</type>
+            <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer</type>
             <kafka>
                 <name>test-kafka-producer</name>
                 <mode>Producer</mode>
@@ -69,7 +69,7 @@
             </kafka>
         </connection>
         <connection>
-            <type>ai.sapper.cdc.core.connections.impl.BasicKafkaConsumer</type>
+            <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaConsumer</type>
             <kafka>
                 <name>test-kafka-consumer</name>
                 <mode>Consumer</mode>

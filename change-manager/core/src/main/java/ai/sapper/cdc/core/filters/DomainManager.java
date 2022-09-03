@@ -1,6 +1,5 @@
 package ai.sapper.cdc.core.filters;
 
-import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.filters.DomainFilter;
 import ai.sapper.cdc.common.filters.DomainFilterMatcher;
 import ai.sapper.cdc.common.filters.DomainFilters;
@@ -11,8 +10,8 @@ import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.BaseStateManager;
 import ai.sapper.cdc.core.connections.ConnectionManager;
-import ai.sapper.cdc.core.connections.HdfsConnection;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
+import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;

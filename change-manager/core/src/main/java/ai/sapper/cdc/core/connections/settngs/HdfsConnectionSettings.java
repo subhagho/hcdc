@@ -1,12 +1,10 @@
 package ai.sapper.cdc.core.connections.settngs;
 
-import ai.sapper.cdc.core.connections.HdfsConnection;
-import ai.sapper.cdc.core.connections.HdfsHAConnection;
+import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
+import ai.sapper.cdc.core.connections.hadoop.HdfsHAConnection;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.Map;
 
 public class HdfsConnectionSettings {
 

@@ -5,7 +5,7 @@ import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.cdc.core.connections.ConnectionManager;
-import ai.sapper.cdc.core.connections.HdfsConnection;
+import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.schema.SchemaManager;
 import ai.sapper.hcdc.agents.common.CDCDataConverter;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;

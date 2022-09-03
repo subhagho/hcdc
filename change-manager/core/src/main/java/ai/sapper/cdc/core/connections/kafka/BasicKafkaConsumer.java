@@ -1,15 +1,16 @@
-package ai.sapper.cdc.core.connections.impl;
+package ai.sapper.cdc.core.connections.kafka;
 
 import ai.sapper.cdc.core.connections.*;
+import ai.sapper.cdc.core.connections.kafka.KafkaConsumerConnection;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import lombok.NonNull;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.tree.ImmutableNode;
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.ByteArraySerializer;
-import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.apache.kafka.common.serialization.StringDeserializer;
 
-public class BasicKafkaProducer extends KafkaProducerConnection<String, byte[]> {
+public class BasicKafkaConsumer extends KafkaConsumerConnection<String, byte[]> {
     /**
      * @param xmlConfig
      * @return
@@ -20,9 +21,9 @@ public class BasicKafkaProducer extends KafkaProducerConnection<String, byte[]> 
                            @NonNull ConnectionManager connectionManager) throws ConnectionError {
         super.init(xmlConfig, connectionManager);
         settings().getProperties()
-                .put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+                .put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         settings().getProperties()
-                .put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
+                .put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class.getName());
 
         return this;
     }
@@ -34,9 +35,9 @@ public class BasicKafkaProducer extends KafkaProducerConnection<String, byte[]> 
                            @NonNull ConnectionManager connectionManager) throws ConnectionError {
         super.init(name, connection, path, connectionManager);
         settings().getProperties()
-                .put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+                .put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         settings().getProperties()
-                .put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
+                .put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class.getName());
 
         return this;
     }
@@ -46,9 +47,9 @@ public class BasicKafkaProducer extends KafkaProducerConnection<String, byte[]> 
                             @NonNull ConnectionManager connectionManager) throws ConnectionError {
         super.setup(settings, connectionManager);
         settings().getProperties()
-                .put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+                .put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         settings().getProperties()
-                .put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
+                .put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class.getName());
 
         return this;
     }

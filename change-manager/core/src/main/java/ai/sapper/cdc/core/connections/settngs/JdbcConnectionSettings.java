@@ -1,15 +1,15 @@
 package ai.sapper.cdc.core.connections.settngs;
 
-import ai.sapper.cdc.core.connections.S2Connection;
+import ai.sapper.cdc.core.connections.db.JdbcConnection;
 import ai.sapper.cdc.core.model.Encrypted;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class S2ConnectionSettings extends ConnectionSettings {
-    public static final String JDBC_S2_PREFIX = "jdbc:singlestore";
-
+public class JdbcConnectionSettings extends ConnectionSettings {
+    private String jdbcDriver;
+    private String jdbcDialect;
     private String jdbcUrl;
     private String db;
     private String user;
@@ -17,7 +17,7 @@ public class S2ConnectionSettings extends ConnectionSettings {
     private String password;
     private int poolSize = 32;
 
-    public S2ConnectionSettings() {
-        setConnectionType(S2Connection.class);
+    public JdbcConnectionSettings() {
+        setConnectionType(JdbcConnection.class);
     }
 }

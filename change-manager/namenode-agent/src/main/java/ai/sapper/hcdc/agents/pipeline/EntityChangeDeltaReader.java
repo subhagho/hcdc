@@ -3,7 +3,7 @@ package ai.sapper.hcdc.agents.pipeline;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.WebServiceClient;
 import ai.sapper.cdc.core.connections.ConnectionManager;
-import ai.sapper.cdc.core.connections.HdfsConnection;
+import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.io.Archiver;
 import ai.sapper.cdc.core.io.CDCFileSystem;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
