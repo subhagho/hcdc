@@ -1,9 +1,11 @@
 package ai.sapper.cdc.core.connections;
 
 import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.common.utils.ReflectionUtils;
+import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.NonNull;
@@ -185,7 +187,7 @@ public class ConnectionManager implements Closeable {
     }
 
     public void save(@NonNull Connection connection) throws ConnectionError {
-        Preconditions.checkNotNull(connection);
+        Preconditions.checkNotNull(this.connection);
         try {
             CuratorFramework client = this.connection.client();
             String path = new PathUtils.ZkPathBuilder(zkPath)
@@ -206,6 +208,31 @@ public class ConnectionManager implements Closeable {
             }
             client.setData().forPath(path,
                     connection.getClass().getCanonicalName().getBytes(StandardCharsets.UTF_8));
+        } catch (Exception ex) {
+            throw new ConnectionError(ex);
+        }
+    }
+
+    public void save() throws ConnectionError {
+        for (String name : connections.keySet()) {
+            Connection connection = connections.get(name);
+            save(connection);
+            DefaultLogger.LOGGER.info(
+                    String.format("Saved connection: [name=%s][type=%s]",
+                            name, connection.getClass().getCanonicalName()));
+        }
+    }
+
+    public void create(@NonNull Class<? extends Connection> type,
+                       @NonNull ConnectionSettings settings) throws ConnectionError {
+        try {
+            try (Connection connection = type
+                    .getDeclaredConstructor()
+                    .newInstance()
+                    .setup(settings)) {
+                connection.connect();
+                save(connection);
+            }
         } catch (Exception ex) {
             throw new ConnectionError(ex);
         }

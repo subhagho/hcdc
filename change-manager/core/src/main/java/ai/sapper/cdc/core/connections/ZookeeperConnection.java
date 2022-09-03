@@ -3,6 +3,7 @@ package ai.sapper.cdc.core.connections;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import ai.sapper.cdc.core.connections.settngs.ZookeeperSettings;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -111,6 +112,26 @@ public class ZookeeperConnection implements Connection {
                 Preconditions.checkNotNull(settings);
                 Preconditions.checkState(name.equals(settings.getName()));
 
+                setup();
+
+                state.state(EConnectionState.Initialized);
+            } catch (Exception ex) {
+                throw new ConnectionError(ex);
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Connection setup(@NonNull ConnectionSettings settings) throws ConnectionError {
+        Preconditions.checkArgument(settings instanceof ZookeeperSettings);
+        synchronized (state) {
+            try {
+                if (state.isConnected()) {
+                    close();
+                }
+                state.clear(EConnectionState.Unknown);
+                this.settings = (ZookeeperSettings) settings;
                 setup();
 
                 state.state(EConnectionState.Initialized);

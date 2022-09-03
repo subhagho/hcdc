@@ -1,6 +1,7 @@
 package ai.sapper.cdc.core.connections;
 
 import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import com.singlestore.jdbc.SingleStorePoolDataSource;
 import lombok.Getter;
 import lombok.NonNull;
@@ -31,6 +32,11 @@ public class S2Connection implements Connection {
     public Connection init(@NonNull String name,
                            @NonNull ZookeeperConnection connection,
                            @NonNull String path) throws ConnectionError {
+        return null;
+    }
+
+    @Override
+    public Connection setup(@NonNull ConnectionSettings settings) throws ConnectionError {
         return null;
     }
 

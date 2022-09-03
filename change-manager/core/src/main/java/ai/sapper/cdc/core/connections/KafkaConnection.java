@@ -3,6 +3,7 @@ package ai.sapper.cdc.core.connections;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import ai.sapper.cdc.core.connections.settngs.KafkaSettings;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -81,8 +82,21 @@ public abstract class KafkaConnection implements MessageConnection {
             settings = JSONUtils.read(data, KafkaSettings.class);
             Preconditions.checkNotNull(settings);
             Preconditions.checkState(name.equals(settings.getName()));
+        } catch (Exception ex) {
+            throw new ConnectionError(ex);
+        }
+        return this;
+    }
 
-            state.state(EConnectionState.Initialized);
+    @Override
+    public Connection setup(@NonNull ConnectionSettings settings) throws ConnectionError {
+        Preconditions.checkArgument(settings instanceof KafkaSettings);
+        try {
+            if (state.isConnected()) {
+                close();
+            }
+            state.clear(EConnectionState.Unknown);
+            this.settings = (KafkaSettings) settings;
         } catch (Exception ex) {
             throw new ConnectionError(ex);
         }

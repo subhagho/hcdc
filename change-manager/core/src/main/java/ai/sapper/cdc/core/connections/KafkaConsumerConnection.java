@@ -1,5 +1,6 @@
 package ai.sapper.cdc.core.connections;
 
+import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -36,6 +37,7 @@ public class KafkaConsumerConnection<K, V> extends KafkaConnection {
                     throw new ConfigurationException("Connection not initialized in Consumer mode.");
                 }
                 setup();
+
                 state.state(EConnectionState.Initialized);
             } catch (Throwable t) {
                 state.error(t);
@@ -65,7 +67,26 @@ public class KafkaConsumerConnection<K, V> extends KafkaConnection {
         return this;
     }
 
+    @Override
+    public Connection setup(@NonNull ConnectionSettings settings) throws ConnectionError {
+        synchronized (state) {
+            super.setup(settings);
+            try {
+                if (settings().getMode() != EKafkaClientMode.Consumer) {
+                    throw new ConfigurationException("Connection not initialized in Consumer mode.");
+                }
+                setup();
+                state.state(EConnectionState.Initialized);
+            } catch (Throwable t) {
+                state.error(t);
+                throw new ConnectionError("Error opening HDFS connection.", t);
+            }
+        }
+        return this;
+    }
+
     private void setup() throws Exception {
+        settings().setConnectionType(getClass());
         Properties props = settings().getProperties();
         if (props.containsKey(CONFIG_MAX_POLL_RECORDS)) {
             String s = props.getProperty(CONFIG_MAX_POLL_RECORDS);

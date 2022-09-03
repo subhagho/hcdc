@@ -3,6 +3,7 @@ package ai.sapper.cdc.core.connections;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import ai.sapper.cdc.core.connections.settngs.HdfsConnectionSettings;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -111,6 +112,24 @@ public class HdfsConnection implements Connection {
                 setupHadoopConfig();
 
                 state.state(EConnectionState.Initialized);
+            } catch (Exception ex) {
+                throw new ConnectionError(ex);
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Connection setup(@NonNull ConnectionSettings settings) throws ConnectionError {
+        Preconditions.checkArgument(settings instanceof HdfsConnectionSettings.HdfsSettings);
+        synchronized (state) {
+            try {
+                if (state.isConnected()) {
+                    close();
+                }
+                this.settings = (HdfsConnectionSettings.HdfsBaseSettings) settings;
+                setupHadoopConfig();
+                state.clear(EConnectionState.Unknown);
             } catch (Exception ex) {
                 throw new ConnectionError(ex);
             }

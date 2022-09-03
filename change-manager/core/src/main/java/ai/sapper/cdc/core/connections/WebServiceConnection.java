@@ -3,6 +3,7 @@ package ai.sapper.cdc.core.connections;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import ai.sapper.cdc.core.connections.settngs.WebServiceConnectionSettings;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -113,6 +114,25 @@ public class WebServiceConnection implements Connection {
         return this;
     }
 
+    @Override
+    public Connection setup(@NonNull ConnectionSettings settings) throws ConnectionError {
+        Preconditions.checkArgument(settings instanceof WebServiceConnectionSettings);
+        synchronized (state) {
+            try {
+                this.settings = (WebServiceConnectionSettings) settings;
+                client = new JerseyClientBuilder().build();
+                name = this.settings.getName();
+                endpoint = new URL(this.settings.getEndpoint());
+
+                state.state(EConnectionState.Initialized);
+                return this;
+            } catch (Exception ex) {
+                state.error(ex);
+                throw new ConnectionError(ex);
+            }
+        }
+    }
+
     /**
      * @return
      * @throws ConnectionError
@@ -198,12 +218,12 @@ public class WebServiceConnection implements Connection {
             if (get() == null) {
                 throw new ConfigurationException("WebService connection Configuration not set or is NULL");
             }
-            settings.setName( get().getString(Constants.CONFIG_NAME));
+            settings.setName(get().getString(Constants.CONFIG_NAME));
             if (Strings.isNullOrEmpty(settings.getName())) {
                 throw new ConfigurationException(String.format("WebService connection Configuration Error: missing [%s]",
                         Constants.CONFIG_NAME));
             }
-            settings.setEndpoint( get().getString(Constants.CONFIG_URL));
+            settings.setEndpoint(get().getString(Constants.CONFIG_URL));
             if (Strings.isNullOrEmpty(settings.getEndpoint())) {
                 throw new ConfigurationException(String.format("WebService connection Configuration Error: missing [%s]",
                         Constants.CONFIG_URL));

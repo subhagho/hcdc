@@ -3,6 +3,7 @@ package ai.sapper.cdc.core.connections;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import ai.sapper.cdc.core.connections.settngs.HdfsConnectionSettings;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -67,6 +68,27 @@ public class HdfsHAConnection extends HdfsConnection {
         return this;
     }
 
+    @Override
+    public Connection setup(@NonNull ConnectionSettings settings) throws ConnectionError {
+        Preconditions.checkArgument(settings instanceof HdfsConnectionSettings.HdfsHASettings);
+        synchronized (state) {
+            try {
+                if (state.isConnected()) {
+                    close();
+                }
+                state.clear(EConnectionState.Unknown);
+                this.settings = (HdfsConnectionSettings.HdfsBaseSettings) settings;
+
+                setupHadoopConfig();
+
+                state.state(EConnectionState.Initialized);
+            } catch (Throwable t) {
+                state.error(t);
+                throw new ConnectionError("Error opening HDFS connection.", t);
+            }
+        }
+        return this;
+    }
 
     @Override
     public Connection init(@NonNull String name, @NonNull ZookeeperConnection connection, @NonNull String path) throws ConnectionError {

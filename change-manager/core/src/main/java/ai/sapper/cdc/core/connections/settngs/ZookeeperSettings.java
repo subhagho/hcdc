@@ -1,12 +1,15 @@
 package ai.sapper.cdc.core.connections.settngs;
 
+import ai.sapper.cdc.core.connections.ZookeeperConnection;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class ZookeeperSettings {
-    private String name;
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
+        property = "@class")
+public class ZookeeperSettings extends ConnectionSettings {
     private String connectionString;
     private String authenticationHandler;
     private String namespace;
@@ -15,4 +18,8 @@ public class ZookeeperSettings {
     private int retryCount = 3;
     private int connectionTimeout = -1;
     private int sessionTimeout = -1;
+
+    public ZookeeperSettings() {
+        setConnectionType(ZookeeperConnection.class);
+    }
 }

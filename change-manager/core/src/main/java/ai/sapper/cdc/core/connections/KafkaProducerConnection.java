@@ -1,5 +1,6 @@
 package ai.sapper.cdc.core.connections;
 
+import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -26,9 +27,7 @@ public class KafkaProducerConnection<K, V> extends KafkaConnection {
         synchronized (state) {
             super.init(xmlConfig);
             try {
-                if (settings().getMode() != EKafkaClientMode.Producer) {
-                    throw new ConfigurationException("Connection not initialized in Producer mode.");
-                }
+                setup();
                 state.state(EConnectionState.Initialized);
             } catch (Throwable t) {
                 state.error(t);
@@ -45,9 +44,7 @@ public class KafkaProducerConnection<K, V> extends KafkaConnection {
         synchronized (state) {
             super.init(name, connection, path);
             try {
-                if (settings().getMode() != EKafkaClientMode.Producer) {
-                    throw new ConfigurationException("Connection not initialized in Producer mode.");
-                }
+                setup();
                 state.state(EConnectionState.Initialized);
             } catch (Throwable t) {
                 state.error(t);
@@ -55,6 +52,28 @@ public class KafkaProducerConnection<K, V> extends KafkaConnection {
             }
         }
         return this;
+    }
+
+    @Override
+    public Connection setup(@NonNull ConnectionSettings settings) throws ConnectionError {
+        synchronized (state) {
+            super.setup(settings);
+            try {
+                setup();
+                state.state(EConnectionState.Initialized);
+            } catch (Throwable t) {
+                state.error(t);
+                throw new ConnectionError("Error opening HDFS connection.", t);
+            }
+        }
+        return this;
+    }
+
+    private void setup() throws Exception {
+        if (settings().getMode() != EKafkaClientMode.Producer) {
+            throw new ConfigurationException("Connection not initialized in Producer mode.");
+        }
+        settings().setConnectionType(getClass());
     }
 
     /**
