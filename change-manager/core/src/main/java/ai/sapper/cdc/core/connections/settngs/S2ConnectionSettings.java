@@ -1,5 +1,6 @@
 package ai.sapper.cdc.core.connections.settngs;
 
+import ai.sapper.cdc.core.connections.S2Connection;
 import ai.sapper.cdc.core.model.Encrypted;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,4 +16,8 @@ public class S2ConnectionSettings extends ConnectionSettings {
     @Encrypted
     private String password;
     private int poolSize = 32;
+
+    public S2ConnectionSettings() {
+        setConnectionType(S2Connection.class);
+    }
 }
