@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <configuration>
+    <env>DEV</env>
     <agent>
         <module>CDC-PROCESSORS</module>
         <instance>EntityChangeDeltaConsumer</instance>
-        <env>DEV</env>
         <source>ha-cluster</source>
         <enableHeartbeat>true</enableHeartbeat>
         <needHadoop>false</needHadoop>

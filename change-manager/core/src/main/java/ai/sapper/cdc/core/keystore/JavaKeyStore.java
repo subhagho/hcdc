@@ -1,4 +1,4 @@
-package ai.sapper.cdc.core;
+package ai.sapper.cdc.core.keystore;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;

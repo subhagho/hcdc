@@ -113,7 +113,7 @@ public class NameNodeEnv extends BaseEnv {
             moduleInstance.setInstanceId(moduleInstance.id());
 
             stateManager = config.stateManagerClass.newInstance();
-            stateManager.withEnvironment(config.env, name)
+            stateManager.withEnvironment(environment(), name)
                     .withModuleInstance(moduleInstance);
             stateManager
                     .init(configNode, connectionManager(), config.source);
@@ -133,7 +133,7 @@ public class NameNodeEnv extends BaseEnv {
             if (ConfigReader.checkIfNodeExists(configNode,
                     SchemaManager.SchemaManagerConfig.Constants.__CONFIG_PATH)) {
                 schemaManager = new SchemaManager();
-                schemaManager.init(configNode, connectionManager(), config.env, config.source);
+                schemaManager.init(configNode, connectionManager(), environment(), config.source);
             }
 
             if (ConfigReader.checkIfNodeExists(configNode,
@@ -323,7 +323,6 @@ public class NameNodeEnv extends BaseEnv {
     public static class NameNEnvConfig extends ConfigReader {
         private static class Constants {
             private static final String __CONFIG_PATH = "agent";
-            private static final String CONFIG_ENV = "env";
             private static final String CONFIG_MODULE = "module";
             private static final String CONFIG_INSTANCE = "instance";
             private static final String CONFIG_HEARTBEAT = "enableHeartbeat";
@@ -346,7 +345,6 @@ public class NameNodeEnv extends BaseEnv {
             private static final String CONFIG_LOAD_HADOOP = "needHadoop";
         }
 
-        private String env;
         private String module;
         private String instance;
         private String source;
@@ -373,11 +371,6 @@ public class NameNodeEnv extends BaseEnv {
                 throw new ConfigurationException("HDFS Configuration not set or is NULL");
             }
             try {
-                env = get().getString(Constants.CONFIG_ENV);
-                if (Strings.isNullOrEmpty(env)) {
-                    throw new ConfigurationException(
-                            String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_ENV));
-                }
                 module = get().getString(Constants.CONFIG_MODULE);
                 if (Strings.isNullOrEmpty(module)) {
                     throw new ConfigurationException(

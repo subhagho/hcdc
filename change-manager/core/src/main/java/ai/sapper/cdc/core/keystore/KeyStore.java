@@ -1,4 +1,4 @@
-package ai.sapper.cdc.core;
+package ai.sapper.cdc.core.keystore;
 
 import lombok.AccessLevel;
 import lombok.Getter;

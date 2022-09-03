@@ -2,6 +2,8 @@ package ai.sapper.cdc.core;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.connections.TestUtils;
+import ai.sapper.cdc.core.keystore.JavaKeyStore;
+import ai.sapper.cdc.core.keystore.KeyStore;
 import com.google.common.base.Preconditions;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.XMLConfiguration;

@@ -5,7 +5,7 @@ import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.common.utils.ReflectionUtils;
-import ai.sapper.cdc.core.KeyStore;
+import ai.sapper.cdc.core.keystore.KeyStore;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -35,7 +35,6 @@ public class ConnectionManager implements Closeable {
         public static final String CONFIG_SHARED = "shared";
         public static final String CONFIG_SHARED_ZK = String.format("%s.connection", CONFIG_SHARED);
         public static final String CONFIG_SHARED_ZK_PATH = String.format("%s.path", CONFIG_SHARED);
-
         public static final String PATH_ZK_CLASS = "class";
     }
 
@@ -45,6 +44,12 @@ public class ConnectionManager implements Closeable {
     private ZookeeperConnection connection;
     private String zkPath;
     private KeyStore keyStore;
+    private String environment;
+
+    public ConnectionManager withEnv(@NonNull String environment) {
+        this.environment = environment;
+        return this;
+    }
 
     public ConnectionManager init(@NonNull HierarchicalConfiguration<ImmutableNode> config,
                                   String pathPrefix) throws ConnectionError {
@@ -89,7 +94,12 @@ public class ConnectionManager implements Closeable {
             if (connection == null) {
                 throw new Exception(String.format("ZooKeeper connection not found. [name=%s]", zk));
             }
-            String path = config.getString(Constants.CONFIG_SHARED_ZK_PATH);
+            String bp = config.getString(Constants.CONFIG_SHARED_ZK_PATH);
+
+            String path = new PathUtils.ZkPathBuilder(bp)
+                    .withPath(Constants.__CONFIG_PATH)
+                    .withPath(environment)
+                    .build();
             if (Strings.isNullOrEmpty(path)) {
                 throw new Exception(
                         String.format("ZooKeeper path not found. [path=%s]", Constants.CONFIG_SHARED_ZK_PATH));

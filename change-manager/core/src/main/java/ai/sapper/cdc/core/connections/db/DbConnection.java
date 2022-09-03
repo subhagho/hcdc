@@ -2,7 +2,7 @@ package ai.sapper.cdc.core.connections.db;
 
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
-import ai.sapper.cdc.core.KeyStore;
+import ai.sapper.cdc.core.keystore.KeyStore;
 import ai.sapper.cdc.core.connections.Connection;
 import ai.sapper.cdc.core.connections.ConnectionError;
 import ai.sapper.cdc.core.connections.ConnectionManager;

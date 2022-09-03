@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <configuration>
+    <env>DEV</env>
     <agent>
         <module>TEST-ENV</module>
-        <env>DEV</env>
         <instance>Test</instance>
         <source>demo</source>
         <connections>
@@ -10,18 +10,18 @@
         </connections>
     </agent>
     <keystore>
-        <class>ai.sapper.cdc.core.JavaKeyStore</class>
+        <class>ai.sapper.cdc.core.keystore.JavaKeyStore</class>
         <path>src/test/resources/test-keystore.jks</path>
     </keystore>
     <locks>
+        <connection>test-zk</connection>
+        <path>/test/env</path>
         <lock>
             <name>global</name>
-            <connection>zk-state-connection</connection>
             <lock-node>NN-GLOBAL-LOCK</lock-node>
         </lock>
         <lock>
             <name>LOCK_REPLICATION</name>
-            <connection>zk-state-connection</connection>
             <lock-node>NN-REPLICATION-LOCK</lock-node>
         </lock>
     </locks>
@@ -29,7 +29,7 @@
         <connections>
             <shared>
                 <connection>test-zk</connection>
-                <path>/test/env/connections</path>
+                <path>/test/env</path>
             </shared>
             <connection>
                 <type>ai.sapper.cdc.core.connections.hadoop.HdfsConnection</type>
