@@ -14,6 +14,7 @@ import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,13 @@ public abstract class BaseEnv {
     }
 
     public BaseEnv init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
+        String temp = System.getProperty("java.io.tmpdir");
+        temp = String.format("%s/sapper/cdc/%s", temp, getClass().getSimpleName());
+        File tdir = new File(temp);
+        if (!tdir.exists()) {
+            tdir.mkdirs();
+        }
+        System.setProperty("java.io.tmpdir", temp);
         environment = xmlConfig.getString(Constants.CONFIG_ENV_NAME);
         if (Strings.isNullOrEmpty(environment)) {
             throw new ConfigurationException(

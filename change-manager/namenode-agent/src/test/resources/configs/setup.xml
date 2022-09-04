@@ -122,7 +122,17 @@
                         <topic>ha-cluster.cdc</topic>
                     </kafka>
                 </connection>
-
+                <connection>
+                    <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer</type>
+                    <kafka>
+                        <name>producer-edits-queue</name>
+                        <mode>Producer</mode>
+                        <producer>
+                            <config>src/test/resources/configs/kafka/producer-editlog.properties</config>
+                        </producer>
+                        <topic>ha-cluster.edits</topic>
+                    </kafka>
+                </connection>
                 <connection>
                     <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer</type>
                     <kafka>
