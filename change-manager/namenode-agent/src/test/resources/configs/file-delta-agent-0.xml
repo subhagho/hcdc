@@ -27,10 +27,6 @@
                     <connection>zk-state-connection</connection>
                     <schema>output</schema>
                 </schema>
-                <schema>
-                    <basePath>/ai/sapper/cdc/registry/output</basePath>
-                    <connection>zk-state-connection</connection>
-                </schema>
             </managers>
             <processor>
                 <files>
@@ -59,7 +55,7 @@
                     </receiver>
                     <errorQueue>
                         <connectionType>kafka</connectionType>
-                        <connection>producer-delta-errors-queue</connection>
+                        <connection>producer-errors-files-queue</connection>
                         <!--partitioner></partitioner-->
                     </errorQueue>
                     <readBatchTimeout>5000</readBatchTimeout>
