@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
+import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 
 @Getter
@@ -17,12 +18,16 @@ public class DemoEnv extends BaseEnv {
 
     private HierarchicalConfiguration<ImmutableNode> config;
     private final String module = "TEST";
-    public DemoEnv init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws Exception {
+
+    public BaseEnv init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
+        super.init(xmlConfig);
+
         withStoreKey(TEST_PASSWD);
-        config = xmlConfig.configurationAt(__CONFIG_PATH);
+        config = rootConfig().configurationAt(__CONFIG_PATH);
+
         String cp = config.getString(CONFIG_CONNECTIONS);
         Preconditions.checkState(!Strings.isNullOrEmpty(cp));
-        super.init(xmlConfig, module, cp);
+        super.setup(module, cp);
 
         return this;
     }

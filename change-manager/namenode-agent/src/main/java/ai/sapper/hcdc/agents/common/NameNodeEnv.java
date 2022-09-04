@@ -71,14 +71,16 @@ public class NameNodeEnv extends BaseEnv {
                     new Thread(new ShutdownThread()
                             .name(name)
                             .env(this)));
-            configNode = xmlConfig.configurationAt(NameNEnvConfig.Constants.__CONFIG_PATH);
+            super.init(xmlConfig);
 
-            this.config = new NameNEnvConfig(xmlConfig);
+            configNode = rootConfig().configurationAt(NameNEnvConfig.Constants.__CONFIG_PATH);
+
+            this.config = new NameNEnvConfig(rootConfig());
             this.config.read();
 
             hostIPs = NetUtils.getInetAddresses();
 
-            super.init(xmlConfig, config.module, config.connectionConfigPath);
+            super.setup(config.module, config.connectionConfigPath);
 
             if (config().readHadoopConfig) {
                 hdfsConnection = connectionManager().getConnection(config.hdfsAdminConnection, HdfsConnection.class);

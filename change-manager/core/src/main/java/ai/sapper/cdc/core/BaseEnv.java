@@ -23,6 +23,7 @@ import java.util.Map;
 public abstract class BaseEnv {
     public static class Constants {
         public static final String CONFIG_ENV = "env";
+        public static final String CONFIG_ENV_NAME = String.format("%s.name", CONFIG_ENV);
     }
 
     private ConnectionManager connectionManager;
@@ -30,23 +31,30 @@ public abstract class BaseEnv {
     private KeyStore keyStore;
     private final DistributedLockBuilder lockBuilder = new DistributedLockBuilder();
     private String environment;
+    private HierarchicalConfiguration<ImmutableNode> rootConfig;
 
     public BaseEnv withStoreKey(@NonNull String storeKey) {
         this.storeKey = storeKey;
         return this;
     }
 
-    public void init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                     @NonNull String module,
-                     @NonNull String connectionsConfigPath) throws ConfigurationException {
+    public BaseEnv init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
+        environment = xmlConfig.getString(Constants.CONFIG_ENV_NAME);
+        if (Strings.isNullOrEmpty(environment)) {
+            throw new ConfigurationException(
+                    String.format("Base Env: missing parameter. [name=%s]", Constants.CONFIG_ENV_NAME));
+        }
+        rootConfig = xmlConfig.configurationAt(Constants.CONFIG_ENV);
+
+        return this;
+    }
+
+    public void setup(@NonNull String module,
+                      @NonNull String connectionsConfigPath) throws ConfigurationException {
         try {
-            environment = xmlConfig.getString(Constants.CONFIG_ENV);
-            if (Strings.isNullOrEmpty(environment)) {
-                throw new ConfigurationException(
-                        String.format("Base Env: missing parameter. [name=%s]", Constants.CONFIG_ENV));
-            }
-            if (ConfigReader.checkIfNodeExists(xmlConfig, KeyStore.__CONFIG_PATH)) {
-                String c = xmlConfig.getString(KeyStore.CONFIG_KEYSTORE_CLASS);
+
+            if (ConfigReader.checkIfNodeExists(rootConfig, KeyStore.__CONFIG_PATH)) {
+                String c = rootConfig.getString(KeyStore.CONFIG_KEYSTORE_CLASS);
                 if (Strings.isNullOrEmpty(c)) {
                     throw new ConfigurationException(
                             String.format("Key Store class not defined. [config=%s]", KeyStore.CONFIG_KEYSTORE_CLASS));
@@ -54,17 +62,17 @@ public abstract class BaseEnv {
                 Class<? extends KeyStore> cls = (Class<? extends KeyStore>) Class.forName(c);
                 keyStore = cls.getDeclaredConstructor().newInstance();
                 keyStore.withPassword(storeKey)
-                        .init(xmlConfig);
+                        .init(rootConfig);
             }
             this.storeKey = null;
 
             connectionManager = new ConnectionManager()
                     .withKeyStore(keyStore)
                     .withEnv(environment);
-            connectionManager.init(xmlConfig, connectionsConfigPath);
+            connectionManager.init(rootConfig, connectionsConfigPath);
 
             lockBuilder.withEnv(environment)
-                    .init(xmlConfig, module, connectionManager);
+                    .init(rootConfig, module, connectionManager);
 
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
