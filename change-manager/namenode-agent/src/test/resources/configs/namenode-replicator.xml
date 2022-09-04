@@ -42,7 +42,7 @@
             <connections>
                 <shared>
                     <connection>zk-state-connection</connection>
-                    <path>/ai/sapper/cdc/registry/connections</path>
+                    <path>/ai/sapper/cdc/registry</path>
                 </shared>
                 <connection>
                     <type>ai.sapper.cdc.core.connections.ZookeeperConnection</type>
