@@ -75,10 +75,11 @@ public class SchemaManager {
 
     private SchemaManagerConfig config;
     private ZookeeperConnection zkConnection;
-    private DistributedLock lock;
+    private DistributedLock writeLock;
     private String environment;
     private String source;
     private String zkPath;
+    private String lockPath;
     private LRUCache<SchemaEntity, CacheEntity> cache = null;
 
     public SchemaManager() {
@@ -90,23 +91,23 @@ public class SchemaManager {
         this.zkPath = schemaManager.zkPath;
         this.environment = schemaManager.environment;
         this.source = schemaManager.source;
+        this.lockPath = schemaManager.lockPath;
 
-        lock = new DistributedLock(SchemaManagerConfig.Constants.CONST_LOCK_NAMESPACE,
-                SchemaManagerConfig.Constants.CONST_LOCK_NAME,
-                config.basePath)
-                .withConnection(zkConnection);
+        createWriteLock();
     }
 
     public SchemaManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                               @NonNull ConnectionManager manger,
                               @NonNull String environment,
-                              @NonNull String source) throws ConfigurationException {
+                              @NonNull String source,
+                              @NonNull String lockPath) throws ConfigurationException {
         try {
             config = new SchemaManagerConfig(xmlConfig);
             config.read();
 
             this.environment = environment;
             this.source = source;
+            this.lockPath = lockPath;
 
             zkConnection = manger.getConnection(config.connection(), ZookeeperConnection.class);
             if (zkConnection == null) {
@@ -117,17 +118,14 @@ public class SchemaManager {
 
             zkPath = new PathUtils.ZkPathBuilder(config.basePath)
                     .withPath(environment)
-                    .withPath(config.schema)
+                    .withPath(SCHEMA_PATH)
                     .withPath(source)
                     .build();
             CuratorFramework client = zkConnection().client();
             if (client.checkExists().forPath(zkPath) == null) {
                 client.create().creatingParentsIfNeeded().forPath(zkPath);
             }
-            lock = new DistributedLock(SchemaManagerConfig.Constants.CONST_LOCK_NAMESPACE,
-                    SchemaManagerConfig.Constants.CONST_LOCK_NAME,
-                    config.basePath)
-                    .withConnection(zkConnection);
+            createWriteLock();
             if (config.cached) {
                 cache = new LRUCache<>(config.cacheSize);
             }
@@ -135,6 +133,13 @@ public class SchemaManager {
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
         }
+    }
+
+    private void createWriteLock() {
+        writeLock = new DistributedLock(SchemaManagerConfig.Constants.CONST_LOCK_NAMESPACE,
+                SchemaManagerConfig.Constants.CONST_LOCK_NAME,
+                lockPath)
+                .withConnection(zkConnection);
     }
 
     private EntityDef checkCache(SchemaEntity schemaEntity, SchemaVersion version) {
@@ -185,7 +190,7 @@ public class SchemaManager {
     public EntityDef save(@NonNull Schema schema,
                           @NonNull SchemaEntity schemaEntity,
                           @NonNull SchemaVersion version) throws Exception {
-        lock.lock();
+        writeLock.lock();
         try {
             String path = getZkPath(schemaEntity, version);
             CuratorFramework client = zkConnection().client();
@@ -206,7 +211,7 @@ public class SchemaManager {
             putInCache(schemaEntity, version, en);
             return en;
         } finally {
-            lock.unlock();
+            writeLock.unlock();
         }
     }
 
@@ -247,7 +252,7 @@ public class SchemaManager {
 
     public boolean delete(@NonNull SchemaEntity schemaEntity,
                           @NonNull SchemaVersion version) throws Exception {
-        lock.lock();
+        writeLock.lock();
         try {
             String path = getZkPath(schemaEntity, version);
             CuratorFramework client = zkConnection().client();
@@ -257,12 +262,12 @@ public class SchemaManager {
             }
             return false;
         } finally {
-            lock.unlock();
+            writeLock.unlock();
         }
     }
 
     public boolean delete(@NonNull SchemaEntity schemaEntity) throws Exception {
-        lock.lock();
+        writeLock.lock();
         try {
             String path = getZkPath(schemaEntity);
             CuratorFramework client = zkConnection().client();
@@ -272,7 +277,7 @@ public class SchemaManager {
             }
             return false;
         } finally {
-            lock.unlock();
+            writeLock.unlock();
         }
     }
 
@@ -365,7 +370,7 @@ public class SchemaManager {
 
     private String getZkPath() {
         return new PathUtils.ZkPathBuilder(zkPath)
-                .withPath(SCHEMA_PATH)
+                .withPath(config().schema)
                 .build();
     }
 

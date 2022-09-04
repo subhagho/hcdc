@@ -4,7 +4,7 @@
         <name>DEV</name>
         <agent>
             <module>EDITS-LOG-PROCESSORS</module>
-            <instance>HDFSSchemaScanner/0</instance>
+            <instance>HDFSSchemaScanner</instance>
             <source>ha-cluster</source>
             <needHadoop>false</needHadoop>
             <connections>
@@ -17,7 +17,7 @@
                     <connection>zk-state-connection</connection>
                 </state>
                 <domain>
-                    <basePath>/ai/sapper/cdc/registry/hdfs</basePath>
+                    <basePath>/ai/sapper/cdc/registry</basePath>
                     <connection>zk-state-connection</connection>
                     <hdfs>source-hdfs-ha</hdfs>
                     <module>hdfs</module>

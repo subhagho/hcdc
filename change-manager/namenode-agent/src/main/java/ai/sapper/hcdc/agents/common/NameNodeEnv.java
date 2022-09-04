@@ -135,7 +135,11 @@ public class NameNodeEnv extends BaseEnv {
             if (ConfigReader.checkIfNodeExists(configNode,
                     SchemaManager.SchemaManagerConfig.Constants.__CONFIG_PATH)) {
                 schemaManager = new SchemaManager();
-                schemaManager.init(configNode, connectionManager(), environment(), config.source);
+                schemaManager.init(configNode,
+                        connectionManager(),
+                        environment(),
+                        config.source,
+                        lockBuilder().zkPath());
             }
 
             if (ConfigReader.checkIfNodeExists(configNode,
@@ -147,7 +151,7 @@ public class NameNodeEnv extends BaseEnv {
                                     AuditLogger.CONFIG_AUDIT_CLASS));
                 }
                 Class<? extends AuditLogger> cls = (Class<? extends AuditLogger>) Class.forName(c);
-                auditLogger = cls.newInstance();
+                auditLogger = cls.getDeclaredConstructor().newInstance();
                 auditLogger.init(configNode);
             }
             state.state(ENameNEnvState.Initialized);

@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 
 @Getter
-@Setter
 @Accessors(fluent = true)
 public class DistributedLockBuilder {
     public static class Constants {
