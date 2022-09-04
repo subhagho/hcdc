@@ -18,6 +18,8 @@ import lombok.NonNull;
 import lombok.experimental.Accessors;
 import org.apache.curator.framework.CuratorFramework;
 
+import java.sql.SQLException;
+
 @Getter
 @Accessors(fluent = true)
 public abstract class DbConnection implements Connection {
@@ -125,6 +127,8 @@ public abstract class DbConnection implements Connection {
         }
         return builder.toString();
     }
+
+    public abstract java.sql.Connection getConnection() throws SQLException;
 
     @Override
     public Throwable error() {
