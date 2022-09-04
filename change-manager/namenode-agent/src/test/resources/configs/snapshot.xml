@@ -19,11 +19,13 @@
             <domain>
                 <basePath>/ai/sapper/cdc/registry</basePath>
                 <connection>zk-state-connection</connection>
+                <hdfs>source-hdfs-ha</hdfs>
                 <module>hdfs</module>
             </domain>
             <schema>
-                <basePath>/ai/sapper/cdc/registry/hdfs</basePath>
+                <basePath>/ai/sapper/cdc/registry</basePath>
                 <connection>zk-state-connection</connection>
+                <schema>hdfs</schema>
             </schema>
         </managers>
         <useSSL>false</useSSL>
@@ -31,12 +33,12 @@
             <snapshot>
                 <sender>
                     <connectionType>kafka</connectionType>
-                    <connection>cdc-kafka-queue</connection>
+                    <connection>producer-cdc-queue</connection>
                     <!--partitioner></partitioner-->
                 </sender>
                 <tnxSender>
                     <connectionType>kafka</connectionType>
-                    <connection>edits-kafka-queue</connection>
+                    <connection>producer-edits-queue</connection>
                     <!--partitioner></partitioner-->
                 </tnxSender>
                 <readBatchTimeout>5000</readBatchTimeout>
