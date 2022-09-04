@@ -6,6 +6,7 @@ import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.common.utils.ReflectionUtils;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
+import ai.sapper.cdc.core.connections.settngs.EConnectionType;
 import ai.sapper.cdc.core.keystore.KeyStore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -303,5 +304,20 @@ public class ConnectionManager implements Closeable {
             }
             return false;
         }
+    }
+
+    public Map<String, ConnectionSettings> list(String type) {
+        if (!connections.isEmpty()) {
+            EConnectionType ct = EConnectionType.parse(type);
+            Map<String, ConnectionSettings> settings = new HashMap<>();
+            for (String name : connections.keySet()) {
+                Connection connection = connections.get(name);
+                if (ct == null || connection.type() == ct) {
+                    settings.put(connection.name(), connection.settings());
+                }
+            }
+            if (!settings.isEmpty()) return settings;
+        }
+        return null;
     }
 }

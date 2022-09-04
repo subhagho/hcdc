@@ -16,6 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 public class Setup {
     private static final String NAME = "SETUP";
@@ -119,6 +121,24 @@ public class Setup {
             DefaultLogger.stacktrace(ex);
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
                     (ConnectionSettings) null).withError(ex),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @RequestMapping(value = "/admin/connections/list/{type}", method = RequestMethod.GET)
+    public ResponseEntity<BasicResponse<Map<String, ConnectionSettings>>> listConnections(
+            @PathVariable("type") String type) {
+        try {
+            ConnectionManager connectionManager = NameNodeEnv.get(NAME).connectionManager();
+            Map<String, ConnectionSettings> settings = connectionManager.list(type);
+            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
+                    settings),
+                    HttpStatus.OK);
+        } catch (Exception ex) {
+            DefaultLogger.LOGGER.error("Error starting service.", ex);
+            DefaultLogger.stacktrace(ex);
+            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
+                    (Map<String, ConnectionSettings>) null).withError(ex),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
