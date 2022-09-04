@@ -107,14 +107,22 @@ public class ConnectionManager implements Closeable {
             if (!connection.isConnected()) connection.connect();
             CuratorFramework client = connection.client();
             if (client.checkExists().forPath(path) != null) {
-                List<String> childs = client.getChildren().forPath(path);
-                if (childs != null && !childs.isEmpty()) {
-                    for (String c : childs) {
-                        String cp = new PathUtils.ZkPathBuilder(path)
-                                .withPath(c)
+                List<String> types = client.getChildren().forPath(path);
+                if (types != null && !types.isEmpty()) {
+                    for (String type : types) {
+                        String tp = new PathUtils.ZkPathBuilder(path)
+                                .withPath(type)
                                 .build();
-                        initConnection(connection, cp, c);
-                        count++;
+                        List<String> names = client.getChildren().forPath(tp);
+                        if (names != null && !names.isEmpty()) {
+                            for (String name : names) {
+                                String cp = new PathUtils.ZkPathBuilder(tp)
+                                        .withPath(name)
+                                        .build();
+                                initConnection(connection, cp, name);
+                                count++;
+                            }
+                        }
                     }
                 }
             }
@@ -210,9 +218,12 @@ public class ConnectionManager implements Closeable {
     public void save(@NonNull Connection connection) throws ConnectionError {
         Preconditions.checkNotNull(this.connection);
         try {
-            CuratorFramework client = this.connection.client();
-            String path = new PathUtils.ZkPathBuilder(zkPath)
+            String basePath = new PathUtils.ZkPathBuilder(zkPath)
+                    .withPath(connection.type().name())
                     .withPath(connection.name())
+                    .build();
+            CuratorFramework client = this.connection.client();
+            String path = new PathUtils.ZkPathBuilder(basePath)
                     .withPath(connection.path())
                     .build();
             if (client.checkExists().forPath(path) == null) {
@@ -220,8 +231,7 @@ public class ConnectionManager implements Closeable {
             }
             String json = JSONUtils.asString(connection.settings(), connection.settings().getClass());
             client.setData().forPath(path, json.getBytes(StandardCharsets.UTF_8));
-            path = new PathUtils.ZkPathBuilder(zkPath)
-                    .withPath(connection.name())
+            path = new PathUtils.ZkPathBuilder(basePath)
                     .withPath(Constants.PATH_ZK_CLASS)
                     .build();
             if (client.checkExists().forPath(path) == null) {

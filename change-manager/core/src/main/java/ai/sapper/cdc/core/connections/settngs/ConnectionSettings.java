@@ -8,7 +8,8 @@ import java.util.Map;
 @Getter
 @Setter
 public abstract class ConnectionSettings {
+    private EConnectionType type;
     private String name;
     private Map<String, String> parameters;
-    private Class<?> connectionType;
+    private Class<?> connectionClass;
 }

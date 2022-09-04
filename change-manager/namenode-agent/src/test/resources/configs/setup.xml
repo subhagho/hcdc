@@ -3,7 +3,7 @@
     <env>
         <name>DEV</name>
         <agent>
-            <module>EDITS-LOG-PROCESSORS</module>
+            <module>CDC-PROCESSORS</module>
             <instance>setup</instance>
             <source>ha-cluster</source>
             <enableHeartbeat>false</enableHeartbeat>
@@ -88,27 +88,16 @@
                         <connectionTimeout>10000</connectionTimeout>
                     </zookeeper>
                 </connection>
-
+                <!-- Kafka Producer connections-->
                 <connection>
                     <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer</type>
                     <kafka>
-                        <name>producer-delta-queue</name>
+                        <name>producer-edits-queue</name>
                         <mode>Producer</mode>
                         <producer>
-                            <config>src/test/resources/configs/kafka/producer-files-out.properties</config>
+                            <config>src/test/resources/configs/kafka/producer-editlog.properties</config>
                         </producer>
-                        <topic>ha-cluster.delta.files</topic>
-                    </kafka>
-                </connection>
-                <connection>
-                    <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer</type>
-                    <kafka>
-                        <name>producer-errors-queue</name>
-                        <mode>Producer</mode>
-                        <producer>
-                            <config>src/test/resources/configs/kafka/producer-files-errors.properties</config>
-                        </producer>
-                        <topic>ha-cluster.errors.files</topic>
+                        <topic>ha-cluster.edits</topic>
                     </kafka>
                 </connection>
                 <connection>
@@ -125,12 +114,12 @@
                 <connection>
                     <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer</type>
                     <kafka>
-                        <name>producer-edits-queue</name>
+                        <name>producer-delta-queue</name>
                         <mode>Producer</mode>
                         <producer>
-                            <config>src/test/resources/configs/kafka/producer-editlog.properties</config>
+                            <config>src/test/resources/configs/kafka/producer-files-out.properties</config>
                         </producer>
-                        <topic>ha-cluster.edits</topic>
+                        <topic>ha-cluster.delta</topic>
                     </kafka>
                 </connection>
                 <connection>
@@ -144,6 +133,18 @@
                         <topic>ha-cluster.delta.files</topic>
                     </kafka>
                 </connection>
+                <!-- Kafka Producer Connections - Error Queues-->
+                <connection>
+                    <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer</type>
+                    <kafka>
+                        <name>producer-errors-queue</name>
+                        <mode>Producer</mode>
+                        <producer>
+                            <config>src/test/resources/configs/kafka/producer-files-errors.properties</config>
+                        </producer>
+                        <topic>ha-cluster.errors.files</topic>
+                    </kafka>
+                </connection>
                 <connection>
                     <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer</type>
                     <kafka>
@@ -152,10 +153,10 @@
                         <producer>
                             <config>src/test/resources/configs/kafka/producer-files-errors.properties</config>
                         </producer>
-                        <topic>ha-cluster.errors.files</topic>
+                        <topic>ha-cluster.errors</topic>
                     </kafka>
                 </connection>
-
+                <!-- Kafka Consumer connections-->
                 <connection>
                     <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaConsumer</type>
                     <kafka>

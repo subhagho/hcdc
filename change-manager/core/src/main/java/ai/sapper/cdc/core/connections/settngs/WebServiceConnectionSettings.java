@@ -13,6 +13,7 @@ public class WebServiceConnectionSettings extends ConnectionSettings{
     private String endpoint;
 
     public WebServiceConnectionSettings() {
-        setConnectionType(WebServiceConnection.class);
+        setConnectionClass(WebServiceConnection.class);
+        setType(EConnectionType.rest);
     }
 }

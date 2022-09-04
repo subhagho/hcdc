@@ -15,6 +15,10 @@ public class HdfsConnectionSettings {
     public abstract static class HdfsBaseSettings extends ConnectionSettings {
         protected boolean securityEnabled = false;
         protected boolean adminEnabled = false;
+
+        public HdfsBaseSettings() {
+            setType(EConnectionType.hadoop);
+        }
     }
 
     @Getter
@@ -26,7 +30,7 @@ public class HdfsConnectionSettings {
         private String secondaryNameNodeUri;
 
         public HdfsSettings() {
-            setConnectionType(HdfsConnection.class);
+            setConnectionClass(HdfsConnection.class);
         }
     }
 
@@ -41,7 +45,7 @@ public class HdfsConnectionSettings {
         private String[][] nameNodeAddresses;
 
         public HdfsHASettings() {
-            setConnectionType(HdfsHAConnection.class);
+            setConnectionClass(HdfsHAConnection.class);
         }
     }
 }

@@ -4,6 +4,7 @@ import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
+import ai.sapper.cdc.core.connections.settngs.EConnectionType;
 import ai.sapper.cdc.core.connections.settngs.WebServiceConnectionSettings;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -178,6 +179,11 @@ public class WebServiceConnection implements Connection {
     @Override
     public String path() {
         return WebServiceConnectionConfig.__CONFIG_PATH;
+    }
+
+    @Override
+    public EConnectionType type() {
+        return settings.getType();
     }
 
     /**

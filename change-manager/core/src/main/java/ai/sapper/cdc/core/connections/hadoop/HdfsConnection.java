@@ -8,6 +8,7 @@ import ai.sapper.cdc.core.connections.ConnectionError;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
+import ai.sapper.cdc.core.connections.settngs.EConnectionType;
 import ai.sapper.cdc.core.connections.settngs.HdfsConnectionSettings;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -213,6 +214,11 @@ public class HdfsConnection implements Connection {
     @Override
     public String path() {
         return HdfsConfig.__CONFIG_PATH;
+    }
+
+    @Override
+    public EConnectionType type() {
+        return settings.getType();
     }
 
     /**

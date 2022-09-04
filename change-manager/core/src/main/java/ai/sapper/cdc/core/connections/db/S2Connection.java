@@ -105,7 +105,7 @@ public class S2Connection extends DbConnection {
 
         public JdbcConnectionSettings read() throws ConfigurationException {
             settings = super.read();
-            settings.setConnectionType(S2Connection.class);
+            settings.setConnectionClass(S2Connection.class);
             return settings;
         }
     }

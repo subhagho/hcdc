@@ -20,6 +20,7 @@ public class ZookeeperSettings extends ConnectionSettings {
     private int sessionTimeout = -1;
 
     public ZookeeperSettings() {
-        setConnectionType(ZookeeperConnection.class);
+        setConnectionClass(ZookeeperConnection.class);
+        setType(EConnectionType.zookeeper);
     }
 }

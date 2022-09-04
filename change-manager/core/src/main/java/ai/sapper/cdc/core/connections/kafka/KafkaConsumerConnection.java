@@ -93,7 +93,7 @@ public class KafkaConsumerConnection<K, V> extends KafkaConnection {
     }
 
     private void setup() throws Exception {
-        settings().setConnectionType(getClass());
+        settings().setConnectionClass(getClass());
         Properties props = settings().getProperties();
         if (props.containsKey(CONFIG_MAX_POLL_RECORDS)) {
             String s = props.getProperty(CONFIG_MAX_POLL_RECORDS);

@@ -19,4 +19,8 @@ public class KafkaSettings extends ConnectionSettings {
     private String topic;
 
     private List<Integer> partitions;
+
+    public KafkaSettings() {
+        setType(EConnectionType.kafka);
+    }
 }

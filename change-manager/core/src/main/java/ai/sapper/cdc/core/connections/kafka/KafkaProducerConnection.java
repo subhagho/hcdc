@@ -80,7 +80,7 @@ public class KafkaProducerConnection<K, V> extends KafkaConnection {
         if (settings().getMode() != EKafkaClientMode.Producer) {
             throw new ConfigurationException("Connection not initialized in Producer mode.");
         }
-        settings().setConnectionType(getClass());
+        settings().setConnectionClass(getClass());
     }
 
     /**

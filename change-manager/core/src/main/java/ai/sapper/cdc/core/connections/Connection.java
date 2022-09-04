@@ -2,6 +2,7 @@ package ai.sapper.cdc.core.connections;
 
 import ai.sapper.cdc.common.AbstractState;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
+import ai.sapper.cdc.core.connections.settngs.EConnectionType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.NonNull;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
@@ -51,4 +52,6 @@ public interface Connection extends Closeable {
     String path();
 
     Object settings();
+
+    EConnectionType type();
 }

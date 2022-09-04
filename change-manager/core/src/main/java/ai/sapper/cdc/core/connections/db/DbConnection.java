@@ -2,6 +2,7 @@ package ai.sapper.cdc.core.connections.db;
 
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.connections.settngs.EConnectionType;
 import ai.sapper.cdc.core.keystore.KeyStore;
 import ai.sapper.cdc.core.connections.Connection;
 import ai.sapper.cdc.core.connections.ConnectionError;
@@ -140,4 +141,8 @@ public abstract class DbConnection implements Connection {
         return state.isConnected();
     }
 
+    @Override
+    public EConnectionType type() {
+        return settings.getType();
+    }
 }

@@ -18,6 +18,7 @@ public class JdbcConnectionSettings extends ConnectionSettings {
     private int poolSize = 32;
 
     public JdbcConnectionSettings() {
-        setConnectionType(JdbcConnection.class);
+        setConnectionClass(JdbcConnection.class);
+        setType(EConnectionType.db);
     }
 }
