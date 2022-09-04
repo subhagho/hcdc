@@ -7,6 +7,7 @@ import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.common.utils.ReflectionUtils;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import ai.sapper.cdc.core.connections.settngs.EConnectionType;
+import ai.sapper.cdc.core.connections.settngs.ESettingsSource;
 import ai.sapper.cdc.core.keystore.KeyStore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -66,6 +67,12 @@ public class ConnectionManager implements Closeable {
                 int count = initConnections();
                 count += initSharedConnections();
                 LOG.info(String.format("Initialized %d connections...", count));
+                for (String name : connections.keySet()) {
+                    Connection conn = connections.get(name);
+                    if (conn.settings().getSource() == ESettingsSource.File) {
+                        save(conn);
+                    }
+                }
             }
             return this;
         } catch (Exception ex) {
@@ -239,6 +246,7 @@ public class ConnectionManager implements Closeable {
             if (client.checkExists().forPath(path) == null) {
                 client.create().creatingParentsIfNeeded().forPath(path);
             }
+            connection.settings().setSource(ESettingsSource.ZooKeeper);
             client.setData().forPath(path,
                     connection.getClass().getCanonicalName().getBytes(StandardCharsets.UTF_8));
         } catch (Exception ex) {
