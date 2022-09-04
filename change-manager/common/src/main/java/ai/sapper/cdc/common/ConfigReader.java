@@ -134,7 +134,7 @@ public class ConfigReader {
             FileLocationStrategy strategy = new CombinedLocationStrategy(subs);
             Parameters params = new Parameters();
             FileBasedConfigurationBuilder<XMLConfiguration> builder
-                    = new FileBasedConfigurationBuilder<XMLConfiguration>(XMLConfiguration.class)
+                    = new FileBasedConfigurationBuilder<>(XMLConfiguration.class)
                     .configure(params
                             .xml()
                             .setLocationStrategy(strategy)
