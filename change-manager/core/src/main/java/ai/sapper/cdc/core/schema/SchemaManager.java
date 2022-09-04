@@ -117,6 +117,7 @@ public class SchemaManager {
 
             zkPath = new PathUtils.ZkPathBuilder(config.basePath)
                     .withPath(environment)
+                    .withPath(config.schema)
                     .withPath(source)
                     .build();
             CuratorFramework client = zkConnection().client();
@@ -476,6 +477,7 @@ public class SchemaManager {
             public static final String CONFIG_CONNECTION = "connection";
             public static final String CONFIG_BASE_PATH = "basePath";
             public static final String CONFIG_CACHE = "cache";
+            public static final String CONFIG_SCHEMA = "schema";
             public static final String CONFIG_CACHED = String.format("%s.enable", CONFIG_CACHE);
             public static final String CONFIG_CACHE_EXPIRY = String.format("%s.expire", CONFIG_CACHE);
             public static final String CONFIG_CACHE_SIZE = String.format("%s.size", CONFIG_CACHE);
@@ -483,6 +485,8 @@ public class SchemaManager {
 
         private String connection;
         private String basePath;
+        private String schema;
+
         private boolean cached = true;
         private long cacheTimeout = 1000 * 60 * 30; // 30 mins
         private int cacheSize = 1024;
@@ -493,17 +497,22 @@ public class SchemaManager {
 
         public void read() throws ConfigurationException {
             if (get() == null) {
-                throw new ConfigurationException("Domain Manager Configuration not set or is NULL");
+                throw new ConfigurationException("Schema Manager Configuration not set or is NULL");
             }
             connection = get().getString(Constants.CONFIG_CONNECTION);
             if (Strings.isNullOrEmpty(connection)) {
                 throw new ConfigurationException(
-                        String.format("Domain Manager Configuration Error: missing [%s]", Constants.CONFIG_CONNECTION));
+                        String.format("Schema Manager Configuration Error: missing [%s]", Constants.CONFIG_CONNECTION));
             }
             basePath = get().getString(Constants.CONFIG_BASE_PATH);
             if (Strings.isNullOrEmpty(basePath)) {
                 throw new ConfigurationException(
-                        String.format("Domain Manager Configuration Error: missing [%s]", Constants.CONFIG_BASE_PATH));
+                        String.format("Schema Manager Configuration Error: missing [%s]", Constants.CONFIG_BASE_PATH));
+            }
+            schema = get().getString(Constants.CONFIG_SCHEMA);
+            if (Strings.isNullOrEmpty(schema)) {
+                throw new ConfigurationException(
+                        String.format("Schema Manager Configuration Error: missing [%s]", Constants.CONFIG_SCHEMA));
             }
             if (ConfigReader.checkIfNodeExists(get(), Constants.CONFIG_CACHE)) {
                 String s = get().getString(Constants.CONFIG_CACHED);

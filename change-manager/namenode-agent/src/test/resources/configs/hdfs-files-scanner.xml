@@ -19,10 +19,12 @@
                 <basePath>/ai/sapper/cdc/registry/hdfs</basePath>
                 <connection>zk-state-connection</connection>
                 <hdfs>source-hdfs-ha</hdfs>
+                <module>hdfs</module>
             </domain>
             <schema>
-                <basePath>/ai/sapper/cdc/registry/hdfs</basePath>
+                <basePath>/ai/sapper/cdc/registry</basePath>
                 <connection>zk-state-connection</connection>
+                <schema>hdfs</schema>
             </schema>
         </managers>
         <scanner>
