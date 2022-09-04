@@ -13,7 +13,7 @@
             </connections>
             <managers>
                 <state>
-                    <basePath>/ai/sapper/cdc/processors</basePath>
+                    <basePath>/ai/sapper/cdc/utils</basePath>
                     <connection>zk-state-connection</connection>
                 </state>
             </managers>

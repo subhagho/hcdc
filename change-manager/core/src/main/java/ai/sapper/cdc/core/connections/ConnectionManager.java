@@ -97,8 +97,8 @@ public class ConnectionManager implements Closeable {
             String bp = config.getString(Constants.CONFIG_SHARED_ZK_PATH);
 
             String path = new PathUtils.ZkPathBuilder(bp)
-                    .withPath(Constants.__CONFIG_PATH)
                     .withPath(environment)
+                    .withPath(Constants.__CONFIG_PATH)
                     .build();
             if (Strings.isNullOrEmpty(path)) {
                 throw new Exception(

@@ -188,7 +188,7 @@ public class ZkStateManager extends BaseStateManager {
 
     @Getter
     @Accessors(fluent = true)
-    public static class ZkStateManagerConfig extends DomainManager.DomainManagerConfig {
+    public static class ZkStateManagerConfig extends BaseStateManager.BaseStateManagerConfig {
         public static final String __CONFIG_PATH = "managers.state";
 
         public ZkStateManagerConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {

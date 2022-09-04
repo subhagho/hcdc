@@ -90,8 +90,8 @@ public class DistributedLockBuilder {
         if (Strings.isNullOrEmpty(zkPath)) return;
 
         zkPath = new PathUtils.ZkPathBuilder(zkPath)
-                .withPath(Constants.CONFIG_LOCKS)
                 .withPath(environment)
+                .withPath(Constants.CONFIG_LOCKS)
                 .build();
         CuratorFramework client = connection.client();
         if (client.checkExists().forPath(zkPath) == null) return;

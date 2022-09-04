@@ -128,6 +128,7 @@ public class DomainManager {
         return new PathUtils.ZkPathBuilder(config.basePath())
                 .withPath(environment)
                 .withPath(CONFIG_PATH)
+                .withPath(config.module)
                 .build();
     }
 
@@ -275,12 +276,14 @@ public class DomainManager {
         public static final class Constants {
             public static final String CONFIG_HDFS_CONNECTION = "hdfs";
             public static final String CONFIG_IGNORE_REGEX = "ignoreRegex";
+            public static final String CONFIG_MODULE = "module";
         }
 
         private static final String __CONFIG_PATH = "managers.domain";
 
          private String hdfsConnection;
         private String ignoreRegex;
+        private String module;
 
         public DomainManagerConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);
@@ -293,6 +296,11 @@ public class DomainManager {
         public void read() throws ConfigurationException {
             super.read();
             try {
+                module = get().getString(Constants.CONFIG_MODULE);
+                if (Strings.isNullOrEmpty(module)) {
+                    throw new ConfigurationException(
+                            String.format("Domain Manager: missing param. [name=%s]", Constants.CONFIG_MODULE));
+                }
                 if (get().containsKey(Constants.CONFIG_HDFS_CONNECTION)) {
                     hdfsConnection = get().getString(Constants.CONFIG_HDFS_CONNECTION);
                 }
