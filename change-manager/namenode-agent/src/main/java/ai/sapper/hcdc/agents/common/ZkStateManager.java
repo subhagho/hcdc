@@ -5,7 +5,6 @@ import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.BaseStateManager;
 import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.cdc.core.connections.ConnectionManager;
-import ai.sapper.cdc.core.filters.DomainManager;
 import ai.sapper.hcdc.agents.model.ModuleTxState;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;

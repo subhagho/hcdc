@@ -2,22 +2,17 @@ package ai.sapper.cdc.core;
 
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.core.connections.ConnectionManager;
-import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import ai.sapper.cdc.core.keystore.KeyStore;
 import ai.sapper.cdc.core.utils.DistributedLockBuilder;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Getter
 @Accessors(fluent = true)

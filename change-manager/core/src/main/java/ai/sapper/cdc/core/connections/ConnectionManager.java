@@ -5,8 +5,8 @@ import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.common.utils.ReflectionUtils;
-import ai.sapper.cdc.core.keystore.KeyStore;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
+import ai.sapper.cdc.core.keystore.KeyStore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.NonNull;
@@ -40,7 +40,7 @@ public class ConnectionManager implements Closeable {
 
     private String configPath;
     private HierarchicalConfiguration<ImmutableNode> config;
-    private Map<String, Connection> connections = new HashMap<>();
+    private final Map<String, Connection> connections = new HashMap<>();
     private ZookeeperConnection connection;
     private String zkPath;
     private KeyStore keyStore;
@@ -61,10 +61,11 @@ public class ConnectionManager implements Closeable {
         try {
 
             this.config = config.configurationAt(configPath);
-            int count = initConnections();
-            count += initSharedConnections();
-
-            LOG.info(String.format("Initialized %d connections...", count));
+            synchronized (connections) {
+                int count = initConnections();
+                count += initSharedConnections();
+                LOG.info(String.format("Initialized %d connections...", count));
+            }
             return this;
         } catch (Exception ex) {
             connections.clear();
@@ -244,6 +245,27 @@ public class ConnectionManager implements Closeable {
         }
     }
 
+    public boolean delete(@NonNull Connection connection) throws ConnectionError {
+        Preconditions.checkNotNull(this.connection);
+        boolean ret = false;
+        try {
+            String basePath = new PathUtils.ZkPathBuilder(zkPath)
+                    .withPath(connection.type().name())
+                    .withPath(connection.name())
+                    .build();
+            CuratorFramework client = this.connection.client();
+            if (client.checkExists().forPath(basePath) != null) {
+                connection.close();
+                client.delete().deletingChildrenIfNeeded().forPath(basePath);
+                connections.remove(connection.name());
+                ret = true;
+            }
+        } catch (Exception ex) {
+            throw new ConnectionError(ex);
+        }
+        return ret;
+    }
+
     public void save() throws ConnectionError {
         for (String name : connections.keySet()) {
             Connection connection = connections.get(name);
@@ -256,21 +278,30 @@ public class ConnectionManager implements Closeable {
 
     public void create(@NonNull Class<? extends Connection> type,
                        @NonNull ConnectionSettings settings) throws ConnectionError {
-        try {
-            try (Connection connection = type
-                    .getDeclaredConstructor()
-                    .newInstance()
-                    .setup(settings, this)) {
-                connection.connect();
-                save(connection);
+        synchronized (connections) {
+            try {
+                try (Connection connection = type
+                        .getDeclaredConstructor()
+                        .newInstance()
+                        .setup(settings, this)) {
+                    connection.connect();
+                    addConnection(connection.name(), connection);
+                    save(connection);
+                }
+            } catch (Exception ex) {
+                throw new ConnectionError(ex);
             }
-        } catch (Exception ex) {
-            throw new ConnectionError(ex);
         }
     }
 
-    public String getEncryptedValue(@NonNull String key) throws Exception {
-        Preconditions.checkNotNull(keyStore);
-        return keyStore.read(key);
+    public boolean remove(@NonNull Class<? extends Connection> type,
+                          @NonNull String name) throws ConnectionError {
+        synchronized (connections) {
+            Connection connection = getConnection(name, type);
+            if (connection != null) {
+                return delete(connection);
+            }
+            return false;
+        }
     }
 }

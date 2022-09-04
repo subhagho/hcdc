@@ -3,7 +3,6 @@ package ai.sapper.cdc.core.connections.hadoop;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.TestUtils;
-import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.utils.FileSystemUtils;
 import com.google.common.base.Preconditions;
 import org.apache.commons.configuration2.XMLConfiguration;

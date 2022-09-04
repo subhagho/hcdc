@@ -51,7 +51,7 @@ public interface Connection extends Closeable {
 
     String path();
 
-    Object settings();
+    ConnectionSettings settings();
 
     EConnectionType type();
 }

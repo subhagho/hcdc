@@ -4,7 +4,6 @@ package ai.sapper.hcdc.utils;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
