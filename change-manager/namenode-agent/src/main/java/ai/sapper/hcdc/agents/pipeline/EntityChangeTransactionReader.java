@@ -5,6 +5,7 @@ import ai.sapper.cdc.common.model.EntityDef;
 import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.model.services.SnapshotDoneRequest;
 import ai.sapper.cdc.common.schema.SchemaVersion;
+import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.core.WebServiceClient;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.io.Archiver;
@@ -35,6 +36,7 @@ import org.apache.hadoop.hdfs.HDFSBlockReader;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 
@@ -297,7 +299,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     .setDomain(schemaEntity.getDomain())
                     .setEntityName(schemaEntity.getEntity())
                     .setFileSystem(fs.fileSystemCode())
-                    .setOutputPath(response.path().path())
+                    .setOutputPath(JSONUtils.asString(response.path().pathConfig(), Map.class))
                     .build();
             MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(
                     message.value().getNamespace(),
@@ -695,7 +697,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                             .setDomain(schemaEntity.getDomain())
                             .setEntityName(schemaEntity.getEntity())
                             .setFileSystem(fs.fileSystemCode())
-                            .setOutputPath(response.path().path())
+                            .setOutputPath(JSONUtils.asString(response.path().pathConfig(), Map.class))
                             .build();
 
                     EntityDef schema = schemaManager.get(rState.getEntity());

@@ -8,6 +8,7 @@ import ai.sapper.cdc.common.utils.NetUtils;
 import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.BaseStateManager;
 import ai.sapper.cdc.core.DistributedLock;
+import ai.sapper.cdc.core.HeartbeatThread;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.model.CDCAgentState;
 import ai.sapper.cdc.core.model.ModuleInstance;
@@ -44,6 +45,8 @@ public class NameNodeEnv extends BaseEnv {
     private final String name;
 
     private Thread heartbeatThread;
+    private HeartbeatThread heartbeat;
+
     private AuditLogger auditLogger;
     private NameNEnvConfig config;
     private HierarchicalConfiguration<ImmutableNode> configNode;
@@ -114,7 +117,8 @@ public class NameNodeEnv extends BaseEnv {
             moduleInstance.setName(config.instance());
             moduleInstance.setInstanceId(moduleInstance.id());
 
-            stateManager = config.stateManagerClass.newInstance();
+            stateManager = config.stateManagerClass
+                    .getDeclaredConstructor().newInstance();
             stateManager.withEnvironment(environment(), name)
                     .withModuleInstance(moduleInstance);
             stateManager
@@ -128,8 +132,7 @@ public class NameNodeEnv extends BaseEnv {
             }
 
             stateManager
-                    .withReplicationLock(lock)
-                    .withModuleInstance(moduleInstance);
+                    .withReplicationLock(lock);
             stateManager.checkAgentState();
 
             if (ConfigReader.checkIfNodeExists(configNode,
@@ -156,7 +159,8 @@ public class NameNodeEnv extends BaseEnv {
             }
             state.state(ENameNEnvState.Initialized);
             if (config.enableHeartbeat) {
-                heartbeatThread = new Thread(new HeartbeatThread(name).withStateManager(stateManager));
+                heartbeat = new HeartbeatThread(name).withStateManager(stateManager);
+                heartbeatThread = new Thread(heartbeat);
                 heartbeatThread.start();
             }
             return this;
@@ -174,6 +178,11 @@ public class NameNodeEnv extends BaseEnv {
 
     public synchronized ENameNEnvState stop() {
         try {
+            if (heartbeatThread != null) {
+                heartbeat.terminate();
+                heartbeatThread.join();
+                heartbeatThread = null;
+            }
             if (agentState.state() == CDCAgentState.EAgentState.Active
                     || agentState.state() == CDCAgentState.EAgentState.StandBy) {
                 agentState.state(CDCAgentState.EAgentState.Stopped);
@@ -188,9 +197,7 @@ public class NameNodeEnv extends BaseEnv {
                 state.state(ENameNEnvState.Disposed);
             }
             close();
-            if (heartbeatThread != null) {
-                heartbeatThread.join();
-            }
+
         } catch (Exception ex) {
             LOG.error("Error disposing NameNodeEnv...", ex);
         }
@@ -198,15 +205,15 @@ public class NameNodeEnv extends BaseEnv {
     }
 
     public String module() {
-        return config.module();
+        return moduleInstance.getModule();
     }
 
     public String instance() {
-        return config.instance;
+        return moduleInstance.getName();
     }
 
     public String source() {
-        return config.source;
+        return moduleInstance.getSource();
     }
 
     public DistributedLock createLock(@NonNull String name) throws NameNodeError {

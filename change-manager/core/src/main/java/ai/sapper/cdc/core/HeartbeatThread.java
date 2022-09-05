@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.agents.common;
+package ai.sapper.cdc.core;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import com.google.common.base.Preconditions;
@@ -7,15 +7,20 @@ import lombok.NonNull;
 public class HeartbeatThread implements Runnable {
     private final String name;
     private long sleepInterval = 60 * 1000; // 60 secs.
-    private ZkStateManager stateManager;
+    private BaseStateManager stateManager;
+    private boolean running = true;
 
     public HeartbeatThread(@NonNull String name) {
         this.name = name;
     }
 
-    public HeartbeatThread withStateManager(@NonNull ZkStateManager stateManager) {
+    public HeartbeatThread withStateManager(@NonNull BaseStateManager stateManager) {
         this.stateManager = stateManager;
         return this;
+    }
+
+    public void terminate() {
+        running = false;
     }
 
     /**
@@ -33,9 +38,8 @@ public class HeartbeatThread implements Runnable {
     public void run() {
         Preconditions.checkNotNull(stateManager);
         try {
-            while (NameNodeEnv.get(name).state().isAvailable()) {
-                stateManager.heartbeat(stateManager.moduleInstance().getInstanceId(),
-                        NameNodeEnv.get(name).agentState());
+            while (running) {
+                stateManager.heartbeat(stateManager.moduleInstance().getInstanceId());
                 Thread.sleep(sleepInterval);
             }
         } catch (Exception ex) {

@@ -4,7 +4,9 @@ import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.BaseStateManager;
 import ai.sapper.cdc.core.DistributedLock;
+import ai.sapper.cdc.core.ManagerStateError;
 import ai.sapper.cdc.core.connections.ConnectionManager;
+import ai.sapper.cdc.core.model.Heartbeat;
 import ai.sapper.hcdc.agents.model.ModuleTxState;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -183,6 +185,15 @@ public class ZkStateManager extends BaseStateManager {
 
     public String basePath() {
         return config().basePath();
+    }
+
+    @Override
+    public Heartbeat heartbeat(@NonNull String name) throws ManagerStateError {
+        try {
+            return heartbeat(name, NameNodeEnv.get(name).agentState());
+        } catch (Exception ex) {
+            throw new ManagerStateError(ex);
+        }
     }
 
     @Getter

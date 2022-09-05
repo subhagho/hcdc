@@ -8,6 +8,7 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
@@ -70,6 +71,12 @@ public class LocalReader extends Reader {
     @Override
     public boolean isOpen() {
         return (inputStream != null);
+    }
+
+    @Override
+    public File copy() throws IOException {
+        LocalPathInfo pi = (LocalPathInfo) path();
+        return pi.file();
     }
 
     /**

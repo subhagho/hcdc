@@ -5,6 +5,7 @@ import lombok.NonNull;
 import lombok.experimental.Accessors;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 
 @Getter
@@ -27,4 +28,6 @@ public abstract class Reader implements Closeable {
     public abstract void seek(int offset) throws IOException;
 
     public abstract boolean isOpen();
+
+    public abstract File copy() throws IOException;
 }

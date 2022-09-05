@@ -65,7 +65,7 @@ public class AvroConverter extends FormatConverter {
         Preconditions.checkNotNull(schemaManager());
         try {
             long count = 0;
-            EntityDef schema = parseSchema(source, fileState, schemaEntity);
+            EntityDef schema = parseSchema(source, schemaEntity);
             Schema wrapper = AvroUtils.createSchema(schema.schema());
             final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(wrapper);
             try (DataFileWriter<GenericRecord> fos = new DataFileWriter<>(writer)) {
@@ -116,7 +116,6 @@ public class AvroConverter extends FormatConverter {
     }
 
     private EntityDef parseSchema(File file,
-                                  DFSFileState fileState,
                                   SchemaEntity schemaEntity) throws Exception {
         DatumReader<GenericRecord> datumReader = new GenericDatumReader<>();
         try (DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(file, datumReader)) {
@@ -156,7 +155,7 @@ public class AvroConverter extends FormatConverter {
                     fos.write(data.data().array());
                     fos.flush();
                 }
-                return parseSchema(tempf, fileState, schemaEntity);
+                return parseSchema(tempf, schemaEntity);
             }
             return null;
         } catch (Exception ex) {
