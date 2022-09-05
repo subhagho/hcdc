@@ -370,19 +370,19 @@ public class SchemaManager {
         return null;
     }
 
-    private String getZkPath() {
+    public String getZkPath() {
         return new PathUtils.ZkPathBuilder(zkPath)
                 .withPath(config().schema)
                 .build();
     }
 
-    private String getZkDomainPath(String domain) {
+    public String getZkDomainPath(String domain) {
         return new PathUtils.ZkPathBuilder(getZkPath())
                 .withPath(domain)
                 .build();
     }
 
-    private String getZkPath(SchemaEntity schema) {
+    public String getZkPath(SchemaEntity schema) {
         return new PathUtils.ZkPathBuilder(getZkPath())
                 .withPath(schema.getDomain())
                 .withPath(schema.getEntity())
