@@ -330,7 +330,9 @@ public class SchemaManager {
 
     private EntityDef get(@NonNull String path, SchemaVersion version) throws Exception {
         CuratorFramework client = zkConnection().client();
-        path = PathUtils.formatZkPath(String.format("%s/%s", path, version.path()));
+        path = new PathUtils.ZkPathBuilder(path)
+                .withPath(version.path())
+                .build();
         if (client.checkExists().forPath(path) != null) {
             byte[] data = client.getData().forPath(path);
             if (data != null && data.length > 0) {

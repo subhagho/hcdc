@@ -60,7 +60,12 @@ public class DistributedLock extends ReentrantLock implements Closeable {
     }
 
     private String lockPath() {
-        return PathUtils.formatZkPath(String.format("%s/%s/__locks/%s", zkBasePath, id.namespace, id.name));
+        return new PathUtils.ZkPathBuilder()
+                .withPath(zkBasePath)
+                .withPath(id.namespace)
+                .withPath("__locks")
+                .withPath(id.name)
+                .build();
     }
 
     /**

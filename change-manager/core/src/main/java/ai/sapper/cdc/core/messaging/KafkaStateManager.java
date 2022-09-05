@@ -69,6 +69,10 @@ public class KafkaStateManager {
     }
 
     private String getZkPath(long partition) {
-        return PathUtils.formatZkPath(String.format("%s/%s/%s/%d", zkStatePath(), name, topic(), partition));
+        return new PathUtils.ZkPathBuilder(zkStatePath)
+                .withPath(name)
+                .withPath(topic)
+                .withPath(String.valueOf(partition))
+                .build();
     }
 }

@@ -252,7 +252,10 @@ public abstract class BaseStateManager {
 
 
     private String getHeartbeatPath(String name) {
-        return PathUtils.formatZkPath(String.format("%s/%s/%s", zkPath, Constants.ZK_PATH_HEARTBEAT, name));
+        return new PathUtils.ZkPathBuilder(zkPath)
+                .withPath(Constants.ZK_PATH_HEARTBEAT)
+                .withPath(name)
+                .build();
     }
 
     @Getter

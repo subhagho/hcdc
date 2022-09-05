@@ -428,7 +428,9 @@ public class FileStateHelper {
             }
         } else {
             for (String child : children) {
-                String cpath = PathUtils.formatZkPath(String.format("%s/%s", path, child));
+                String cpath = new PathUtils.ZkPathBuilder(path)
+                        .withPath(child)
+                        .build();
                 listFiles(cpath, files, client, fileState);
             }
         }
@@ -467,7 +469,9 @@ public class FileStateHelper {
         List<String> children = client.getChildren().forPath(zpath);
         if (children != null && !children.isEmpty()) {
             for (String child : children) {
-                String cp = PathUtils.formatZkPath(String.format("%s/%s", zpath, child));
+                String cp = new PathUtils.ZkPathBuilder(zpath)
+                        .withPath(child)
+                        .build();
                 search(cp, paths, client);
             }
         } else {
