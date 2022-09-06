@@ -3,8 +3,8 @@
     <env>
         <name>DEV</name>
         <agent>
-            <!--module>CDC-PROCESSORS</module-->
-            <module>EDITS-LOG-PROCESSORS</module>
+            <module>CDC-PROCESSORS</module>
+            <!--module>EDITS-LOG-PROCESSORS</module -->
             <instance>setup</instance>
             <source>ha-cluster</source>
             <enableHeartbeat>false</enableHeartbeat>
@@ -143,7 +143,7 @@
                         <producer>
                             <config>https://raw.githubusercontent.com/subhagho/hcdc/1.2-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-files-errors.properties</config>
                         </producer>
-                        <topic>ha-cluster.errors.files</topic>
+                        <topic>ha-cluster.errors</topic>
                     </kafka>
                 </connection>
                 <connection>
@@ -154,7 +154,18 @@
                         <producer>
                             <config>https://raw.githubusercontent.com/subhagho/hcdc/1.2-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-files-errors.properties</config>
                         </producer>
-                        <topic>ha-cluster.errors</topic>
+                        <topic>ha-cluster.errors.files</topic>
+                    </kafka>
+                </connection>
+                <connection>
+                    <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer</type>
+                    <kafka>
+                        <name>producer-errors-loader-queue</name>
+                        <mode>Producer</mode>
+                        <producer>
+                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.2-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-files-errors.properties</config>
+                        </producer>
+                        <topic>ha-cluster.errors.loader</topic>
                     </kafka>
                 </connection>
                 <!-- Kafka Consumer connections-->
@@ -192,6 +203,18 @@
                             <!--partitions>1</partitions-->
                         </consumer>
                         <topic>ha-cluster.delta</topic>
+                    </kafka>
+                </connection>
+                <connection>
+                    <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaConsumer</type>
+                    <kafka>
+                        <name>consumer-delta-files-queue</name>
+                        <mode>Consumer</mode>
+                        <consumer>
+                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.2-SNAPSHOT/change-manager/namenode-agent/src/test/resources/consumer.properties</config>
+                            <!--partitions>1</partitions-->
+                        </consumer>
+                        <topic>ha-cluster.delta.files</topic>
                     </kafka>
                 </connection>
             </connections>

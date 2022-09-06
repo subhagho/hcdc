@@ -33,29 +33,26 @@ public class AvroChangeRecord {
     private GenericRecord data;
 
     public AvroChangeRecord parse(@NonNull GenericRecord record) throws IOException {
-        txId = (int) record.get(AVRO_FIELD_TXID);
+        txId = (long) record.get(AVRO_FIELD_TXID);
         if (txId < 0) {
             throw new IOException(String.format("Data Error: missing field. [field=%s]", AVRO_FIELD_OP));
         }
-        String s = (String) record.get(AVRO_FIELD_OP);
-        if (Strings.isNullOrEmpty(s)) {
-            throw new IOException(String.format("Data Error: missing field. [field=%s]", AVRO_FIELD_OP));
-        }
-        op = AvroChangeType.EChangeType.valueOf(s);
-        String d = (String) record.get(AVRO_FIELD_TARGET_DOMAIN);
+        int o = (int) record.get(AVRO_FIELD_OP);
+        op = AvroChangeType.EChangeType.values()[o];
+        String d = record.get(AVRO_FIELD_TARGET_DOMAIN).toString();
         if (Strings.isNullOrEmpty(d)) {
             throw new IOException(String.format("Data Error: missing field. [field=%s]", AVRO_FIELD_TARGET_DOMAIN));
         }
-        String e = (String) record.get(AVRO_FIELD_TARGET_ENTITY);
+        String e = record.get(AVRO_FIELD_TARGET_ENTITY).toString();
         if (Strings.isNullOrEmpty(e)) {
             throw new IOException(String.format("Data Error: missing field. [field=%s]", AVRO_FIELD_TARGET_ENTITY));
         }
         targetEntity = new SchemaEntity(d, e);
-        d = (String) record.get(AVRO_FIELD_SOURCE_DOMAIN);
+        d = record.get(AVRO_FIELD_SOURCE_DOMAIN).toString();
         if (Strings.isNullOrEmpty(d)) {
             throw new IOException(String.format("Data Error: missing field. [field=%s]", AVRO_FIELD_SOURCE_DOMAIN));
         }
-        e = (String) record.get(AVRO_FIELD_SOURCE_ENTITY);
+        e = record.get(AVRO_FIELD_SOURCE_ENTITY).toString();
         if (Strings.isNullOrEmpty(e)) {
             throw new IOException(String.format("Data Error: missing field. [field=%s]", AVRO_FIELD_SOURCE_ENTITY));
         }
