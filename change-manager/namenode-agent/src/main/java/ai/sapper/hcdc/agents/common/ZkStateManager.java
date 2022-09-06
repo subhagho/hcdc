@@ -10,6 +10,7 @@ import ai.sapper.cdc.core.model.Heartbeat;
 import ai.sapper.hcdc.agents.model.ModuleTxState;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -30,6 +31,7 @@ public class ZkStateManager extends BaseStateManager {
     private String source;
     private String zkModuleStatePath;
     private ModuleTxState moduleTxState;
+    @Getter(AccessLevel.NONE)
     private DistributedLock replicationLock;
 
     private final ReplicationStateHelper replicaStateHelper = new ReplicationStateHelper();
@@ -194,6 +196,14 @@ public class ZkStateManager extends BaseStateManager {
         } catch (Exception ex) {
             throw new ManagerStateError(ex);
         }
+    }
+
+    public void stateLock() {
+        replicationLock.lock();
+    }
+
+    public void stateUnlock() {
+        replicationLock.unlock();
     }
 
     @Getter

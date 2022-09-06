@@ -120,7 +120,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         checkStaleInode(message, fileState, file);
 
         FSFile fsf = FileSystemHelper.createFile(fileState, fs, schemaEntity);
-        stateManager().replicationLock().lock();
+        stateManager().stateLock();
         try {
             DFSFileReplicaState rState = stateManager()
                     .replicaStateHelper()
@@ -143,7 +143,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     DFSError.ErrorCode.SYNC_STOPPED,
                     hdfsPath, ex.getLocalizedMessage());
         } finally {
-            stateManager().replicationLock().unlock();
+            stateManager().stateUnlock();
         }
     }
 
@@ -317,7 +317,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 rState.setStoragePath(ap.pathConfig());
             }
             file.delete();
-            stateManager().replicationLock().lock();
+            stateManager().stateLock();
             try {
                 rState = stateManager()
                         .replicaStateHelper()
@@ -330,7 +330,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                         .replicaStateHelper()
                         .update(rState);
             } finally {
-                stateManager().replicationLock().unlock();
+                stateManager().stateUnlock();
             }
             LOGGER.debug(getClass(), txId,
                     String.format("Deleted file. [path=%s]", fileState.getFileInfo().getHdfsPath()));

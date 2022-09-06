@@ -4,7 +4,8 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class PathUtilsTest {
     private static final String LOCAL_PATH = "src/test/java/ai/sapper/cdc/common/utils/FileWatcherFactoryTest.java";

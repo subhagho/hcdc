@@ -73,7 +73,7 @@ public class EntityChangeDeltaProcessor extends ChangeDeltaProcessor {
                 }
                 LOG.debug(String.format("Received messages. [count=%d]", batch.size()));
                 for (MessageObject<String, DFSChangeDelta> message : batch) {
-                    stateManager().replicationLock().lock();
+                    stateManager().stateLock();
                     try {
                         try {
                             long txId = process(message);
@@ -102,7 +102,7 @@ public class EntityChangeDeltaProcessor extends ChangeDeltaProcessor {
                         }
                         receiver().ack(message.id());
                     } finally {
-                        stateManager().replicationLock().unlock();
+                        stateManager().stateUnlock();
                     }
                 }
             }

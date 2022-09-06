@@ -209,7 +209,7 @@ public class HDFSSnapshotProcessor {
                          @NonNull SchemaEntity entity,
                          long txId) throws SnapshotError {
         Preconditions.checkState(sender != null);
-        stateManager.replicationLock().lock();
+        stateManager.stateLock();
         try {
             DefaultLogger.debug(LOG, String.format("Generating snapshot for file. [path=%s]", hdfsPath));
             DFSFileState fileState = stateManager
@@ -261,13 +261,13 @@ public class HDFSSnapshotProcessor {
         } catch (Exception ex) {
             throw new SnapshotError(ex);
         } finally {
-            stateManager.replicationLock().unlock();
+            stateManager.stateUnlock();
         }
     }
 
     public DFSFileReplicaState snapshotDone(@NonNull String hdfsPath, @NonNull SchemaEntity entity, long tnxId) throws SnapshotError {
         Preconditions.checkState(tnxSender != null);
-        stateManager.replicationLock().lock();
+        stateManager.stateLock();
         try {
             DFSFileState fileState = stateManager
                     .fileStateHelper()
@@ -314,7 +314,7 @@ public class HDFSSnapshotProcessor {
         } catch (Exception ex) {
             throw new SnapshotError(ex);
         } finally {
-            stateManager.replicationLock().unlock();
+            stateManager.stateUnlock();
         }
     }
 
