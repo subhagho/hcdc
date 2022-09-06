@@ -13,7 +13,7 @@ import java.util.List;
 
 @Getter
 @Accessors(fluent = true)
-public abstract class MessageReceiver<I, M> implements Closeable {
+public abstract class MessageReceiver<I, M> implements Closeable, AckDelegate<I> {
     private MessageConnection connection;
     private int batchSize = 32;
     private ZookeeperConnection zkConnection;
@@ -65,8 +65,6 @@ public abstract class MessageReceiver<I, M> implements Closeable {
     public abstract List<MessageObject<I, M>> nextBatch() throws MessagingError;
 
     public abstract List<MessageObject<I, M>> nextBatch(long timeout) throws MessagingError;
-
-    public abstract void ack(@NonNull I messageId) throws MessagingError;
 
     public abstract void ack(@NonNull List<I> messageIds) throws MessagingError;
 }
