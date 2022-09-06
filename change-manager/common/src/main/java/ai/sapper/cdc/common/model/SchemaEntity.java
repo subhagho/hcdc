@@ -12,7 +12,7 @@ import java.util.Objects;
 @ToString
 public class SchemaEntity {
     private String domain;
-    private String group;
+    private String group = "DEFAULT";
     private String entity;
 
     public SchemaEntity() {
