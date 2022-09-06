@@ -29,6 +29,7 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.List;
@@ -368,6 +369,7 @@ public class NameNodeEnv extends BaseEnv {
         private String hadoopHome;
         private String hadoopAdminUrl;
         private String hadoopConfFile;
+        private File hadoopConfig;
         private boolean hadoopUseSSL = true;
         private boolean readHadoopConfig = true;
         private boolean enableHeartbeat = false;
@@ -453,10 +455,12 @@ public class NameNodeEnv extends BaseEnv {
                             String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_HADOOP_HOME));
             }
             hadoopConfFile = get().getString(Constants.CONFIG_HADOOP_CONFIG);
-            if (Strings.isNullOrEmpty(hadoopConfFile)) {
+            hadoopConfig = ConfigReader.readFileNode(get(), Constants.CONFIG_HADOOP_CONFIG);
+            if (hadoopConfig == null || !hadoopConfig.exists()) {
                 throw new ConfigurationException(
                         String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_HADOOP_CONFIG));
             }
+
             String s = get().getString(Constants.HDFS_NN_USE_HTTPS);
             if (!Strings.isNullOrEmpty(s)) {
                 hadoopUseSSL = Boolean.parseBoolean(s);

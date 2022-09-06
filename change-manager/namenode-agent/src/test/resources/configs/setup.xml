@@ -95,7 +95,7 @@
                         <name>producer-edits-queue</name>
                         <mode>Producer</mode>
                         <producer>
-                            <config>src/test/resources/configs/kafka/producer-editlog.properties</config>
+                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.2-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-editlog.properties</config>
                         </producer>
                         <topic>ha-cluster.edits</topic>
                     </kafka>
@@ -106,7 +106,7 @@
                         <name>producer-cdc-queue</name>
                         <mode>Producer</mode>
                         <producer>
-                            <config>src/test/resources/configs/kafka/producer-hcdc-out.properties</config>
+                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.2-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-hcdc-out.properties</config>
                         </producer>
                         <topic>ha-cluster.cdc</topic>
                     </kafka>
@@ -117,7 +117,7 @@
                         <name>producer-delta-queue</name>
                         <mode>Producer</mode>
                         <producer>
-                            <config>src/test/resources/configs/kafka/producer-files-out.properties</config>
+                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.2-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-files-out.properties</config>
                         </producer>
                         <topic>ha-cluster.delta</topic>
                     </kafka>
@@ -128,7 +128,7 @@
                         <name>producer-delta-files-queue</name>
                         <mode>Producer</mode>
                         <producer>
-                            <config>src/test/resources/configs/kafka/producer-files-out.properties</config>
+                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.2-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-files-out.properties</config>
                         </producer>
                         <topic>ha-cluster.delta.files</topic>
                     </kafka>
@@ -140,7 +140,7 @@
                         <name>producer-errors-queue</name>
                         <mode>Producer</mode>
                         <producer>
-                            <config>src/test/resources/configs/kafka/producer-files-errors.properties</config>
+                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.2-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-files-errors.properties</config>
                         </producer>
                         <topic>ha-cluster.errors.files</topic>
                     </kafka>
@@ -151,7 +151,7 @@
                         <name>producer-errors-files-queue</name>
                         <mode>Producer</mode>
                         <producer>
-                            <config>src/test/resources/configs/kafka/producer-files-errors.properties</config>
+                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.2-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-files-errors.properties</config>
                         </producer>
                         <topic>ha-cluster.errors</topic>
                     </kafka>
@@ -163,7 +163,7 @@
                         <name>consumer-edits-queue</name>
                         <mode>Consumer</mode>
                         <consumer>
-                            <config>src/test/resources/consumer.properties</config>
+                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.2-SNAPSHOT/change-manager/namenode-agent/src/test/resources/consumer.properties</config>
                             <partitions>0</partitions>
                         </consumer>
                         <topic>ha-cluster.edits</topic>
@@ -175,7 +175,7 @@
                         <name>consumer-cdc-queue</name>
                         <mode>Consumer</mode>
                         <consumer>
-                            <config>src/test/resources/consumer.properties</config>
+                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.2-SNAPSHOT/change-manager/namenode-agent/src/test/resources/consumer.properties</config>
                             <!--partitions>1</partitions-->
                         </consumer>
                         <topic>ha-cluster.cdc</topic>
@@ -187,7 +187,7 @@
                         <name>consumer-delta-queue</name>
                         <mode>Consumer</mode>
                         <consumer>
-                            <config>src/test/resources/consumer.properties</config>
+                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.2-SNAPSHOT/change-manager/namenode-agent/src/test/resources/consumer.properties</config>
                             <!--partitions>1</partitions-->
                         </consumer>
                         <topic>ha-cluster.delta</topic>

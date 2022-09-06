@@ -1,6 +1,7 @@
 package ai.sapper.cdc.common;
 
 import ai.sapper.cdc.common.model.services.EConfigFileType;
+import ai.sapper.cdc.common.utils.PathUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -185,5 +186,14 @@ public class ConfigReader {
             }
         }
         return map;
+    }
+
+    public static File readFileNode(@NonNull HierarchicalConfiguration<ImmutableNode> config,
+                                    @NonNull String name) throws Exception {
+        String value = config.getString(name);
+        if (!Strings.isNullOrEmpty(value)) {
+            return PathUtils.readFile(value);
+        }
+        return null;
     }
 }

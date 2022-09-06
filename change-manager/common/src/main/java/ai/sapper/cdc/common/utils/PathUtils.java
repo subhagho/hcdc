@@ -1,8 +1,17 @@
 package ai.sapper.cdc.common.utils;
 
+import com.google.common.base.Strings;
 import lombok.NonNull;
+import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -32,6 +41,19 @@ public class PathUtils {
         }
         File path = new File(String.format("%s/%s.%s",
                 dir.getAbsolutePath(), name, ext));
+        if (path.exists()) {
+            path.delete();
+        }
+        return path;
+    }
+
+    public static File getTempFile(@NonNull String name) {
+        File dir = new File(TEMP_PATH);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        File path = new File(String.format("%s/%s",
+                dir.getAbsolutePath(), name));
         if (path.exists()) {
             path.delete();
         }
@@ -80,7 +102,7 @@ public class PathUtils {
                 for (String path : paths) {
                     fmt.append("/").append(path);
                 }
-                return formatPath(fmt.toString());
+                return formatZkPath(fmt.toString());
             }
             return null;
         }
@@ -92,5 +114,40 @@ public class PathUtils {
             }
             return path;
         }
+    }
+
+    public static File readFile(@NonNull String path) throws Exception {
+        URI uri = new URI(path);
+        String schema = uri.getScheme();
+        File file = null;
+        if (Strings.isNullOrEmpty(schema)) {
+            file = new File(path);
+            if (!file.exists()) {
+                throw new IOException(String.format("Specified path not found. [path=%s]",
+                        file.getAbsolutePath()));
+            }
+        } else if (schema.compareToIgnoreCase("file") == 0) {
+            path = String.format("%s/%s", uri.getHost(), uri.getPath());
+            file = new File(path);
+            if (!file.exists()) {
+                throw new IOException(String.format("Specified path not found. [path=%s]",
+                        file.getAbsolutePath()));
+            }
+        } else {
+            URL url = uri.toURL();
+            String ext = FilenameUtils.getExtension(path);
+            String name = UUID.randomUUID().toString();
+            if (Strings.isNullOrEmpty(ext))
+                file = getTempFile(name);
+            else
+                file = getTempFile(name, ext);
+            try (InputStream in = url.openStream()) {
+                ReadableByteChannel rbc = Channels.newChannel(in);
+                try (FileOutputStream fos = new FileOutputStream(file)) {
+                    fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+                }
+            }
+        }
+        return file;
     }
 }

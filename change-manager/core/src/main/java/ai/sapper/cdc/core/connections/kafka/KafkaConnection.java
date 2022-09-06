@@ -189,17 +189,14 @@ public abstract class KafkaConnection implements MessageConnection {
                 }
 
                 if (settings.getMode() == EKafkaClientMode.Producer) {
-                    settings.setConfigPath(get().getString(Constants.CONFIG_PRODUCER_CONFIG));
-                    if (Strings.isNullOrEmpty(settings.getConfigPath())) {
+                    File configFile = ConfigReader.readFileNode(get(), Constants.CONFIG_PRODUCER_CONFIG);
+                    if (configFile == null || !configFile.exists()) {
                         throw new ConfigurationException(String.format("Kafka Configuration Error: missing [%s]",
-                                Constants.CONFIG_PRODUCER_CONFIG));
+                                Constants.CONFIG_FILE_CONFIG));
                     }
-                    File cf = new File(settings.getConfigPath());
-                    if (!cf.exists()) {
-                        throw new ConfigurationException(String.format("Invalid Producer configuration file. [path=%s]", cf.getAbsolutePath()));
-                    }
+                    settings.setConfigPath(get().getString(Constants.CONFIG_PRODUCER_CONFIG));
                     settings.setProperties(new Properties());
-                    settings.getProperties().load(new FileInputStream(cf));
+                    settings.getProperties().load(new FileInputStream(configFile));
                 } else if (settings.getMode() == EKafkaClientMode.Consumer) {
                     HierarchicalConfiguration<ImmutableNode> cnode = get().configurationAt(Constants.CONFIG_CONSUMER);
                     if (cnode == null) {
@@ -207,17 +204,14 @@ public abstract class KafkaConnection implements MessageConnection {
                                 String.format("Invalid Consumer configuration: missing path. [path=%s]",
                                         Constants.CONFIG_CONSUMER));
                     }
-                    settings.setConfigPath(cnode.getString(Constants.CONFIG_FILE_CONFIG));
-                    if (Strings.isNullOrEmpty(settings.getConfigPath())) {
+                    File configFile = ConfigReader.readFileNode(cnode, Constants.CONFIG_FILE_CONFIG);
+                    if (configFile == null || !configFile.exists()) {
                         throw new ConfigurationException(String.format("Kafka Configuration Error: missing [%s]",
                                 Constants.CONFIG_FILE_CONFIG));
                     }
-                    File cf = new File(settings.getConfigPath());
-                    if (!cf.exists()) {
-                        throw new ConfigurationException(String.format("Invalid Consumer configuration file. [path=%s]", cf.getAbsolutePath()));
-                    }
+                    settings.setConfigPath(cnode.getString(Constants.CONFIG_FILE_CONFIG));
                     settings.setProperties(new Properties());
-                    settings.getProperties().load(new FileInputStream(cf));
+                    settings.getProperties().load(new FileInputStream(configFile));
 
                     String ps = null;
                     settings.setPartitions(new ArrayList<>());
