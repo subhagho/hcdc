@@ -13,7 +13,7 @@ class HadoopDataLoaderTest {
                     "--input",
                     "csv",
                     "--output",
-                    "parquet",
+                    "avro",
                     "--data",
                     "src/test/resources/data",
                     "--tmp",

@@ -55,7 +55,9 @@ public class HadoopDataLoader {
             loaderConfig.read();
 
             connectionManager = new ConnectionManager();
-            connectionManager.init(config, loaderConfig.connectionPath);
+            connectionManager
+                    .withEnv(loaderConfig.env)
+                    .init(config, loaderConfig.connectionPath);
 
             connection = connectionManager.getConnection(loaderConfig.connectionToUse, HdfsConnection.class);
             connection.connect();
@@ -217,17 +219,23 @@ public class HadoopDataLoader {
         private static final String CONFIG_CONNECTION_HDFS = "connections.use";
         private static final String CONFIG_BATCH_SIZE = "batchSize";
         private static final String CONFIG_BASE_DIR = "baseDir";
+        private static final String CONFIG_ENV = "env";
 
         private String connectionPath;
         private long batchSize = 1024 * 1024 * 16;
         private String baseDir;
         private String connectionToUse;
+        private String env;
 
         public LoaderConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);
         }
 
         public void read() throws ConfigurationException {
+            env = get().getString(CONFIG_ENV);
+            if (Strings.isNullOrEmpty(env)) {
+                throw new ConfigurationException(String.format("HDFS Data Loader Configuration Error: missing [%s]", CONFIG_ENV));
+            }
             connectionPath = get().getString(CONFIG_CONNECTIONS);
             if (Strings.isNullOrEmpty(connectionPath)) {
                 throw new ConfigurationException(String.format("HDFS Data Loader Configuration Error: missing [%s]", CONFIG_CONNECTIONS));
