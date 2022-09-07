@@ -6,6 +6,7 @@ import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.settngs.JdbcConnectionSettings;
 import ai.sapper.cdc.core.keystore.KeyStore;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.singlestore.jdbc.SingleStorePoolDataSource;
 import lombok.Getter;
 import lombok.NonNull;
@@ -15,13 +16,15 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 
 import java.io.IOException;
+import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Properties;
 
 @Getter
 @Accessors(fluent = true)
 public class S2Connection extends DbConnection {
-    private SingleStorePoolDataSource poolDataSource;
     private S2ConnectionConfig config;
+    private Properties connectionProps;
 
     public S2Connection() {
         super(S2ConnectionConfig.__CONFIG_PATH);
@@ -48,6 +51,22 @@ public class S2Connection extends DbConnection {
         }
     }
 
+    protected String createJdbcUrl() throws Exception {
+        String url = settings.getJdbcUrl().trim();
+        if (url.endsWith("/")) {
+            url = url.substring(0, url.length() - 1);
+        }
+        StringBuilder builder = new StringBuilder(url);
+        if (!Strings.isNullOrEmpty(settings.getDb())) {
+            builder.append("/")
+                    .append(settings.getDb());
+        }
+        builder.append("?")
+                .append(Constants.DB_KEY_USER)
+                .append(settings.getUser());
+        return builder.toString();
+    }
+
     @Override
     public Connection connect() throws ConnectionError {
         KeyStore keyStore = connectionManager().keyStore();
@@ -56,8 +75,20 @@ public class S2Connection extends DbConnection {
             if (state.isConnected()) return this;
             Preconditions.checkState(state.state() == EConnectionState.Initialized);
             try {
-                String jdbc = createJdbcUrl(keyStore);
-                poolDataSource = new SingleStorePoolDataSource(jdbc);
+                String pk = settings.getPassword();
+
+                connectionProps = new Properties();
+                String username = settings.getUser();
+                String password = keyStore.read(pk);
+                if (username != null) {
+                    connectionProps.setProperty("user", username);
+                }
+                if (password != null) {
+                    connectionProps.setProperty("password", password);
+                }
+                if (settings.getParameters() != null) {
+                    connectionProps.putAll(settings.getParameters());
+                }
 
                 state.state(EConnectionState.Connected);
                 return this;
@@ -69,7 +100,19 @@ public class S2Connection extends DbConnection {
 
     public java.sql.Connection getConnection() throws SQLException {
         Preconditions.checkState(isConnected());
-        return poolDataSource.getConnection();
+        KeyStore keyStore = connectionManager().keyStore();
+        Preconditions.checkNotNull(keyStore);
+
+        try {
+            Class.forName("com.singlestore.jdbc.Driver");
+            return DriverManager.getConnection(
+                    createJdbcUrl(),
+                    connectionProps);
+        } catch (ClassNotFoundException ex) {
+            throw new SQLException("No sql driver found.");
+        } catch (Exception ex) {
+            throw new SQLException(ex);
+        }
     }
 
     @Override
@@ -77,10 +120,6 @@ public class S2Connection extends DbConnection {
         synchronized (state) {
             if (state.isConnected()) {
                 state.state(EConnectionState.Closed);
-            }
-            if (poolDataSource != null) {
-                poolDataSource.close();
-                poolDataSource = null;
             }
         }
     }

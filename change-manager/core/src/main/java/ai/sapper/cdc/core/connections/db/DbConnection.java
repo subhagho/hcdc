@@ -100,9 +100,9 @@ public abstract class DbConnection implements Connection {
     protected String createJdbcUrl(KeyStore keyStore) throws Exception {
         String url = settings.getJdbcUrl().trim();
         if (url.endsWith("/")) {
-            url = url.substring(0, url.length() - 2);
+            url = url.substring(0, url.length() - 1);
         }
-        StringBuilder builder = new StringBuilder(settings.getJdbcUrl());
+        StringBuilder builder = new StringBuilder(url);
         if (!Strings.isNullOrEmpty(settings.getDb())) {
             builder.append("/")
                     .append(settings.getDb());
