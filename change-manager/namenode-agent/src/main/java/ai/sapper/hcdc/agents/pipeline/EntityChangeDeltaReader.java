@@ -36,7 +36,7 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
     private CDCFileSystem fs;
     private Archiver archiver;
 
-    private FileDeltaProcessorConfig config;
+    private EntityChangeDeltaReaderConfig config;
     private HdfsConnection connection;
     private CDCFileSystem.FileSystemMocker fileSystemMocker;
     private WebServiceClient client;
@@ -60,7 +60,7 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
     public ChangeDeltaProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                                      @NonNull ConnectionManager manger) throws ConfigurationException {
         try {
-            config = new FileDeltaProcessorConfig(xmlConfig);
+            config = new EntityChangeDeltaReaderConfig(xmlConfig);
             config.read();
 
             super.init(config, manger);
@@ -77,13 +77,13 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
             if (fileSystemMocker == null) {
                 Class<? extends CDCFileSystem> fsc = (Class<? extends CDCFileSystem>) Class.forName(config.fsType);
                 fs = fsc.newInstance();
-                fs.init(config.config(), FileDeltaProcessorConfig.Constants.CONFIG_PATH_FS);
+                fs.init(config.config(), EntityChangeDeltaReaderConfig.Constants.CONFIG_PATH_FS);
             } else {
                 fs = (CDCFileSystem) fileSystemMocker.create(config.config());
             }
             client = new WebServiceClient();
             client.init(config.config(),
-                    FileDeltaProcessorConfig.Constants.CONFIG_WS_PATH,
+                    EntityChangeDeltaReaderConfig.Constants.CONFIG_WS_PATH,
                     manger);
 
             if (!Strings.isNullOrEmpty(config.archiverClass)) {
@@ -202,7 +202,7 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
 
     @Getter
     @Accessors(fluent = true)
-    public static class FileDeltaProcessorConfig extends ChangeDeltaProcessorConfig {
+    public static class EntityChangeDeltaReaderConfig extends ChangeDeltaProcessorConfig {
         public static final String __CONFIG_PATH = "processor.files";
 
         public static class Constants {
@@ -218,7 +218,7 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
         private String archiverClass;
         private HierarchicalConfiguration<ImmutableNode> fsConfig;
 
-        public FileDeltaProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
+        public EntityChangeDeltaReaderConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);
         }
 

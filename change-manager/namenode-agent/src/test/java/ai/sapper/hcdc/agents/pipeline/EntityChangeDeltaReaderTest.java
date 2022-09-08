@@ -67,7 +67,7 @@ class EntityChangeDeltaReaderTest {
         public CDCFileSystem create(@NonNull HierarchicalConfiguration<ImmutableNode> config) throws Exception {
             return (S3FileSystem) new S3FileSystem()
                     .withClient(s3Client)
-                    .init(config, EntityChangeDeltaReader.FileDeltaProcessorConfig.Constants.CONFIG_PATH_FS);
+                    .init(config, EntityChangeDeltaReader.EntityChangeDeltaReaderConfig.Constants.CONFIG_PATH_FS);
         }
     }
 }
