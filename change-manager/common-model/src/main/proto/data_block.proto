@@ -160,10 +160,11 @@ message DFSSchemaChange {
 message DFSChangeDelta {
   required string namespace = 1;
   required string txId = 2;
-  required string entity = 3;
-  required string type = 4;
-  required uint64 timestamp = 5;
-  required bytes body = 6;
-  optional DFSSchema schema = 7;
+  required int64 sequence = 3;
+  required string entity = 4;
+  required string type = 5;
+  required uint64 timestamp = 6;
+  required bytes body = 7;
+  optional DFSSchema schema = 8;
 }
 

@@ -69,6 +69,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                                     delF,
                                     DFSDeleteFile.class,
                                     schemaEntity,
+                                    message.value().getSequence(),
                                     MessageObject.MessageMode.Forked)
                             .correlationId(message.id());
 
@@ -186,6 +187,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                     data,
                     DFSAppendFile.class,
                     rState.getEntity(),
+                    message.value().getSequence(),
                     message.mode());
             sender.send(message);
         } else if (fileState.hasError()) {
@@ -254,6 +256,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                             data,
                             DFSRenameFile.class,
                             null,
+                            message.value().getSequence(),
                             MessageObject.MessageMode.Recursive)
                     .correlationId(message.id());
 
@@ -309,6 +312,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                             data,
                             DFSDeleteFile.class,
                             rState.getEntity(),
+                            message.value().getSequence(),
                             MessageObject.MessageMode.Recursive)
                     .correlationId(message.id());
 
@@ -382,6 +386,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                     data,
                     DFSDeleteFile.class,
                     rState.getEntity(),
+                    message.value().getSequence(),
                     message.mode());
 
             sender.send(message);
@@ -463,6 +468,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                     data,
                     DFSAddBlock.class,
                     rState.getEntity(),
+                    message.value().getSequence(),
                     message.mode());
             sender.send(message);
 
@@ -562,6 +568,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                     data,
                     DFSUpdateBlocks.class,
                     rState.getEntity(),
+                    message.value().getSequence(),
                     message.mode());
             sender.send(message);
 
@@ -715,6 +722,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                     data,
                     DFSCloseFile.class,
                     rState.getEntity(),
+                    message.value().getSequence(),
                     message.mode());
             sender.send(message);
 
@@ -770,6 +778,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                         dms,
                         DFSDeleteFile.class,
                         schemaEntity,
+                        message.value().getSequence(),
                         MessageObject.MessageMode.Forked)
                 .correlationId(message.id());
 
@@ -813,6 +822,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                         ams,
                         DFSAddFile.class,
                         null,
+                        message.value().getSequence(),
                         MessageObject.MessageMode.Snapshot)
                 .correlationId(message.id());
 
@@ -824,6 +834,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                         cms,
                         DFSCloseFile.class,
                         null,
+                        message.value().getSequence(),
                         MessageObject.MessageMode.Backlog)
                 .correlationId(message.id());
         processCloseFileTxMessage(cms, cm, txId);

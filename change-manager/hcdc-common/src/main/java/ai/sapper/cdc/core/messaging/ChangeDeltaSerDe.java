@@ -29,7 +29,7 @@ public class ChangeDeltaSerDe {
         MessageObject<String, DFSChangeDelta> m = create(namespace,
                 error.build(),
                 DFSError.class,
-                null, MessageObject.MessageMode.Error);
+                null, -1, MessageObject.MessageMode.Error);
         m.correlationId(messageId);
 
         return m;
@@ -42,16 +42,23 @@ public class ChangeDeltaSerDe {
                 .setOpCode(tnx.getOp().name())
                 .setTransaction(tnx)
                 .build();
-        return create(namespace, ignoreTx, DFSIgnoreTx.class, null, mode);
+        return create(namespace, ignoreTx, DFSIgnoreTx.class, null, -1, mode);
     }
 
     public static <T> MessageObject<String, DFSChangeDelta> create(@NonNull String namespace,
                                                                    @NonNull T data,
                                                                    @NonNull Class<? extends T> type,
                                                                    SchemaEntity schemaEntity,
+                                                                   long sequence,
                                                                    @NonNull MessageObject.MessageMode mode) throws Exception {
         DFSChangeDelta delta = null;
         DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
+        if (mode == MessageObject.MessageMode.Snapshot) {
+            Preconditions.checkArgument(sequence >= 0);
+            builder.setSequence(sequence);
+        } else {
+            builder.setSequence(-1);
+        }
         String key = null;
         String id = null;
         if (type.equals(DFSAddFile.class)) {

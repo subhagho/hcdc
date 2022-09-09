@@ -189,13 +189,13 @@ public final class DFSBlockProto {
       "i_sapper_hcdc_common_model.DFSFile\0226\n\006sc" +
       "hema\030\003 \002(\0132&.ai_sapper_hcdc_common_model" +
       ".DFSSchema\022\n\n\002op\030\004 \002(\005\022\025\n\rcurrentSchema\030" +
-      "\005 \001(\t\022\025\n\rupdatedSchema\030\006 \002(\t\"\250\001\n\016DFSChan" +
+      "\005 \001(\t\022\025\n\rupdatedSchema\030\006 \002(\t\"\272\001\n\016DFSChan" +
       "geDelta\022\021\n\tnamespace\030\001 \002(\t\022\014\n\004txId\030\002 \002(\t" +
-      "\022\016\n\006entity\030\003 \002(\t\022\014\n\004type\030\004 \002(\t\022\021\n\ttimest",
-      "amp\030\005 \002(\004\022\014\n\004body\030\006 \002(\014\0226\n\006schema\030\007 \001(\0132" +
-      "&.ai_sapper_hcdc_common_model.DFSSchemaB" +
-      ".\n\033ai.sapper.hcdc.common.modelB\rDFSBlock" +
-      "ProtoP\001"
+      "\022\020\n\010sequence\030\003 \002(\003\022\016\n\006entity\030\004 \002(\t\022\014\n\004ty",
+      "pe\030\005 \002(\t\022\021\n\ttimestamp\030\006 \002(\004\022\014\n\004body\030\007 \002(" +
+      "\014\0226\n\006schema\030\010 \001(\0132&.ai_sapper_hcdc_commo" +
+      "n_model.DFSSchemaB.\n\033ai.sapper.hcdc.comm" +
+      "on.modelB\rDFSBlockProtoP\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -303,7 +303,7 @@ public final class DFSBlockProto {
           internal_static_ai_sapper_hcdc_common_model_DFSChangeDelta_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_ai_sapper_hcdc_common_model_DFSChangeDelta_descriptor,
-              new java.lang.String[] { "Namespace", "TxId", "Entity", "Type", "Timestamp", "Body", "Schema", });
+              new java.lang.String[] { "Namespace", "TxId", "Sequence", "Entity", "Type", "Timestamp", "Body", "Schema", });
           return null;
         }
       };

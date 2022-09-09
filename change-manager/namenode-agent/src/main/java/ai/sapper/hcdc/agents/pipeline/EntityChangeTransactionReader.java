@@ -306,6 +306,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     delta,
                     DFSChangeData.class,
                     schemaEntity,
+                    message.value().getSequence(),
                     message.mode());
             sender.send(m);
 
@@ -723,6 +724,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                             delta,
                             DFSChangeData.class,
                             schemaEntity,
+                            message.value().getSequence(),
                             message.mode());
                     sender.send(m);
                 } catch (IOException ex) {

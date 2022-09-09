@@ -64,29 +64,34 @@ public  final class DFSChangeDelta extends
             txId_ = input.readBytes();
             break;
           }
-          case 26: {
+          case 24: {
             bitField0_ |= 0x00000004;
-            entity_ = input.readBytes();
+            sequence_ = input.readInt64();
             break;
           }
           case 34: {
             bitField0_ |= 0x00000008;
+            entity_ = input.readBytes();
+            break;
+          }
+          case 42: {
+            bitField0_ |= 0x00000010;
             type_ = input.readBytes();
             break;
           }
-          case 40: {
-            bitField0_ |= 0x00000010;
+          case 48: {
+            bitField0_ |= 0x00000020;
             timestamp_ = input.readUInt64();
             break;
           }
-          case 50: {
-            bitField0_ |= 0x00000020;
+          case 58: {
+            bitField0_ |= 0x00000040;
             body_ = input.readBytes();
             break;
           }
-          case 58: {
+          case 66: {
             ai.sapper.hcdc.common.model.DFSSchema.Builder subBuilder = null;
-            if (((bitField0_ & 0x00000040) == 0x00000040)) {
+            if (((bitField0_ & 0x00000080) == 0x00000080)) {
               subBuilder = schema_.toBuilder();
             }
             schema_ = input.readMessage(ai.sapper.hcdc.common.model.DFSSchema.PARSER, extensionRegistry);
@@ -94,7 +99,7 @@ public  final class DFSChangeDelta extends
               subBuilder.mergeFrom(schema_);
               schema_ = subBuilder.buildPartial();
             }
-            bitField0_ |= 0x00000040;
+            bitField0_ |= 0x00000080;
             break;
           }
         }
@@ -223,17 +228,33 @@ public  final class DFSChangeDelta extends
     }
   }
 
-  // required string entity = 3;
-  public static final int ENTITY_FIELD_NUMBER = 3;
-  private java.lang.Object entity_;
+  // required int64 sequence = 3;
+  public static final int SEQUENCE_FIELD_NUMBER = 3;
+  private long sequence_;
   /**
-   * <code>required string entity = 3;</code>
+   * <code>required int64 sequence = 3;</code>
    */
-  public boolean hasEntity() {
+  public boolean hasSequence() {
     return ((bitField0_ & 0x00000004) == 0x00000004);
   }
   /**
-   * <code>required string entity = 3;</code>
+   * <code>required int64 sequence = 3;</code>
+   */
+  public long getSequence() {
+    return sequence_;
+  }
+
+  // required string entity = 4;
+  public static final int ENTITY_FIELD_NUMBER = 4;
+  private java.lang.Object entity_;
+  /**
+   * <code>required string entity = 4;</code>
+   */
+  public boolean hasEntity() {
+    return ((bitField0_ & 0x00000008) == 0x00000008);
+  }
+  /**
+   * <code>required string entity = 4;</code>
    */
   public java.lang.String getEntity() {
     java.lang.Object ref = entity_;
@@ -250,7 +271,7 @@ public  final class DFSChangeDelta extends
     }
   }
   /**
-   * <code>required string entity = 3;</code>
+   * <code>required string entity = 4;</code>
    */
   public com.google.protobuf.ByteString
       getEntityBytes() {
@@ -266,17 +287,17 @@ public  final class DFSChangeDelta extends
     }
   }
 
-  // required string type = 4;
-  public static final int TYPE_FIELD_NUMBER = 4;
+  // required string type = 5;
+  public static final int TYPE_FIELD_NUMBER = 5;
   private java.lang.Object type_;
   /**
-   * <code>required string type = 4;</code>
+   * <code>required string type = 5;</code>
    */
   public boolean hasType() {
-    return ((bitField0_ & 0x00000008) == 0x00000008);
+    return ((bitField0_ & 0x00000010) == 0x00000010);
   }
   /**
-   * <code>required string type = 4;</code>
+   * <code>required string type = 5;</code>
    */
   public java.lang.String getType() {
     java.lang.Object ref = type_;
@@ -293,7 +314,7 @@ public  final class DFSChangeDelta extends
     }
   }
   /**
-   * <code>required string type = 4;</code>
+   * <code>required string type = 5;</code>
    */
   public com.google.protobuf.ByteString
       getTypeBytes() {
@@ -309,55 +330,55 @@ public  final class DFSChangeDelta extends
     }
   }
 
-  // required uint64 timestamp = 5;
-  public static final int TIMESTAMP_FIELD_NUMBER = 5;
+  // required uint64 timestamp = 6;
+  public static final int TIMESTAMP_FIELD_NUMBER = 6;
   private long timestamp_;
   /**
-   * <code>required uint64 timestamp = 5;</code>
+   * <code>required uint64 timestamp = 6;</code>
    */
   public boolean hasTimestamp() {
-    return ((bitField0_ & 0x00000010) == 0x00000010);
+    return ((bitField0_ & 0x00000020) == 0x00000020);
   }
   /**
-   * <code>required uint64 timestamp = 5;</code>
+   * <code>required uint64 timestamp = 6;</code>
    */
   public long getTimestamp() {
     return timestamp_;
   }
 
-  // required bytes body = 6;
-  public static final int BODY_FIELD_NUMBER = 6;
+  // required bytes body = 7;
+  public static final int BODY_FIELD_NUMBER = 7;
   private com.google.protobuf.ByteString body_;
   /**
-   * <code>required bytes body = 6;</code>
+   * <code>required bytes body = 7;</code>
    */
   public boolean hasBody() {
-    return ((bitField0_ & 0x00000020) == 0x00000020);
+    return ((bitField0_ & 0x00000040) == 0x00000040);
   }
   /**
-   * <code>required bytes body = 6;</code>
+   * <code>required bytes body = 7;</code>
    */
   public com.google.protobuf.ByteString getBody() {
     return body_;
   }
 
-  // optional .ai_sapper_hcdc_common_model.DFSSchema schema = 7;
-  public static final int SCHEMA_FIELD_NUMBER = 7;
+  // optional .ai_sapper_hcdc_common_model.DFSSchema schema = 8;
+  public static final int SCHEMA_FIELD_NUMBER = 8;
   private ai.sapper.hcdc.common.model.DFSSchema schema_;
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 7;</code>
+   * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 8;</code>
    */
   public boolean hasSchema() {
-    return ((bitField0_ & 0x00000040) == 0x00000040);
+    return ((bitField0_ & 0x00000080) == 0x00000080);
   }
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 7;</code>
+   * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 8;</code>
    */
   public ai.sapper.hcdc.common.model.DFSSchema getSchema() {
     return schema_;
   }
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 7;</code>
+   * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 8;</code>
    */
   public ai.sapper.hcdc.common.model.DFSSchemaOrBuilder getSchemaOrBuilder() {
     return schema_;
@@ -366,6 +387,7 @@ public  final class DFSChangeDelta extends
   private void initFields() {
     namespace_ = "";
     txId_ = "";
+    sequence_ = 0L;
     entity_ = "";
     type_ = "";
     timestamp_ = 0L;
@@ -382,6 +404,10 @@ public  final class DFSChangeDelta extends
       return false;
     }
     if (!hasTxId()) {
+      memoizedIsInitialized = 0;
+      return false;
+    }
+    if (!hasSequence()) {
       memoizedIsInitialized = 0;
       return false;
     }
@@ -421,19 +447,22 @@ public  final class DFSChangeDelta extends
       output.writeBytes(2, getTxIdBytes());
     }
     if (((bitField0_ & 0x00000004) == 0x00000004)) {
-      output.writeBytes(3, getEntityBytes());
+      output.writeInt64(3, sequence_);
     }
     if (((bitField0_ & 0x00000008) == 0x00000008)) {
-      output.writeBytes(4, getTypeBytes());
+      output.writeBytes(4, getEntityBytes());
     }
     if (((bitField0_ & 0x00000010) == 0x00000010)) {
-      output.writeUInt64(5, timestamp_);
+      output.writeBytes(5, getTypeBytes());
     }
     if (((bitField0_ & 0x00000020) == 0x00000020)) {
-      output.writeBytes(6, body_);
+      output.writeUInt64(6, timestamp_);
     }
     if (((bitField0_ & 0x00000040) == 0x00000040)) {
-      output.writeMessage(7, schema_);
+      output.writeBytes(7, body_);
+    }
+    if (((bitField0_ & 0x00000080) == 0x00000080)) {
+      output.writeMessage(8, schema_);
     }
     getUnknownFields().writeTo(output);
   }
@@ -454,23 +483,27 @@ public  final class DFSChangeDelta extends
     }
     if (((bitField0_ & 0x00000004) == 0x00000004)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(3, getEntityBytes());
+        .computeInt64Size(3, sequence_);
     }
     if (((bitField0_ & 0x00000008) == 0x00000008)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(4, getTypeBytes());
+        .computeBytesSize(4, getEntityBytes());
     }
     if (((bitField0_ & 0x00000010) == 0x00000010)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeUInt64Size(5, timestamp_);
+        .computeBytesSize(5, getTypeBytes());
     }
     if (((bitField0_ & 0x00000020) == 0x00000020)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(6, body_);
+        .computeUInt64Size(6, timestamp_);
     }
     if (((bitField0_ & 0x00000040) == 0x00000040)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeMessageSize(7, schema_);
+        .computeBytesSize(7, body_);
+    }
+    if (((bitField0_ & 0x00000080) == 0x00000080)) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(8, schema_);
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSerializedSize = size;
@@ -593,20 +626,22 @@ public  final class DFSChangeDelta extends
       bitField0_ = (bitField0_ & ~0x00000001);
       txId_ = "";
       bitField0_ = (bitField0_ & ~0x00000002);
-      entity_ = "";
+      sequence_ = 0L;
       bitField0_ = (bitField0_ & ~0x00000004);
-      type_ = "";
+      entity_ = "";
       bitField0_ = (bitField0_ & ~0x00000008);
-      timestamp_ = 0L;
+      type_ = "";
       bitField0_ = (bitField0_ & ~0x00000010);
-      body_ = com.google.protobuf.ByteString.EMPTY;
+      timestamp_ = 0L;
       bitField0_ = (bitField0_ & ~0x00000020);
+      body_ = com.google.protobuf.ByteString.EMPTY;
+      bitField0_ = (bitField0_ & ~0x00000040);
       if (schemaBuilder_ == null) {
         schema_ = ai.sapper.hcdc.common.model.DFSSchema.getDefaultInstance();
       } else {
         schemaBuilder_.clear();
       }
-      bitField0_ = (bitField0_ & ~0x00000040);
+      bitField0_ = (bitField0_ & ~0x00000080);
       return this;
     }
 
@@ -646,21 +681,25 @@ public  final class DFSChangeDelta extends
       if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
         to_bitField0_ |= 0x00000004;
       }
-      result.entity_ = entity_;
+      result.sequence_ = sequence_;
       if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
         to_bitField0_ |= 0x00000008;
       }
-      result.type_ = type_;
+      result.entity_ = entity_;
       if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
         to_bitField0_ |= 0x00000010;
       }
-      result.timestamp_ = timestamp_;
+      result.type_ = type_;
       if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
         to_bitField0_ |= 0x00000020;
       }
-      result.body_ = body_;
+      result.timestamp_ = timestamp_;
       if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
         to_bitField0_ |= 0x00000040;
+      }
+      result.body_ = body_;
+      if (((from_bitField0_ & 0x00000080) == 0x00000080)) {
+        to_bitField0_ |= 0x00000080;
       }
       if (schemaBuilder_ == null) {
         result.schema_ = schema_;
@@ -693,13 +732,16 @@ public  final class DFSChangeDelta extends
         txId_ = other.txId_;
         onChanged();
       }
+      if (other.hasSequence()) {
+        setSequence(other.getSequence());
+      }
       if (other.hasEntity()) {
-        bitField0_ |= 0x00000004;
+        bitField0_ |= 0x00000008;
         entity_ = other.entity_;
         onChanged();
       }
       if (other.hasType()) {
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000010;
         type_ = other.type_;
         onChanged();
       }
@@ -722,6 +764,10 @@ public  final class DFSChangeDelta extends
         return false;
       }
       if (!hasTxId()) {
+        
+        return false;
+      }
+      if (!hasSequence()) {
         
         return false;
       }
@@ -917,16 +963,49 @@ public  final class DFSChangeDelta extends
       return this;
     }
 
-    // required string entity = 3;
-    private java.lang.Object entity_ = "";
+    // required int64 sequence = 3;
+    private long sequence_ ;
     /**
-     * <code>required string entity = 3;</code>
+     * <code>required int64 sequence = 3;</code>
      */
-    public boolean hasEntity() {
+    public boolean hasSequence() {
       return ((bitField0_ & 0x00000004) == 0x00000004);
     }
     /**
-     * <code>required string entity = 3;</code>
+     * <code>required int64 sequence = 3;</code>
+     */
+    public long getSequence() {
+      return sequence_;
+    }
+    /**
+     * <code>required int64 sequence = 3;</code>
+     */
+    public Builder setSequence(long value) {
+      bitField0_ |= 0x00000004;
+      sequence_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>required int64 sequence = 3;</code>
+     */
+    public Builder clearSequence() {
+      bitField0_ = (bitField0_ & ~0x00000004);
+      sequence_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    // required string entity = 4;
+    private java.lang.Object entity_ = "";
+    /**
+     * <code>required string entity = 4;</code>
+     */
+    public boolean hasEntity() {
+      return ((bitField0_ & 0x00000008) == 0x00000008);
+    }
+    /**
+     * <code>required string entity = 4;</code>
      */
     public java.lang.String getEntity() {
       java.lang.Object ref = entity_;
@@ -940,7 +1019,7 @@ public  final class DFSChangeDelta extends
       }
     }
     /**
-     * <code>required string entity = 3;</code>
+     * <code>required string entity = 4;</code>
      */
     public com.google.protobuf.ByteString
         getEntityBytes() {
@@ -956,51 +1035,51 @@ public  final class DFSChangeDelta extends
       }
     }
     /**
-     * <code>required string entity = 3;</code>
+     * <code>required string entity = 4;</code>
      */
     public Builder setEntity(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000004;
+  bitField0_ |= 0x00000008;
       entity_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>required string entity = 3;</code>
+     * <code>required string entity = 4;</code>
      */
     public Builder clearEntity() {
-      bitField0_ = (bitField0_ & ~0x00000004);
+      bitField0_ = (bitField0_ & ~0x00000008);
       entity_ = getDefaultInstance().getEntity();
       onChanged();
       return this;
     }
     /**
-     * <code>required string entity = 3;</code>
+     * <code>required string entity = 4;</code>
      */
     public Builder setEntityBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000004;
+  bitField0_ |= 0x00000008;
       entity_ = value;
       onChanged();
       return this;
     }
 
-    // required string type = 4;
+    // required string type = 5;
     private java.lang.Object type_ = "";
     /**
-     * <code>required string type = 4;</code>
+     * <code>required string type = 5;</code>
      */
     public boolean hasType() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
+      return ((bitField0_ & 0x00000010) == 0x00000010);
     }
     /**
-     * <code>required string type = 4;</code>
+     * <code>required string type = 5;</code>
      */
     public java.lang.String getType() {
       java.lang.Object ref = type_;
@@ -1014,7 +1093,7 @@ public  final class DFSChangeDelta extends
       }
     }
     /**
-     * <code>required string type = 4;</code>
+     * <code>required string type = 5;</code>
      */
     public com.google.protobuf.ByteString
         getTypeBytes() {
@@ -1030,122 +1109,122 @@ public  final class DFSChangeDelta extends
       }
     }
     /**
-     * <code>required string type = 4;</code>
+     * <code>required string type = 5;</code>
      */
     public Builder setType(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000008;
+  bitField0_ |= 0x00000010;
       type_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>required string type = 4;</code>
+     * <code>required string type = 5;</code>
      */
     public Builder clearType() {
-      bitField0_ = (bitField0_ & ~0x00000008);
+      bitField0_ = (bitField0_ & ~0x00000010);
       type_ = getDefaultInstance().getType();
       onChanged();
       return this;
     }
     /**
-     * <code>required string type = 4;</code>
+     * <code>required string type = 5;</code>
      */
     public Builder setTypeBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000008;
+  bitField0_ |= 0x00000010;
       type_ = value;
       onChanged();
       return this;
     }
 
-    // required uint64 timestamp = 5;
+    // required uint64 timestamp = 6;
     private long timestamp_ ;
     /**
-     * <code>required uint64 timestamp = 5;</code>
+     * <code>required uint64 timestamp = 6;</code>
      */
     public boolean hasTimestamp() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
+      return ((bitField0_ & 0x00000020) == 0x00000020);
     }
     /**
-     * <code>required uint64 timestamp = 5;</code>
+     * <code>required uint64 timestamp = 6;</code>
      */
     public long getTimestamp() {
       return timestamp_;
     }
     /**
-     * <code>required uint64 timestamp = 5;</code>
+     * <code>required uint64 timestamp = 6;</code>
      */
     public Builder setTimestamp(long value) {
-      bitField0_ |= 0x00000010;
+      bitField0_ |= 0x00000020;
       timestamp_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>required uint64 timestamp = 5;</code>
+     * <code>required uint64 timestamp = 6;</code>
      */
     public Builder clearTimestamp() {
-      bitField0_ = (bitField0_ & ~0x00000010);
+      bitField0_ = (bitField0_ & ~0x00000020);
       timestamp_ = 0L;
       onChanged();
       return this;
     }
 
-    // required bytes body = 6;
+    // required bytes body = 7;
     private com.google.protobuf.ByteString body_ = com.google.protobuf.ByteString.EMPTY;
     /**
-     * <code>required bytes body = 6;</code>
+     * <code>required bytes body = 7;</code>
      */
     public boolean hasBody() {
-      return ((bitField0_ & 0x00000020) == 0x00000020);
+      return ((bitField0_ & 0x00000040) == 0x00000040);
     }
     /**
-     * <code>required bytes body = 6;</code>
+     * <code>required bytes body = 7;</code>
      */
     public com.google.protobuf.ByteString getBody() {
       return body_;
     }
     /**
-     * <code>required bytes body = 6;</code>
+     * <code>required bytes body = 7;</code>
      */
     public Builder setBody(com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000020;
+  bitField0_ |= 0x00000040;
       body_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>required bytes body = 6;</code>
+     * <code>required bytes body = 7;</code>
      */
     public Builder clearBody() {
-      bitField0_ = (bitField0_ & ~0x00000020);
+      bitField0_ = (bitField0_ & ~0x00000040);
       body_ = getDefaultInstance().getBody();
       onChanged();
       return this;
     }
 
-    // optional .ai_sapper_hcdc_common_model.DFSSchema schema = 7;
+    // optional .ai_sapper_hcdc_common_model.DFSSchema schema = 8;
     private ai.sapper.hcdc.common.model.DFSSchema schema_ = ai.sapper.hcdc.common.model.DFSSchema.getDefaultInstance();
     private com.google.protobuf.SingleFieldBuilder<
         ai.sapper.hcdc.common.model.DFSSchema, ai.sapper.hcdc.common.model.DFSSchema.Builder, ai.sapper.hcdc.common.model.DFSSchemaOrBuilder> schemaBuilder_;
     /**
-     * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 7;</code>
+     * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 8;</code>
      */
     public boolean hasSchema() {
-      return ((bitField0_ & 0x00000040) == 0x00000040);
+      return ((bitField0_ & 0x00000080) == 0x00000080);
     }
     /**
-     * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 7;</code>
+     * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 8;</code>
      */
     public ai.sapper.hcdc.common.model.DFSSchema getSchema() {
       if (schemaBuilder_ == null) {
@@ -1155,7 +1234,7 @@ public  final class DFSChangeDelta extends
       }
     }
     /**
-     * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 7;</code>
+     * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 8;</code>
      */
     public Builder setSchema(ai.sapper.hcdc.common.model.DFSSchema value) {
       if (schemaBuilder_ == null) {
@@ -1167,11 +1246,11 @@ public  final class DFSChangeDelta extends
       } else {
         schemaBuilder_.setMessage(value);
       }
-      bitField0_ |= 0x00000040;
+      bitField0_ |= 0x00000080;
       return this;
     }
     /**
-     * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 7;</code>
+     * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 8;</code>
      */
     public Builder setSchema(
         ai.sapper.hcdc.common.model.DFSSchema.Builder builderForValue) {
@@ -1181,15 +1260,15 @@ public  final class DFSChangeDelta extends
       } else {
         schemaBuilder_.setMessage(builderForValue.build());
       }
-      bitField0_ |= 0x00000040;
+      bitField0_ |= 0x00000080;
       return this;
     }
     /**
-     * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 7;</code>
+     * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 8;</code>
      */
     public Builder mergeSchema(ai.sapper.hcdc.common.model.DFSSchema value) {
       if (schemaBuilder_ == null) {
-        if (((bitField0_ & 0x00000040) == 0x00000040) &&
+        if (((bitField0_ & 0x00000080) == 0x00000080) &&
             schema_ != ai.sapper.hcdc.common.model.DFSSchema.getDefaultInstance()) {
           schema_ =
             ai.sapper.hcdc.common.model.DFSSchema.newBuilder(schema_).mergeFrom(value).buildPartial();
@@ -1200,11 +1279,11 @@ public  final class DFSChangeDelta extends
       } else {
         schemaBuilder_.mergeFrom(value);
       }
-      bitField0_ |= 0x00000040;
+      bitField0_ |= 0x00000080;
       return this;
     }
     /**
-     * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 7;</code>
+     * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 8;</code>
      */
     public Builder clearSchema() {
       if (schemaBuilder_ == null) {
@@ -1213,19 +1292,19 @@ public  final class DFSChangeDelta extends
       } else {
         schemaBuilder_.clear();
       }
-      bitField0_ = (bitField0_ & ~0x00000040);
+      bitField0_ = (bitField0_ & ~0x00000080);
       return this;
     }
     /**
-     * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 7;</code>
+     * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 8;</code>
      */
     public ai.sapper.hcdc.common.model.DFSSchema.Builder getSchemaBuilder() {
-      bitField0_ |= 0x00000040;
+      bitField0_ |= 0x00000080;
       onChanged();
       return getSchemaFieldBuilder().getBuilder();
     }
     /**
-     * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 7;</code>
+     * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 8;</code>
      */
     public ai.sapper.hcdc.common.model.DFSSchemaOrBuilder getSchemaOrBuilder() {
       if (schemaBuilder_ != null) {
@@ -1235,7 +1314,7 @@ public  final class DFSChangeDelta extends
       }
     }
     /**
-     * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 7;</code>
+     * <code>optional .ai_sapper_hcdc_common_model.DFSSchema schema = 8;</code>
      */
     private com.google.protobuf.SingleFieldBuilder<
         ai.sapper.hcdc.common.model.DFSSchema, ai.sapper.hcdc.common.model.DFSSchema.Builder, ai.sapper.hcdc.common.model.DFSSchemaOrBuilder> 

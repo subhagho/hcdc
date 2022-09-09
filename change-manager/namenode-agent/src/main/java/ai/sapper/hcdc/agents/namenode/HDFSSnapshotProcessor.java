@@ -241,10 +241,12 @@ public class HDFSSnapshotProcessor {
             rState.copyBlocks(fileState);
 
             DFSCloseFile closeFile = generateSnapshot(fileState, true, fileState.getLastTnxId());
+            long seq = stateManager().nextSnapshotSeq();
             MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get(name).source(),
                     closeFile,
                     DFSCloseFile.class,
                     entity,
+                    seq,
                     MessageObject.MessageMode.Snapshot);
             sender.send(message);
 
@@ -295,6 +297,7 @@ public class HDFSSnapshotProcessor {
                         closeFile,
                         DFSCloseFile.class,
                         entity,
+                        -1,
                         MessageObject.MessageMode.Backlog);
                 tnxSender.send(message);
                 lastTxId = fileState.getLastTnxId();

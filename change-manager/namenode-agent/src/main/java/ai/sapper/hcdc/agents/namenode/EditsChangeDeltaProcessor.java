@@ -182,6 +182,7 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
                     closeFile,
                     DFSCloseFile.class,
                     schemaEntity,
+                    message.value().getSequence(),
                     MessageObject.MessageMode.Backlog);
             sender().send(mesg);
 

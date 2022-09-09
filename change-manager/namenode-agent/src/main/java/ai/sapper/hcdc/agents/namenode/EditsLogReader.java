@@ -111,6 +111,7 @@ public class EditsLogReader extends HDFSEditsReader {
                         proto,
                         proto.getClass(),
                         null,
+                        -1,
                         MessageObject.MessageMode.New);
                 sender.send(message);
                 txid = tnx.id();

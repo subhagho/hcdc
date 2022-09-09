@@ -39,6 +39,7 @@ public class HCDCChangeDeltaSerDe extends ChangeDeltaSerDe {
                 builder.build(),
                 DFSSchemaChange.class,
                 rState.getEntity(),
+                -1,
                 mode);
     }
 }

@@ -8,6 +8,7 @@ import ai.sapper.cdc.core.ManagerStateError;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.model.Heartbeat;
 import ai.sapper.hcdc.agents.model.ModuleTxState;
+import ai.sapper.hcdc.agents.model.SnapshotState;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.AccessLevel;
@@ -31,6 +32,9 @@ public class ZkStateManager extends BaseStateManager {
     private String source;
     private String zkModuleStatePath;
     private ModuleTxState moduleTxState;
+    private String zkSnapshotStatePath;
+    private SnapshotState snapshotState;
+
     @Getter(AccessLevel.NONE)
     private DistributedLock replicationLock;
 
@@ -75,6 +79,7 @@ public class ZkStateManager extends BaseStateManager {
                 }
             }
             moduleTxState = getModuleState();
+            snapshotState = getSnapshotState();
 
             replicaStateHelper
                     .withZkConnection(connection())
@@ -90,6 +95,57 @@ public class ZkStateManager extends BaseStateManager {
         return this;
     }
 
+    public long nextSnapshotSeq() throws Exception {
+        checkState();
+        synchronized (this) {
+            long seq = snapshotState.getSnapshotSeq();
+            snapshotState.setSnapshotSeq(seq + 1);
+            save(snapshotState);
+            return seq;
+        }
+    }
+
+    public SnapshotState getSnapshotState() throws Exception {
+        checkState();
+        synchronized (this) {
+            if (snapshotState == null) {
+                zkSnapshotStatePath = new PathUtils.ZkPathBuilder(zkModulePath())
+                        .withPath("snapshot")
+                        .build();
+                snapshotState = checkSnapshotState();
+                if (snapshotState == null) {
+                    snapshotState = new SnapshotState();
+                    snapshotState.setModule(moduleInstance().getModule());
+                    snapshotState.setSnapshotSeq(0);
+                    snapshotState = save(snapshotState);
+                }
+            }
+        }
+        return snapshotState;
+    }
+
+    private SnapshotState save(SnapshotState state) throws Exception {
+        CuratorFramework client = connection().client();
+        if (client.checkExists().forPath(zkSnapshotStatePath) == null) {
+            client.create().creatingParentsIfNeeded().forPath(zkSnapshotStatePath);
+        }
+        state.setUpdatedTimestamp(System.currentTimeMillis());
+        String json = JSONUtils.asString(state, SnapshotState.class);
+        client.setData().forPath(zkSnapshotStatePath, json.getBytes(StandardCharsets.UTF_8));
+        return state;
+    }
+
+    private SnapshotState checkSnapshotState() throws Exception {
+        CuratorFramework client = connection().client();
+        if (client.checkExists().forPath(zkSnapshotStatePath) != null) {
+            byte[] data = client.getData().forPath(zkSnapshotStatePath);
+            if (data != null && data.length > 0) {
+                snapshotState = JSONUtils.read(data, SnapshotState.class);
+                return snapshotState;
+            }
+        }
+        return null;
+    }
 
     public ModuleTxState getModuleState() throws Exception {
         checkState();
@@ -127,6 +183,10 @@ public class ZkStateManager extends BaseStateManager {
             if (moduleTxState.getSnapshotTxId() < snapshotTx) {
                 moduleTxState.setSnapshotTxId(snapshotTx);
                 update(moduleTxState);
+            }
+            if (snapshotState.getSnapshotTxId() < snapshotTx) {
+                snapshotState.setSnapshotTxId(snapshotTx);
+                snapshotState = save(snapshotState);
             }
         }
         return moduleTxState;
