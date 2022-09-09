@@ -4,7 +4,7 @@
         <name>DEV</name>
         <agent>
             <module>CDC-PROCESSORS</module>
-            <!--module>EDITS-LOG-PROCESSORS</module -->
+            <!--module>EDITS-LOG-PROCESSORS</module-->
             <instance>setup</instance>
             <source>ha-cluster</source>
             <enableHeartbeat>false</enableHeartbeat>

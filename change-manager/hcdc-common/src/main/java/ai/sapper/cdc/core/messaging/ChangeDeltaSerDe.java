@@ -57,7 +57,7 @@ public class ChangeDeltaSerDe {
             Preconditions.checkArgument(sequence >= 0);
             builder.setSequence(sequence);
         } else {
-            builder.setSequence(-1);
+            builder.setSequence(0);
         }
         String key = null;
         String id = null;
