@@ -38,6 +38,8 @@ public class ConnectionManager implements Closeable {
         public static final String CONFIG_SHARED_ZK = String.format("%s.connection", CONFIG_SHARED);
         public static final String CONFIG_SHARED_ZK_PATH = String.format("%s.path", CONFIG_SHARED);
         public static final String PATH_ZK_CLASS = "class";
+        public static final String CONFIG_SAVE_CONNECTIONS = "save";
+        public static final String CONFIG_OVERRIDE_FROM_FILE = "override";
     }
 
     private String configPath;
@@ -47,13 +49,15 @@ public class ConnectionManager implements Closeable {
     private String zkPath;
     private KeyStore keyStore;
     private String environment;
+    private boolean saveByDefault = false;
+    private boolean overrideFromFile = true;
 
     public ConnectionManager withEnv(@NonNull String environment) {
         this.environment = environment;
         return this;
     }
 
-    public ConnectionManager init(@NonNull HierarchicalConfiguration<ImmutableNode> config,
+    public ConnectionManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                                   String pathPrefix) throws ConnectionError {
         if (Strings.isNullOrEmpty(pathPrefix)) {
             configPath = Constants.__CONFIG_PATH;
@@ -62,14 +66,23 @@ public class ConnectionManager implements Closeable {
         }
         try {
 
-            this.config = config.configurationAt(configPath);
+            config = xmlConfig.configurationAt(configPath);
+            String s = config.getString(Constants.CONFIG_SAVE_CONNECTIONS);
+            if (!Strings.isNullOrEmpty(s)) {
+                saveByDefault = Boolean.parseBoolean(s);
+            }
+            s = config.getString(Constants.CONFIG_OVERRIDE_FROM_FILE);
+            if (!Strings.isNullOrEmpty(s)) {
+                overrideFromFile = Boolean.parseBoolean(s);
+            }
             synchronized (connections) {
                 int count = initConnections();
                 count += initSharedConnections();
                 LOG.info(String.format("Initialized %d connections...", count));
                 for (String name : connections.keySet()) {
                     Connection conn = connections.get(name);
-                    if (conn.settings().getSource() == ESettingsSource.File) {
+                    if (conn.settings().getSource() == ESettingsSource.File
+                            && saveByDefault) {
                         save(conn);
                     }
                 }
@@ -125,6 +138,9 @@ public class ConnectionManager implements Closeable {
                         List<String> names = client.getChildren().forPath(tp);
                         if (names != null && !names.isEmpty()) {
                             for (String name : names) {
+                                if (connections.containsKey(name) && overrideFromFile) {
+                                    continue;
+                                }
                                 String cp = new PathUtils.ZkPathBuilder(tp)
                                         .withPath(name)
                                         .build();
@@ -238,6 +254,7 @@ public class ConnectionManager implements Closeable {
             if (client.checkExists().forPath(path) == null) {
                 client.create().creatingParentsIfNeeded().forPath(path);
             }
+            connection.settings().setSource(ESettingsSource.ZooKeeper);
             String json = JSONUtils.asString(connection.settings(), connection.settings().getClass());
             client.setData().forPath(path, json.getBytes(StandardCharsets.UTF_8));
             path = new PathUtils.ZkPathBuilder(basePath)
