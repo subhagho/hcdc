@@ -1,5 +1,6 @@
 package ai.sapper.cdc.common.model;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -10,6 +11,7 @@ import java.util.Objects;
 @Getter
 @Setter
 @ToString
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
 public class SchemaEntity {
     private String domain;
     private String group = "DEFAULT";

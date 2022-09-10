@@ -10,7 +10,8 @@ import lombok.ToString;
 @Setter
 @ToString
 public class SnapshotDoneRequest {
-    private SchemaEntity entity;
+    private String domain;
+    private String entity;
     private long transactionId;
     private String hdfsPath;
 
@@ -20,7 +21,8 @@ public class SnapshotDoneRequest {
     public SnapshotDoneRequest(@NonNull SchemaEntity entity,
                                long transactionId,
                                @NonNull String hdfsPath) {
-        this.entity = entity;
+        this.domain = entity.getDomain();
+        this.entity = entity.getEntity();
         this.transactionId = transactionId;
         this.hdfsPath = hdfsPath;
     }

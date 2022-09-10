@@ -58,33 +58,33 @@ public interface DFSSchemaChangeOrBuilder
    */
   int getOp();
 
-  // optional string currentSchema = 5;
+  // optional string currentSchemaPath = 5;
   /**
-   * <code>optional string currentSchema = 5;</code>
+   * <code>optional string currentSchemaPath = 5;</code>
    */
-  boolean hasCurrentSchema();
+  boolean hasCurrentSchemaPath();
   /**
-   * <code>optional string currentSchema = 5;</code>
+   * <code>optional string currentSchemaPath = 5;</code>
    */
-  java.lang.String getCurrentSchema();
+  java.lang.String getCurrentSchemaPath();
   /**
-   * <code>optional string currentSchema = 5;</code>
+   * <code>optional string currentSchemaPath = 5;</code>
    */
   com.google.protobuf.ByteString
-      getCurrentSchemaBytes();
+      getCurrentSchemaPathBytes();
 
-  // required string updatedSchema = 6;
+  // required string updatedSchemaPath = 6;
   /**
-   * <code>required string updatedSchema = 6;</code>
+   * <code>required string updatedSchemaPath = 6;</code>
    */
-  boolean hasUpdatedSchema();
+  boolean hasUpdatedSchemaPath();
   /**
-   * <code>required string updatedSchema = 6;</code>
+   * <code>required string updatedSchemaPath = 6;</code>
    */
-  java.lang.String getUpdatedSchema();
+  java.lang.String getUpdatedSchemaPath();
   /**
-   * <code>required string updatedSchema = 6;</code>
+   * <code>required string updatedSchemaPath = 6;</code>
    */
   com.google.protobuf.ByteString
-      getUpdatedSchemaBytes();
+      getUpdatedSchemaPathBytes();
 }

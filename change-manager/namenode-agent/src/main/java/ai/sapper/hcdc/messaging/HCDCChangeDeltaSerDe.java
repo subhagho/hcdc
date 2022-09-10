@@ -16,8 +16,8 @@ import lombok.NonNull;
 public class HCDCChangeDeltaSerDe extends ChangeDeltaSerDe {
 
     public static MessageObject<String, DFSChangeDelta> createSchemaChange(@NonNull DFSTransaction tnx,
-                                                                           SchemaVersion current,
-                                                                           @NonNull SchemaVersion updated,
+                                                                           String current,
+                                                                           @NonNull String updated,
                                                                            @NonNull AvroChangeType.EChangeType op,
                                                                            @NonNull DFSFileReplicaState rState,
                                                                            @NonNull MessageObject.MessageMode mode) throws Exception {
@@ -30,10 +30,10 @@ public class HCDCChangeDeltaSerDe extends ChangeDeltaSerDe {
                 .setTransaction(tnx)
                 .setFile(file)
                 .setSchema(SchemaEntityHelper.proto(rState.getEntity()))
-                .setUpdatedSchema(updated.toString())
+                .setUpdatedSchemaPath(updated)
                 .setOp(op.opCode());
         if (current != null) {
-            builder.setCurrentSchema(current.toString());
+            builder.setCurrentSchemaPath(current);
         }
         return create(rState.getFileInfo().getNamespace(),
                 builder.build(),

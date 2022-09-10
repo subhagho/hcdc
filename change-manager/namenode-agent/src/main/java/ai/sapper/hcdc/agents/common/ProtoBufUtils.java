@@ -5,8 +5,8 @@ import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.agents.model.DFSFileState;
 import ai.sapper.hcdc.common.model.DFSFile;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import lombok.NonNull;
-import org.apache.parquet.Strings;
 
 public class ProtoBufUtils {
     public static boolean update(@NonNull DFSFileState fileState, @NonNull DFSFile file) throws Exception {
@@ -55,5 +55,18 @@ public class ProtoBufUtils {
             updated = true;
         }
         return updated;
+    }
+
+    public static DFSFile update(@NonNull DFSFile file,
+                                 @NonNull String schemaLocation) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(schemaLocation));
+        DFSFile.Builder builder = DFSFile.newBuilder();
+        builder.setNamespace(file.getNamespace())
+                .setPath(file.getPath())
+                .setInodeId(file.getInodeId())
+                .setFileType(file.getFileType())
+                .setSchemaLocation(schemaLocation);
+
+        return builder.build();
     }
 }

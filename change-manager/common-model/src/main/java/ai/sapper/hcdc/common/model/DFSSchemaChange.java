@@ -100,12 +100,12 @@ public  final class DFSSchemaChange extends
           }
           case 42: {
             bitField0_ |= 0x00000010;
-            currentSchema_ = input.readBytes();
+            currentSchemaPath_ = input.readBytes();
             break;
           }
           case 50: {
             bitField0_ |= 0x00000020;
-            updatedSchema_ = input.readBytes();
+            updatedSchemaPath_ = input.readBytes();
             break;
           }
         }
@@ -230,20 +230,20 @@ public  final class DFSSchemaChange extends
     return op_;
   }
 
-  // optional string currentSchema = 5;
-  public static final int CURRENTSCHEMA_FIELD_NUMBER = 5;
-  private java.lang.Object currentSchema_;
+  // optional string currentSchemaPath = 5;
+  public static final int CURRENTSCHEMAPATH_FIELD_NUMBER = 5;
+  private java.lang.Object currentSchemaPath_;
   /**
-   * <code>optional string currentSchema = 5;</code>
+   * <code>optional string currentSchemaPath = 5;</code>
    */
-  public boolean hasCurrentSchema() {
+  public boolean hasCurrentSchemaPath() {
     return ((bitField0_ & 0x00000010) == 0x00000010);
   }
   /**
-   * <code>optional string currentSchema = 5;</code>
+   * <code>optional string currentSchemaPath = 5;</code>
    */
-  public java.lang.String getCurrentSchema() {
-    java.lang.Object ref = currentSchema_;
+  public java.lang.String getCurrentSchemaPath() {
+    java.lang.Object ref = currentSchemaPath_;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
@@ -251,42 +251,42 @@ public  final class DFSSchemaChange extends
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       if (bs.isValidUtf8()) {
-        currentSchema_ = s;
+        currentSchemaPath_ = s;
       }
       return s;
     }
   }
   /**
-   * <code>optional string currentSchema = 5;</code>
+   * <code>optional string currentSchemaPath = 5;</code>
    */
   public com.google.protobuf.ByteString
-      getCurrentSchemaBytes() {
-    java.lang.Object ref = currentSchema_;
+      getCurrentSchemaPathBytes() {
+    java.lang.Object ref = currentSchemaPath_;
     if (ref instanceof java.lang.String) {
       com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
-      currentSchema_ = b;
+      currentSchemaPath_ = b;
       return b;
     } else {
       return (com.google.protobuf.ByteString) ref;
     }
   }
 
-  // required string updatedSchema = 6;
-  public static final int UPDATEDSCHEMA_FIELD_NUMBER = 6;
-  private java.lang.Object updatedSchema_;
+  // required string updatedSchemaPath = 6;
+  public static final int UPDATEDSCHEMAPATH_FIELD_NUMBER = 6;
+  private java.lang.Object updatedSchemaPath_;
   /**
-   * <code>required string updatedSchema = 6;</code>
+   * <code>required string updatedSchemaPath = 6;</code>
    */
-  public boolean hasUpdatedSchema() {
+  public boolean hasUpdatedSchemaPath() {
     return ((bitField0_ & 0x00000020) == 0x00000020);
   }
   /**
-   * <code>required string updatedSchema = 6;</code>
+   * <code>required string updatedSchemaPath = 6;</code>
    */
-  public java.lang.String getUpdatedSchema() {
-    java.lang.Object ref = updatedSchema_;
+  public java.lang.String getUpdatedSchemaPath() {
+    java.lang.Object ref = updatedSchemaPath_;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
@@ -294,22 +294,22 @@ public  final class DFSSchemaChange extends
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       if (bs.isValidUtf8()) {
-        updatedSchema_ = s;
+        updatedSchemaPath_ = s;
       }
       return s;
     }
   }
   /**
-   * <code>required string updatedSchema = 6;</code>
+   * <code>required string updatedSchemaPath = 6;</code>
    */
   public com.google.protobuf.ByteString
-      getUpdatedSchemaBytes() {
-    java.lang.Object ref = updatedSchema_;
+      getUpdatedSchemaPathBytes() {
+    java.lang.Object ref = updatedSchemaPath_;
     if (ref instanceof java.lang.String) {
       com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
-      updatedSchema_ = b;
+      updatedSchemaPath_ = b;
       return b;
     } else {
       return (com.google.protobuf.ByteString) ref;
@@ -321,8 +321,8 @@ public  final class DFSSchemaChange extends
     file_ = ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance();
     schema_ = ai.sapper.hcdc.common.model.DFSSchema.getDefaultInstance();
     op_ = 0;
-    currentSchema_ = "";
-    updatedSchema_ = "";
+    currentSchemaPath_ = "";
+    updatedSchemaPath_ = "";
   }
   private byte memoizedIsInitialized = -1;
   public final boolean isInitialized() {
@@ -345,7 +345,7 @@ public  final class DFSSchemaChange extends
       memoizedIsInitialized = 0;
       return false;
     }
-    if (!hasUpdatedSchema()) {
+    if (!hasUpdatedSchemaPath()) {
       memoizedIsInitialized = 0;
       return false;
     }
@@ -381,10 +381,10 @@ public  final class DFSSchemaChange extends
       output.writeInt32(4, op_);
     }
     if (((bitField0_ & 0x00000010) == 0x00000010)) {
-      output.writeBytes(5, getCurrentSchemaBytes());
+      output.writeBytes(5, getCurrentSchemaPathBytes());
     }
     if (((bitField0_ & 0x00000020) == 0x00000020)) {
-      output.writeBytes(6, getUpdatedSchemaBytes());
+      output.writeBytes(6, getUpdatedSchemaPathBytes());
     }
     getUnknownFields().writeTo(output);
   }
@@ -413,11 +413,11 @@ public  final class DFSSchemaChange extends
     }
     if (((bitField0_ & 0x00000010) == 0x00000010)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(5, getCurrentSchemaBytes());
+        .computeBytesSize(5, getCurrentSchemaPathBytes());
     }
     if (((bitField0_ & 0x00000020) == 0x00000020)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(6, getUpdatedSchemaBytes());
+        .computeBytesSize(6, getUpdatedSchemaPathBytes());
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSerializedSize = size;
@@ -558,9 +558,9 @@ public  final class DFSSchemaChange extends
       bitField0_ = (bitField0_ & ~0x00000004);
       op_ = 0;
       bitField0_ = (bitField0_ & ~0x00000008);
-      currentSchema_ = "";
+      currentSchemaPath_ = "";
       bitField0_ = (bitField0_ & ~0x00000010);
-      updatedSchema_ = "";
+      updatedSchemaPath_ = "";
       bitField0_ = (bitField0_ & ~0x00000020);
       return this;
     }
@@ -621,11 +621,11 @@ public  final class DFSSchemaChange extends
       if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
         to_bitField0_ |= 0x00000010;
       }
-      result.currentSchema_ = currentSchema_;
+      result.currentSchemaPath_ = currentSchemaPath_;
       if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
         to_bitField0_ |= 0x00000020;
       }
-      result.updatedSchema_ = updatedSchema_;
+      result.updatedSchemaPath_ = updatedSchemaPath_;
       result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
@@ -654,14 +654,14 @@ public  final class DFSSchemaChange extends
       if (other.hasOp()) {
         setOp(other.getOp());
       }
-      if (other.hasCurrentSchema()) {
+      if (other.hasCurrentSchemaPath()) {
         bitField0_ |= 0x00000010;
-        currentSchema_ = other.currentSchema_;
+        currentSchemaPath_ = other.currentSchemaPath_;
         onChanged();
       }
-      if (other.hasUpdatedSchema()) {
+      if (other.hasUpdatedSchemaPath()) {
         bitField0_ |= 0x00000020;
-        updatedSchema_ = other.updatedSchema_;
+        updatedSchemaPath_ = other.updatedSchemaPath_;
         onChanged();
       }
       this.mergeUnknownFields(other.getUnknownFields());
@@ -685,7 +685,7 @@ public  final class DFSSchemaChange extends
         
         return false;
       }
-      if (!hasUpdatedSchema()) {
+      if (!hasUpdatedSchemaPath()) {
         
         return false;
       }
@@ -1107,150 +1107,150 @@ public  final class DFSSchemaChange extends
       return this;
     }
 
-    // optional string currentSchema = 5;
-    private java.lang.Object currentSchema_ = "";
+    // optional string currentSchemaPath = 5;
+    private java.lang.Object currentSchemaPath_ = "";
     /**
-     * <code>optional string currentSchema = 5;</code>
+     * <code>optional string currentSchemaPath = 5;</code>
      */
-    public boolean hasCurrentSchema() {
+    public boolean hasCurrentSchemaPath() {
       return ((bitField0_ & 0x00000010) == 0x00000010);
     }
     /**
-     * <code>optional string currentSchema = 5;</code>
+     * <code>optional string currentSchemaPath = 5;</code>
      */
-    public java.lang.String getCurrentSchema() {
-      java.lang.Object ref = currentSchema_;
+    public java.lang.String getCurrentSchemaPath() {
+      java.lang.Object ref = currentSchemaPath_;
       if (!(ref instanceof java.lang.String)) {
         java.lang.String s = ((com.google.protobuf.ByteString) ref)
             .toStringUtf8();
-        currentSchema_ = s;
+        currentSchemaPath_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
       }
     }
     /**
-     * <code>optional string currentSchema = 5;</code>
+     * <code>optional string currentSchemaPath = 5;</code>
      */
     public com.google.protobuf.ByteString
-        getCurrentSchemaBytes() {
-      java.lang.Object ref = currentSchema_;
+        getCurrentSchemaPathBytes() {
+      java.lang.Object ref = currentSchemaPath_;
       if (ref instanceof String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        currentSchema_ = b;
+        currentSchemaPath_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
     /**
-     * <code>optional string currentSchema = 5;</code>
+     * <code>optional string currentSchemaPath = 5;</code>
      */
-    public Builder setCurrentSchema(
+    public Builder setCurrentSchemaPath(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
   bitField0_ |= 0x00000010;
-      currentSchema_ = value;
+      currentSchemaPath_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>optional string currentSchema = 5;</code>
+     * <code>optional string currentSchemaPath = 5;</code>
      */
-    public Builder clearCurrentSchema() {
+    public Builder clearCurrentSchemaPath() {
       bitField0_ = (bitField0_ & ~0x00000010);
-      currentSchema_ = getDefaultInstance().getCurrentSchema();
+      currentSchemaPath_ = getDefaultInstance().getCurrentSchemaPath();
       onChanged();
       return this;
     }
     /**
-     * <code>optional string currentSchema = 5;</code>
+     * <code>optional string currentSchemaPath = 5;</code>
      */
-    public Builder setCurrentSchemaBytes(
+    public Builder setCurrentSchemaPathBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
   bitField0_ |= 0x00000010;
-      currentSchema_ = value;
+      currentSchemaPath_ = value;
       onChanged();
       return this;
     }
 
-    // required string updatedSchema = 6;
-    private java.lang.Object updatedSchema_ = "";
+    // required string updatedSchemaPath = 6;
+    private java.lang.Object updatedSchemaPath_ = "";
     /**
-     * <code>required string updatedSchema = 6;</code>
+     * <code>required string updatedSchemaPath = 6;</code>
      */
-    public boolean hasUpdatedSchema() {
+    public boolean hasUpdatedSchemaPath() {
       return ((bitField0_ & 0x00000020) == 0x00000020);
     }
     /**
-     * <code>required string updatedSchema = 6;</code>
+     * <code>required string updatedSchemaPath = 6;</code>
      */
-    public java.lang.String getUpdatedSchema() {
-      java.lang.Object ref = updatedSchema_;
+    public java.lang.String getUpdatedSchemaPath() {
+      java.lang.Object ref = updatedSchemaPath_;
       if (!(ref instanceof java.lang.String)) {
         java.lang.String s = ((com.google.protobuf.ByteString) ref)
             .toStringUtf8();
-        updatedSchema_ = s;
+        updatedSchemaPath_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
       }
     }
     /**
-     * <code>required string updatedSchema = 6;</code>
+     * <code>required string updatedSchemaPath = 6;</code>
      */
     public com.google.protobuf.ByteString
-        getUpdatedSchemaBytes() {
-      java.lang.Object ref = updatedSchema_;
+        getUpdatedSchemaPathBytes() {
+      java.lang.Object ref = updatedSchemaPath_;
       if (ref instanceof String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        updatedSchema_ = b;
+        updatedSchemaPath_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
     /**
-     * <code>required string updatedSchema = 6;</code>
+     * <code>required string updatedSchemaPath = 6;</code>
      */
-    public Builder setUpdatedSchema(
+    public Builder setUpdatedSchemaPath(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
   bitField0_ |= 0x00000020;
-      updatedSchema_ = value;
+      updatedSchemaPath_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>required string updatedSchema = 6;</code>
+     * <code>required string updatedSchemaPath = 6;</code>
      */
-    public Builder clearUpdatedSchema() {
+    public Builder clearUpdatedSchemaPath() {
       bitField0_ = (bitField0_ & ~0x00000020);
-      updatedSchema_ = getDefaultInstance().getUpdatedSchema();
+      updatedSchemaPath_ = getDefaultInstance().getUpdatedSchemaPath();
       onChanged();
       return this;
     }
     /**
-     * <code>required string updatedSchema = 6;</code>
+     * <code>required string updatedSchemaPath = 6;</code>
      */
-    public Builder setUpdatedSchemaBytes(
+    public Builder setUpdatedSchemaPathBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
   bitField0_ |= 0x00000020;
-      updatedSchema_ = value;
+      updatedSchemaPath_ = value;
       onChanged();
       return this;
     }

@@ -3,6 +3,7 @@ package ai.sapper.hcdc.services.namenode;
 import ai.sapper.cdc.common.filters.DomainFilter;
 import ai.sapper.cdc.common.filters.DomainFilters;
 import ai.sapper.cdc.common.filters.Filter;
+import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.model.services.*;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.schema.SchemaManager;
@@ -120,9 +121,10 @@ public class SnapshotService {
     public ResponseEntity<DFSFileReplicaState> snapshotDone(@RequestBody SnapshotDoneRequest request) {
         try {
             ServiceHelper.checkService(processor.name(), processor);
+            SchemaEntity entity = new SchemaEntity(request.getDomain(), request.getEntity());
             DFSFileReplicaState rState = processor.getProcessor()
                     .snapshotDone(request.getHdfsPath(),
-                            request.getEntity(),
+                            entity,
                             request.getTransactionId());
             return new ResponseEntity<>(rState, HttpStatus.OK);
         } catch (Throwable t) {

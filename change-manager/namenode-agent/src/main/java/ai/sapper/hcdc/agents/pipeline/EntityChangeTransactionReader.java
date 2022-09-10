@@ -18,10 +18,7 @@ import ai.sapper.cdc.core.messaging.MessageSender;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.model.HDFSBlockData;
 import ai.sapper.cdc.core.schema.SchemaManager;
-import ai.sapper.hcdc.agents.common.CDCDataConverter;
-import ai.sapper.hcdc.agents.common.InvalidTransactionError;
-import ai.sapper.hcdc.agents.common.NameNodeEnv;
-import ai.sapper.hcdc.agents.common.TransactionProcessor;
+import ai.sapper.hcdc.agents.common.*;
 import ai.sapper.hcdc.agents.model.*;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.common.utils.SchemaEntityHelper;
@@ -293,9 +290,24 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             rDelta.setRecordCount(response.recordCount());
             rState.addDelta(rDelta);
 
+            SchemaManager schemaManager = NameNodeEnv.get(name()).schemaManager();
+            DFSFile dfile = data.getFile();
+            EntityDef schema = schemaManager.get(rState.getEntity());
+            if (schema != null) {
+                if (!Strings.isNullOrEmpty(schema.schemaPath())) {
+                    rState.getFileInfo().setSchemaLocation(schema.schemaPath());
+                }
+                dfile = ProtoBufUtils.update(dfile, schema.schemaPath());
+            } else {
+                throw new InvalidTransactionError(txId,
+                        DFSError.ErrorCode.SYNC_STOPPED,
+                        data.getFile().getPath(),
+                        String.format("Entity Schema not found. [entity=%s]",
+                                rState.getEntity().toString()));
+            }
             DFSChangeData delta = DFSChangeData.newBuilder()
                     .setTransaction(data.getTransaction())
-                    .setFile(data.getFile())
+                    .setFile(dfile)
                     .setDomain(schemaEntity.getDomain())
                     .setEntityName(schemaEntity.getEntity())
                     .setFileSystem(fs.fileSystemCode())
@@ -586,7 +598,8 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                                           long txId) throws Exception {
         SchemaEntity schemaEntity = SchemaEntityHelper.parse(message.value().getSchema());
         if (message.mode() == MessageObject.MessageMode.Snapshot) {
-            if (Strings.isNullOrEmpty(schemaEntity.getDomain()) || Strings.isNullOrEmpty(schemaEntity.getEntity())) {
+            if (Strings.isNullOrEmpty(schemaEntity.getDomain()) ||
+                    Strings.isNullOrEmpty(schemaEntity.getEntity())) {
                 throw new InvalidTransactionError(txId,
                         DFSError.ErrorCode.SYNC_STOPPED,
                         data.getFile().getPath(),
@@ -692,15 +705,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     } else {
                         rState.setRecordCount(rState.getRecordCount() + response.recordCount());
                     }
-                    DFSChangeData delta = DFSChangeData.newBuilder()
-                            .setTransaction(data.getTransaction())
-                            .setFile(data.getFile())
-                            .setDomain(schemaEntity.getDomain())
-                            .setEntityName(schemaEntity.getEntity())
-                            .setFileSystem(fs.fileSystemCode())
-                            .setOutputPath(JSONUtils.asString(response.path().pathConfig(), Map.class))
-                            .build();
-
+                    DFSFile dfile = data.getFile();
                     EntityDef schema = schemaManager.get(rState.getEntity());
                     if (schema != null) {
                         if (!Strings.isNullOrEmpty(schema.schemaPath())) {
@@ -708,16 +713,36 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                         }
                         if (schema.version() != null) {
                             if (prevSchema != null) {
-                                compareSchemaVersions(prevSchema.version(),
+                                dfile = compareSchemaVersions(prevSchema.version(),
                                         schema.version(),
                                         rState, data.getTransaction(),
-                                        message, txId);
+                                        message,
+                                        dfile);
                             } else {
-
+                                dfile = compareSchemaVersions(null,
+                                        schema.version(),
+                                        rState, data.getTransaction(),
+                                        message,
+                                        dfile);
                             }
                             rState.getFileInfo().setSchemaVersion(schema.version());
                         }
+                    } else {
+                        throw new InvalidTransactionError(txId,
+                                DFSError.ErrorCode.SYNC_STOPPED,
+                                data.getFile().getPath(),
+                                String.format("Entity Schema not found. [entity=%s]",
+                                        rState.getEntity().toString()));
                     }
+
+                    DFSChangeData delta = DFSChangeData.newBuilder()
+                            .setTransaction(data.getTransaction())
+                            .setFile(dfile)
+                            .setDomain(schemaEntity.getDomain())
+                            .setEntityName(schemaEntity.getEntity())
+                            .setFileSystem(fs.fileSystemCode())
+                            .setOutputPath(JSONUtils.asString(response.path().pathConfig(), Map.class))
+                            .build();
 
                     MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(
                             message.value().getNamespace(),
@@ -766,12 +791,13 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         }
     }
 
-    private void compareSchemaVersions(SchemaVersion current,
-                                       @NonNull SchemaVersion updated,
-                                       @NonNull DFSFileReplicaState replicaState,
-                                       @NonNull DFSTransaction tnx,
-                                       @NonNull MessageObject<String, DFSChangeDelta> message,
-                                       long txId) throws Exception {
+    private DFSFile compareSchemaVersions(SchemaVersion current,
+                                          @NonNull SchemaVersion updated,
+                                          @NonNull DFSFileReplicaState replicaState,
+                                          @NonNull DFSTransaction tnx,
+                                          @NonNull MessageObject<String, DFSChangeDelta> message,
+                                          @NonNull DFSFile file) throws Exception {
+
         AvroChangeType.EChangeType op = null;
         boolean changed = false;
         if (current == null) {
@@ -783,18 +809,43 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             op = AvroChangeType.EChangeType.EntityUpdate;
             changed = true;
         }
+        SchemaManager schemaManager = NameNodeEnv.get(name()).schemaManager();
+        EntityDef ned = schemaManager.get(replicaState.getEntity(), updated);
+        if (ned == null) {
+            throw new Exception(
+                    String.format("Entity Schema not found. [entity=%s][version=%s]",
+                            replicaState.getEntity().toString(),
+                            updated.toString()));
+        }
+        String updatedPath = ned.schemaPath();
         if (changed) {
+            String currentPath = null;
+            if (current != null) {
+                EntityDef ed = schemaManager.get(replicaState.getEntity(), current);
+                if (ed == null) {
+                    throw new Exception(
+                            String.format("Entity Schema not found. [entity=%s][version=%s]",
+                                    replicaState.getEntity().toString(),
+                                    current.toString()));
+                }
+                currentPath = ed.schemaPath();
+            }
+
             MessageObject<String, DFSChangeDelta> m = HCDCChangeDeltaSerDe
                     .createSchemaChange(tnx,
-                            current,
-                            updated, op,
+                            currentPath,
+                            updatedPath,
+                            op,
                             replicaState,
                             MessageObject.MessageMode.Schema
                     );
             m.correlationId(message.id());
 
             sender.send(m);
+
         }
+
+        return ProtoBufUtils.update(file, updatedPath);
     }
 
     private DFSFileReplicaState snapshotDone(DFSFileState fileState,
