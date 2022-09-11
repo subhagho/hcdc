@@ -2,16 +2,19 @@ package ai.sapper.cdc.core.schema;
 
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.cache.LRUCache;
-import ai.sapper.cdc.common.model.EntityDef;
 import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.model.services.PathOrSchema;
 import ai.sapper.cdc.common.model.services.PathWithSchema;
+import ai.sapper.cdc.common.schema.AvroSchema;
+import ai.sapper.cdc.common.schema.SchemaEvolutionValidator;
 import ai.sapper.cdc.common.schema.SchemaVersion;
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
@@ -22,7 +25,7 @@ import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.log4j.Level;
+import org.slf4j.event.Level;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -36,7 +39,7 @@ public class SchemaManager {
     @Setter
     @Accessors(fluent = true)
     private static class SchemaElement {
-        private EntityDef entityDef;
+        private AvroSchema entityDef;
         private long readtime;
     }
 
@@ -46,7 +49,7 @@ public class SchemaManager {
     private static class CacheEntity {
         private Map<SchemaVersion, SchemaElement> versions = new HashMap<>();
 
-        public EntityDef get(SchemaVersion version, long timeout) {
+        public AvroSchema get(SchemaVersion version, long timeout) {
             if (versions.containsKey(version)) {
                 SchemaElement se = versions.get(version);
                 long t = System.currentTimeMillis() - se.readtime;
@@ -58,7 +61,7 @@ public class SchemaManager {
             return null;
         }
 
-        public void put(SchemaVersion version, EntityDef entityDef) {
+        public void put(SchemaVersion version, AvroSchema entityDef) {
             SchemaElement se = versions.get(version);
             if (se == null) {
                 se = new SchemaElement();
@@ -142,7 +145,7 @@ public class SchemaManager {
                 .withConnection(zkConnection);
     }
 
-    private EntityDef checkCache(SchemaEntity schemaEntity, SchemaVersion version) {
+    private AvroSchema checkCache(SchemaEntity schemaEntity, SchemaVersion version) {
         if (cache != null) {
             Optional<CacheEntity> ce = cache.get(schemaEntity);
             if (ce.isPresent()) {
@@ -152,7 +155,7 @@ public class SchemaManager {
         return null;
     }
 
-    private void putInCache(SchemaEntity schemaEntity, SchemaVersion version, EntityDef entityDef) {
+    private void putInCache(SchemaEntity schemaEntity, SchemaVersion version, AvroSchema entityDef) {
         if (cache != null) {
             CacheEntity c = null;
             Optional<CacheEntity> ce = cache.get(schemaEntity);
@@ -166,30 +169,25 @@ public class SchemaManager {
         }
     }
 
-    public EntityDef checkAndSave(@NonNull String schemaStr,
-                                  @NonNull SchemaEntity schemaEntity) throws Exception {
-        Schema schema = new Schema.Parser().parse(schemaStr);
-        return checkAndSave(schema, schemaEntity);
-    }
-
-    public EntityDef checkAndSave(@NonNull Schema schema,
-                                  @NonNull SchemaEntity schemaEntity) throws Exception {
+    public AvroSchema checkAndSave(@NonNull AvroSchema schema,
+                                   @NonNull SchemaEntity schemaEntity) throws Exception {
         SchemaVersion version = currentVersion(schemaEntity);
-        EntityDef current = get(schemaEntity, version);
+        AvroSchema current = get(schemaEntity, version);
         if (current == null) {
             return save(schema, schemaEntity, version);
         } else {
-            SchemaVersion next = nextVersion(schema, current.schema(), version);
+            SchemaVersion next = nextVersion(schemaEntity, schema, current, version);
             if (!next.equals(version)) {
                 return save(schema, schemaEntity, next);
+            } else {
+                return save(schema, schemaEntity, version);
             }
         }
-        return current;
     }
 
-    public EntityDef save(@NonNull Schema schema,
-                          @NonNull SchemaEntity schemaEntity,
-                          @NonNull SchemaVersion version) throws Exception {
+    public AvroSchema save(@NonNull AvroSchema schema,
+                           @NonNull SchemaEntity schemaEntity,
+                           @NonNull SchemaVersion version) throws Exception {
         writeLock.lock();
         try {
             String path = getZkPath(schemaEntity, version);
@@ -197,50 +195,49 @@ public class SchemaManager {
             if (client.checkExists().forPath(path) == null) {
                 client.create().creatingParentsIfNeeded().forPath(path);
             }
-            String schemaStr = schema.toString(false);
-            client.setData().forPath(path, schemaStr.getBytes(StandardCharsets.UTF_8));
+            schema.setVersion(version);
+            schema.setZkPath(path);
+            String json = JSONUtils.asString(schema, schema.getClass());
+            client.setData().forPath(path, json.getBytes(StandardCharsets.UTF_8));
 
             String p = getZkPath(schemaEntity);
-            String json = JSONUtils.asString(version, SchemaVersion.class);
+            json = JSONUtils.asString(version, SchemaVersion.class);
             client.setData().forPath(p, json.getBytes(StandardCharsets.UTF_8));
 
-            EntityDef en = new EntityDef()
-                    .schemaPath(p)
-                    .schema(schema)
-                    .version(version);
-            putInCache(schemaEntity, version, en);
-            return en;
+            putInCache(schemaEntity, version, schema);
+            return schema;
         } finally {
             writeLock.unlock();
         }
     }
 
-    public EntityDef copySchema(@NonNull String source,
-                                @NonNull SchemaEntity schemaEntity) throws Exception {
-        EntityDef schema = get(schemaEntity, source);
-        if (schema != null) {
-            return checkAndSave(schema.schema(), schemaEntity);
-        }
-        return null;
-    }
-
-    private SchemaVersion nextVersion(Schema schema,
-                                      Schema current,
+    private SchemaVersion nextVersion(SchemaEntity entity,
+                                      AvroSchema schema,
+                                      AvroSchema current,
                                       SchemaVersion version) throws Exception {
         SchemaVersion next = new SchemaVersion(version);
         if (current != null) {
-            if (schema.equals(current)) return next;
-
+            if (schema.compare(current)) return next;
+            List<AvroSchema> schemas = findSchemas(entity);
+            if (schemas != null && !schemas.isEmpty()) {
+                for (AvroSchema avs : schemas) {
+                    if (avs.compare(current)) continue;
+                    if (avs.compare(schema)) return schema.getVersion();
+                }
+            }
             List<SchemaEvolutionValidator.Message> messages
-                    = SchemaEvolutionValidator.checkBackwardCompatibility(current, schema, schema.getName());
-            Level maxLevel = Level.ALL;
+                    = SchemaEvolutionValidator
+                    .checkBackwardCompatibility(current.getSchema(),
+                            schema.getSchema(),
+                            current.getSchema().getName());
+            Level maxLevel = Level.DEBUG;
             for (SchemaEvolutionValidator.Message message : messages) {
-                if (message.getLevel().isGreaterOrEqual(maxLevel)) {
+                if (DefaultLogger.isGreaterOrEqual(message.getLevel(), maxLevel)) {
                     maxLevel = message.getLevel();
                 }
             }
 
-            if (maxLevel.isGreaterOrEqual(Level.ERROR)) {
+            if (DefaultLogger.isGreaterOrEqual(maxLevel, Level.ERROR)) {
                 next.setMajorVersion(version.getMajorVersion() + 1);
                 next.setMinorVersion(0);
             } else {
@@ -248,6 +245,41 @@ public class SchemaManager {
             }
         }
         return next;
+    }
+
+    public List<AvroSchema> findSchemas(@NonNull SchemaEntity entity) throws Exception {
+        CuratorFramework client = zkConnection.client();
+        String basePath = getZkPath(entity);
+        if (client.checkExists().forPath(basePath) != null) {
+            List<AvroSchema> schemas = new ArrayList<>();
+            List<String> mjvers = client.getChildren().forPath(basePath);
+            if (mjvers != null && !mjvers.isEmpty()) {
+                for (String mj : mjvers) {
+                    int mjv = Integer.parseInt(mj);
+                    String path = new PathUtils.ZkPathBuilder(basePath)
+                            .withPath(mj)
+                            .build();
+                    List<String> mnvers = client.getChildren().forPath(path);
+                    if (mnvers != null && !mnvers.isEmpty()) {
+                        for (String mn : mnvers) {
+                            int mnv = Integer.parseInt(mn);
+                            String p = new PathUtils.ZkPathBuilder(path)
+                                    .withPath(mn)
+                                    .build();
+                            SchemaVersion v = new SchemaVersion(mjv, mnv);
+                            byte[] data = client.getData().forPath(p);
+                            if (data != null && data.length > 0) {
+                                AvroSchema schema = JSONUtils.read(data, AvroSchema.class);
+                                Preconditions.checkState(schema.getVersion().equals(v));
+                                schemas.add(schema);
+                            }
+                        }
+                    }
+                }
+            }
+            if (!schemas.isEmpty()) return schemas;
+        }
+        return null;
     }
 
     public boolean delete(@NonNull SchemaEntity schemaEntity,
@@ -281,13 +313,13 @@ public class SchemaManager {
         }
     }
 
-    public EntityDef get(@NonNull SchemaEntity schemaEntity) throws Exception {
+    public AvroSchema get(@NonNull SchemaEntity schemaEntity) throws Exception {
         return get(schemaEntity, currentVersion(schemaEntity));
     }
 
-    public EntityDef get(@NonNull SchemaEntity schemaEntity,
-                         @NonNull SchemaVersion version) throws Exception {
-        EntityDef en = checkCache(schemaEntity, version);
+    public AvroSchema get(@NonNull SchemaEntity schemaEntity,
+                          @NonNull SchemaVersion version) throws Exception {
+        AvroSchema en = checkCache(schemaEntity, version);
         if (en != null) return en;
 
         String path = getZkPath(schemaEntity, version);
@@ -298,8 +330,8 @@ public class SchemaManager {
         return getZkPath(schemaEntity, currentVersion(schemaEntity));
     }
 
-    public EntityDef get(@NonNull SchemaEntity schemaEntity,
-                         @NonNull String path) throws Exception {
+    public AvroSchema get(@NonNull SchemaEntity schemaEntity,
+                          @NonNull String path) throws Exception {
         CuratorFramework client = zkConnection().client();
         if (client.checkExists().forPath(path) != null) {
             byte[] data = client.getData().forPath(path);
@@ -317,18 +349,15 @@ public class SchemaManager {
                     }
                 }
 
-                String schemaStr = new String(data, StandardCharsets.UTF_8);
-                EntityDef en = new EntityDef().schemaPath(path)
-                        .version(version)
-                        .schema(new Schema.Parser().parse(schemaStr));
-                putInCache(schemaEntity, version, en);
+                AvroSchema en = JSONUtils.read(data, AvroSchema.class);
+                putInCache(schemaEntity, version, en.load());
                 return en;
             }
         }
         return null;
     }
 
-    private EntityDef get(@NonNull String path, SchemaVersion version) throws Exception {
+    private AvroSchema get(@NonNull String path, SchemaVersion version) throws Exception {
         CuratorFramework client = zkConnection().client();
         path = new PathUtils.ZkPathBuilder(path)
                 .withPath(version.path())
@@ -336,11 +365,8 @@ public class SchemaManager {
         if (client.checkExists().forPath(path) != null) {
             byte[] data = client.getData().forPath(path);
             if (data != null && data.length > 0) {
-                String schemaStr = new String(data, StandardCharsets.UTF_8);
-                return new EntityDef()
-                        .schema(new Schema.Parser().parse(schemaStr))
-                        .version(version)
-                        .schemaPath(path);
+                AvroSchema en = JSONUtils.read(data, AvroSchema.class);
+                return en.load();
             }
         }
         return null;
@@ -410,13 +436,13 @@ public class SchemaManager {
                     String zkPath = String.format("%s/%s", path, cp);
                     SchemaVersion version = currentVersion(zkPath);
                     if (version != null) {
-                        EntityDef schema = get(zkPath, version);
+                        AvroSchema schema = get(zkPath, version);
                         if (schema != null) {
                             PathWithSchema ws = new PathWithSchema();
                             ws.setDomain(domain);
                             ws.setNode(cp);
                             ws.setZkPath(zkPath);
-                            ws.setSchemaStr(schema.schema().toString(false));
+                            ws.setSchemaStr(schema.getSchemaStr());
                             ws.setVersion(JSONUtils.asString(version, SchemaVersion.class));
                             paths.add(ws);
                             added = true;
@@ -447,13 +473,13 @@ public class SchemaManager {
                     String zkPath = String.format("%s/%s", path, cp);
                     SchemaVersion version = currentVersion(zkPath);
                     if (version != null) {
-                        EntityDef schema = get(zkPath, version);
+                        AvroSchema schema = get(zkPath, version);
                         if (schema != null) {
                             PathWithSchema ws = new PathWithSchema();
                             ws.setDomain(domain);
                             ws.setNode(cp);
                             ws.setZkPath(zkPath);
-                            ws.setSchemaStr(schema.schema().toString(false));
+                            ws.setSchemaStr(schema.getSchemaStr());
                             ws.setVersion(JSONUtils.asString(version, SchemaVersion.class));
                             paths.add(ws);
                             added = true;

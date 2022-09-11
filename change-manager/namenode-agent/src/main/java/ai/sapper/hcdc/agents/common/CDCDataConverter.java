@@ -1,8 +1,8 @@
 package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.cdc.common.model.AvroChangeType;
-import ai.sapper.cdc.common.model.EntityDef;
 import ai.sapper.cdc.common.model.SchemaEntity;
+import ai.sapper.cdc.common.schema.AvroSchema;
 import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
@@ -113,13 +113,13 @@ public class CDCDataConverter {
                                 data.data().array(),
                                 (int) data.dataSize())) {
                             EFileType fileType = converter.fileType();
-                            EntityDef schema = converter.extractSchema(reader,
+                            AvroSchema schema = converter.extractSchema(reader,
                                     fileState, schemaEntity);
                             if (schema != null) {
                                 ExtractSchemaResponse response = new ExtractSchemaResponse();
                                 return response.fileType(fileType)
-                                        .schema(schema.schema())
-                                        .version(schema.version());
+                                        .schema(schema.getSchema())
+                                        .version(schema.getVersion());
                             }
                         }
                     }

@@ -1,10 +1,12 @@
-package ai.sapper.cdc.core.schema;
+package ai.sapper.cdc.common.schema;
 
+import ai.sapper.cdc.common.utils.DefaultLogger;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.avro.JsonProperties;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
-import org.apache.log4j.Level;
-import org.codehaus.jackson.JsonNode;
+import org.slf4j.event.Level;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -22,6 +24,7 @@ public class SchemaEvolutionValidator {
 
     private static final Schema NULL_TYPE_SCHEMA = Schema.create(Schema.Type.NULL);
     private final List<String> _recordStack = new ArrayList<String>();
+
 
     /**
      * This main method provides an easy command line tool to compare two
@@ -63,18 +66,18 @@ public class SchemaEvolutionValidator {
         List<Message> messages = SchemaEvolutionValidator.checkBackwardCompatibility(oldSchema,
                 newSchema,
                 oldSchema.getName());
-        Level maxLevel = Level.ALL;
+        Level maxLevel = Level.ERROR;
         for (Message message : messages) {
             System.out.println(message.getLevel() + ": " + message.getMessage());
-            if (message.getLevel().isGreaterOrEqual(maxLevel)) {
+            if (DefaultLogger.isGreaterOrEqual(message._level, maxLevel)) {
                 maxLevel = message.getLevel();
             }
         }
 
-        if (maxLevel.isGreaterOrEqual(Level.ERROR)) {
+        if (DefaultLogger.isGreaterOrEqual(Level.ERROR, maxLevel)) {
             System.out.println(Level.ERROR
                     + ": The schema is not backward compatible. New clients will not be able to read existing data.");
-        } else if (maxLevel.isGreaterOrEqual(Level.WARN)) {
+        } else if (DefaultLogger.isGreaterOrEqual(Level.WARN, maxLevel)) {
             System.out.println(Level.WARN
                     + ": The schema is partially backward compatible, but old clients will not be able to read data serialized in the new format.");
         } else {
@@ -642,13 +645,14 @@ public class SchemaEvolutionValidator {
 
             // Get the default value
             Object defaultJson = field.defaultVal();
+            if (!(defaultJson instanceof JsonProperties.Null)) {
+                String expectedVal = String.valueOf(defaultJson);
 
-            String expectedVal = String.valueOf(defaultJson);
-
-            if (expectedVal != null) {
-                messages.add(new Message(Level.ERROR, "Illegal default value for field " + name
-                        + ". The default must be of type "
-                        + expectedVal + "."));
+                if (expectedVal != null) {
+                    messages.add(new Message(Level.ERROR, "Illegal default value for field " + name
+                            + ". The default must be of type "
+                            + expectedVal + "."));
+                }
             }
         }
     }
@@ -702,7 +706,7 @@ public class SchemaEvolutionValidator {
                 break;
             case ENUM:
                 if (defaultJson.isTextual()) {
-                    if (schema.hasEnumSymbol(defaultJson.getTextValue())) {
+                    if (schema.hasEnumSymbol(defaultJson.asText())) {
                         break;
                     }
                 }
@@ -710,7 +714,7 @@ public class SchemaEvolutionValidator {
                 break;
             case FIXED:
                 if (defaultJson.isTextual()) {
-                    byte[] fixed = defaultJson.getValueAsText().getBytes();
+                    byte[] fixed = defaultJson.asText().getBytes();
                     if (fixed.length == schema.getFixedSize()) {
                         break;
                     }

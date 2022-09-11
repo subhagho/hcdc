@@ -1,9 +1,9 @@
 package ai.sapper.hcdc.agents.pipeline;
 
 import ai.sapper.cdc.common.model.AvroChangeType;
-import ai.sapper.cdc.common.model.EntityDef;
 import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.model.services.SnapshotDoneRequest;
+import ai.sapper.cdc.common.schema.AvroSchema;
 import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.core.WebServiceClient;
@@ -292,12 +292,12 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
 
             SchemaManager schemaManager = NameNodeEnv.get(name()).schemaManager();
             DFSFile dfile = data.getFile();
-            EntityDef schema = schemaManager.get(rState.getEntity());
+            AvroSchema schema = schemaManager.get(rState.getEntity());
             if (schema != null) {
-                if (!Strings.isNullOrEmpty(schema.schemaPath())) {
-                    rState.getFileInfo().setSchemaLocation(schema.schemaPath());
+                if (!Strings.isNullOrEmpty(schema.getZkPath())) {
+                    rState.getFileInfo().setSchemaLocation(schema.getZkPath());
                 }
-                dfile = ProtoBufUtils.update(dfile, schema.schemaPath());
+                dfile = ProtoBufUtils.update(dfile, schema.getZkPath());
             } else {
                 throw new InvalidTransactionError(txId,
                         DFSError.ErrorCode.SYNC_STOPPED,
@@ -649,7 +649,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                                     data.getFile().getPath()));
                 }
                 SchemaManager schemaManager = NameNodeEnv.get(name()).schemaManager();
-                EntityDef prevSchema = schemaManager.get(rState.getEntity());
+                AvroSchema prevSchema = schemaManager.get(rState.getEntity());
                 CDCDataConverter converter = new CDCDataConverter()
                         .withFileSystem(fs)
                         .withSchemaManager(schemaManager);
@@ -706,26 +706,26 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                         rState.setRecordCount(rState.getRecordCount() + response.recordCount());
                     }
                     DFSFile dfile = data.getFile();
-                    EntityDef schema = schemaManager.get(rState.getEntity());
+                    AvroSchema schema = schemaManager.get(rState.getEntity());
                     if (schema != null) {
-                        if (!Strings.isNullOrEmpty(schema.schemaPath())) {
-                            rState.getFileInfo().setSchemaLocation(schema.schemaPath());
+                        if (!Strings.isNullOrEmpty(schema.getZkPath())) {
+                            rState.getFileInfo().setSchemaLocation(schema.getZkPath());
                         }
-                        if (schema.version() != null) {
+                        if (schema.getVersion() != null) {
                             if (prevSchema != null) {
-                                dfile = compareSchemaVersions(prevSchema.version(),
-                                        schema.version(),
+                                dfile = compareSchemaVersions(prevSchema.getVersion(),
+                                        schema.getVersion(),
                                         rState, data.getTransaction(),
                                         message,
                                         dfile);
                             } else {
                                 dfile = compareSchemaVersions(null,
-                                        schema.version(),
+                                        schema.getVersion(),
                                         rState, data.getTransaction(),
                                         message,
                                         dfile);
                             }
-                            rState.getFileInfo().setSchemaVersion(schema.version());
+                            rState.getFileInfo().setSchemaVersion(schema.getVersion());
                         }
                     } else {
                         throw new InvalidTransactionError(txId,
@@ -810,25 +810,25 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             changed = true;
         }
         SchemaManager schemaManager = NameNodeEnv.get(name()).schemaManager();
-        EntityDef ned = schemaManager.get(replicaState.getEntity(), updated);
+        AvroSchema ned = schemaManager.get(replicaState.getEntity(), updated);
         if (ned == null) {
             throw new Exception(
                     String.format("Entity Schema not found. [entity=%s][version=%s]",
                             replicaState.getEntity().toString(),
                             updated.toString()));
         }
-        String updatedPath = ned.schemaPath();
+        String updatedPath = ned.getZkPath();
         if (changed) {
             String currentPath = null;
             if (current != null) {
-                EntityDef ed = schemaManager.get(replicaState.getEntity(), current);
+                AvroSchema ed = schemaManager.get(replicaState.getEntity(), current);
                 if (ed == null) {
                     throw new Exception(
                             String.format("Entity Schema not found. [entity=%s][version=%s]",
                                     replicaState.getEntity().toString(),
                                     current.toString()));
                 }
-                currentPath = ed.schemaPath();
+                currentPath = ed.getZkPath();
             }
 
             MessageObject<String, DFSChangeDelta> m = HCDCChangeDeltaSerDe

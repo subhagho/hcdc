@@ -1,10 +1,13 @@
 package ai.sapper.cdc.common.utils;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import lombok.NonNull;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -50,7 +53,7 @@ public class ChecksumUtils {
         }
 
         if (numChunks == 0) {
-            return new byte[][] { md.digest() };
+            return new byte[][]{md.digest()};
         }
 
         byte[][] chunkSHA256Hashes = new byte[(int) numChunks][];
@@ -172,5 +175,21 @@ public class ChecksumUtils {
         } catch (Exception ex) {
             throw new IOException(ex);
         }
+    }
+
+    public static String generateHash(@NonNull String data) throws Exception {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(data));
+        MessageDigest digest = MessageDigest.getInstance("MD5");
+        digest.update(data.getBytes(StandardCharsets.UTF_8));
+        byte[] hash = digest.digest();
+        return bytesToHex(hash);
+    }
+
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 }

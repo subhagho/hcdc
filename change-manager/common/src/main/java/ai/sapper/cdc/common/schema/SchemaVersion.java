@@ -1,5 +1,6 @@
 package ai.sapper.cdc.common.schema;
 
+import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -16,6 +17,13 @@ public class SchemaVersion {
     public SchemaVersion(@NonNull SchemaVersion sv) {
         this.majorVersion = sv.majorVersion;
         this.minorVersion = sv.minorVersion;
+    }
+
+    public SchemaVersion(int majorVersion, int minorVersion) {
+        Preconditions.checkArgument(majorVersion >= 0);
+        Preconditions.checkArgument(minorVersion >= 0);
+        this.majorVersion = majorVersion;
+        this.minorVersion = minorVersion;
     }
 
     public String path() {

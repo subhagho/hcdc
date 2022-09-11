@@ -1,8 +1,8 @@
 package ai.sapper.hcdc.agents.common.converter;
 
 import ai.sapper.cdc.common.model.AvroChangeType;
-import ai.sapper.cdc.common.model.EntityDef;
 import ai.sapper.cdc.common.model.SchemaEntity;
+import ai.sapper.cdc.common.schema.AvroSchema;
 import ai.sapper.cdc.common.schema.AvroUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.model.EFileType;
@@ -65,12 +65,12 @@ public class AvroConverter extends FormatConverter {
         Preconditions.checkNotNull(schemaManager());
         try {
             long count = 0;
-            EntityDef schema = parseSchema(source, schemaEntity);
-            Schema wrapper = AvroUtils.createSchema(schema.schema());
+            AvroSchema schema = parseSchema(source, schemaEntity);
+            Schema wrapper = AvroUtils.createSchema(schema.getSchema());
             final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(wrapper);
             try (DataFileWriter<GenericRecord> fos = new DataFileWriter<>(writer)) {
                 fos.create(wrapper, output);
-                GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema.schema());
+                GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema.getSchema());
                 try (DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(source, reader)) {
                     while (dataFileReader.hasNext()) {
                         GenericRecord record = dataFileReader.next();
@@ -115,12 +115,14 @@ public class AvroConverter extends FormatConverter {
         return false;
     }
 
-    private EntityDef parseSchema(File file,
-                                  SchemaEntity schemaEntity) throws Exception {
+    private AvroSchema parseSchema(File file,
+                                   SchemaEntity schemaEntity) throws Exception {
         DatumReader<GenericRecord> datumReader = new GenericDatumReader<>();
         try (DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(file, datumReader)) {
             Schema schema = dataFileReader.getSchema();
-            return schemaManager().checkAndSave(schema, schemaEntity);
+            AvroSchema avs = new AvroSchema();
+            avs.withSchema(schema);
+            return schemaManager().checkAndSave(avs, schemaEntity);
         }
     }
 
@@ -130,12 +132,12 @@ public class AvroConverter extends FormatConverter {
      * @throws IOException
      */
     @Override
-    public EntityDef extractSchema(@NonNull HDFSBlockReader reader,
+    public AvroSchema extractSchema(@NonNull HDFSBlockReader reader,
                                    @NonNull DFSFileState fileState,
                                    @NonNull SchemaEntity schemaEntity) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
-            EntityDef schema = hasSchema(fileState, schemaEntity);
+            AvroSchema schema = hasSchema(fileState, schemaEntity);
             if (schema != null) {
                 return schema;
             }

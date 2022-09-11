@@ -3,9 +3,16 @@ package ai.sapper.cdc.common.utils;
 import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 
 public final class DefaultLogger {
     public static Logger LOGGER = LoggerFactory.getLogger(DefaultLogger.class);
+
+    public static boolean isGreaterOrEqual(Level l1, Level l2) {
+        int i1 = l1.toInt();
+        int i2 = l2.toInt();
+        return (i1 >= i2);
+    }
 
     public static String error(Throwable err, String format, Object... args) {
         String mesg = String.format(format, args);

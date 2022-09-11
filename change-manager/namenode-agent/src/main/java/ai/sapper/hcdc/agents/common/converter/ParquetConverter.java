@@ -1,8 +1,8 @@
 package ai.sapper.hcdc.agents.common.converter;
 
 import ai.sapper.cdc.common.model.AvroChangeType;
-import ai.sapper.cdc.common.model.EntityDef;
 import ai.sapper.cdc.common.model.SchemaEntity;
+import ai.sapper.cdc.common.schema.AvroSchema;
 import ai.sapper.cdc.common.schema.AvroUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.model.EFileType;
@@ -73,9 +73,9 @@ public class ParquetConverter extends FormatConverter {
         ParquetReader<GenericRecord> reader = new AvroParquetReader(conf, new Path(source.toURI()));
         long count = 0;
         try {
-            EntityDef schema = parseSchema(source, fileState, schemaEntity);
+            AvroSchema schema = parseSchema(source, fileState, schemaEntity);
 
-            Schema wrapper = AvroUtils.createSchema(schema.schema());
+            Schema wrapper = AvroUtils.createSchema(schema.getSchema());
             final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(wrapper);
             try (DataFileWriter<GenericRecord> fos = new DataFileWriter<>(writer)) {
                 fos.create(wrapper, output);
@@ -97,7 +97,7 @@ public class ParquetConverter extends FormatConverter {
         }
     }
 
-    private EntityDef parseSchema(File file,
+    private AvroSchema parseSchema(File file,
                                   DFSFileState fileState,
                                   SchemaEntity schemaEntity) throws Exception {
 
@@ -107,7 +107,8 @@ public class ParquetConverter extends FormatConverter {
                      ParquetFileReader.open(HadoopInputFile.fromPath(new Path(file.toURI()), conf))) {
             MessageType pschema = reader.getFooter().getFileMetaData().getSchema();
             Schema schema = new AvroSchemaConverter(conf).convert(pschema);
-            return schemaManager().checkAndSave(schema, schemaEntity);
+            AvroSchema avs = new AvroSchema();
+            return schemaManager().checkAndSave(avs.withSchema(schema), schemaEntity);
         }
     }
 
@@ -141,12 +142,12 @@ public class ParquetConverter extends FormatConverter {
      * @throws IOException
      */
     @Override
-    public EntityDef extractSchema(@NonNull HDFSBlockReader reader,
+    public AvroSchema extractSchema(@NonNull HDFSBlockReader reader,
                                    @NonNull DFSFileState fileState,
                                    @NonNull SchemaEntity schemaEntity) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
-            EntityDef schema = hasSchema(fileState, schemaEntity);
+            AvroSchema schema = hasSchema(fileState, schemaEntity);
             if (schema != null) {
                 return schema;
             }

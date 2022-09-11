@@ -1,20 +1,21 @@
 package ai.sapper.hcdc.agents.common.converter;
 
 import ai.sapper.cdc.common.model.AvroChangeType;
-import ai.sapper.cdc.common.model.EntityDef;
 import ai.sapper.cdc.common.model.SchemaEntity;
+import ai.sapper.cdc.common.schema.AvroSchema;
 import ai.sapper.cdc.common.schema.AvroUtils;
 import ai.sapper.cdc.common.schema.SchemaHelper;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.model.HDFSBlockData;
-import ai.sapper.cdc.core.schema.SchemaEvolutionValidator;
+import ai.sapper.cdc.common.schema.SchemaEvolutionValidator;
 import ai.sapper.hcdc.agents.common.FormatConverter;
 import ai.sapper.hcdc.agents.model.DFSBlockState;
 import ai.sapper.hcdc.agents.model.DFSFileState;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import lombok.NonNull;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
@@ -23,8 +24,7 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumWriter;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.hdfs.HDFSBlockReader;
-import org.apache.log4j.Level;
-import org.apache.parquet.Strings;
+import org.slf4j.event.Level;
 
 import java.io.*;
 import java.util.List;
@@ -65,21 +65,21 @@ public class JsonConverter extends FormatConverter {
                             @NonNull AvroChangeType.EChangeType op) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
-            EntityDef schema = hasSchema(fileState, schemaEntity);
+            AvroSchema schema = hasSchema(fileState, schemaEntity);
             if (schema == null) {
                 schema = parseSchema(source, fileState, schemaEntity);
             }
             long count = 0;
-            Schema wrapper = AvroUtils.createSchema(schema.schema());
-            final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema.schema());
+            Schema wrapper = AvroUtils.createSchema(schema.getSchema());
+            final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema.getSchema());
             try (DataFileWriter<GenericRecord> fos = new DataFileWriter<>(writer)) {
-                fos.create(schema.schema(), output);
+                fos.create(schema.getSchema(), output);
                 try (BufferedReader br = new BufferedReader(new FileReader(source))) {
                     String line;
                     while ((line = br.readLine()) != null) {
                         line = line.trim();
                         if (Strings.isNullOrEmpty(line)) continue;
-                        GenericRecord record = AvroUtils.jsonToAvroRecord(line, schema.schema());
+                        GenericRecord record = AvroUtils.jsonToAvroRecord(line, schema.getSchema());
                         GenericRecord wrapped = wrap(wrapper,
                                 schemaEntity,
                                 fileState.getFileInfo().getNamespace(),
@@ -116,9 +116,9 @@ public class JsonConverter extends FormatConverter {
         return canParse(path, null);
     }
 
-    private EntityDef parseSchema(File file,
-                                  DFSFileState fileState,
-                                  SchemaEntity schemaEntity) throws Exception {
+    private AvroSchema parseSchema(File file,
+                                   DFSFileState fileState,
+                                   SchemaEntity schemaEntity) throws Exception {
         Schema schema = null;
         ObjectMapper mapper = new ObjectMapper();
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
@@ -134,14 +134,14 @@ public class JsonConverter extends FormatConverter {
                     } else {
                         List<SchemaEvolutionValidator.Message> messages
                                 = SchemaEvolutionValidator.checkBackwardCompatibility(_schema, schema, schema.getName());
-                        Level maxLevel = Level.ALL;
+                        Level maxLevel = Level.DEBUG;
                         for (SchemaEvolutionValidator.Message message : messages) {
-                            if (message.getLevel().isGreaterOrEqual(maxLevel)) {
+                            if (DefaultLogger.isGreaterOrEqual(message.getLevel(), maxLevel)) {
                                 maxLevel = message.getLevel();
                             }
                         }
 
-                        if (maxLevel.isGreaterOrEqual(Level.ERROR)) {
+                        if (DefaultLogger.isGreaterOrEqual(maxLevel, Level.ERROR)) {
                             DefaultLogger.LOGGER.warn(
                                     String.format("Found incompatible schema. [schema=%s][entity=%s]",
                                             _schema.toString(true), schemaEntity.toString()));
@@ -153,7 +153,9 @@ public class JsonConverter extends FormatConverter {
             }
         }
         if (schema != null) {
-            return schemaManager().checkAndSave(schema, schemaEntity);
+            AvroSchema avs = new AvroSchema();
+            return schemaManager()
+                    .checkAndSave(avs.withSchema(schema), schemaEntity);
         }
         return null;
     }
@@ -165,12 +167,12 @@ public class JsonConverter extends FormatConverter {
      * @throws IOException
      */
     @Override
-    public EntityDef extractSchema(@NonNull HDFSBlockReader reader,
-                                   @NonNull DFSFileState fileState,
-                                   @NonNull SchemaEntity schemaEntity) throws IOException {
+    public AvroSchema extractSchema(@NonNull HDFSBlockReader reader,
+                                    @NonNull DFSFileState fileState,
+                                    @NonNull SchemaEntity schemaEntity) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
-            EntityDef schema = hasSchema(fileState, schemaEntity);
+            AvroSchema schema = hasSchema(fileState, schemaEntity);
             if (schema != null) {
                 return schema;
             }
