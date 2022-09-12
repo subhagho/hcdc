@@ -52,8 +52,8 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
                     throw new InvalidTransactionError(txId,
                             DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getFileInfo().getHdfsPath(),
-                            String.format("Valid File already exists. [path=%s]",
-                                    fileState.getFileInfo().getHdfsPath()))
+                            new Exception(String.format("Valid File already exists. [path=%s]",
+                                    fileState.getFileInfo().getHdfsPath())))
                             .withFile(data.getFile());
                 } else {
                     LOGGER.warn(getClass(), txId,
@@ -117,8 +117,8 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
                 throw new InvalidTransactionError(txId,
                         DFSError.ErrorCode.SYNC_STOPPED,
                         fileState.getFileInfo().getHdfsPath(),
-                        String.format("Valid File already exists. [path=%s]",
-                                fileState.getFileInfo().getHdfsPath()))
+                        new Exception(String.format("Valid File already exists. [path=%s]",
+                                fileState.getFileInfo().getHdfsPath())))
                         .withFile(data.getFile());
             }
         }
@@ -170,8 +170,8 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
-                    String.format("NameNode Replica out of sync, missing file state. [path=%s]",
-                            data.getFile().getPath()))
+                    new Exception(String.format("NameNode Replica out of sync, missing file state. [path=%s]",
+                            data.getFile().getPath())))
                     .withFile(data.getFile());
         }
         if (fileState.getLastTnxId() >= txId) {
@@ -207,8 +207,8 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
-                    String.format("NameNode Replica out of sync, missing file state. [path=%s]",
-                            data.getFile().getPath()))
+                    new Exception(String.format("NameNode Replica out of sync, missing file state. [path=%s]",
+                            data.getFile().getPath())))
                     .withFile(data.getFile());
         }
         if (fileState.getLastTnxId() >= txId) {
@@ -247,8 +247,8 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
-                    String.format("NameNode Replica out of sync, missing file state. [path=%s]",
-                            data.getFile().getPath()))
+                    new Exception(String.format("NameNode Replica out of sync, missing file state. [path=%s]",
+                            data.getFile().getPath())))
                     .withFile(data.getFile());
         }
         if (fileState.getLastTnxId() >= txId) {
@@ -291,8 +291,8 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
-                    String.format("NameNode Replica out of sync, missing file state. [path=%s]",
-                            data.getFile().getPath()))
+                    new Exception(String.format("NameNode Replica out of sync, missing file state. [path=%s]",
+                            data.getFile().getPath())))
                     .withFile(data.getFile());
         }
         if (fileState.getLastTnxId() >= txId) {
@@ -306,8 +306,8 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getFileInfo().getHdfsPath(),
-                    String.format("File State out of sync, no block to update. [path=%s]",
-                            fileState.getFileInfo().getHdfsPath()))
+                    new Exception(String.format("File State out of sync, no block to update. [path=%s]",
+                            fileState.getFileInfo().getHdfsPath())))
                     .withFile(data.getFile());
         }
         for (DFSBlock block : blocks) {
@@ -316,15 +316,15 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
                 throw new InvalidTransactionError(txId,
                         DFSError.ErrorCode.SYNC_STOPPED,
                         fileState.getFileInfo().getHdfsPath(),
-                        String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
-                                fileState.getFileInfo().getHdfsPath(), block.getBlockId()))
+                        new Exception(String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
+                                fileState.getFileInfo().getHdfsPath(), block.getBlockId())))
                         .withFile(data.getFile());
             } else if (bs.getDataSize() != block.getSize()) {
                 throw new InvalidTransactionError(txId,
                         DFSError.ErrorCode.SYNC_STOPPED,
                         fileState.getFileInfo().getHdfsPath(),
-                        String.format("File State out of sync, block size mismatch. [path=%s][blockID=%d]",
-                                fileState.getFileInfo().getHdfsPath(), block.getBlockId()))
+                        new Exception(String.format("File State out of sync, block size mismatch. [path=%s][blockID=%d]",
+                                fileState.getFileInfo().getHdfsPath(), block.getBlockId())))
                         .withFile(data.getFile());
             }
             if (bs.blockIsFull()) continue;
@@ -355,8 +355,8 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
-                    String.format("NameNode Replica out of sync, missing file state. [path=%s]",
-                            data.getFile().getPath()))
+                    new Exception(String.format("NameNode Replica out of sync, missing file state. [path=%s]",
+                            data.getFile().getPath())))
                     .withFile(data.getFile());
         }
         if (fileState.getLastTnxId() >= txId) {
@@ -387,8 +387,8 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
-                    String.format("NameNode Replica out of sync, missing file state. [path=%s]",
-                            data.getFile().getPath()))
+                    new Exception(String.format("NameNode Replica out of sync, missing file state. [path=%s]",
+                            data.getFile().getPath())))
                     .withFile(data.getFile());
         }
         if (!checkCloseTxState(fileState, message.mode(), txId)) {
@@ -406,8 +406,8 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
                     throw new InvalidTransactionError(txId,
                             DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getFileInfo().getHdfsPath(),
-                            String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
-                                    fileState.getFileInfo().getHdfsPath(), block.getBlockId()))
+                            new Exception(String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
+                                    fileState.getFileInfo().getHdfsPath(), block.getBlockId())))
                             .withFile(data.getFile());
                 } else if (bs.canUpdate()) {
                     fileState = stateManager()
@@ -424,15 +424,15 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
                     throw new InvalidTransactionError(txId,
                             DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getFileInfo().getHdfsPath(),
-                            String.format("File State out of sync, block size mismatch. [path=%s][blockID=%d]",
-                                    fileState.getFileInfo().getHdfsPath(), block.getBlockId()))
+                            new Exception(String.format("File State out of sync, block size mismatch. [path=%s][blockID=%d]",
+                                    fileState.getFileInfo().getHdfsPath(), block.getBlockId())))
                             .withFile(data.getFile());
                 } else {
                     throw new InvalidTransactionError(txId,
                             DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getFileInfo().getHdfsPath(),
-                            String.format("File State out of sync, block state mismatch. [path=%s][blockID=%d]",
-                                    fileState.getFileInfo().getHdfsPath(), block.getBlockId()))
+                            new Exception(String.format("File State out of sync, block state mismatch. [path=%s][blockID=%d]",
+                                    fileState.getFileInfo().getHdfsPath(), block.getBlockId())))
                             .withFile(data.getFile());
                 }
             }

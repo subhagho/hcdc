@@ -20,21 +20,6 @@ public class InvalidTransactionError extends Exception {
     }
 
     /**
-     * Constructs a new exception with the specified detail message.  The
-     * cause is not initialized, and may subsequently be initialized by
-     * a call to {@link #initCause}.
-     *
-     * @param message the detail message. The detail message is saved for
-     *                later retrieval by the {@link #getMessage()} method.
-     */
-    public InvalidTransactionError(long txId, DFSError.ErrorCode errorCode, String hdfsPath, String message) {
-        super(String.format(__PREFIX, message));
-        this.hdfsPath = hdfsPath;
-        this.errorCode = errorCode;
-        this.txId = txId;
-    }
-
-    /**
      * Constructs a new exception with the specified detail message and
      * cause.  <p>Note that the detail message associated with
      * {@code cause} is <i>not</i> automatically incorporated in

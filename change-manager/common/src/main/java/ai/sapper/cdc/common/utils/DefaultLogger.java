@@ -21,16 +21,18 @@ public final class DefaultLogger {
 
     public static String stacktrace(@NonNull Throwable error) {
         StringBuilder buff = new StringBuilder(String.format("ERROR: %s", error.getLocalizedMessage()));
+        buff.append("\n\t********************************BEGIN TRACE********************************\n");
         Throwable e = error;
         while (e != null) {
-            buff.append("\n\t********************************BEGIN TRACE********************************\n");
+            buff.append("\n\t---------------------------------------------------------------------------\n");
             buff.append(String.format("\tERROR: %s\n", e.getLocalizedMessage()));
             for (StackTraceElement se : e.getStackTrace()) {
                 buff.append(String.format("\t%s\n", se.toString()));
             }
-            buff.append("\t********************************END   TRACE********************************\n");
             e = e.getCause();
         }
+        buff.append("\t********************************END   TRACE********************************\n");
+
         return buff.toString();
     }
 

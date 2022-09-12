@@ -80,7 +80,9 @@ public class FileStateHelper {
                             throw new InvalidTransactionError(txId,
                                     DFSError.ErrorCode.SYNC_STOPPED,
                                     file.getPath(),
-                                    String.format("Valid File already exists. [path=%s]", file.getPath()));
+                                    new Exception(String.format("Valid File already exists. [path=%s]",
+                                            file.getPath())))
+                                    .withFile(file);
                         } else {
                             client.delete().forPath(zp);
                         }
@@ -125,7 +127,7 @@ public class FileStateHelper {
                         throw new InvalidTransactionError(txId,
                                 DFSError.ErrorCode.SYNC_STOPPED,
                                 inode.path(),
-                                String.format("Valid File already exists. [path=%s]", inode.path()));
+                                new Exception(String.format("Valid File already exists. [path=%s]", inode.path())));
                     } else {
                         client.delete().forPath(zp);
                     }
@@ -232,8 +234,9 @@ public class FileStateHelper {
                             throw new InvalidTransactionError(txId,
                                     DFSError.ErrorCode.SYNC_STOPPED,
                                     fs.getFileInfo().getHdfsPath(),
-                                    String.format("Invalid Block Data: Previous Block ID not specified. [path=%s][blockID=%d]",
-                                            fs.getFileInfo().getHdfsPath(), bs.getBlockId()));
+                                    new Exception(String.format(
+                                            "Invalid Block Data: Previous Block ID not specified. [path=%s][blockID=%d]",
+                                            fs.getFileInfo().getHdfsPath(), bs.getBlockId())));
                         }
                     } else {
                         DFSBlockState pb = fs.get(prevBlockId);
@@ -241,8 +244,9 @@ public class FileStateHelper {
                             throw new InvalidTransactionError(txId,
                                     DFSError.ErrorCode.SYNC_STOPPED,
                                     fs.getFileInfo().getHdfsPath(),
-                                    String.format("Invalid Block Data: Previous Block not found. [path=%s][blockID=%d]",
-                                            fs.getFileInfo().getHdfsPath(), bs.getBlockId()));
+                                    new Exception(String.format(
+                                            "Invalid Block Data: Previous Block not found. [path=%s][blockID=%d]",
+                                            fs.getFileInfo().getHdfsPath(), bs.getBlockId())));
                         }
                     }
                     fs.add(bs);

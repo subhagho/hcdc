@@ -237,10 +237,11 @@ public class SchemaManager {
                 }
             }
 
-            if (DefaultLogger.isGreaterOrEqual(maxLevel, Level.ERROR)) {
+            if (DefaultLogger.isGreaterOrEqual(maxLevel, Level.ERROR) ||
+                    DefaultLogger.isGreaterOrEqual(maxLevel, Level.WARN)) {
                 next.setMajorVersion(version.getMajorVersion() + 1);
                 next.setMinorVersion(0);
-            } else {
+            } else if (DefaultLogger.isGreaterOrEqual(maxLevel, Level.INFO)) {
                 next.setMinorVersion(version.getMinorVersion() + 1);
             }
         }
@@ -271,7 +272,7 @@ public class SchemaManager {
                             if (data != null && data.length > 0) {
                                 AvroSchema schema = JSONUtils.read(data, AvroSchema.class);
                                 Preconditions.checkState(schema.getVersion().equals(v));
-                                schemas.add(schema);
+                                schemas.add(schema.load());
                             }
                         }
                     }

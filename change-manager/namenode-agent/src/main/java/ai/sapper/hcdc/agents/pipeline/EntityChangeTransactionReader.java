@@ -93,8 +93,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
-                    String.format("Invalid Schema Entity: domain or entity is NULL. [path=%s]",
-                            data.getFile().getPath()));
+                    new Exception(String.format("Invalid Schema Entity: domain or entity is NULL. [path=%s]",
+                            data.getFile().getPath())))
+                    .withFile(data.getFile());
         }
         registerFile(data.getFile(), schemaEntity, message, txId);
     }
@@ -111,7 +112,8 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     hdfsPath,
-                    String.format("File not found. [path=%s]", hdfsPath));
+                    new IOException(String.format("File not found. [path=%s]", hdfsPath)))
+                    .withFile(file);
         }
 
         checkStaleInode(message, fileState, file);
@@ -138,7 +140,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         } catch (Exception ex) {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
-                    hdfsPath, ex.getLocalizedMessage());
+                    hdfsPath, ex);
         } finally {
             stateManager().stateUnlock();
         }
@@ -161,8 +163,8 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
-                    String.format("NameNode Replica out of sync, missing file state. [path=%s]",
-                            data.getFile().getPath()));
+                    new Exception(String.format("NameNode Replica out of sync, missing file state. [path=%s]",
+                            data.getFile().getPath())));
         }
 
         checkStaleInode(message, fileState, data.getFile());
@@ -176,8 +178,8 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
-                    String.format("File not setup for replication. [path=%s]",
-                            data.getFile().getPath()));
+                    new Exception(String.format("File not setup for replication. [path=%s]",
+                            data.getFile().getPath())));
         } else if (rState.getLastReplicatedTx() >= txId) {
             if (message.mode() == MessageObject.MessageMode.New) {
                 throw new InvalidMessageError(message.id(),
@@ -191,8 +193,8 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 throw new InvalidTransactionError(txId,
                         DFSError.ErrorCode.SYNC_STOPPED,
                         data.getFile().getPath(),
-                        String.format("FileSystem file not found. [path=%s]",
-                                data.getFile().getPath()));
+                        new Exception(String.format("FileSystem file not found. [path=%s]",
+                                data.getFile().getPath())));
             }
             rState = stateManager()
                     .replicaStateHelper()
@@ -207,7 +209,8 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getFileInfo().getHdfsPath(),
-                    String.format("FileSystem sync error. [path=%s]", fileState.getFileInfo().getHdfsPath()));
+                    new Exception(String.format("FileSystem sync error. [path=%s]",
+                            fileState.getFileInfo().getHdfsPath())));
         }
     }
 
@@ -228,8 +231,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
-                    String.format("NameNode Replica out of sync, missing file state. [path=%s]",
-                            data.getFile().getPath()));
+                    new Exception(String.format("NameNode Replica out of sync, missing file state. [path=%s]",
+                            data.getFile().getPath())))
+                    .withFile(data.getFile());
         }
         checkStaleInode(message, fileState, data.getFile());
 
@@ -237,8 +241,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
-                    String.format("File not marked for delete. [path=%s]",
-                            data.getFile().getPath()));
+                    new Exception(String.format("File not marked for delete. [path=%s]",
+                            data.getFile().getPath())))
+                    .withFile(data.getFile());
         }
 
         SchemaEntity schemaEntity = SchemaEntityHelper.parse(message.value().getSchema());
@@ -250,8 +255,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
-                    String.format("File not setup for replication. [path=%s]",
-                            data.getFile().getPath()));
+                    new Exception(String.format("File not setup for replication. [path=%s]",
+                            data.getFile().getPath())))
+                    .withFile(data.getFile());
         } else if (rState.getLastReplicatedTx() >= txId) {
             if (message.mode() == MessageObject.MessageMode.New) {
                 throw new InvalidMessageError(message.id(),
@@ -264,8 +270,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 throw new InvalidTransactionError(txId,
                         DFSError.ErrorCode.SYNC_STOPPED,
                         data.getFile().getPath(),
-                        String.format("FileSystem file not found. [path=%s]",
-                                data.getFile().getPath()));
+                        new Exception(String.format("FileSystem file not found. [path=%s]",
+                                data.getFile().getPath())))
+                        .withFile(data.getFile());
             }
             CDCDataConverter converter = new CDCDataConverter()
                     .withFileSystem(fs)
@@ -279,8 +286,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 throw new InvalidTransactionError(txId,
                         DFSError.ErrorCode.SYNC_STOPPED,
                         data.getFile().getPath(),
-                        String.format("Failed to generate transaction delta. [path=%s]",
-                                data.getFile().getPath()));
+                        new Exception(String.format("Failed to generate transaction delta. [path=%s]",
+                                data.getFile().getPath())))
+                        .withFile(data.getFile());
             }
             DFSReplicationDelta rDelta = new DFSReplicationDelta();
             rDelta.setOp(AvroChangeType.EChangeType.RecordDelete);
@@ -302,8 +310,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 throw new InvalidTransactionError(txId,
                         DFSError.ErrorCode.SYNC_STOPPED,
                         data.getFile().getPath(),
-                        String.format("Entity Schema not found. [entity=%s]",
-                                rState.getEntity().toString()));
+                        new Exception(String.format("Entity Schema not found. [entity=%s]",
+                                rState.getEntity().toString())))
+                        .withFile(data.getFile());
             }
             DFSChangeData delta = DFSChangeData.newBuilder()
                     .setTransaction(data.getTransaction())
@@ -351,7 +360,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getFileInfo().getHdfsPath(),
-                    String.format("FileSystem sync error. [path=%s]", fileState.getFileInfo().getHdfsPath()));
+                    new Exception(String.format("FileSystem sync error. [path=%s]",
+                            fileState.getFileInfo().getHdfsPath())))
+                    .withFile(data.getFile());
         }
     }
 
@@ -372,8 +383,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
-                    String.format("NameNode Replica out of sync, missing file state. [path=%s]",
-                            data.getFile().getPath()));
+                    new Exception(String.format("NameNode Replica out of sync, missing file state. [path=%s]",
+                            data.getFile().getPath())))
+                    .withFile(data.getFile());
         }
 
         checkStaleInode(message, fileState, data.getFile());
@@ -386,8 +398,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
-                    String.format("File not setup for replication. [path=%s]",
-                            data.getFile().getPath()));
+                    new Exception(String.format("File not setup for replication. [path=%s]",
+                            data.getFile().getPath())))
+                    .withFile(data.getFile());
         } else if (rState.getLastReplicatedTx() >= txId) {
             if (message.mode() == MessageObject.MessageMode.New) {
                 throw new InvalidMessageError(message.id(),
@@ -400,8 +413,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 throw new InvalidTransactionError(txId,
                         DFSError.ErrorCode.SYNC_STOPPED,
                         data.getFile().getPath(),
-                        String.format("FileSystem file not found. [path=%s]",
-                                data.getFile().getPath()));
+                        new Exception(String.format("FileSystem file not found. [path=%s]",
+                                data.getFile().getPath())))
+                        .withFile(data.getFile());
             }
             DFSBlock dataBlock = data.getLastBlock();
             DFSBlockState block = fileState.get(dataBlock.getBlockId());
@@ -409,8 +423,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 throw new InvalidTransactionError(txId,
                         DFSError.ErrorCode.SYNC_STOPPED,
                         data.getFile().getPath(),
-                        String.format("File State block not found. [path=%s][block ID=%d]",
-                                data.getFile().getPath(), dataBlock.getBlockId()));
+                        new Exception(String.format("File State block not found. [path=%s][block ID=%d]",
+                                data.getFile().getPath(), dataBlock.getBlockId())))
+                        .withFile(data.getFile());
             }
             FSBlock bb = file.get(block.getBlockId());
             if (bb == null) {
@@ -437,7 +452,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getFileInfo().getHdfsPath(),
-                    String.format("FileSystem sync error. [path=%s]", fileState.getFileInfo().getHdfsPath()));
+                    new Exception(String.format("FileSystem sync error. [path=%s]",
+                            fileState.getFileInfo().getHdfsPath())))
+                    .withFile(data.getFile());
         }
     }
 
@@ -458,8 +475,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
-                    String.format("NameNode Replica out of sync, missing file state. [path=%s]",
-                            data.getFile().getPath()));
+                    new Exception(String.format("NameNode Replica out of sync, missing file state. [path=%s]",
+                            data.getFile().getPath())))
+                    .withFile(data.getFile());
         }
 
         checkStaleInode(message, fileState, data.getFile());
@@ -468,8 +486,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getFileInfo().getHdfsPath(),
-                    String.format("File State out of sync, no block to update. [path=%s]",
-                            fileState.getFileInfo().getHdfsPath()));
+                    new Exception(String.format("File State out of sync, no block to update. [path=%s]",
+                            fileState.getFileInfo().getHdfsPath())))
+                    .withFile(data.getFile());
         }
         SchemaEntity schemaEntity = SchemaEntityHelper.parse(message.value().getSchema());
 
@@ -480,8 +499,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
-                    String.format("File not setup for replication. [path=%s]",
-                            data.getFile().getPath()));
+                    new Exception(String.format("File not setup for replication. [path=%s]",
+                            data.getFile().getPath())))
+                    .withFile(data.getFile());
         } else if (rState.getLastReplicatedTx() >= txId) {
             if (message.mode() == MessageObject.MessageMode.New) {
                 throw new InvalidMessageError(message.id(),
@@ -494,8 +514,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 throw new InvalidTransactionError(txId,
                         DFSError.ErrorCode.SYNC_STOPPED,
                         data.getFile().getPath(),
-                        String.format("FileSystem file not found. [path=%s]",
-                                data.getFile().getPath()));
+                        new Exception(String.format("FileSystem file not found. [path=%s]",
+                                data.getFile().getPath())))
+                        .withFile(data.getFile());
             }
             for (DFSBlock block : blocks) {
                 DFSBlockState bs = fileState.get(block.getBlockId());
@@ -503,14 +524,18 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     throw new InvalidTransactionError(txId,
                             DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getFileInfo().getHdfsPath(),
-                            String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
-                                    fileState.getFileInfo().getHdfsPath(), block.getBlockId()));
+                            new Exception(
+                                    String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
+                                            fileState.getFileInfo().getHdfsPath(), block.getBlockId())))
+                            .withFile(data.getFile());
                 } else if (bs.getDataSize() != block.getSize()) {
                     throw new InvalidTransactionError(txId,
                             DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getFileInfo().getHdfsPath(),
-                            String.format("File State out of sync, block size mismatch. [path=%s][blockID=%d]",
-                                    fileState.getFileInfo().getHdfsPath(), block.getBlockId()));
+                            new Exception(
+                                    String.format("File State out of sync, block size mismatch. [path=%s][blockID=%d]",
+                                            fileState.getFileInfo().getHdfsPath(), block.getBlockId())))
+                            .withFile(data.getFile());
                 }
                 if (bs.blockIsFull()) continue;
                 FSBlock bb = file.get(bs.getBlockId());
@@ -518,8 +543,10 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     throw new InvalidTransactionError(txId,
                             DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getFileInfo().getHdfsPath(),
-                            String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
-                                    fileState.getFileInfo().getHdfsPath(), block.getBlockId()));
+                            new Exception(
+                                    String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
+                                            fileState.getFileInfo().getHdfsPath(), block.getBlockId())))
+                            .withFile(data.getFile());
                 }
                 DFSBlockReplicaState b = rState.get(bb.blockId());
                 if (b == null) {
@@ -545,7 +572,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getFileInfo().getHdfsPath(),
-                    String.format("FileSystem sync error. [path=%s]", fileState.getFileInfo().getHdfsPath()));
+                    new Exception(String.format("FileSystem sync error. [path=%s]",
+                            fileState.getFileInfo().getHdfsPath())))
+                    .withFile(data.getFile());
         }
     }
 
@@ -566,8 +595,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
-                    String.format("NameNode Replica out of sync, missing file state. [path=%s]",
-                            data.getFile().getPath()));
+                    new Exception(String.format("NameNode Replica out of sync, missing file state. [path=%s]",
+                            data.getFile().getPath())))
+                    .withFile(data.getFile());
         }
         if (fileState.getLastTnxId() >= txId) {
             LOGGER.warn(getClass(), txId,
@@ -603,7 +633,10 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 throw new InvalidTransactionError(txId,
                         DFSError.ErrorCode.SYNC_STOPPED,
                         data.getFile().getPath(),
-                        String.format("Invalid Schema Entity: domain or entity is NULL. [path=%s]", data.getFile().getPath()));
+                        new Exception(
+                                String.format("Invalid Schema Entity: domain or entity is NULL. [path=%s]",
+                                        data.getFile().getPath())))
+                        .withFile(data.getFile());
             }
             registerFile(data.getFile(), schemaEntity, message, txId);
         }
@@ -614,8 +647,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
-                    String.format("NameNode Replica out of sync, missing file state. [path=%s]",
-                            data.getFile().getPath()));
+                    new Exception(String.format("NameNode Replica out of sync, missing file state. [path=%s]",
+                            data.getFile().getPath())))
+                    .withFile(data.getFile());
         }
         checkStaleInode(message, fileState, data.getFile());
 
@@ -626,8 +660,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
-                    String.format("File not setup for replication. [path=%s]",
-                            data.getFile().getPath()));
+                    new Exception(String.format("File not setup for replication. [path=%s]",
+                            data.getFile().getPath())))
+                    .withFile(data.getFile());
         } else if (rState.getLastReplicatedTx() >= txId) {
             if (message.mode() == MessageObject.MessageMode.New) {
                 throw new InvalidMessageError(message.id(),
@@ -645,8 +680,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     throw new InvalidTransactionError(txId,
                             DFSError.ErrorCode.SYNC_STOPPED,
                             data.getFile().getPath(),
-                            String.format("FileSystem file not found. [path=%s]",
-                                    data.getFile().getPath()));
+                            new Exception(String.format("FileSystem file not found. [path=%s]",
+                                    data.getFile().getPath())))
+                            .withFile(data.getFile());
                 }
                 SchemaManager schemaManager = NameNodeEnv.get(name()).schemaManager();
                 AvroSchema prevSchema = schemaManager.get(rState.getEntity());
@@ -661,16 +697,20 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                             throw new InvalidTransactionError(txId,
                                     DFSError.ErrorCode.SYNC_STOPPED,
                                     data.getFile().getPath(),
-                                    String.format("Block not registered for update. [path=%s][block ID=%d]",
-                                            data.getFile().getPath(), block.getBlockId()));
+                                    new Exception(
+                                            String.format("Block not registered for update. [path=%s][block ID=%d]",
+                                                    data.getFile().getPath(), block.getBlockId())))
+                                    .withFile(data.getFile());
                         }
                         FSBlock fsb = file.get(block.getBlockId());
                         if (fsb == null) {
                             throw new InvalidTransactionError(txId,
                                     DFSError.ErrorCode.SYNC_STOPPED,
                                     data.getFile().getPath(),
-                                    String.format("Block not found in FileSystem. [path=%s][block ID=%d]",
-                                            data.getFile().getPath(), block.getBlockId()));
+                                    new Exception(
+                                            String.format("Block not found in FileSystem. [path=%s][block ID=%d]",
+                                                    data.getFile().getPath(), block.getBlockId())))
+                                    .withFile(data.getFile());
                         }
 
                         long size = copyBlock(txId,
@@ -690,8 +730,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                         throw new InvalidTransactionError(txId,
                                 DFSError.ErrorCode.SYNC_STOPPED,
                                 data.getFile().getPath(),
-                                String.format("Failed to generate transaction delta. [path=%s]",
-                                        data.getFile().getPath()));
+                                new Exception(String.format("Failed to generate transaction delta. [path=%s]",
+                                        data.getFile().getPath())))
+                                .withFile(data.getFile());
                     }
                     DFSReplicationDelta rDelta = new DFSReplicationDelta();
                     rDelta.setOp(AvroChangeType.EChangeType.RecordDelete);
@@ -731,8 +772,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                         throw new InvalidTransactionError(txId,
                                 DFSError.ErrorCode.SYNC_STOPPED,
                                 data.getFile().getPath(),
-                                String.format("Entity Schema not found. [entity=%s]",
-                                        rState.getEntity().toString()));
+                                new Exception(String.format("Entity Schema not found. [entity=%s]",
+                                        rState.getEntity().toString())))
+                                .withFile(data.getFile());
                     }
 
                     DFSChangeData delta = DFSChangeData.newBuilder()
@@ -755,9 +797,8 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 } catch (IOException ex) {
                     throw new InvalidTransactionError(txId,
                             DFSError.ErrorCode.SYNC_STOPPED,
-                            data.getFile().getPath(),
-                            String.format("Error converting change delta to Avro. [path=%s]",
-                                    data.getFile().getPath()));
+                            data.getFile().getPath(), ex)
+                            .withFile(data.getFile());
                 }
                 if (message.mode() == MessageObject.MessageMode.Snapshot) {
                     DFSFileReplicaState nState = snapshotDone(fileState, rState);
@@ -765,7 +806,8 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                         throw new InvalidTransactionError(txId,
                                 DFSError.ErrorCode.SYNC_STOPPED,
                                 fileState.getFileInfo().getHdfsPath(),
-                                String.format("Error marking Snapshot Done. [TXID=%d]", txId));
+                                new Exception(String.format("Error marking Snapshot Done. [TXID=%d]", txId)))
+                                .withFile(data.getFile());
                     }
                 }
 
@@ -781,13 +823,17 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getFileInfo().getHdfsPath(),
-                    String.format("FileSystem sync error. [path=%s]", fileState.getFileInfo().getHdfsPath()));
+                    new Exception(
+                            String.format("FileSystem sync error. [path=%s]",
+                                    fileState.getFileInfo().getHdfsPath())))
+                    .withFile(data.getFile());
         } else if (!rState.canUpdate()) {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     data.getFile().getPath(),
-                    String.format("File not setup for replication. [path=%s]",
-                            data.getFile().getPath()));
+                    new Exception(String.format("File not setup for replication. [path=%s]",
+                            data.getFile().getPath())))
+                    .withFile(data.getFile());
         }
     }
 
@@ -837,7 +883,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                             updatedPath,
                             op,
                             replicaState,
-                            MessageObject.MessageMode.Schema
+                            message.mode()
                     );
             m.correlationId(message.id());
 
@@ -880,8 +926,8 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getFileInfo().getHdfsPath(),
-                    String.format("Error reading block from HDFS. [path=%s][block ID=%d]",
-                            fileState.getFileInfo().getHdfsPath(), source.getBlockId()));
+                    new Exception(String.format("Error reading block from HDFS. [path=%s][block ID=%d]",
+                            fileState.getFileInfo().getHdfsPath(), source.getBlockId())));
         }
         if (detect
                 && (fileState.getFileInfo().getFileType() == null

@@ -649,7 +649,7 @@ public class SchemaEvolutionValidator {
                 String expectedVal = String.valueOf(defaultJson);
 
                 if (expectedVal != null) {
-                    messages.add(new Message(Level.ERROR, "Illegal default value for field " + name
+                    messages.add(new Message(Level.DEBUG, "Illegal default value for field " + name
                             + ". The default must be of type "
                             + expectedVal + "."));
                 }

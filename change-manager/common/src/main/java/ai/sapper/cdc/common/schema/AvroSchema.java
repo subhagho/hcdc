@@ -1,6 +1,7 @@
 package ai.sapper.cdc.common.schema;
 
 import ai.sapper.cdc.common.utils.ChecksumUtils;
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -8,6 +9,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import org.apache.avro.Schema;
+import org.slf4j.event.Level;
 
 import java.util.List;
 
@@ -23,7 +25,8 @@ public class AvroSchema {
 
     public AvroSchema withSchema(@NonNull Schema schema) throws Exception {
         schemaStr = schema.toString(false);
-        hash = ChecksumUtils.generateHash(schemaStr);
+        hash = ChecksumUtils.generateHash(schemaStr.replaceAll("\\s", ""));
+        this.schema = schema;
         return this;
     }
 
@@ -43,6 +46,7 @@ public class AvroSchema {
 
     public boolean compare(@NonNull AvroSchema target)
             throws Exception {
+        Preconditions.checkNotNull(this.schema);
         Preconditions.checkNotNull(target.schema);
         if (hash.compareTo(target.hash) != 0) {
             return false;
@@ -53,6 +57,12 @@ public class AvroSchema {
                                 target.schema,
                                 this.schema.getName());
         if (response.isEmpty()) return true;
-        return false;
+        Level maxLevel = Level.DEBUG;
+        for (SchemaEvolutionValidator.Message message : response) {
+            if (DefaultLogger.isGreaterOrEqual(message.getLevel(), maxLevel)) {
+                maxLevel = message.getLevel();
+            }
+        }
+        return DefaultLogger.isGreaterOrEqual(Level.DEBUG, maxLevel);
     }
 }
