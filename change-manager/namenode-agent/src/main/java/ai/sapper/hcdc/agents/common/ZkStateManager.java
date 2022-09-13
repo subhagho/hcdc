@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.agents.common;
 
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.BaseStateManager;
@@ -100,7 +101,7 @@ public class ZkStateManager extends BaseStateManager {
         synchronized (this) {
             long seq = snapshotState.getSnapshotSeq();
             snapshotState.setSnapshotSeq(seq + 1);
-            save(snapshotState);
+            snapshotState = save(snapshotState);
             return seq;
         }
     }
@@ -132,6 +133,7 @@ public class ZkStateManager extends BaseStateManager {
         state.setUpdatedTimestamp(System.currentTimeMillis());
         String json = JSONUtils.asString(state, SnapshotState.class);
         client.setData().forPath(zkSnapshotStatePath, json.getBytes(StandardCharsets.UTF_8));
+        DefaultLogger.LOGGER.debug(String.format("Updated Snapshot Sequence [%s]", state));
         return state;
     }
 

@@ -13,6 +13,8 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Accessors(fluent = true)
@@ -28,6 +30,7 @@ public abstract class BaseEnv {
     private final DistributedLockBuilder lockBuilder = new DistributedLockBuilder();
     private String environment;
     private HierarchicalConfiguration<ImmutableNode> rootConfig;
+    private List<ExitCallback> exitCallbacks;
 
     public BaseEnv withStoreKey(@NonNull String storeKey) {
         this.storeKey = storeKey;
@@ -82,6 +85,13 @@ public abstract class BaseEnv {
         }
     }
 
+    public synchronized BaseEnv addExitCallback(@NonNull ExitCallback callback) {
+        if (exitCallbacks == null) {
+            exitCallbacks = new ArrayList<>();
+        }
+        exitCallbacks.add(callback);
+        return this;
+    }
 
     public DistributedLock createLock(@NonNull String path,
                                       @NonNull String module,

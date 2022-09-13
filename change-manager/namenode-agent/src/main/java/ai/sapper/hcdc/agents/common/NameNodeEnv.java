@@ -5,10 +5,7 @@ import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.audit.AuditLogger;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.NetUtils;
-import ai.sapper.cdc.core.BaseEnv;
-import ai.sapper.cdc.core.BaseStateManager;
-import ai.sapper.cdc.core.DistributedLock;
-import ai.sapper.cdc.core.HeartbeatThread;
+import ai.sapper.cdc.core.*;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.model.CDCAgentState;
 import ai.sapper.cdc.core.model.ModuleInstance;
@@ -307,6 +304,11 @@ public class NameNodeEnv extends BaseEnv {
         @Override
         public void run() {
             try {
+                if (env.exitCallbacks() != null) {
+                    for (ExitCallback callback : env.exitCallbacks()) {
+                        callback.call(env.state);
+                    }
+                }
                 NameNodeEnv.dispose(name);
                 env.LOG.warn(String.format("NameNode environment shutdown. [name=%s]", name));
             } catch (Exception ex) {
