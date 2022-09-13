@@ -53,8 +53,12 @@ public class ChangeDeltaSerDe {
                                                                    @NonNull MessageObject.MessageMode mode) throws Exception {
         DFSChangeDelta delta = null;
         DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-        if (mode == MessageObject.MessageMode.Snapshot) {
-            Preconditions.checkArgument(sequence >= 0);
+        if (mode == MessageObject.MessageMode.Snapshot &&
+                !(data instanceof DFSSchemaChange)) {
+            if (sequence < 0) {
+                throw new Exception(
+                        String.format("Invalid Snapshot Sequence: Entity=[%s]", schemaEntity.toString()));
+            }
             builder.setSequence(sequence);
         } else {
             builder.setSequence(0);
