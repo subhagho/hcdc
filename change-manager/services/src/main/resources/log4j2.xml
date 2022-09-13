@@ -95,12 +95,12 @@
     </Appenders>
 
     <Loggers>
-        <Logger name="ai.sapper.hcdc.agents.namenode" additivity="false" level="debug">
+        <!--Logger name="ai.sapper.hcdc.agents.namenode" additivity="false" level="debug">
             <AppenderRef ref="NameNodeLog"/>
         </Logger>
         <Logger name="ai.sapper.hcdc.agents.pipeline" additivity="false" level="debug">
             <AppenderRef ref="PipelineLog"/>
-        </Logger>
+        </Logger-->
         <Logger name="ai.sapper.cdc.common.audit" additivity="false" level="info">
             <AppenderRef ref="audit"/>
         </Logger>

@@ -196,4 +196,14 @@ public class ConfigReader {
         }
         return null;
     }
+
+    public static void checkStringValue(String value,
+                                        @NonNull Class<?> caller,
+                                        @NonNull String name) throws ConfigurationException {
+        if (Strings.isNullOrEmpty(value)) {
+            throw new ConfigurationException(
+                    String.format("[%s] Missing configuration [name=%s]",
+                            caller.getSimpleName(), name));
+        }
+    }
 }
