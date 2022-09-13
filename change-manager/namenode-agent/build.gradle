@@ -25,7 +25,6 @@ configurations.testRuntimeClasspath {
 
 dependencies {
     implementation project(':common')
-    implementation project(':common-model')
     implementation project(':core')
     implementation project(':hcdc-common')
 

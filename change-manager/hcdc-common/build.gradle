@@ -1,6 +1,40 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.18'
+    }
+}
+
+apply plugin: 'com.google.protobuf'
+
+protobuf {
+    // Configure the protoc executable
+    protoc {
+        // Download from repositories
+        artifact = 'com.google.protobuf:protoc:2.5.0'
+    }
+    generatedFilesBaseDir = 'hcdc-common/src'
+
+    generateProtoTasks {
+
+        // all() returns the collection of all protoc tasks
+        all().each { task ->
+            // Here you can configure the task
+        }
+
+        // In addition to all(), you may get the task collection by various
+        // criteria:
+
+        // (Java only) returns tasks for a sourceSet
+        ofSourceSet('main')
+
+    }
+}
+
 dependencies {
     implementation project(':common')
-    implementation project(':common-model')
     implementation project(':core')
 
     implementation 'org.ehcache:ehcache:3.10.0'

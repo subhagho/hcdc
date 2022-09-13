@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.agents.model;
 
-import ai.sapper.cdc.common.messaging.ChangeDeltaMessage;
+import ai.sapper.cdc.core.messaging.ChangeDeltaMessage;
 import ai.sapper.hcdc.agents.common.DFSAgentError;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.common.model.*;

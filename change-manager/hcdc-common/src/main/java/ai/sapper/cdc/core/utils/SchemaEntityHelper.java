@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.common.utils;
+package ai.sapper.cdc.core.utils;
 
 import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.hcdc.common.model.DFSSchema;

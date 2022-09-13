@@ -11,7 +11,7 @@ import ai.sapper.hcdc.agents.common.InvalidTransactionError;
 import ai.sapper.hcdc.agents.common.TransactionProcessor;
 import ai.sapper.hcdc.agents.model.*;
 import ai.sapper.hcdc.common.model.*;
-import ai.sapper.hcdc.common.utils.SchemaEntityHelper;
+import ai.sapper.cdc.core.utils.SchemaEntityHelper;
 import com.google.common.base.Strings;
 import lombok.NonNull;
 

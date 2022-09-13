@@ -3,7 +3,7 @@ package ai.sapper.hcdc.agents.pipeline;
 import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.core.messaging.KafkaPartitioner;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
-import ai.sapper.hcdc.common.utils.SchemaEntityHelper;
+import ai.sapper.cdc.core.utils.SchemaEntityHelper;
 import lombok.NonNull;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;

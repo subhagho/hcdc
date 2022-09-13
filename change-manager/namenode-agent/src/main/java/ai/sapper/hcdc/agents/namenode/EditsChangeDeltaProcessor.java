@@ -18,7 +18,7 @@ import ai.sapper.hcdc.agents.model.DFSFileState;
 import ai.sapper.hcdc.agents.model.DFSTransactionType;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSCloseFile;
-import ai.sapper.hcdc.common.utils.SchemaEntityHelper;
+import ai.sapper.cdc.core.utils.SchemaEntityHelper;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;

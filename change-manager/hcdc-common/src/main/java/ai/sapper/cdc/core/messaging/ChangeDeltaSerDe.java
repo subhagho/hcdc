@@ -3,7 +3,7 @@ package ai.sapper.cdc.core.messaging;
 import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.common.model.*;
-import ai.sapper.hcdc.common.utils.SchemaEntityHelper;
+import ai.sapper.cdc.core.utils.SchemaEntityHelper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.protobuf.MessageOrBuilder;

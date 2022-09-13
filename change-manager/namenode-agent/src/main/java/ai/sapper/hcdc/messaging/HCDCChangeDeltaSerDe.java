@@ -1,7 +1,6 @@
 package ai.sapper.hcdc.messaging;
 
 import ai.sapper.cdc.common.model.AvroChangeType;
-import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
@@ -9,7 +8,7 @@ import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSFile;
 import ai.sapper.hcdc.common.model.DFSSchemaChange;
 import ai.sapper.hcdc.common.model.DFSTransaction;
-import ai.sapper.hcdc.common.utils.SchemaEntityHelper;
+import ai.sapper.cdc.core.utils.SchemaEntityHelper;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 

@@ -18,7 +18,7 @@ configurations.all {
 
 dependencies {
     implementation project(':common')
-    implementation project(':common-model')
+    implementation project(':hcdc-common')
     implementation project(':core')
     implementation project(':namenode-agent')
 

@@ -21,7 +21,7 @@ import ai.sapper.cdc.core.schema.SchemaManager;
 import ai.sapper.hcdc.agents.common.*;
 import ai.sapper.hcdc.agents.model.*;
 import ai.sapper.hcdc.common.model.*;
-import ai.sapper.hcdc.common.utils.SchemaEntityHelper;
+import ai.sapper.cdc.core.utils.SchemaEntityHelper;
 import ai.sapper.hcdc.io.FSBlock;
 import ai.sapper.hcdc.io.FSFile;
 import ai.sapper.hcdc.io.HCDCFsUtils;
