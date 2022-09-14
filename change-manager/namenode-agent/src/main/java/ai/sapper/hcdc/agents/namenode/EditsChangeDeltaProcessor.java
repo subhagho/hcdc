@@ -17,8 +17,8 @@ import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.agents.model.DFSFileState;
 import ai.sapper.hcdc.agents.model.DFSTransactionType;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
-import ai.sapper.hcdc.common.model.DFSCloseFile;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
+import ai.sapper.hcdc.common.model.DFSFileClose;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -132,18 +132,19 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
     }
 
     private void processBacklogMessage(MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
-        DFSCloseFile closeFile = (DFSCloseFile) ChangeDeltaSerDe.parse(message.value());
+        DFSFileClose closeFile = ChangeDeltaSerDe.parse(message.value(), DFSFileClose.class);
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
-                .get(closeFile.getFile().getPath());
+                .get(closeFile.getFile().getEntity().getEntity());
         if (fileState == null) {
             throw new InvalidMessageError(message.id(),
-                    String.format("HDFS File Not found. [path=%s]", closeFile.getFile().getPath()));
+                    String.format("HDFS File Not found. [path=%s]", closeFile.getFile().getEntity().getEntity()));
         }
         SchemaEntity schemaEntity = processor.isRegistered(fileState.getFileInfo().getHdfsPath());
         if (schemaEntity == null) {
             throw new InvalidMessageError(message.id(),
-                    String.format("HDFS File Not registered. [path=%s]", closeFile.getFile().getPath()));
+                    String.format("HDFS File Not registered. [path=%s]",
+                            closeFile.getFile().getEntity().getEntity()));
         }
         DFSFileReplicaState rState = stateManager()
                 .replicaStateHelper()
@@ -151,17 +152,21 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
         if (rState == null || !rState.isEnabled()) {
             throw new InvalidMessageError(message.id(),
                     String.format("HDFS File not registered for snapshot. [path=%s][inode=%d]",
-                            closeFile.getFile().getPath(), fileState.getFileInfo().getInodeId()));
+                            closeFile.getFile().getEntity().getEntity(),
+                            fileState.getFileInfo().getInodeId()));
         }
         if (rState.isSnapshotReady()) {
             throw new InvalidMessageError(message.id(),
                     String.format("Snapshot already completed for file. [path=%s][inode=%d]",
-                            closeFile.getFile().getPath(), fileState.getFileInfo().getInodeId()));
+                            closeFile.getFile().getEntity().getEntity(),
+                            fileState.getFileInfo().getInodeId()));
         }
         if (rState.getSnapshotTxId() != txId) {
             throw new InvalidMessageError(message.id(),
                     String.format("Snapshot transaction mismatch. [path=%s][inode=%d] [expected=%d][actual=%d]",
-                            closeFile.getFile().getPath(), fileState.getFileInfo().getInodeId(), rState.getSnapshotTxId(), txId));
+                            closeFile.getFile().getEntity().getEntity(),
+                            fileState.getFileInfo().getInodeId(),
+                            rState.getSnapshotTxId(), txId));
         }
         if (fileState.getLastTnxId() > txId)
             sendBackLogMessage(message, fileState, rState, txId);
@@ -173,14 +178,11 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
                                     long txId) throws Exception {
         DFSTransactionType.DFSCloseFileType tnx = buildBacklogTransactions(fileState, rState, txId + 1);
         if (tnx != null) {
-            SchemaEntity schemaEntity = null;
-            if (message.value().hasSchema()) {
-                schemaEntity = SchemaEntityHelper.parse(message.value().getSchema());
-            }
-            DFSCloseFile closeFile = tnx.convertToProto();
-            MessageObject<String, DFSChangeDelta> mesg = ChangeDeltaSerDe.create(message.value().getNamespace(),
-                    closeFile,
-                    DFSCloseFile.class,
+            SchemaEntity schemaEntity = SchemaEntityHelper.parse(message.value().getEntity());
+
+            DFSFileClose closeFile = tnx.convertToProto();
+            MessageObject<String, DFSChangeDelta> mesg = ChangeDeltaSerDe.create(closeFile,
+                    DFSFileClose.class,
                     schemaEntity,
                     message.value().getSequence(),
                     MessageObject.MessageMode.Backlog);

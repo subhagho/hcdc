@@ -3,16 +3,18 @@
 
 package ai.sapper.hcdc.common.model;
 
-public interface DFSRenameFileOrBuilder
-    extends com.google.protobuf.MessageOrBuilder {
+public interface DFSFileRenameOrBuilder extends
+    // @@protoc_insertion_point(interface_extends:ai_sapper_hcdc_common_model.DFSFileRename)
+    com.google.protobuf.MessageOrBuilder {
 
-  // required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * @return Whether the transaction field is set.
    */
   boolean hasTransaction();
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * @return The transaction.
    */
   ai.sapper.hcdc.common.model.DFSTransaction getTransaction();
   /**
@@ -20,13 +22,14 @@ public interface DFSRenameFileOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSTransactionOrBuilder getTransactionOrBuilder();
 
-  // required .ai_sapper_hcdc_common_model.DFSFile srcFile = 2;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSFile srcFile = 2;</code>
+   * @return Whether the srcFile field is set.
    */
   boolean hasSrcFile();
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSFile srcFile = 2;</code>
+   * @return The srcFile.
    */
   ai.sapper.hcdc.common.model.DFSFile getSrcFile();
   /**
@@ -34,13 +37,14 @@ public interface DFSRenameFileOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSFileOrBuilder getSrcFileOrBuilder();
 
-  // required .ai_sapper_hcdc_common_model.DFSFile destFile = 3;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSFile destFile = 3;</code>
+   * @return Whether the destFile field is set.
    */
   boolean hasDestFile();
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSFile destFile = 3;</code>
+   * @return The destFile.
    */
   ai.sapper.hcdc.common.model.DFSFile getDestFile();
   /**
@@ -48,23 +52,25 @@ public interface DFSRenameFileOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSFileOrBuilder getDestFileOrBuilder();
 
-  // required uint64 length = 4;
   /**
    * <code>required uint64 length = 4;</code>
+   * @return Whether the length field is set.
    */
   boolean hasLength();
   /**
    * <code>required uint64 length = 4;</code>
+   * @return The length.
    */
   long getLength();
 
-  // optional .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
+   * <code>optional .ai_sapper_hcdc_common_model.DFSFileRename.RenameOpts opts = 5;</code>
+   * @return Whether the opts field is set.
    */
   boolean hasOpts();
   /**
-   * <code>optional .ai_sapper_hcdc_common_model.DFSRenameFile.RenameOpts opts = 5;</code>
+   * <code>optional .ai_sapper_hcdc_common_model.DFSFileRename.RenameOpts opts = 5;</code>
+   * @return The opts.
    */
-  ai.sapper.hcdc.common.model.DFSRenameFile.RenameOpts getOpts();
+  ai.sapper.hcdc.common.model.DFSFileRename.RenameOpts getOpts();
 }

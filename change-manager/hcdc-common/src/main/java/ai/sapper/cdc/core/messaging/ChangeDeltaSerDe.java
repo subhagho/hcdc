@@ -13,42 +13,44 @@ import lombok.NonNull;
 import java.util.UUID;
 
 public class ChangeDeltaSerDe {
-    public static MessageObject<String, DFSChangeDelta> createErrorTx(@NonNull String namespace,
-                                                                      @NonNull String messageId,
+    public static MessageObject<String, DFSChangeDelta> createErrorTx(@NonNull String messageId,
                                                                       @NonNull DFSTransaction tnx,
                                                                       @NonNull DFSError.ErrorCode code,
                                                                       @NonNull String message,
+                                                                      @NonNull SchemaEntity schemaEntity,
                                                                       DFSFile file) throws Exception {
         DFSError.Builder error = DFSError.newBuilder();
         error.setCode(code)
                 .setMessage(message)
                 .setTransaction(tnx);
-        if (file != null) {
-            error.setFile(file);
+        if (file == null) {
+            DFSFile.Builder builder = DFSFile.newBuilder();
+            builder.setInodeId(-1)
+                    .setEntity(SchemaEntityHelper.proto(schemaEntity));
+            file = builder.build();
         }
-        MessageObject<String, DFSChangeDelta> m = create(namespace,
-                error.build(),
+        error.setFile(file);
+        MessageObject<String, DFSChangeDelta> m = create(error.build(),
                 DFSError.class,
-                null, -1, MessageObject.MessageMode.Error);
+                schemaEntity, -1, MessageObject.MessageMode.Error);
         m.correlationId(messageId);
 
         return m;
     }
 
-    public static MessageObject<String, DFSChangeDelta> createIgnoreTx(@NonNull String namespace,
+    public static MessageObject<String, DFSChangeDelta> createIgnoreTx(@NonNull SchemaEntity schemaEntity,
                                                                        @NonNull DFSTransaction tnx,
                                                                        @NonNull MessageObject.MessageMode mode) throws Exception {
         DFSIgnoreTx ignoreTx = DFSIgnoreTx.newBuilder()
                 .setOpCode(tnx.getOp().name())
                 .setTransaction(tnx)
                 .build();
-        return create(namespace, ignoreTx, DFSIgnoreTx.class, null, -1, mode);
+        return create(ignoreTx, DFSIgnoreTx.class, schemaEntity, -1, mode);
     }
 
-    public static <T> MessageObject<String, DFSChangeDelta> create(@NonNull String namespace,
-                                                                   @NonNull T data,
+    public static <T> MessageObject<String, DFSChangeDelta> create(@NonNull T data,
                                                                    @NonNull Class<? extends T> type,
-                                                                   SchemaEntity schemaEntity,
+                                                                   @NonNull SchemaEntity schemaEntity,
                                                                    long sequence,
                                                                    @NonNull MessageObject.MessageMode mode) throws Exception {
         DFSChangeDelta delta = null;
@@ -65,38 +67,47 @@ public class ChangeDeltaSerDe {
         }
         String key = null;
         String id = null;
-        if (type.equals(DFSAddFile.class)) {
-            id = create(namespace, (DFSAddFile) data, builder);
-        } else if (type.equals(DFSAppendFile.class)) {
-            id = create(namespace, (DFSAppendFile) data, builder);
-        } else if (type.equals(DFSDeleteFile.class)) {
-            id = create(namespace, (DFSDeleteFile) data, builder);
-        } else if (type.equals(DFSAddBlock.class)) {
-            id = create(namespace, (DFSAddBlock) data, builder);
-        } else if (type.equals(DFSUpdateBlocks.class)) {
-            id = create(namespace, (DFSUpdateBlocks) data, builder);
-        } else if (type.equals(DFSTruncateBlock.class)) {
-            id = create(namespace, (DFSTruncateBlock) data, builder);
-        } else if (type.equals(DFSCloseFile.class)) {
-            id = create(namespace, (DFSCloseFile) data, builder);
-        } else if (type.equals(DFSRenameFile.class)) {
-            id = create(namespace, (DFSRenameFile) data, builder);
-        } else if (type.equals(DFSIgnoreTx.class)) {
-            id = create(namespace, (DFSIgnoreTx) data, builder);
-        } else if (type.equals(DFSChangeData.class)) {
-            id = create(namespace, (DFSChangeData) data, builder);
-        } else if (type.equals(DFSError.class)) {
-            id = create(namespace, (DFSError) data, builder);
-        } else if (type.equals(DFSSchemaChange.class)) {
-            id = create(namespace, (DFSSchemaChange) data, builder);
+        if (type.equals(DFSFileAdd.class) &&
+                data instanceof DFSFileAdd) {
+            id = create((DFSFileAdd) data, builder);
+        } else if (type.equals(DFSFileAppend.class) &&
+                data instanceof DFSFileAppend) {
+            id = create((DFSFileAppend) data, builder);
+        } else if (type.equals(DFSFileDelete.class) &&
+                data instanceof DFSFileDelete) {
+            id = create((DFSFileDelete) data, builder);
+        } else if (type.equals(DFSBlockAdd.class) &&
+                data instanceof DFSBlockAdd) {
+            id = create((DFSBlockAdd) data, builder);
+        } else if (type.equals(DFSBlockUpdate.class) &&
+                data instanceof DFSBlockUpdate) {
+            id = create((DFSBlockUpdate) data, builder);
+        } else if (type.equals(DFSBlockTruncate.class) &&
+                data instanceof DFSBlockTruncate) {
+            id = create((DFSBlockTruncate) data, builder);
+        } else if (type.equals(DFSFileClose.class) &&
+                data instanceof DFSFileClose) {
+            id = create((DFSFileClose) data, builder);
+        } else if (type.equals(DFSFileRename.class) &&
+                data instanceof DFSFileRename) {
+            id = create((DFSFileRename) data, builder);
+        } else if (type.equals(DFSIgnoreTx.class) &&
+                data instanceof DFSIgnoreTx) {
+            id = create((DFSIgnoreTx) data, builder);
+        } else if (type.equals(DFSChangeData.class) &&
+                data instanceof DFSChangeData) {
+            id = create((DFSChangeData) data, builder);
+        } else if (type.equals(DFSError.class) &&
+                data instanceof DFSError) {
+            id = create((DFSError) data, builder);
+        } else if (type.equals(DFSSchemaChange.class) &&
+                data instanceof DFSSchemaChange) {
+            id = create((DFSSchemaChange) data, builder);
         } else {
             throw new MessagingError(String.format("Invalid Message DataType. [type=%s]", type.getCanonicalName()));
         }
-        if (schemaEntity != null) {
-            builder.setSchema(SchemaEntityHelper.proto(schemaEntity));
-        }
         delta = builder.build();
-        key = delta.getEntity();
+        key = getMessageKey(schemaEntity);
         if (Strings.isNullOrEmpty(id)) {
             id = UUID.randomUUID().toString();
         }
@@ -110,9 +121,7 @@ public class ChangeDeltaSerDe {
             StringBuilder mesg = new StringBuilder();
             mesg.append("Message: [").append(message.id()).append("]\n");
             mesg.append("Key: [").append(message.key()).append("]\n");
-            mesg.append("Domain: [").append(delta.getSchema()
-                            .getDomain()).append(":")
-                    .append(delta.getSchema().getEntity()).append("]\n");
+            mesg.append("Domain: [").append(schemaEntity).append("]\n");
             mesg.append("Data: [\n").append(printer.print((MessageOrBuilder) data)).append("\n]");
 
             DefaultLogger.LOGGER.debug(mesg.toString());
@@ -120,12 +129,26 @@ public class ChangeDeltaSerDe {
         return message;
     }
 
+    public static String getMessageKey(@NonNull SchemaEntity schemaEntity) {
+        return String.format("%s::%s::%s",
+                schemaEntity.getDomain(),
+                schemaEntity.getSchema(),
+                schemaEntity.getEntity());
+    }
+
+    public static String getMessageKey(@NonNull DFSSchemaEntity schemaEntity) {
+        return String.format("%s::%s::%s",
+                schemaEntity.getDomain(),
+                schemaEntity.getSchema(),
+                schemaEntity.getEntity());
+    }
+
     public static MessageObject<String, DFSChangeDelta> update(@NonNull MessageObject<String, DFSChangeDelta> message,
                                                                @NonNull SchemaEntity schemaEntity,
                                                                @NonNull MessageObject.MessageMode mode) throws Exception {
         DFSChangeDelta delta = message.value();
         delta = delta.toBuilder()
-                .setSchema(SchemaEntityHelper.proto(schemaEntity))
+                .setTarget(SchemaEntityHelper.proto(schemaEntity))
                 .build();
         MessageObject<String, DFSChangeDelta> m = new KafkaMessage<>(message);
         m.correlationId(message.correlationId());
@@ -136,192 +159,238 @@ public class ChangeDeltaSerDe {
         return m;
     }
 
-    public static String create(@NonNull String namespace,
-                                @NonNull DFSChangeData data,
+    public static String create(@NonNull DFSChangeData data,
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
-                .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getFile().getPath())
+                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
-                .setBody(data.toByteString());
+                .setDataChange(data);
         return String.valueOf(data.getFile().getInodeId());
     }
 
-    public static String create(@NonNull String namespace,
-                                @NonNull DFSAddFile data,
+    public static String create(@NonNull DFSFileAdd data,
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
-                .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getFile().getPath())
+                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
-                .setBody(data.toByteString());
+                .setFileAdd(data);
         return String.valueOf(data.getFile().getInodeId());
     }
 
-    public static String create(@NonNull String namespace,
-                                @NonNull DFSAppendFile data,
+    public static String create(@NonNull DFSFileAppend data,
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
-                .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getFile().getPath())
+                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
-                .setBody(data.toByteString());
+                .setFileAppend(data);
         return String.valueOf(data.getFile().getInodeId());
     }
 
-    public static String create(@NonNull String namespace,
-                                @NonNull DFSDeleteFile data,
+    public static String create(@NonNull DFSFileDelete data,
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
-                .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getFile().getPath())
+                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
-                .setBody(data.toByteString());
+                .setFileDelete(data);
         return String.valueOf(data.getFile().getInodeId());
     }
 
-    public static String create(@NonNull String namespace,
-                                @NonNull DFSAddBlock data,
+    public static String create(@NonNull DFSBlockAdd data,
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
-                .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getFile().getPath())
+                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
-                .setBody(data.toByteString());
+                .setBlockAdd(data);
         return String.valueOf(data.getFile().getInodeId());
     }
 
-    public static String create(@NonNull String namespace,
-                                @NonNull DFSUpdateBlocks data,
+    public static String create(@NonNull DFSBlockUpdate data,
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
-                .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getFile().getPath())
+                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
-                .setBody(data.toByteString());
+                .setBlockUpdate(data);
         return String.valueOf(data.getFile().getInodeId());
     }
 
-    public static String create(@NonNull String namespace,
-                                @NonNull DFSTruncateBlock data,
+    public static String create(@NonNull DFSBlockTruncate data,
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
-                .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getFile().getPath())
+                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
-                .setBody(data.toByteString());
+                .setBlockTruncate(data);
         return String.valueOf(data.getFile().getInodeId());
     }
 
-    public static String create(@NonNull String namespace,
-                                @NonNull DFSCloseFile data,
+    public static String create(@NonNull DFSFileClose data,
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
-                .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getFile().getPath())
+                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
-                .setBody(data.toByteString());
+                .setFileClose(data);
         return String.valueOf(data.getFile().getInodeId());
     }
 
-    public static String create(@NonNull String namespace,
-                                @NonNull DFSRenameFile data,
+    public static String create(@NonNull DFSFileRename data,
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
-                .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getSrcFile().getPath())
+                .setEntity(data.getSrcFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
-                .setBody(data.toByteString());
+                .setFileRename(data);
         return String.valueOf(data.getSrcFile().getInodeId());
     }
 
-    public static String create(@NonNull String namespace,
-                                @NonNull DFSIgnoreTx data,
+    public static String create(@NonNull DFSIgnoreTx data,
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
-                .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(String.format("IGNORE:%s", data.getTransaction().getTransactionId()))
+                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
-                .setBody(data.toByteString());
+                .setIgnore(data);
         return String.valueOf(data.getFile().getInodeId());
     }
 
-    public static String create(@NonNull String namespace,
-                                @NonNull DFSError data,
+    public static String create(@NonNull DFSError data,
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
-                .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity("")
+                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
-                .setBody(data.toByteString());
+                .setError(data);
         return UUID.randomUUID().toString();
     }
 
-    public static String create(@NonNull String namespace,
-                                @NonNull DFSSchemaChange data,
+    public static String create(@NonNull DFSSchemaChange data,
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
-                .setNamespace(namespace)
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getFile().getPath())
+                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
-                .setSchema(data.getSchema())
-                .setBody(data.toByteString());
+                .setSchemaChange(data);
         return UUID.randomUUID().toString();
     }
 
-    public static Object parse(@NonNull DFSChangeDelta changeDelta) throws Exception {
-        Preconditions.checkArgument(changeDelta.hasType());
-        String type = changeDelta.getType();
-        if (type.compareTo(DFSAddFile.class.getCanonicalName()) == 0) {
-            return DFSAddFile.parseFrom(changeDelta.getBody());
-        } else if (type.compareTo(DFSAppendFile.class.getCanonicalName()) == 0) {
-            return DFSAppendFile.parseFrom(changeDelta.getBody());
-        } else if (type.compareTo(DFSDeleteFile.class.getCanonicalName()) == 0) {
-            return DFSDeleteFile.parseFrom(changeDelta.getBody());
-        } else if (type.compareTo(DFSAddBlock.class.getCanonicalName()) == 0) {
-            return DFSAddBlock.parseFrom(changeDelta.getBody());
-        } else if (type.compareTo(DFSUpdateBlocks.class.getCanonicalName()) == 0) {
-            return DFSUpdateBlocks.parseFrom(changeDelta.getBody());
-        } else if (type.compareTo(DFSTruncateBlock.class.getCanonicalName()) == 0) {
-            return DFSTruncateBlock.parseFrom(changeDelta.getBody());
-        } else if (type.compareTo(DFSCloseFile.class.getCanonicalName()) == 0) {
-            return DFSCloseFile.parseFrom(changeDelta.getBody());
-        } else if (type.compareTo(DFSRenameFile.class.getCanonicalName()) == 0) {
-            return DFSRenameFile.parseFrom(changeDelta.getBody());
-        } else if (type.compareTo(DFSIgnoreTx.class.getCanonicalName()) == 0) {
-            return DFSIgnoreTx.parseFrom(changeDelta.getBody());
-        } else if (type.compareTo(DFSChangeData.class.getCanonicalName()) == 0) {
-            return DFSChangeData.parseFrom(changeDelta.getBody());
-        } else if (type.compareTo(DFSError.class.getCanonicalName()) == 0) {
-            return DFSError.parseFrom(changeDelta.getBody());
-        } else if (type.compareTo(DFSSchemaChange.class.getCanonicalName()) == 0) {
-            return DFSSchemaChange.parseFrom(changeDelta.getBody());
+    public static <T> T parse(@NonNull DFSChangeDelta delta,
+                              @NonNull Class<? extends T> type) throws Exception {
+        if (type.equals(DFSFileAdd.class)) {
+            if (delta.hasFileAdd()) {
+                return (T) delta.getFileAdd();
+            } else {
+                throw new MessagingError(
+                        String.format("Invalid Message: Type not found. [type=%s]",
+                                type.getCanonicalName()));
+            }
+        } else if (type.equals(DFSFileAppend.class)) {
+            if (delta.hasFileAppend()) {
+                return (T) delta.getFileAppend();
+            } else {
+                throw new MessagingError(
+                        String.format("Invalid Message: Type not found. [type=%s]",
+                                type.getCanonicalName()));
+            }
+        } else if (type.equals(DFSFileDelete.class)) {
+            if (delta.hasFileDelete()) {
+                return (T) delta.getFileDelete();
+            } else {
+                throw new MessagingError(
+                        String.format("Invalid Message: Type not found. [type=%s]",
+                                type.getCanonicalName()));
+            }
+        } else if (type.equals(DFSBlockAdd.class)) {
+            if (delta.hasBlockAdd()) {
+                return (T) delta.getBlockAdd();
+            } else {
+                throw new MessagingError(
+                        String.format("Invalid Message: Type not found. [type=%s]",
+                                type.getCanonicalName()));
+            }
+        } else if (type.equals(DFSBlockUpdate.class)) {
+            if (delta.hasBlockUpdate()) {
+                return (T) delta.getBlockUpdate();
+            } else {
+                throw new MessagingError(
+                        String.format("Invalid Message: Type not found. [type=%s]",
+                                type.getCanonicalName()));
+            }
+        } else if (type.equals(DFSBlockTruncate.class)) {
+            if (delta.hasBlockTruncate()) {
+                return (T) delta.getBlockTruncate();
+            } else {
+                throw new MessagingError(
+                        String.format("Invalid Message: Type not found. [type=%s]",
+                                type.getCanonicalName()));
+            }
+        } else if (type.equals(DFSFileClose.class)) {
+            if (delta.hasFileClose()) {
+                return (T) delta.getFileClose();
+            } else {
+                throw new MessagingError(
+                        String.format("Invalid Message: Type not found. [type=%s]",
+                                type.getCanonicalName()));
+            }
+        } else if (type.equals(DFSFileRename.class)) {
+            if (delta.hasFileRename()) {
+                return (T) delta.getFileRename();
+            } else {
+                throw new MessagingError(
+                        String.format("Invalid Message: Type not found. [type=%s]",
+                                type.getCanonicalName()));
+            }
+        } else if (type.equals(DFSIgnoreTx.class)) {
+            if (delta.hasIgnore()) {
+                return (T) delta.getIgnore();
+            } else {
+                throw new MessagingError(
+                        String.format("Invalid Message: Type not found. [type=%s]",
+                                type.getCanonicalName()));
+            }
+        } else if (type.equals(DFSChangeData.class)) {
+            if (delta.hasDataChange()) {
+                return (T) delta.getDataChange();
+            } else {
+                throw new MessagingError(
+                        String.format("Invalid Message: Type not found. [type=%s]",
+                                type.getCanonicalName()));
+            }
+        } else if (type.equals(DFSError.class)) {
+            if (delta.hasError()) {
+                return (T) delta.getError();
+            } else {
+                throw new MessagingError(
+                        String.format("Invalid Message: Type not found. [type=%s]",
+                                type.getCanonicalName()));
+            }
+        } else if (type.equals(DFSSchemaChange.class)) {
+            if (delta.hasSchemaChange()) {
+                return (T) delta.getSchemaChange();
+            } else {
+                throw new MessagingError(
+                        String.format("Invalid Message: Type not found. [type=%s]",
+                                type.getCanonicalName()));
+            }
         } else {
-            throw new MessagingError(String.format("Invalid Message Type. [type=%s]", type));
+            throw new MessagingError(String.format("Invalid Message DataType. [type=%s]", type.getCanonicalName()));
         }
     }
 }

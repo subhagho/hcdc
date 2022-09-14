@@ -2,6 +2,8 @@ package ai.sapper.hcdc.agents.model;
 
 import ai.sapper.cdc.core.model.BlockTransactionDelta;
 import ai.sapper.cdc.core.model.EFileType;
+import ai.sapper.hcdc.common.model.DFSFile;
+import ai.sapper.hcdc.common.model.DFSSchemaEntity;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -106,5 +108,10 @@ public class DFSFileState {
 
     public boolean hasBlocks() {
         return (blocks != null && !blocks.isEmpty());
+    }
+
+    public DFSFileState withEntity(@NonNull DFSFile file) {
+        fileInfo = new DFSFileInfo().parse(file);
+        return this;
     }
 }

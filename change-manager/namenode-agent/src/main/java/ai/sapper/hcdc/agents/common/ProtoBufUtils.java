@@ -60,12 +60,8 @@ public class ProtoBufUtils {
     public static DFSFile update(@NonNull DFSFile file,
                                  @NonNull String schemaLocation) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(schemaLocation));
-        DFSFile.Builder builder = DFSFile.newBuilder();
-        builder.setNamespace(file.getNamespace())
-                .setPath(file.getPath())
-                .setInodeId(file.getInodeId())
-                .setFileType(file.getFileType())
-                .setSchemaLocation(schemaLocation);
+        DFSFile.Builder builder = file.toBuilder();
+        builder.setSchemaLocation(schemaLocation);
 
         return builder.build();
     }

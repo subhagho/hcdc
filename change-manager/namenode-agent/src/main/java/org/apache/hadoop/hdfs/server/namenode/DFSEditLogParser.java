@@ -4,7 +4,7 @@ import ai.sapper.hcdc.agents.common.DFSAgentError;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.model.DFSEditLogBatch;
 import ai.sapper.hcdc.agents.model.DFSTransactionType;
-import ai.sapper.hcdc.common.model.DFSRenameFile;
+import ai.sapper.hcdc.common.model.DFSFileRename;
 import ai.sapper.hcdc.common.model.DFSTransaction;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
@@ -156,8 +156,10 @@ public class DFSEditLogParser {
         if (!shouldLogTx(op.txid)) return null;
 
         DFSTransactionType.DFSIgnoreTxType ift = new DFSTransactionType.DFSIgnoreTxType();
-        ift.id(op.getTransactionId()).op(DFSTransaction.Operation.IGNORE);
-        ift.opCode(op.opCode.name());
+        ift.id(op.getTransactionId())
+                .op(DFSTransaction.Operation.IGNORE);
+        ift.namespace(env.source())
+                .opCode(op.opCode.name());
 
         batch.transactions().add(ift);
 
@@ -179,10 +181,10 @@ public class DFSEditLogParser {
             if (rop.options != null && rop.options.length > 0) {
                 for (Options.Rename rn : rop.options) {
                     if (rn == Options.Rename.TO_TRASH) {
-                        rft.opts(DFSRenameFile.RenameOpts.TO_TRASH);
+                        rft.opts(DFSFileRename.RenameOpts.TO_TRASH);
                         break;
                     } else if (rn == Options.Rename.OVERWRITE) {
-                        rft.opts(DFSRenameFile.RenameOpts.OVERWRITE);
+                        rft.opts(DFSFileRename.RenameOpts.OVERWRITE);
                     }
                 }
             }

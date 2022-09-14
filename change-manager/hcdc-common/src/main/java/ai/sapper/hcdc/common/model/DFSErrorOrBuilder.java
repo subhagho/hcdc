@@ -3,16 +3,18 @@
 
 package ai.sapper.hcdc.common.model;
 
-public interface DFSErrorOrBuilder
-    extends com.google.protobuf.MessageOrBuilder {
+public interface DFSErrorOrBuilder extends
+    // @@protoc_insertion_point(interface_extends:ai_sapper_hcdc_common_model.DFSError)
+    com.google.protobuf.MessageOrBuilder {
 
-  // required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * @return Whether the transaction field is set.
    */
   boolean hasTransaction();
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * @return The transaction.
    */
   ai.sapper.hcdc.common.model.DFSTransaction getTransaction();
   /**
@@ -20,38 +22,42 @@ public interface DFSErrorOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSTransactionOrBuilder getTransactionOrBuilder();
 
-  // required .ai_sapper_hcdc_common_model.DFSError.ErrorCode code = 2;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSError.ErrorCode code = 2;</code>
+   * @return Whether the code field is set.
    */
   boolean hasCode();
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSError.ErrorCode code = 2;</code>
+   * @return The code.
    */
   ai.sapper.hcdc.common.model.DFSError.ErrorCode getCode();
 
-  // required string message = 3;
   /**
    * <code>required string message = 3;</code>
+   * @return Whether the message field is set.
    */
   boolean hasMessage();
   /**
    * <code>required string message = 3;</code>
+   * @return The message.
    */
   java.lang.String getMessage();
   /**
    * <code>required string message = 3;</code>
+   * @return The bytes for message.
    */
   com.google.protobuf.ByteString
       getMessageBytes();
 
-  // optional .ai_sapper_hcdc_common_model.DFSFile file = 4;
   /**
    * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 4;</code>
+   * @return Whether the file field is set.
    */
   boolean hasFile();
   /**
    * <code>optional .ai_sapper_hcdc_common_model.DFSFile file = 4;</code>
+   * @return The file.
    */
   ai.sapper.hcdc.common.model.DFSFile getFile();
   /**

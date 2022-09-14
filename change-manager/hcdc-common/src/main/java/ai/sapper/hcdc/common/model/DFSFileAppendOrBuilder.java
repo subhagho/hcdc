@@ -3,16 +3,18 @@
 
 package ai.sapper.hcdc.common.model;
 
-public interface DFSTruncateBlockOrBuilder
-    extends com.google.protobuf.MessageOrBuilder {
+public interface DFSFileAppendOrBuilder extends
+    // @@protoc_insertion_point(interface_extends:ai_sapper_hcdc_common_model.DFSFileAppend)
+    com.google.protobuf.MessageOrBuilder {
 
-  // required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * @return Whether the transaction field is set.
    */
   boolean hasTransaction();
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * @return The transaction.
    */
   ai.sapper.hcdc.common.model.DFSTransaction getTransaction();
   /**
@@ -20,13 +22,14 @@ public interface DFSTruncateBlockOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSTransactionOrBuilder getTransactionOrBuilder();
 
-  // required .ai_sapper_hcdc_common_model.DFSFile file = 2;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * @return Whether the file field is set.
    */
   boolean hasFile();
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * @return The file.
    */
   ai.sapper.hcdc.common.model.DFSFile getFile();
   /**
@@ -34,27 +37,14 @@ public interface DFSTruncateBlockOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSFileOrBuilder getFileOrBuilder();
 
-  // required .ai_sapper_hcdc_common_model.DFSBlock block = 3;
   /**
-   * <code>required .ai_sapper_hcdc_common_model.DFSBlock block = 3;</code>
+   * <code>optional bool newBlock = 3;</code>
+   * @return Whether the newBlock field is set.
    */
-  boolean hasBlock();
+  boolean hasNewBlock();
   /**
-   * <code>required .ai_sapper_hcdc_common_model.DFSBlock block = 3;</code>
+   * <code>optional bool newBlock = 3;</code>
+   * @return The newBlock.
    */
-  ai.sapper.hcdc.common.model.DFSBlock getBlock();
-  /**
-   * <code>required .ai_sapper_hcdc_common_model.DFSBlock block = 3;</code>
-   */
-  ai.sapper.hcdc.common.model.DFSBlockOrBuilder getBlockOrBuilder();
-
-  // required uint64 newLength = 4;
-  /**
-   * <code>required uint64 newLength = 4;</code>
-   */
-  boolean hasNewLength();
-  /**
-   * <code>required uint64 newLength = 4;</code>
-   */
-  long getNewLength();
+  boolean getNewBlock();
 }

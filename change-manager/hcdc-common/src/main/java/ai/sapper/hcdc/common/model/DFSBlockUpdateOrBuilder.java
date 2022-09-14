@@ -3,16 +3,18 @@
 
 package ai.sapper.hcdc.common.model;
 
-public interface DFSUpdateBlocksOrBuilder
-    extends com.google.protobuf.MessageOrBuilder {
+public interface DFSBlockUpdateOrBuilder extends
+    // @@protoc_insertion_point(interface_extends:ai_sapper_hcdc_common_model.DFSBlockUpdate)
+    com.google.protobuf.MessageOrBuilder {
 
-  // required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * @return Whether the transaction field is set.
    */
   boolean hasTransaction();
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * @return The transaction.
    */
   ai.sapper.hcdc.common.model.DFSTransaction getTransaction();
   /**
@@ -20,13 +22,14 @@ public interface DFSUpdateBlocksOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSTransactionOrBuilder getTransactionOrBuilder();
 
-  // required .ai_sapper_hcdc_common_model.DFSFile file = 2;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * @return Whether the file field is set.
    */
   boolean hasFile();
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * @return The file.
    */
   ai.sapper.hcdc.common.model.DFSFile getFile();
   /**
@@ -34,7 +37,6 @@ public interface DFSUpdateBlocksOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSFileOrBuilder getFileOrBuilder();
 
-  // repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 3;
   /**
    * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 3;</code>
    */

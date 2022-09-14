@@ -28,14 +28,12 @@ public class HCDCChangeDeltaSerDe extends ChangeDeltaSerDe {
         DFSSchemaChange.Builder builder = DFSSchemaChange.newBuilder()
                 .setTransaction(tnx)
                 .setFile(file)
-                .setSchema(SchemaEntityHelper.proto(rState.getEntity()))
                 .setUpdatedSchemaPath(updated)
                 .setOp(op.opCode());
         if (current != null) {
             builder.setCurrentSchemaPath(current);
         }
-        return create(rState.getFileInfo().getNamespace(),
-                builder.build(),
+        return create(builder.build(),
                 DFSSchemaChange.class,
                 rState.getEntity(),
                 -1,

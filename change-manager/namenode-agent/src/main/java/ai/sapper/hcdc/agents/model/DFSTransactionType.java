@@ -1,6 +1,9 @@
 package ai.sapper.hcdc.agents.model;
 
+import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.core.messaging.ChangeDeltaMessage;
+import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
+import ai.sapper.cdc.core.utils.SchemaEntityHelper;
 import ai.sapper.hcdc.agents.common.DFSAgentError;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.common.model.*;
@@ -23,6 +26,7 @@ import java.util.List;
 @Setter
 @Accessors(fluent = true)
 public abstract class DFSTransactionType<T> implements Comparable<DFSTransactionType<T>> {
+    public static final String IGNORE_TX = "%s.IGNORE";
     private long id;
     private DFSTransaction.Operation op;
     private long timestamp;
@@ -87,7 +91,8 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
 
     public abstract T convertToProto() throws DFSAgentError;
 
-    public abstract void parseFrom(byte[] data) throws DFSAgentError;
+    public abstract void parseFrom(@NonNull DFSChangeDelta delta,
+                                   @NonNull Class<?> type) throws DFSAgentError;
 
     public abstract void parseFrom(T proto) throws DFSAgentError;
 
@@ -98,22 +103,19 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
      * @param message
      * @throws DFSAgentError
      */
-    public static DFSTransactionType<?> parseProtoFrom(byte[] message) throws DFSAgentError {
+    public static <T extends DFSTransactionType<?>> T parseProtoFrom(byte[] message,
+                                                                     @NonNull Class<T> type) throws DFSAgentError {
         try {
             Preconditions.checkArgument(message != null && message.length > 0);
             DFSChangeDelta delta = DFSChangeDelta.parseFrom(message);
             if (Strings.isNullOrEmpty(delta.getType())) {
                 throw new InvalidProtocolBufferException("NULL/Empty field. [type]");
             }
-            Class<?> cls = Class.forName(delta.getType());
-            Object obj = cls.newInstance();
-            if (!(obj instanceof DFSTransactionType)) {
-                throw new InvalidClassException(String.format("Specified type is not a valid transaction type. [type=%s]", cls.getCanonicalName()));
-            }
-            DFSTransactionType<?> data = (DFSTransactionType<?>) obj;
-            data.parseFrom(delta.getBody().toByteArray());
+            DFSTransactionType<?> tnx = type.getDeclaredConstructor().newInstance();
+            Class<?> mType = Class.forName(delta.getType());
+            tnx.parseFrom(delta, mType);
 
-            return data;
+            return (T) tnx;
         } catch (Exception ex) {
             throw new DFSAgentError(ex);
         }
@@ -179,17 +181,17 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         public DFSFile getProto() {
             Preconditions.checkState(!Strings.isNullOrEmpty(namespace));
             Preconditions.checkState(!Strings.isNullOrEmpty(path));
-
+            SchemaEntity entity = new SchemaEntity(namespace, path);
             return DFSFile.newBuilder()
-                    .setNamespace(namespace)
-                    .setPath(path)
+                    .setEntity(SchemaEntityHelper.proto(entity))
                     .setInodeId(inodeId)
                     .build();
         }
 
         public void parse(@NonNull DFSFile file) {
-            this.namespace = file.getNamespace();
-            this.path = file.getPath();
+            SchemaEntity entity = SchemaEntityHelper.parse(file.getEntity());
+            this.namespace = entity.getDomain();
+            this.path = entity.getEntity();
             this.inodeId = file.getInodeId();
         }
     }
@@ -234,7 +236,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     @Setter
     @Accessors(fluent = true)
     @ToString
-    public static class DFSAddBlockType extends DFSTransactionType<DFSAddBlock> {
+    public static class DFSAddBlockType extends DFSTransactionType<DFSBlockAdd> {
         private DFSFileType file;
         private DFSBlockType penultimateBlock;
         private DFSBlockType lastBlock;
@@ -244,10 +246,10 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public DFSAddBlock convertToProto() throws DFSAgentError {
+        public DFSBlockAdd convertToProto() throws DFSAgentError {
             Preconditions.checkNotNull(file);
 
-            DFSAddBlock.Builder builder = DFSAddBlock.newBuilder();
+            DFSBlockAdd.Builder builder = DFSBlockAdd.newBuilder();
             builder.setTransaction(getTransactionProto()).setFile(file.getProto());
             if (penultimateBlock != null) {
                 builder.setPenultimateBlock(penultimateBlock.getProto());
@@ -259,15 +261,16 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         }
 
         /**
-         * @param data
+         * @param delta
          * @throws DFSAgentError
          */
         @Override
-        public void parseFrom(byte[] data) throws DFSAgentError {
+        public void parseFrom(@NonNull DFSChangeDelta delta,
+                              @NonNull Class<?> type) throws DFSAgentError {
             try {
-                DFSAddBlock addBlock = DFSAddBlock.parseFrom(data);
+                DFSBlockAdd addBlock = ChangeDeltaSerDe.parse(delta, DFSBlockAdd.class);
                 parseFrom(addBlock);
-            } catch (InvalidProtocolBufferException e) {
+            } catch (Exception e) {
                 throw new DFSAgentError(String.format("Error reading from byte array. [type=%s]", getClass().getCanonicalName()), e);
             }
         }
@@ -277,7 +280,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public void parseFrom(DFSAddBlock proto) throws DFSAgentError {
+        public void parseFrom(DFSBlockAdd proto) throws DFSAgentError {
             Preconditions.checkArgument(proto.hasTransaction());
             Preconditions.checkArgument(proto.hasFile());
 
@@ -302,16 +305,15 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         @Override
         public ChangeDeltaMessage getMessage(@NonNull String source) throws DFSAgentError {
             ChangeDeltaMessage message = new ChangeDeltaMessage();
-            DFSAddBlock proto = convertToProto();
+            DFSBlockAdd proto = convertToProto();
 
-            message.setKey(proto.getFile().getPath());
+            message.setKey(ChangeDeltaSerDe.getMessageKey(proto.getFile().getEntity()));
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(source);
-            builder.setType(proto.getClass().getCanonicalName());
-            builder.setEntity(proto.getFile().getPath());
-            builder.setTimestamp(System.currentTimeMillis());
-            builder.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
-            builder.setBody(ByteString.copyFrom(proto.toByteArray()));
+            builder.setType(proto.getClass().getCanonicalName())
+                    .setEntity(proto.getFile().getEntity())
+                    .setTimestamp(System.currentTimeMillis())
+                    .setTxId(String.valueOf(proto.getTransaction().getTransactionId()))
+                    .setBlockAdd(proto);
             message.setData(builder.build());
 
             return message;
@@ -323,7 +325,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     @Setter
     @Accessors(fluent = true)
     @ToString
-    public static class DFSAddFileType extends DFSTransactionType<DFSAddFile> {
+    public static class DFSAddFileType extends DFSTransactionType<DFSFileAdd> {
         private DFSFileType file;
         private long length;
         private long blockSize;
@@ -337,12 +339,16 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public DFSAddFile convertToProto() throws DFSAgentError {
+        public DFSFileAdd convertToProto() throws DFSAgentError {
             Preconditions.checkNotNull(file);
 
-            DFSAddFile.Builder builder = DFSAddFile.newBuilder();
+            DFSFileAdd.Builder builder = DFSFileAdd.newBuilder();
             builder.setTransaction(getTransactionProto()).setFile(file.getProto());
-            builder.setLength(length).setBlockSize(blockSize).setModifiedTime(modifiedTime).setAccessedTime(accessedTime).setOverwrite(overwrite);
+            builder.setLength(length)
+                    .setBlockSize(blockSize)
+                    .setModifiedTime(modifiedTime)
+                    .setAccessedTime(accessedTime)
+                    .setOverwrite(overwrite);
             if (!blocks.isEmpty()) {
                 for (DFSBlockType block : blocks) {
                     builder.addBlocks(block.getProto());
@@ -352,15 +358,16 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         }
 
         /**
-         * @param data
+         * @param delta
          * @throws DFSAgentError
          */
         @Override
-        public void parseFrom(byte[] data) throws DFSAgentError {
+        public void parseFrom(@NonNull DFSChangeDelta delta,
+                              @NonNull Class<?> type) throws DFSAgentError {
             try {
-                DFSAddFile addFile = DFSAddFile.parseFrom(data);
+                DFSFileAdd addFile = ChangeDeltaSerDe.parse(delta, DFSFileAdd.class);
                 parseFrom(addFile);
-            } catch (InvalidProtocolBufferException e) {
+            } catch (Exception e) {
                 throw new DFSAgentError(String.format("Error reading from byte array. [type=%s]", getClass().getCanonicalName()), e);
             }
         }
@@ -370,7 +377,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public void parseFrom(DFSAddFile proto) throws DFSAgentError {
+        public void parseFrom(DFSFileAdd proto) throws DFSAgentError {
             Preconditions.checkArgument(proto.hasTransaction());
             Preconditions.checkArgument(proto.hasFile());
 
@@ -384,9 +391,9 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             this.accessedTime = proto.getAccessedTime();
             this.overwrite = proto.getOverwrite();
 
-            List<DFSBlock> bl = proto.getBlocksList();
-            if (bl != null && !bl.isEmpty()) {
-                for (DFSBlock block : bl) {
+            List<DFSBlock> blocksList = proto.getBlocksList();
+            if (!blocksList.isEmpty()) {
+                for (DFSBlock block : blocksList) {
                     DFSBlockType bt = new DFSBlockType();
                     bt.parse(block);
                     blocks.add(bt);
@@ -401,16 +408,16 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         @Override
         public ChangeDeltaMessage getMessage(@NonNull String source) throws DFSAgentError {
             ChangeDeltaMessage message = new ChangeDeltaMessage();
-            DFSAddFile proto = convertToProto();
+            DFSFileAdd proto = convertToProto();
 
-            message.setKey(proto.getFile().getPath());
+            message.setKey(ChangeDeltaSerDe.getMessageKey(proto.getFile().getEntity()));
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(source);
-            builder.setType(proto.getClass().getCanonicalName());
-            builder.setEntity(proto.getFile().getPath());
-            builder.setTimestamp(System.currentTimeMillis());
-            builder.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
-            builder.setBody(ByteString.copyFrom(proto.toByteArray()));
+            builder.setType(proto.getClass().getCanonicalName())
+                    .setEntity(proto.getFile().getEntity())
+                    .setTimestamp(System.currentTimeMillis())
+                    .setTxId(String.valueOf(proto.getTransaction().getTransactionId()))
+                    .setFileAdd(proto);
+
             message.setData(builder.build());
 
             return message;
@@ -421,7 +428,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     @Setter
     @Accessors(fluent = true)
     @ToString
-    public static class DFSAppendFileType extends DFSTransactionType<DFSAppendFile> {
+    public static class DFSAppendFileType extends DFSTransactionType<DFSFileAppend> {
         private DFSFileType file;
         private boolean newBlock;
 
@@ -430,10 +437,10 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public DFSAppendFile convertToProto() throws DFSAgentError {
+        public DFSFileAppend convertToProto() throws DFSAgentError {
             Preconditions.checkNotNull(file);
 
-            DFSAppendFile.Builder builder = DFSAppendFile.newBuilder();
+            DFSFileAppend.Builder builder = DFSFileAppend.newBuilder();
             builder.setTransaction(getTransactionProto()).setFile(file.getProto());
             builder.setNewBlock(newBlock);
 
@@ -441,15 +448,16 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         }
 
         /**
-         * @param data
+         * @param delta
          * @throws DFSAgentError
          */
         @Override
-        public void parseFrom(byte[] data) throws DFSAgentError {
+        public void parseFrom(@NonNull DFSChangeDelta delta,
+                              @NonNull Class<?> type) throws DFSAgentError {
             try {
-                DFSAppendFile addFile = DFSAppendFile.parseFrom(data);
-                parseFrom(addFile);
-            } catch (InvalidProtocolBufferException e) {
+                DFSFileAppend append = ChangeDeltaSerDe.parse(delta, DFSFileAppend.class);
+                parseFrom(append);
+            } catch (Exception e) {
                 throw new DFSAgentError(String.format("Error reading from byte array. [type=%s]", getClass().getCanonicalName()), e);
             }
         }
@@ -459,7 +467,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public void parseFrom(DFSAppendFile proto) throws DFSAgentError {
+        public void parseFrom(DFSFileAppend proto) throws DFSAgentError {
             Preconditions.checkArgument(proto.hasTransaction());
             Preconditions.checkArgument(proto.hasFile());
 
@@ -477,16 +485,15 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         @Override
         public ChangeDeltaMessage getMessage(@NonNull String source) throws DFSAgentError {
             ChangeDeltaMessage message = new ChangeDeltaMessage();
-            DFSAppendFile proto = convertToProto();
+            DFSFileAppend proto = convertToProto();
 
-            message.setKey(proto.getFile().getPath());
+            message.setKey(ChangeDeltaSerDe.getMessageKey(proto.getFile().getEntity()));
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(source);
-            builder.setType(proto.getClass().getCanonicalName());
-            builder.setEntity(proto.getFile().getPath());
-            builder.setTimestamp(System.currentTimeMillis());
-            builder.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
-            builder.setBody(ByteString.copyFrom(proto.toByteArray()));
+            builder.setType(proto.getClass().getCanonicalName())
+                    .setEntity(proto.getFile().getEntity())
+                    .setTimestamp(System.currentTimeMillis())
+                    .setTxId(String.valueOf(proto.getTransaction().getTransactionId()))
+                    .setFileAppend(proto);
             message.setData(builder.build());
 
             return message;
@@ -497,7 +504,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     @Setter
     @Accessors(fluent = true)
     @ToString
-    public static final class DFSCloseFileType extends DFSTransactionType<DFSCloseFile> {
+    public static final class DFSCloseFileType extends DFSTransactionType<DFSFileClose> {
         private DFSFileType file;
         private long length;
         private long blockSize;
@@ -516,13 +523,17 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public DFSCloseFile convertToProto() throws DFSAgentError {
+        public DFSFileClose convertToProto() throws DFSAgentError {
             Preconditions.checkNotNull(file);
 
-            DFSCloseFile.Builder builder = DFSCloseFile.newBuilder();
+            DFSFileClose.Builder builder = DFSFileClose.newBuilder();
 
             builder.setTransaction(getTransactionProto()).setFile(file.getProto());
-            builder.setLength(length).setBlockSize(blockSize).setModifiedTime(modifiedTime).setAccessedTime(accessedTime).setOverwrite(overwrite);
+            builder.setLength(length)
+                    .setBlockSize(blockSize)
+                    .setModifiedTime(modifiedTime)
+                    .setAccessedTime(accessedTime)
+                    .setOverwrite(overwrite);
             if (!blocks.isEmpty()) {
                 for (DFSBlockType block : blocks) {
                     builder.addBlocks(block.getProto());
@@ -532,15 +543,16 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         }
 
         /**
-         * @param data
+         * @param delta
          * @throws DFSAgentError
          */
         @Override
-        public void parseFrom(byte[] data) throws DFSAgentError {
+        public void parseFrom(@NonNull DFSChangeDelta delta,
+                              @NonNull Class<?> type) throws DFSAgentError {
             try {
-                DFSCloseFile addFile = DFSCloseFile.parseFrom(data);
-                parseFrom(addFile);
-            } catch (InvalidProtocolBufferException e) {
+                DFSFileClose close = ChangeDeltaSerDe.parse(delta, DFSFileClose.class);
+                parseFrom(close);
+            } catch (Exception e) {
                 throw new DFSAgentError(String.format("Error reading from byte array. [type=%s]", getClass().getCanonicalName()), e);
             }
         }
@@ -550,7 +562,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public void parseFrom(DFSCloseFile proto) throws DFSAgentError {
+        public void parseFrom(DFSFileClose proto) throws DFSAgentError {
             Preconditions.checkArgument(proto.hasTransaction());
             Preconditions.checkArgument(proto.hasFile());
 
@@ -564,9 +576,9 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             this.accessedTime = proto.getAccessedTime();
             this.overwrite = proto.getOverwrite();
 
-            List<DFSBlock> bl = proto.getBlocksList();
-            if (bl != null && !bl.isEmpty()) {
-                for (DFSBlock block : bl) {
+            List<DFSBlock> blocksList = proto.getBlocksList();
+            if (!blocksList.isEmpty()) {
+                for (DFSBlock block : blocksList) {
                     DFSBlockType bt = new DFSBlockType();
                     bt.parse(block);
                     blocks.add(bt);
@@ -582,16 +594,15 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         @Override
         public ChangeDeltaMessage getMessage(@NonNull String source) throws DFSAgentError {
             ChangeDeltaMessage message = new ChangeDeltaMessage();
-            DFSCloseFile proto = convertToProto();
+            DFSFileClose proto = convertToProto();
 
-            message.setKey(proto.getFile().getPath());
+            message.setKey(ChangeDeltaSerDe.getMessageKey(proto.getFile().getEntity()));
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(source);
-            builder.setType(proto.getClass().getCanonicalName());
-            builder.setEntity(proto.getFile().getPath());
-            builder.setTimestamp(System.currentTimeMillis());
-            builder.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
-            builder.setBody(ByteString.copyFrom(proto.toByteArray()));
+            builder.setType(proto.getClass().getCanonicalName())
+                    .setEntity(proto.getFile().getEntity())
+                    .setTimestamp(System.currentTimeMillis())
+                    .setTxId(String.valueOf(proto.getTransaction().getTransactionId()))
+                    .setFileClose(proto);
             message.setData(builder.build());
 
             return message;
@@ -602,7 +613,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     @Setter
     @Accessors(fluent = true)
     @ToString
-    public static class DFSDeleteFileType extends DFSTransactionType<DFSDeleteFile> {
+    public static class DFSDeleteFileType extends DFSTransactionType<DFSFileDelete> {
         private DFSFileType file;
 
         /**
@@ -610,26 +621,28 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public DFSDeleteFile convertToProto() throws DFSAgentError {
+        public DFSFileDelete convertToProto() throws DFSAgentError {
             Preconditions.checkNotNull(file);
 
-            DFSDeleteFile.Builder builder = DFSDeleteFile.newBuilder();
-            builder.setTransaction(getTransactionProto()).setFile(file.getProto());
+            DFSFileDelete.Builder builder = DFSFileDelete.newBuilder();
+            builder.setTransaction(getTransactionProto())
+                    .setFile(file.getProto());
             builder.setTimestamp(timestamp());
 
             return builder.build();
         }
 
         /**
-         * @param data
+         * @param delta
          * @throws DFSAgentError
          */
         @Override
-        public void parseFrom(byte[] data) throws DFSAgentError {
+        public void parseFrom(@NonNull DFSChangeDelta delta,
+                              @NonNull Class<?> type) throws DFSAgentError {
             try {
-                DFSDeleteFile addFile = DFSDeleteFile.parseFrom(data);
-                parseFrom(addFile);
-            } catch (InvalidProtocolBufferException e) {
+                DFSFileDelete delete = ChangeDeltaSerDe.parse(delta, DFSFileDelete.class);
+                parseFrom(delete);
+            } catch (Exception e) {
                 throw new DFSAgentError(String.format("Error reading from byte array. [type=%s]", getClass().getCanonicalName()), e);
             }
         }
@@ -639,7 +652,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public void parseFrom(DFSDeleteFile proto) throws DFSAgentError {
+        public void parseFrom(DFSFileDelete proto) throws DFSAgentError {
             Preconditions.checkArgument(proto.hasTransaction());
             Preconditions.checkArgument(proto.hasFile());
 
@@ -658,16 +671,15 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         @Override
         public ChangeDeltaMessage getMessage(@NonNull String source) throws DFSAgentError {
             ChangeDeltaMessage message = new ChangeDeltaMessage();
-            DFSDeleteFile proto = convertToProto();
+            DFSFileDelete proto = convertToProto();
 
-            message.setKey(proto.getFile().getPath());
+            message.setKey(ChangeDeltaSerDe.getMessageKey(proto.getFile().getEntity()));
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(source);
-            builder.setType(proto.getClass().getCanonicalName());
-            builder.setEntity(proto.getFile().getPath());
-            builder.setTimestamp(System.currentTimeMillis());
-            builder.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
-            builder.setBody(ByteString.copyFrom(proto.toByteArray()));
+            builder.setType(proto.getClass().getCanonicalName())
+                    .setEntity(proto.getFile().getEntity())
+                    .setTimestamp(System.currentTimeMillis())
+                    .setTxId(String.valueOf(proto.getTransaction().getTransactionId()))
+                    .setFileDelete(proto);
             message.setData(builder.build());
 
             return message;
@@ -678,7 +690,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     @Setter
     @Accessors(fluent = true)
     @ToString
-    public static class DFSTruncateBlockType extends DFSTransactionType<DFSTruncateBlock> {
+    public static class DFSTruncateBlockType extends DFSTransactionType<DFSBlockTruncate> {
         private DFSFileType file;
         private DFSBlockType block;
         private long newLength;
@@ -688,11 +700,11 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public DFSTruncateBlock convertToProto() throws DFSAgentError {
+        public DFSBlockTruncate convertToProto() throws DFSAgentError {
             Preconditions.checkNotNull(file);
             Preconditions.checkNotNull(block);
 
-            DFSTruncateBlock.Builder builder = DFSTruncateBlock.newBuilder();
+            DFSBlockTruncate.Builder builder = DFSBlockTruncate.newBuilder();
             builder.setTransaction(getTransactionProto())
                     .setFile(file.getProto())
                     .setBlock(block.getProto())
@@ -702,15 +714,16 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         }
 
         /**
-         * @param data
+         * @param delta
          * @throws DFSAgentError
          */
         @Override
-        public void parseFrom(byte[] data) throws DFSAgentError {
+        public void parseFrom(@NonNull DFSChangeDelta delta,
+                              @NonNull Class<?> type) throws DFSAgentError {
             try {
-                DFSTruncateBlock addFile = DFSTruncateBlock.parseFrom(data);
-                parseFrom(addFile);
-            } catch (InvalidProtocolBufferException e) {
+                DFSBlockTruncate truncate = ChangeDeltaSerDe.parse(delta, DFSBlockTruncate.class);
+                parseFrom(truncate);
+            } catch (Exception e) {
                 throw new DFSAgentError(String.format("Error reading from byte array. [type=%s]", getClass().getCanonicalName()), e);
             }
         }
@@ -720,7 +733,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public void parseFrom(DFSTruncateBlock proto) throws DFSAgentError {
+        public void parseFrom(DFSBlockTruncate proto) throws DFSAgentError {
             Preconditions.checkArgument(proto.hasTransaction());
             Preconditions.checkArgument(proto.hasFile());
 
@@ -742,16 +755,15 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         @Override
         public ChangeDeltaMessage getMessage(@NonNull String source) throws DFSAgentError {
             ChangeDeltaMessage message = new ChangeDeltaMessage();
-            DFSTruncateBlock proto = convertToProto();
+            DFSBlockTruncate proto = convertToProto();
 
-            message.setKey(proto.getFile().getPath());
+            message.setKey(ChangeDeltaSerDe.getMessageKey(proto.getFile().getEntity()));
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(source);
-            builder.setType(proto.getClass().getCanonicalName());
-            builder.setEntity(proto.getFile().getPath());
-            builder.setTimestamp(System.currentTimeMillis());
-            builder.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
-            builder.setBody(ByteString.copyFrom(proto.toByteArray()));
+            builder.setType(proto.getClass().getCanonicalName())
+                    .setEntity(proto.getFile().getEntity())
+                    .setTimestamp(System.currentTimeMillis())
+                    .setTxId(String.valueOf(proto.getTransaction().getTransactionId()))
+                    .setBlockTruncate(proto);
             message.setData(builder.build());
 
             return message;
@@ -762,7 +774,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     @Setter
     @Accessors(fluent = true)
     @ToString
-    public static class DFSUpdateBlocksType extends DFSTransactionType<DFSUpdateBlocks> {
+    public static class DFSUpdateBlocksType extends DFSTransactionType<DFSBlockUpdate> {
         private DFSFileType file;
         private final List<DFSBlockType> blocks = new ArrayList<>();
 
@@ -771,11 +783,11 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public DFSUpdateBlocks convertToProto() throws DFSAgentError {
+        public DFSBlockUpdate convertToProto() throws DFSAgentError {
             Preconditions.checkNotNull(file);
             Preconditions.checkState(!blocks.isEmpty());
 
-            DFSUpdateBlocks.Builder builder = DFSUpdateBlocks.newBuilder();
+            DFSBlockUpdate.Builder builder = DFSBlockUpdate.newBuilder();
             builder.setTransaction(getTransactionProto()).setFile(file.getProto());
             for (DFSBlockType block : blocks) {
                 builder.addBlocks(block.getProto());
@@ -785,15 +797,16 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         }
 
         /**
-         * @param data
+         * @param delta
          * @throws DFSAgentError
          */
         @Override
-        public void parseFrom(byte[] data) throws DFSAgentError {
+        public void parseFrom(@NonNull DFSChangeDelta delta,
+                              @NonNull Class<?> type) throws DFSAgentError {
             try {
-                DFSUpdateBlocks addFile = DFSUpdateBlocks.parseFrom(data);
-                parseFrom(addFile);
-            } catch (InvalidProtocolBufferException e) {
+                DFSBlockUpdate update = ChangeDeltaSerDe.parse(delta, DFSBlockUpdate.class);
+                parseFrom(update);
+            } catch (Exception e) {
                 throw new DFSAgentError(String.format("Error reading from byte array. [type=%s]", getClass().getCanonicalName()), e);
             }
         }
@@ -803,7 +816,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public void parseFrom(DFSUpdateBlocks proto) throws DFSAgentError {
+        public void parseFrom(DFSBlockUpdate proto) throws DFSAgentError {
             Preconditions.checkArgument(proto.hasTransaction());
             Preconditions.checkArgument(proto.hasFile());
 
@@ -811,8 +824,8 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             file = new DFSFileType();
             file.parse(proto.getFile());
 
-            List<DFSBlock> bl = proto.getBlocksList();
-            for (DFSBlock block : bl) {
+            List<DFSBlock> blocksList = proto.getBlocksList();
+            for (DFSBlock block : blocksList) {
                 DFSBlockType bt = new DFSBlockType();
                 bt.parse(block);
                 blocks.add(bt);
@@ -827,16 +840,15 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         @Override
         public ChangeDeltaMessage getMessage(@NonNull String source) throws DFSAgentError {
             ChangeDeltaMessage message = new ChangeDeltaMessage();
-            DFSUpdateBlocks proto = convertToProto();
+            DFSBlockUpdate proto = convertToProto();
 
-            message.setKey(proto.getFile().getPath());
+            message.setKey(ChangeDeltaSerDe.getMessageKey(proto.getFile().getEntity()));
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(source);
-            builder.setType(proto.getClass().getCanonicalName());
-            builder.setEntity(proto.getFile().getPath());
-            builder.setTimestamp(System.currentTimeMillis());
-            builder.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
-            builder.setBody(ByteString.copyFrom(proto.toByteArray()));
+            builder.setType(proto.getClass().getCanonicalName())
+                    .setEntity(proto.getFile().getEntity())
+                    .setTimestamp(System.currentTimeMillis())
+                    .setTxId(String.valueOf(proto.getTransaction().getTransactionId()))
+                    .setBlockUpdate(proto);
             message.setData(builder.build());
 
             return message;
@@ -847,22 +859,22 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     @Setter
     @Accessors(fluent = true)
     @ToString
-    public static final class DFSRenameFileType extends DFSTransactionType<DFSRenameFile> {
+    public static final class DFSRenameFileType extends DFSTransactionType<DFSFileRename> {
         private DFSFileType source;
         private DFSFileType dest;
         private long length;
-        private DFSRenameFile.RenameOpts opts = DFSRenameFile.RenameOpts.NONE;
+        private DFSFileRename.RenameOpts opts = DFSFileRename.RenameOpts.NONE;
 
         /**
          * @return
          * @throws DFSAgentError
          */
         @Override
-        public DFSRenameFile convertToProto() throws DFSAgentError {
+        public DFSFileRename convertToProto() throws DFSAgentError {
             Preconditions.checkNotNull(source);
             Preconditions.checkNotNull(dest);
 
-            DFSRenameFile.Builder builder = DFSRenameFile.newBuilder();
+            DFSFileRename.Builder builder = DFSFileRename.newBuilder();
             builder.setTransaction(getTransactionProto())
                     .setSrcFile(source.getProto())
                     .setDestFile(dest.getProto())
@@ -873,15 +885,16 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         }
 
         /**
-         * @param data
+         * @param delta
          * @throws DFSAgentError
          */
         @Override
-        public void parseFrom(byte[] data) throws DFSAgentError {
+        public void parseFrom(@NonNull DFSChangeDelta delta,
+                              @NonNull Class<?> type) throws DFSAgentError {
             try {
-                DFSRenameFile addFile = DFSRenameFile.parseFrom(data);
-                parseFrom(addFile);
-            } catch (InvalidProtocolBufferException e) {
+                DFSFileRename rename = ChangeDeltaSerDe.parse(delta, DFSFileRename.class);
+                parseFrom(rename);
+            } catch (Exception e) {
                 throw new DFSAgentError(String.format("Error reading from byte array. [type=%s]", getClass().getCanonicalName()), e);
             }
         }
@@ -891,7 +904,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
          * @throws DFSAgentError
          */
         @Override
-        public void parseFrom(DFSRenameFile proto) throws DFSAgentError {
+        public void parseFrom(DFSFileRename proto) throws DFSAgentError {
             Preconditions.checkArgument(proto.hasTransaction());
             Preconditions.checkArgument(proto.hasSrcFile());
             Preconditions.checkArgument(proto.hasDestFile());
@@ -914,16 +927,15 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         @Override
         public ChangeDeltaMessage getMessage(@NonNull String source) throws DFSAgentError {
             ChangeDeltaMessage message = new ChangeDeltaMessage();
-            DFSRenameFile proto = convertToProto();
+            DFSFileRename proto = convertToProto();
 
-            message.setKey(proto.getDestFile().getPath());
+            message.setKey(ChangeDeltaSerDe.getMessageKey(proto.getDestFile().getEntity()));
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(source);
-            builder.setType(proto.getClass().getCanonicalName());
-            builder.setEntity(proto.getDestFile().getPath());
-            builder.setTimestamp(System.currentTimeMillis());
-            builder.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
-            builder.setBody(ByteString.copyFrom(proto.toByteArray()));
+            builder.setType(proto.getClass().getCanonicalName())
+                    .setEntity(proto.getDestFile().getEntity())
+                    .setTimestamp(System.currentTimeMillis())
+                    .setTxId(String.valueOf(proto.getTransaction().getTransactionId()))
+                    .setFileRename(proto);
             message.setData(builder.build());
 
             return message;
@@ -935,6 +947,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     @Accessors(fluent = true)
     @ToString
     public static class DFSIgnoreTxType extends DFSTransactionType<DFSIgnoreTx> {
+        private String namespace;
         private String opCode;
 
         /**
@@ -944,20 +957,28 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
         @Override
         public DFSIgnoreTx convertToProto() throws DFSAgentError {
             DFSIgnoreTx.Builder builder = DFSIgnoreTx.newBuilder();
-
-            return builder.setTransaction(getTransactionProto()).setOpCode(opCode).build();
+            DFSFileType file = new DFSFileType()
+                    .inodeId(-1)
+                    .namespace(namespace)
+                    .path(String.format(IGNORE_TX, namespace));
+            return builder
+                    .setFile(file.getProto())
+                    .setTransaction(getTransactionProto())
+                    .setOpCode(opCode)
+                    .build();
         }
 
         /**
-         * @param data
+         * @param delta
          * @throws DFSAgentError
          */
         @Override
-        public void parseFrom(byte[] data) throws DFSAgentError {
+        public void parseFrom(@NonNull DFSChangeDelta delta,
+                              @NonNull Class<?> type) throws DFSAgentError {
             try {
-                DFSIgnoreTx addFile = DFSIgnoreTx.parseFrom(data);
-                parseFrom(addFile);
-            } catch (InvalidProtocolBufferException e) {
+                DFSIgnoreTx ignore = ChangeDeltaSerDe.parse(delta, DFSIgnoreTx.class);
+                parseFrom(ignore);
+            } catch (Exception e) {
                 throw new DFSAgentError(String.format("Error reading from byte array. [type=%s]", getClass().getCanonicalName()), e);
             }
         }
@@ -984,12 +1005,11 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
 
             message.setKey(String.format(NameNodeEnv.NN_IGNORE_TNX, source));
             DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-            builder.setNamespace(source);
-            builder.setType(proto.getClass().getCanonicalName());
-            builder.setEntity("");
-            builder.setTimestamp(System.currentTimeMillis());
-            builder.setTxId(String.valueOf(proto.getTransaction().getTransactionId()));
-            builder.setBody(ByteString.copyFrom(proto.toByteArray()));
+            builder.setType(proto.getClass().getCanonicalName())
+                    .setEntity(proto.getFile().getEntity())
+                    .setTimestamp(System.currentTimeMillis())
+                    .setTxId(String.valueOf(proto.getTransaction().getTransactionId()))
+                    .setIgnore(proto);
             message.setData(builder.build());
 
             return message;

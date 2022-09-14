@@ -25,12 +25,17 @@ message DFSTransaction {
   required uint64 timestamp = 3;
 }
 
+message DFSSchemaEntity {
+  required string domain = 1;
+  optional string schema = 2;
+  required string entity = 3;
+}
+
 message DFSFile {
-  required string namespace = 1;
-  required string path = 2;
-  required int64 inodeId = 3;
-  optional string fileType = 4;
-  optional string schemaLocation = 5;
+  required DFSSchemaEntity entity = 1;
+  required int64 inodeId = 2;
+  optional string fileType = 3;
+  optional string schemaLocation = 4;
 }
 
 message DFSBlock {
@@ -44,7 +49,7 @@ message DFSBlock {
   optional bool  deleted = 8;
 }
 
-message DFSAddFile {
+message DFSFileAdd {
   required DFSTransaction transaction = 1;
   required DFSFile file = 2;
   required uint64 length = 3;
@@ -55,39 +60,39 @@ message DFSAddFile {
   optional bool overwrite = 8;
 }
 
-message DFSAppendFile {
+message DFSFileAppend {
   required DFSTransaction transaction = 1;
   required DFSFile file = 2;
   optional bool newBlock = 3;
 }
 
-message DFSDeleteFile {
+message DFSFileDelete {
   required DFSTransaction transaction = 1;
   required DFSFile file = 2;
   required uint64 timestamp = 3;
 }
 
-message DFSAddBlock {
+message DFSBlockAdd {
   required DFSTransaction transaction = 1;
   required DFSFile file = 2;
   optional DFSBlock penultimateBlock = 3;
   required DFSBlock lastBlock = 4;
 }
 
-message DFSUpdateBlocks {
+message DFSBlockUpdate {
   required DFSTransaction transaction = 1;
   required DFSFile file = 2;
   repeated DFSBlock blocks = 3;
 }
 
-message DFSTruncateBlock {
+message DFSBlockTruncate {
   required DFSTransaction transaction = 1;
   required DFSFile file = 2;
   required DFSBlock block = 3;
   required uint64 newLength = 4;
 }
 
-message DFSCloseFile {
+message DFSFileClose {
   required DFSTransaction transaction = 1;
   required DFSFile file = 2;
   required uint64 length = 3;
@@ -98,7 +103,7 @@ message DFSCloseFile {
   optional bool overwrite = 8;
 }
 
-message DFSRenameFile {
+message DFSFileRename {
   enum RenameOpts {
     NONE = 0;
     OVERWRITE = 1;
@@ -138,19 +143,13 @@ message DFSChangeData {
   required string domain = 3;
   required string entityName = 4;
   required FileSystemCode fileSystem = 5;
-  required string outputPath = 6;
-}
-
-message DFSSchema {
-  required string domain = 1;
-  required string entity = 2;
-  optional string group = 3;
+  map<string, string> outputPath = 6;
 }
 
 message DFSSchemaChange {
   required DFSTransaction transaction = 1;
   required DFSFile file = 2;
-  required DFSSchema schema = 3;
+  required string group = 3;
   required int32 op = 4;
   optional string currentSchemaPath = 5;
   required string updatedSchemaPath = 6;
@@ -158,13 +157,25 @@ message DFSSchemaChange {
 
 
 message DFSChangeDelta {
-  required string namespace = 1;
   required string txId = 2;
   required int64 sequence = 3;
-  required string entity = 4;
+  required DFSSchemaEntity entity = 4;
   required string type = 5;
   required uint64 timestamp = 6;
-  required bytes body = 7;
-  optional DFSSchema schema = 8;
+  oneof change {
+    DFSSchemaChange schemaChange = 8;
+    DFSChangeData dataChange = 9;
+    DFSFileAdd fileAdd = 10;
+    DFSFileAppend fileAppend = 11;
+    DFSFileClose fileClose = 12;
+    DFSFileDelete fileDelete = 13;
+    DFSFileRename fileRename = 14;
+    DFSBlockAdd blockAdd = 15;
+    DFSBlockUpdate blockUpdate = 16;
+    DFSBlockTruncate blockTruncate = 17;
+    DFSIgnoreTx ignore = 18;
+    DFSError error = 19;
+  }
+  optional DFSSchemaEntity target = 7;
 }
 

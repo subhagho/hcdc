@@ -14,6 +14,7 @@ import java.util.Objects;
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
 public class SchemaEntity {
     private String domain;
+    private String schema = "DEFAULT";
     private String group = "DEFAULT";
     private String entity;
 

@@ -1,8 +1,10 @@
 package ai.sapper.hcdc.agents.model;
 
+import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.hcdc.common.model.DFSFile;
+import ai.sapper.hcdc.common.model.DFSSchemaEntity;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -34,8 +36,10 @@ public class DFSFileInfo {
         Preconditions.checkState(!Strings.isNullOrEmpty(namespace));
         Preconditions.checkState(!Strings.isNullOrEmpty(hdfsPath));
         DFSFile.Builder builder = DFSFile.newBuilder();
-        builder.setNamespace(namespace)
-                .setPath(hdfsPath)
+        DFSSchemaEntity.Builder entity = DFSSchemaEntity.newBuilder();
+        entity.setDomain(namespace)
+                .setEntity(hdfsPath);
+        builder.setEntity(entity)
                 .setInodeId(inodeId)
                 .setFileType(fileType.name());
         if (!Strings.isNullOrEmpty(schemaLocation)) {
@@ -45,9 +49,10 @@ public class DFSFileInfo {
     }
 
     public DFSFileInfo parse(@NonNull DFSFile file) {
-        namespace = file.getNamespace();
-        hdfsPath = file.getPath();
-        inodeId = file.getInodeId();
+        namespace = file.getEntity().getDomain();
+        hdfsPath = file.getEntity().getEntity();
+        inodeId = file
+                .getInodeId();
         if (file.hasFileType()) {
             fileType = EFileType.valueOf(file.getFileType());
         }

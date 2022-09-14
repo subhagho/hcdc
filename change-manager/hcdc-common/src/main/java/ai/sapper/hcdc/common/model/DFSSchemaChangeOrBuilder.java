@@ -3,16 +3,18 @@
 
 package ai.sapper.hcdc.common.model;
 
-public interface DFSSchemaChangeOrBuilder
-    extends com.google.protobuf.MessageOrBuilder {
+public interface DFSSchemaChangeOrBuilder extends
+    // @@protoc_insertion_point(interface_extends:ai_sapper_hcdc_common_model.DFSSchemaChange)
+    com.google.protobuf.MessageOrBuilder {
 
-  // required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * @return Whether the transaction field is set.
    */
   boolean hasTransaction();
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * @return The transaction.
    */
   ai.sapper.hcdc.common.model.DFSTransaction getTransaction();
   /**
@@ -20,13 +22,14 @@ public interface DFSSchemaChangeOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSTransactionOrBuilder getTransactionOrBuilder();
 
-  // required .ai_sapper_hcdc_common_model.DFSFile file = 2;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * @return Whether the file field is set.
    */
   boolean hasFile();
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * @return The file.
    */
   ai.sapper.hcdc.common.model.DFSFile getFile();
   /**
@@ -34,56 +37,64 @@ public interface DFSSchemaChangeOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSFileOrBuilder getFileOrBuilder();
 
-  // required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;
   /**
-   * <code>required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;</code>
+   * <code>required string group = 3;</code>
+   * @return Whether the group field is set.
    */
-  boolean hasSchema();
+  boolean hasGroup();
   /**
-   * <code>required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;</code>
+   * <code>required string group = 3;</code>
+   * @return The group.
    */
-  ai.sapper.hcdc.common.model.DFSSchema getSchema();
+  java.lang.String getGroup();
   /**
-   * <code>required .ai_sapper_hcdc_common_model.DFSSchema schema = 3;</code>
+   * <code>required string group = 3;</code>
+   * @return The bytes for group.
    */
-  ai.sapper.hcdc.common.model.DFSSchemaOrBuilder getSchemaOrBuilder();
+  com.google.protobuf.ByteString
+      getGroupBytes();
 
-  // required int32 op = 4;
   /**
    * <code>required int32 op = 4;</code>
+   * @return Whether the op field is set.
    */
   boolean hasOp();
   /**
    * <code>required int32 op = 4;</code>
+   * @return The op.
    */
   int getOp();
 
-  // optional string currentSchemaPath = 5;
   /**
    * <code>optional string currentSchemaPath = 5;</code>
+   * @return Whether the currentSchemaPath field is set.
    */
   boolean hasCurrentSchemaPath();
   /**
    * <code>optional string currentSchemaPath = 5;</code>
+   * @return The currentSchemaPath.
    */
   java.lang.String getCurrentSchemaPath();
   /**
    * <code>optional string currentSchemaPath = 5;</code>
+   * @return The bytes for currentSchemaPath.
    */
   com.google.protobuf.ByteString
       getCurrentSchemaPathBytes();
 
-  // required string updatedSchemaPath = 6;
   /**
    * <code>required string updatedSchemaPath = 6;</code>
+   * @return Whether the updatedSchemaPath field is set.
    */
   boolean hasUpdatedSchemaPath();
   /**
    * <code>required string updatedSchemaPath = 6;</code>
+   * @return The updatedSchemaPath.
    */
   java.lang.String getUpdatedSchemaPath();
   /**
    * <code>required string updatedSchemaPath = 6;</code>
+   * @return The bytes for updatedSchemaPath.
    */
   com.google.protobuf.ByteString
       getUpdatedSchemaPathBytes();

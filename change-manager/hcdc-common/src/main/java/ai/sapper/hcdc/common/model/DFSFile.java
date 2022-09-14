@@ -6,36 +6,40 @@ package ai.sapper.hcdc.common.model;
 /**
  * Protobuf type {@code ai_sapper_hcdc_common_model.DFSFile}
  */
-public  final class DFSFile extends
-    com.google.protobuf.GeneratedMessage
-    implements DFSFileOrBuilder {
+public final class DFSFile extends
+    com.google.protobuf.GeneratedMessageV3 implements
+    // @@protoc_insertion_point(message_implements:ai_sapper_hcdc_common_model.DFSFile)
+    DFSFileOrBuilder {
+private static final long serialVersionUID = 0L;
   // Use DFSFile.newBuilder() to construct.
-  private DFSFile(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+  private DFSFile(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
-    this.unknownFields = builder.getUnknownFields();
   }
-  private DFSFile(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-  private static final DFSFile defaultInstance;
-  public static DFSFile getDefaultInstance() {
-    return defaultInstance;
+  private DFSFile() {
+    fileType_ = "";
+    schemaLocation_ = "";
   }
 
-  public DFSFile getDefaultInstanceForType() {
-    return defaultInstance;
+  @java.lang.Override
+  @SuppressWarnings({"unused"})
+  protected java.lang.Object newInstance(
+      UnusedPrivateParameter unused) {
+    return new DFSFile();
   }
 
-  private final com.google.protobuf.UnknownFieldSet unknownFields;
   @java.lang.Override
   public final com.google.protobuf.UnknownFieldSet
-      getUnknownFields() {
+  getUnknownFields() {
     return this.unknownFields;
   }
   private DFSFile(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
-    initFields();
+    this();
+    if (extensionRegistry == null) {
+      throw new java.lang.NullPointerException();
+    }
     int mutable_bitField0_ = 0;
     com.google.protobuf.UnknownFieldSet.Builder unknownFields =
         com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -47,45 +51,52 @@ public  final class DFSFile extends
           case 0:
             done = true;
             break;
-          default: {
-            if (!parseUnknownField(input, unknownFields,
-                                   extensionRegistry, tag)) {
-              done = true;
-            }
-            break;
-          }
           case 10: {
+            ai.sapper.hcdc.common.model.DFSSchemaEntity.Builder subBuilder = null;
+            if (((bitField0_ & 0x00000001) != 0)) {
+              subBuilder = entity_.toBuilder();
+            }
+            entity_ = input.readMessage(ai.sapper.hcdc.common.model.DFSSchemaEntity.PARSER, extensionRegistry);
+            if (subBuilder != null) {
+              subBuilder.mergeFrom(entity_);
+              entity_ = subBuilder.buildPartial();
+            }
             bitField0_ |= 0x00000001;
-            namespace_ = input.readBytes();
             break;
           }
-          case 18: {
+          case 16: {
             bitField0_ |= 0x00000002;
-            path_ = input.readBytes();
-            break;
-          }
-          case 24: {
-            bitField0_ |= 0x00000004;
             inodeId_ = input.readInt64();
             break;
           }
-          case 34: {
-            bitField0_ |= 0x00000008;
-            fileType_ = input.readBytes();
+          case 26: {
+            com.google.protobuf.ByteString bs = input.readBytes();
+            bitField0_ |= 0x00000004;
+            fileType_ = bs;
             break;
           }
-          case 42: {
-            bitField0_ |= 0x00000010;
-            schemaLocation_ = input.readBytes();
+          case 34: {
+            com.google.protobuf.ByteString bs = input.readBytes();
+            bitField0_ |= 0x00000008;
+            schemaLocation_ = bs;
+            break;
+          }
+          default: {
+            if (!parseUnknownField(
+                input, unknownFields, extensionRegistry, tag)) {
+              done = true;
+            }
             break;
           }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
       throw e.setUnfinishedMessage(this);
+    } catch (com.google.protobuf.UninitializedMessageException e) {
+      throw e.asInvalidProtocolBufferException().setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
       throw new com.google.protobuf.InvalidProtocolBufferException(
-          e.getMessage()).setUnfinishedMessage(this);
+          e).setUnfinishedMessage(this);
     } finally {
       this.unknownFields = unknownFields.build();
       makeExtensionsImmutable();
@@ -96,143 +107,75 @@ public  final class DFSFile extends
     return ai.sapper.hcdc.common.model.DFSBlockProto.internal_static_ai_sapper_hcdc_common_model_DFSFile_descriptor;
   }
 
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  @java.lang.Override
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
     return ai.sapper.hcdc.common.model.DFSBlockProto.internal_static_ai_sapper_hcdc_common_model_DFSFile_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
             ai.sapper.hcdc.common.model.DFSFile.class, ai.sapper.hcdc.common.model.DFSFile.Builder.class);
   }
 
-  public static com.google.protobuf.Parser<DFSFile> PARSER =
-      new com.google.protobuf.AbstractParser<DFSFile>() {
-    public DFSFile parsePartialFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return new DFSFile(input, extensionRegistry);
-    }
-  };
-
-  @java.lang.Override
-  public com.google.protobuf.Parser<DFSFile> getParserForType() {
-    return PARSER;
-  }
-
   private int bitField0_;
-  // required string namespace = 1;
-  public static final int NAMESPACE_FIELD_NUMBER = 1;
-  private java.lang.Object namespace_;
+  public static final int ENTITY_FIELD_NUMBER = 1;
+  private ai.sapper.hcdc.common.model.DFSSchemaEntity entity_;
   /**
-   * <code>required string namespace = 1;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSSchemaEntity entity = 1;</code>
+   * @return Whether the entity field is set.
    */
-  public boolean hasNamespace() {
-    return ((bitField0_ & 0x00000001) == 0x00000001);
+  @java.lang.Override
+  public boolean hasEntity() {
+    return ((bitField0_ & 0x00000001) != 0);
   }
   /**
-   * <code>required string namespace = 1;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSSchemaEntity entity = 1;</code>
+   * @return The entity.
    */
-  public java.lang.String getNamespace() {
-    java.lang.Object ref = namespace_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        namespace_ = s;
-      }
-      return s;
-    }
+  @java.lang.Override
+  public ai.sapper.hcdc.common.model.DFSSchemaEntity getEntity() {
+    return entity_ == null ? ai.sapper.hcdc.common.model.DFSSchemaEntity.getDefaultInstance() : entity_;
   }
   /**
-   * <code>required string namespace = 1;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSSchemaEntity entity = 1;</code>
    */
-  public com.google.protobuf.ByteString
-      getNamespaceBytes() {
-    java.lang.Object ref = namespace_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      namespace_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
+  @java.lang.Override
+  public ai.sapper.hcdc.common.model.DFSSchemaEntityOrBuilder getEntityOrBuilder() {
+    return entity_ == null ? ai.sapper.hcdc.common.model.DFSSchemaEntity.getDefaultInstance() : entity_;
   }
 
-  // required string path = 2;
-  public static final int PATH_FIELD_NUMBER = 2;
-  private java.lang.Object path_;
-  /**
-   * <code>required string path = 2;</code>
-   */
-  public boolean hasPath() {
-    return ((bitField0_ & 0x00000002) == 0x00000002);
-  }
-  /**
-   * <code>required string path = 2;</code>
-   */
-  public java.lang.String getPath() {
-    java.lang.Object ref = path_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        path_ = s;
-      }
-      return s;
-    }
-  }
-  /**
-   * <code>required string path = 2;</code>
-   */
-  public com.google.protobuf.ByteString
-      getPathBytes() {
-    java.lang.Object ref = path_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      path_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
-  }
-
-  // required int64 inodeId = 3;
-  public static final int INODEID_FIELD_NUMBER = 3;
+  public static final int INODEID_FIELD_NUMBER = 2;
   private long inodeId_;
   /**
-   * <code>required int64 inodeId = 3;</code>
+   * <code>required int64 inodeId = 2;</code>
+   * @return Whether the inodeId field is set.
    */
+  @java.lang.Override
   public boolean hasInodeId() {
-    return ((bitField0_ & 0x00000004) == 0x00000004);
+    return ((bitField0_ & 0x00000002) != 0);
   }
   /**
-   * <code>required int64 inodeId = 3;</code>
+   * <code>required int64 inodeId = 2;</code>
+   * @return The inodeId.
    */
+  @java.lang.Override
   public long getInodeId() {
     return inodeId_;
   }
 
-  // optional string fileType = 4;
-  public static final int FILETYPE_FIELD_NUMBER = 4;
-  private java.lang.Object fileType_;
+  public static final int FILETYPE_FIELD_NUMBER = 3;
+  private volatile java.lang.Object fileType_;
   /**
-   * <code>optional string fileType = 4;</code>
+   * <code>optional string fileType = 3;</code>
+   * @return Whether the fileType field is set.
    */
+  @java.lang.Override
   public boolean hasFileType() {
-    return ((bitField0_ & 0x00000008) == 0x00000008);
+    return ((bitField0_ & 0x00000004) != 0);
   }
   /**
-   * <code>optional string fileType = 4;</code>
+   * <code>optional string fileType = 3;</code>
+   * @return The fileType.
    */
+  @java.lang.Override
   public java.lang.String getFileType() {
     java.lang.Object ref = fileType_;
     if (ref instanceof java.lang.String) {
@@ -248,8 +191,10 @@ public  final class DFSFile extends
     }
   }
   /**
-   * <code>optional string fileType = 4;</code>
+   * <code>optional string fileType = 3;</code>
+   * @return The bytes for fileType.
    */
+  @java.lang.Override
   public com.google.protobuf.ByteString
       getFileTypeBytes() {
     java.lang.Object ref = fileType_;
@@ -264,18 +209,21 @@ public  final class DFSFile extends
     }
   }
 
-  // optional string schemaLocation = 5;
-  public static final int SCHEMALOCATION_FIELD_NUMBER = 5;
-  private java.lang.Object schemaLocation_;
+  public static final int SCHEMALOCATION_FIELD_NUMBER = 4;
+  private volatile java.lang.Object schemaLocation_;
   /**
-   * <code>optional string schemaLocation = 5;</code>
+   * <code>optional string schemaLocation = 4;</code>
+   * @return Whether the schemaLocation field is set.
    */
+  @java.lang.Override
   public boolean hasSchemaLocation() {
-    return ((bitField0_ & 0x00000010) == 0x00000010);
+    return ((bitField0_ & 0x00000008) != 0);
   }
   /**
-   * <code>optional string schemaLocation = 5;</code>
+   * <code>optional string schemaLocation = 4;</code>
+   * @return The schemaLocation.
    */
+  @java.lang.Override
   public java.lang.String getSchemaLocation() {
     java.lang.Object ref = schemaLocation_;
     if (ref instanceof java.lang.String) {
@@ -291,8 +239,10 @@ public  final class DFSFile extends
     }
   }
   /**
-   * <code>optional string schemaLocation = 5;</code>
+   * <code>optional string schemaLocation = 4;</code>
+   * @return The bytes for schemaLocation.
    */
+  @java.lang.Override
   public com.google.protobuf.ByteString
       getSchemaLocationBytes() {
     java.lang.Object ref = schemaLocation_;
@@ -307,23 +257,14 @@ public  final class DFSFile extends
     }
   }
 
-  private void initFields() {
-    namespace_ = "";
-    path_ = "";
-    inodeId_ = 0L;
-    fileType_ = "";
-    schemaLocation_ = "";
-  }
   private byte memoizedIsInitialized = -1;
+  @java.lang.Override
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
-    if (isInitialized != -1) return isInitialized == 1;
+    if (isInitialized == 1) return true;
+    if (isInitialized == 0) return false;
 
-    if (!hasNamespace()) {
-      memoizedIsInitialized = 0;
-      return false;
-    }
-    if (!hasPath()) {
+    if (!hasEntity()) {
       memoizedIsInitialized = 0;
       return false;
     }
@@ -331,69 +272,131 @@ public  final class DFSFile extends
       memoizedIsInitialized = 0;
       return false;
     }
+    if (!getEntity().isInitialized()) {
+      memoizedIsInitialized = 0;
+      return false;
+    }
     memoizedIsInitialized = 1;
     return true;
   }
 
+  @java.lang.Override
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
-    getSerializedSize();
-    if (((bitField0_ & 0x00000001) == 0x00000001)) {
-      output.writeBytes(1, getNamespaceBytes());
+    if (((bitField0_ & 0x00000001) != 0)) {
+      output.writeMessage(1, getEntity());
     }
-    if (((bitField0_ & 0x00000002) == 0x00000002)) {
-      output.writeBytes(2, getPathBytes());
+    if (((bitField0_ & 0x00000002) != 0)) {
+      output.writeInt64(2, inodeId_);
     }
-    if (((bitField0_ & 0x00000004) == 0x00000004)) {
-      output.writeInt64(3, inodeId_);
+    if (((bitField0_ & 0x00000004) != 0)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, fileType_);
     }
-    if (((bitField0_ & 0x00000008) == 0x00000008)) {
-      output.writeBytes(4, getFileTypeBytes());
+    if (((bitField0_ & 0x00000008) != 0)) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 4, schemaLocation_);
     }
-    if (((bitField0_ & 0x00000010) == 0x00000010)) {
-      output.writeBytes(5, getSchemaLocationBytes());
-    }
-    getUnknownFields().writeTo(output);
+    unknownFields.writeTo(output);
   }
 
-  private int memoizedSerializedSize = -1;
+  @java.lang.Override
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
-    if (((bitField0_ & 0x00000001) == 0x00000001)) {
+    if (((bitField0_ & 0x00000001) != 0)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(1, getNamespaceBytes());
+        .computeMessageSize(1, getEntity());
     }
-    if (((bitField0_ & 0x00000002) == 0x00000002)) {
+    if (((bitField0_ & 0x00000002) != 0)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(2, getPathBytes());
+        .computeInt64Size(2, inodeId_);
     }
-    if (((bitField0_ & 0x00000004) == 0x00000004)) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeInt64Size(3, inodeId_);
+    if (((bitField0_ & 0x00000004) != 0)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, fileType_);
     }
-    if (((bitField0_ & 0x00000008) == 0x00000008)) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(4, getFileTypeBytes());
+    if (((bitField0_ & 0x00000008) != 0)) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, schemaLocation_);
     }
-    if (((bitField0_ & 0x00000010) == 0x00000010)) {
-      size += com.google.protobuf.CodedOutputStream
-        .computeBytesSize(5, getSchemaLocationBytes());
-    }
-    size += getUnknownFields().getSerializedSize();
-    memoizedSerializedSize = size;
+    size += unknownFields.getSerializedSize();
+    memoizedSize = size;
     return size;
   }
 
-  private static final long serialVersionUID = 0L;
   @java.lang.Override
-  protected java.lang.Object writeReplace()
-      throws java.io.ObjectStreamException {
-    return super.writeReplace();
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof ai.sapper.hcdc.common.model.DFSFile)) {
+      return super.equals(obj);
+    }
+    ai.sapper.hcdc.common.model.DFSFile other = (ai.sapper.hcdc.common.model.DFSFile) obj;
+
+    if (hasEntity() != other.hasEntity()) return false;
+    if (hasEntity()) {
+      if (!getEntity()
+          .equals(other.getEntity())) return false;
+    }
+    if (hasInodeId() != other.hasInodeId()) return false;
+    if (hasInodeId()) {
+      if (getInodeId()
+          != other.getInodeId()) return false;
+    }
+    if (hasFileType() != other.hasFileType()) return false;
+    if (hasFileType()) {
+      if (!getFileType()
+          .equals(other.getFileType())) return false;
+    }
+    if (hasSchemaLocation() != other.hasSchemaLocation()) return false;
+    if (hasSchemaLocation()) {
+      if (!getSchemaLocation()
+          .equals(other.getSchemaLocation())) return false;
+    }
+    if (!unknownFields.equals(other.unknownFields)) return false;
+    return true;
   }
 
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptor().hashCode();
+    if (hasEntity()) {
+      hash = (37 * hash) + ENTITY_FIELD_NUMBER;
+      hash = (53 * hash) + getEntity().hashCode();
+    }
+    if (hasInodeId()) {
+      hash = (37 * hash) + INODEID_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getInodeId());
+    }
+    if (hasFileType()) {
+      hash = (37 * hash) + FILETYPE_FIELD_NUMBER;
+      hash = (53 * hash) + getFileType().hashCode();
+    }
+    if (hasSchemaLocation()) {
+      hash = (37 * hash) + SCHEMALOCATION_FIELD_NUMBER;
+      hash = (53 * hash) + getSchemaLocation().hashCode();
+    }
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
+  public static ai.sapper.hcdc.common.model.DFSFile parseFrom(
+      java.nio.ByteBuffer data)
+      throws com.google.protobuf.InvalidProtocolBufferException {
+    return PARSER.parseFrom(data);
+  }
+  public static ai.sapper.hcdc.common.model.DFSFile parseFrom(
+      java.nio.ByteBuffer data,
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
+    return PARSER.parseFrom(data, extensionRegistry);
+  }
   public static ai.sapper.hcdc.common.model.DFSFile parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -417,46 +420,59 @@ public  final class DFSFile extends
   }
   public static ai.sapper.hcdc.common.model.DFSFile parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static ai.sapper.hcdc.common.model.DFSFile parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
   public static ai.sapper.hcdc.common.model.DFSFile parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input);
   }
   public static ai.sapper.hcdc.common.model.DFSFile parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
   public static ai.sapper.hcdc.common.model.DFSFile parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
   public static ai.sapper.hcdc.common.model.DFSFile parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
-  public static Builder newBuilder() { return Builder.create(); }
+  @java.lang.Override
   public Builder newBuilderForType() { return newBuilder(); }
-  public static Builder newBuilder(ai.sapper.hcdc.common.model.DFSFile prototype) {
-    return newBuilder().mergeFrom(prototype);
+  public static Builder newBuilder() {
+    return DEFAULT_INSTANCE.toBuilder();
   }
-  public Builder toBuilder() { return newBuilder(this); }
+  public static Builder newBuilder(ai.sapper.hcdc.common.model.DFSFile prototype) {
+    return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+  }
+  @java.lang.Override
+  public Builder toBuilder() {
+    return this == DEFAULT_INSTANCE
+        ? new Builder() : new Builder().mergeFrom(this);
+  }
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
@@ -464,14 +480,16 @@ public  final class DFSFile extends
    * Protobuf type {@code ai_sapper_hcdc_common_model.DFSFile}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder>
-     implements ai.sapper.hcdc.common.model.DFSFileOrBuilder {
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+      // @@protoc_insertion_point(builder_implements:ai_sapper_hcdc_common_model.DFSFile)
+      ai.sapper.hcdc.common.model.DFSFileOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
       return ai.sapper.hcdc.common.model.DFSBlockProto.internal_static_ai_sapper_hcdc_common_model_DFSFile_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return ai.sapper.hcdc.common.model.DFSBlockProto.internal_static_ai_sapper_hcdc_common_model_DFSFile_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
@@ -484,46 +502,46 @@ public  final class DFSFile extends
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
+        getEntityFieldBuilder();
       }
     }
-    private static Builder create() {
-      return new Builder();
-    }
-
+    @java.lang.Override
     public Builder clear() {
       super.clear();
-      namespace_ = "";
+      if (entityBuilder_ == null) {
+        entity_ = null;
+      } else {
+        entityBuilder_.clear();
+      }
       bitField0_ = (bitField0_ & ~0x00000001);
-      path_ = "";
-      bitField0_ = (bitField0_ & ~0x00000002);
       inodeId_ = 0L;
-      bitField0_ = (bitField0_ & ~0x00000004);
+      bitField0_ = (bitField0_ & ~0x00000002);
       fileType_ = "";
-      bitField0_ = (bitField0_ & ~0x00000008);
+      bitField0_ = (bitField0_ & ~0x00000004);
       schemaLocation_ = "";
-      bitField0_ = (bitField0_ & ~0x00000010);
+      bitField0_ = (bitField0_ & ~0x00000008);
       return this;
     }
 
-    public Builder clone() {
-      return create().mergeFrom(buildPartial());
-    }
-
+    @java.lang.Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
       return ai.sapper.hcdc.common.model.DFSBlockProto.internal_static_ai_sapper_hcdc_common_model_DFSFile_descriptor;
     }
 
+    @java.lang.Override
     public ai.sapper.hcdc.common.model.DFSFile getDefaultInstanceForType() {
       return ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance();
     }
 
+    @java.lang.Override
     public ai.sapper.hcdc.common.model.DFSFile build() {
       ai.sapper.hcdc.common.model.DFSFile result = buildPartial();
       if (!result.isInitialized()) {
@@ -532,28 +550,29 @@ public  final class DFSFile extends
       return result;
     }
 
+    @java.lang.Override
     public ai.sapper.hcdc.common.model.DFSFile buildPartial() {
       ai.sapper.hcdc.common.model.DFSFile result = new ai.sapper.hcdc.common.model.DFSFile(this);
       int from_bitField0_ = bitField0_;
       int to_bitField0_ = 0;
-      if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+      if (((from_bitField0_ & 0x00000001) != 0)) {
+        if (entityBuilder_ == null) {
+          result.entity_ = entity_;
+        } else {
+          result.entity_ = entityBuilder_.build();
+        }
         to_bitField0_ |= 0x00000001;
       }
-      result.namespace_ = namespace_;
-      if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+      if (((from_bitField0_ & 0x00000002) != 0)) {
+        result.inodeId_ = inodeId_;
         to_bitField0_ |= 0x00000002;
       }
-      result.path_ = path_;
-      if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+      if (((from_bitField0_ & 0x00000004) != 0)) {
         to_bitField0_ |= 0x00000004;
       }
-      result.inodeId_ = inodeId_;
-      if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
-        to_bitField0_ |= 0x00000008;
-      }
       result.fileType_ = fileType_;
-      if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
-        to_bitField0_ |= 0x00000010;
+      if (((from_bitField0_ & 0x00000008) != 0)) {
+        to_bitField0_ |= 0x00000008;
       }
       result.schemaLocation_ = schemaLocation_;
       result.bitField0_ = to_bitField0_;
@@ -561,6 +580,39 @@ public  final class DFSFile extends
       return result;
     }
 
+    @java.lang.Override
+    public Builder clone() {
+      return super.clone();
+    }
+    @java.lang.Override
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        java.lang.Object value) {
+      return super.setField(field, value);
+    }
+    @java.lang.Override
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return super.clearField(field);
+    }
+    @java.lang.Override
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return super.clearOneof(oneof);
+    }
+    @java.lang.Override
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, java.lang.Object value) {
+      return super.setRepeatedField(field, index, value);
+    }
+    @java.lang.Override
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        java.lang.Object value) {
+      return super.addRepeatedField(field, value);
+    }
+    @java.lang.Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
       if (other instanceof ai.sapper.hcdc.common.model.DFSFile) {
         return mergeFrom((ai.sapper.hcdc.common.model.DFSFile)other);
@@ -572,49 +624,42 @@ public  final class DFSFile extends
 
     public Builder mergeFrom(ai.sapper.hcdc.common.model.DFSFile other) {
       if (other == ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance()) return this;
-      if (other.hasNamespace()) {
-        bitField0_ |= 0x00000001;
-        namespace_ = other.namespace_;
-        onChanged();
-      }
-      if (other.hasPath()) {
-        bitField0_ |= 0x00000002;
-        path_ = other.path_;
-        onChanged();
+      if (other.hasEntity()) {
+        mergeEntity(other.getEntity());
       }
       if (other.hasInodeId()) {
         setInodeId(other.getInodeId());
       }
       if (other.hasFileType()) {
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000004;
         fileType_ = other.fileType_;
         onChanged();
       }
       if (other.hasSchemaLocation()) {
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000008;
         schemaLocation_ = other.schemaLocation_;
         onChanged();
       }
-      this.mergeUnknownFields(other.getUnknownFields());
+      this.mergeUnknownFields(other.unknownFields);
+      onChanged();
       return this;
     }
 
+    @java.lang.Override
     public final boolean isInitialized() {
-      if (!hasNamespace()) {
-        
-        return false;
-      }
-      if (!hasPath()) {
-        
+      if (!hasEntity()) {
         return false;
       }
       if (!hasInodeId()) {
-        
+        return false;
+      }
+      if (!getEntity().isInitialized()) {
         return false;
       }
       return true;
     }
 
+    @java.lang.Override
     public Builder mergeFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -624,7 +669,7 @@ public  final class DFSFile extends
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
         parsedMessage = (ai.sapper.hcdc.common.model.DFSFile) e.getUnfinishedMessage();
-        throw e;
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -634,211 +679,194 @@ public  final class DFSFile extends
     }
     private int bitField0_;
 
-    // required string namespace = 1;
-    private java.lang.Object namespace_ = "";
+    private ai.sapper.hcdc.common.model.DFSSchemaEntity entity_;
+    private com.google.protobuf.SingleFieldBuilderV3<
+        ai.sapper.hcdc.common.model.DFSSchemaEntity, ai.sapper.hcdc.common.model.DFSSchemaEntity.Builder, ai.sapper.hcdc.common.model.DFSSchemaEntityOrBuilder> entityBuilder_;
     /**
-     * <code>required string namespace = 1;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSSchemaEntity entity = 1;</code>
+     * @return Whether the entity field is set.
      */
-    public boolean hasNamespace() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
+    public boolean hasEntity() {
+      return ((bitField0_ & 0x00000001) != 0);
     }
     /**
-     * <code>required string namespace = 1;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSSchemaEntity entity = 1;</code>
+     * @return The entity.
      */
-    public java.lang.String getNamespace() {
-      java.lang.Object ref = namespace_;
-      if (!(ref instanceof java.lang.String)) {
-        java.lang.String s = ((com.google.protobuf.ByteString) ref)
-            .toStringUtf8();
-        namespace_ = s;
-        return s;
+    public ai.sapper.hcdc.common.model.DFSSchemaEntity getEntity() {
+      if (entityBuilder_ == null) {
+        return entity_ == null ? ai.sapper.hcdc.common.model.DFSSchemaEntity.getDefaultInstance() : entity_;
       } else {
-        return (java.lang.String) ref;
+        return entityBuilder_.getMessage();
       }
     }
     /**
-     * <code>required string namespace = 1;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSSchemaEntity entity = 1;</code>
      */
-    public com.google.protobuf.ByteString
-        getNamespaceBytes() {
-      java.lang.Object ref = namespace_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        namespace_ = b;
-        return b;
+    public Builder setEntity(ai.sapper.hcdc.common.model.DFSSchemaEntity value) {
+      if (entityBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        entity_ = value;
+        onChanged();
       } else {
-        return (com.google.protobuf.ByteString) ref;
+        entityBuilder_.setMessage(value);
       }
-    }
-    /**
-     * <code>required string namespace = 1;</code>
-     */
-    public Builder setNamespace(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-      namespace_ = value;
-      onChanged();
+      bitField0_ |= 0x00000001;
       return this;
     }
     /**
-     * <code>required string namespace = 1;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSSchemaEntity entity = 1;</code>
      */
-    public Builder clearNamespace() {
+    public Builder setEntity(
+        ai.sapper.hcdc.common.model.DFSSchemaEntity.Builder builderForValue) {
+      if (entityBuilder_ == null) {
+        entity_ = builderForValue.build();
+        onChanged();
+      } else {
+        entityBuilder_.setMessage(builderForValue.build());
+      }
+      bitField0_ |= 0x00000001;
+      return this;
+    }
+    /**
+     * <code>required .ai_sapper_hcdc_common_model.DFSSchemaEntity entity = 1;</code>
+     */
+    public Builder mergeEntity(ai.sapper.hcdc.common.model.DFSSchemaEntity value) {
+      if (entityBuilder_ == null) {
+        if (((bitField0_ & 0x00000001) != 0) &&
+            entity_ != null &&
+            entity_ != ai.sapper.hcdc.common.model.DFSSchemaEntity.getDefaultInstance()) {
+          entity_ =
+            ai.sapper.hcdc.common.model.DFSSchemaEntity.newBuilder(entity_).mergeFrom(value).buildPartial();
+        } else {
+          entity_ = value;
+        }
+        onChanged();
+      } else {
+        entityBuilder_.mergeFrom(value);
+      }
+      bitField0_ |= 0x00000001;
+      return this;
+    }
+    /**
+     * <code>required .ai_sapper_hcdc_common_model.DFSSchemaEntity entity = 1;</code>
+     */
+    public Builder clearEntity() {
+      if (entityBuilder_ == null) {
+        entity_ = null;
+        onChanged();
+      } else {
+        entityBuilder_.clear();
+      }
       bitField0_ = (bitField0_ & ~0x00000001);
-      namespace_ = getDefaultInstance().getNamespace();
-      onChanged();
       return this;
     }
     /**
-     * <code>required string namespace = 1;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSSchemaEntity entity = 1;</code>
      */
-    public Builder setNamespaceBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-      namespace_ = value;
+    public ai.sapper.hcdc.common.model.DFSSchemaEntity.Builder getEntityBuilder() {
+      bitField0_ |= 0x00000001;
       onChanged();
-      return this;
-    }
-
-    // required string path = 2;
-    private java.lang.Object path_ = "";
-    /**
-     * <code>required string path = 2;</code>
-     */
-    public boolean hasPath() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
+      return getEntityFieldBuilder().getBuilder();
     }
     /**
-     * <code>required string path = 2;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSSchemaEntity entity = 1;</code>
      */
-    public java.lang.String getPath() {
-      java.lang.Object ref = path_;
-      if (!(ref instanceof java.lang.String)) {
-        java.lang.String s = ((com.google.protobuf.ByteString) ref)
-            .toStringUtf8();
-        path_ = s;
-        return s;
+    public ai.sapper.hcdc.common.model.DFSSchemaEntityOrBuilder getEntityOrBuilder() {
+      if (entityBuilder_ != null) {
+        return entityBuilder_.getMessageOrBuilder();
       } else {
-        return (java.lang.String) ref;
+        return entity_ == null ?
+            ai.sapper.hcdc.common.model.DFSSchemaEntity.getDefaultInstance() : entity_;
       }
     }
     /**
-     * <code>required string path = 2;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSSchemaEntity entity = 1;</code>
      */
-    public com.google.protobuf.ByteString
-        getPathBytes() {
-      java.lang.Object ref = path_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        path_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
+    private com.google.protobuf.SingleFieldBuilderV3<
+        ai.sapper.hcdc.common.model.DFSSchemaEntity, ai.sapper.hcdc.common.model.DFSSchemaEntity.Builder, ai.sapper.hcdc.common.model.DFSSchemaEntityOrBuilder> 
+        getEntityFieldBuilder() {
+      if (entityBuilder_ == null) {
+        entityBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+            ai.sapper.hcdc.common.model.DFSSchemaEntity, ai.sapper.hcdc.common.model.DFSSchemaEntity.Builder, ai.sapper.hcdc.common.model.DFSSchemaEntityOrBuilder>(
+                getEntity(),
+                getParentForChildren(),
+                isClean());
+        entity_ = null;
       }
-    }
-    /**
-     * <code>required string path = 2;</code>
-     */
-    public Builder setPath(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-      path_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>required string path = 2;</code>
-     */
-    public Builder clearPath() {
-      bitField0_ = (bitField0_ & ~0x00000002);
-      path_ = getDefaultInstance().getPath();
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>required string path = 2;</code>
-     */
-    public Builder setPathBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-      path_ = value;
-      onChanged();
-      return this;
+      return entityBuilder_;
     }
 
-    // required int64 inodeId = 3;
     private long inodeId_ ;
     /**
-     * <code>required int64 inodeId = 3;</code>
+     * <code>required int64 inodeId = 2;</code>
+     * @return Whether the inodeId field is set.
      */
+    @java.lang.Override
     public boolean hasInodeId() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
+      return ((bitField0_ & 0x00000002) != 0);
     }
     /**
-     * <code>required int64 inodeId = 3;</code>
+     * <code>required int64 inodeId = 2;</code>
+     * @return The inodeId.
      */
+    @java.lang.Override
     public long getInodeId() {
       return inodeId_;
     }
     /**
-     * <code>required int64 inodeId = 3;</code>
+     * <code>required int64 inodeId = 2;</code>
+     * @param value The inodeId to set.
+     * @return This builder for chaining.
      */
     public Builder setInodeId(long value) {
-      bitField0_ |= 0x00000004;
+      bitField0_ |= 0x00000002;
       inodeId_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>required int64 inodeId = 3;</code>
+     * <code>required int64 inodeId = 2;</code>
+     * @return This builder for chaining.
      */
     public Builder clearInodeId() {
-      bitField0_ = (bitField0_ & ~0x00000004);
+      bitField0_ = (bitField0_ & ~0x00000002);
       inodeId_ = 0L;
       onChanged();
       return this;
     }
 
-    // optional string fileType = 4;
     private java.lang.Object fileType_ = "";
     /**
-     * <code>optional string fileType = 4;</code>
+     * <code>optional string fileType = 3;</code>
+     * @return Whether the fileType field is set.
      */
     public boolean hasFileType() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
+      return ((bitField0_ & 0x00000004) != 0);
     }
     /**
-     * <code>optional string fileType = 4;</code>
+     * <code>optional string fileType = 3;</code>
+     * @return The fileType.
      */
     public java.lang.String getFileType() {
       java.lang.Object ref = fileType_;
       if (!(ref instanceof java.lang.String)) {
-        java.lang.String s = ((com.google.protobuf.ByteString) ref)
-            .toStringUtf8();
-        fileType_ = s;
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          fileType_ = s;
+        }
         return s;
       } else {
         return (java.lang.String) ref;
       }
     }
     /**
-     * <code>optional string fileType = 4;</code>
+     * <code>optional string fileType = 3;</code>
+     * @return The bytes for fileType.
      */
     public com.google.protobuf.ByteString
         getFileTypeBytes() {
@@ -854,65 +882,75 @@ public  final class DFSFile extends
       }
     }
     /**
-     * <code>optional string fileType = 4;</code>
+     * <code>optional string fileType = 3;</code>
+     * @param value The fileType to set.
+     * @return This builder for chaining.
      */
     public Builder setFileType(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000008;
+  bitField0_ |= 0x00000004;
       fileType_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>optional string fileType = 4;</code>
+     * <code>optional string fileType = 3;</code>
+     * @return This builder for chaining.
      */
     public Builder clearFileType() {
-      bitField0_ = (bitField0_ & ~0x00000008);
+      bitField0_ = (bitField0_ & ~0x00000004);
       fileType_ = getDefaultInstance().getFileType();
       onChanged();
       return this;
     }
     /**
-     * <code>optional string fileType = 4;</code>
+     * <code>optional string fileType = 3;</code>
+     * @param value The bytes for fileType to set.
+     * @return This builder for chaining.
      */
     public Builder setFileTypeBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000008;
+  bitField0_ |= 0x00000004;
       fileType_ = value;
       onChanged();
       return this;
     }
 
-    // optional string schemaLocation = 5;
     private java.lang.Object schemaLocation_ = "";
     /**
-     * <code>optional string schemaLocation = 5;</code>
+     * <code>optional string schemaLocation = 4;</code>
+     * @return Whether the schemaLocation field is set.
      */
     public boolean hasSchemaLocation() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
+      return ((bitField0_ & 0x00000008) != 0);
     }
     /**
-     * <code>optional string schemaLocation = 5;</code>
+     * <code>optional string schemaLocation = 4;</code>
+     * @return The schemaLocation.
      */
     public java.lang.String getSchemaLocation() {
       java.lang.Object ref = schemaLocation_;
       if (!(ref instanceof java.lang.String)) {
-        java.lang.String s = ((com.google.protobuf.ByteString) ref)
-            .toStringUtf8();
-        schemaLocation_ = s;
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          schemaLocation_ = s;
+        }
         return s;
       } else {
         return (java.lang.String) ref;
       }
     }
     /**
-     * <code>optional string schemaLocation = 5;</code>
+     * <code>optional string schemaLocation = 4;</code>
+     * @return The bytes for schemaLocation.
      */
     public com.google.protobuf.ByteString
         getSchemaLocationBytes() {
@@ -928,49 +966,95 @@ public  final class DFSFile extends
       }
     }
     /**
-     * <code>optional string schemaLocation = 5;</code>
+     * <code>optional string schemaLocation = 4;</code>
+     * @param value The schemaLocation to set.
+     * @return This builder for chaining.
      */
     public Builder setSchemaLocation(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000010;
+  bitField0_ |= 0x00000008;
       schemaLocation_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>optional string schemaLocation = 5;</code>
+     * <code>optional string schemaLocation = 4;</code>
+     * @return This builder for chaining.
      */
     public Builder clearSchemaLocation() {
-      bitField0_ = (bitField0_ & ~0x00000010);
+      bitField0_ = (bitField0_ & ~0x00000008);
       schemaLocation_ = getDefaultInstance().getSchemaLocation();
       onChanged();
       return this;
     }
     /**
-     * <code>optional string schemaLocation = 5;</code>
+     * <code>optional string schemaLocation = 4;</code>
+     * @param value The bytes for schemaLocation to set.
+     * @return This builder for chaining.
      */
     public Builder setSchemaLocationBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000010;
+  bitField0_ |= 0x00000008;
       schemaLocation_ = value;
       onChanged();
       return this;
     }
+    @java.lang.Override
+    public final Builder setUnknownFields(
+        final com.google.protobuf.UnknownFieldSet unknownFields) {
+      return super.setUnknownFields(unknownFields);
+    }
+
+    @java.lang.Override
+    public final Builder mergeUnknownFields(
+        final com.google.protobuf.UnknownFieldSet unknownFields) {
+      return super.mergeUnknownFields(unknownFields);
+    }
+
 
     // @@protoc_insertion_point(builder_scope:ai_sapper_hcdc_common_model.DFSFile)
   }
 
+  // @@protoc_insertion_point(class_scope:ai_sapper_hcdc_common_model.DFSFile)
+  private static final ai.sapper.hcdc.common.model.DFSFile DEFAULT_INSTANCE;
   static {
-    defaultInstance = new DFSFile(true);
-    defaultInstance.initFields();
+    DEFAULT_INSTANCE = new ai.sapper.hcdc.common.model.DFSFile();
   }
 
-  // @@protoc_insertion_point(class_scope:ai_sapper_hcdc_common_model.DFSFile)
+  public static ai.sapper.hcdc.common.model.DFSFile getDefaultInstance() {
+    return DEFAULT_INSTANCE;
+  }
+
+  @java.lang.Deprecated public static final com.google.protobuf.Parser<DFSFile>
+      PARSER = new com.google.protobuf.AbstractParser<DFSFile>() {
+    @java.lang.Override
+    public DFSFile parsePartialFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return new DFSFile(input, extensionRegistry);
+    }
+  };
+
+  public static com.google.protobuf.Parser<DFSFile> parser() {
+    return PARSER;
+  }
+
+  @java.lang.Override
+  public com.google.protobuf.Parser<DFSFile> getParserForType() {
+    return PARSER;
+  }
+
+  @java.lang.Override
+  public ai.sapper.hcdc.common.model.DFSFile getDefaultInstanceForType() {
+    return DEFAULT_INSTANCE;
+  }
+
 }
 

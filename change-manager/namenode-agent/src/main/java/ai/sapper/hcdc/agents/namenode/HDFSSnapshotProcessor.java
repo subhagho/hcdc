@@ -240,11 +240,10 @@ public class HDFSSnapshotProcessor {
 
             rState.copyBlocks(fileState);
 
-            DFSCloseFile closeFile = generateSnapshot(fileState, true, fileState.getLastTnxId());
+            DFSFileClose closeFile = generateSnapshot(fileState, true, fileState.getLastTnxId());
             long seq = stateManager().nextSnapshotSeq();
-            MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get(name).source(),
-                    closeFile,
-                    DFSCloseFile.class,
+            MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(closeFile,
+                    DFSFileClose.class,
                     entity,
                     seq,
                     MessageObject.MessageMode.Snapshot);
@@ -292,10 +291,9 @@ public class HDFSSnapshotProcessor {
             }
             long lastTxId = tnxId;
             if (fileState.getLastTnxId() > rState.getSnapshotTxId()) {
-                DFSCloseFile closeFile = generateSnapshot(fileState, true, tnxId);
-                MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get(name).source(),
-                        closeFile,
-                        DFSCloseFile.class,
+                DFSFileClose closeFile = generateSnapshot(fileState, true, tnxId);
+                MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(closeFile,
+                        DFSFileClose.class,
                         entity,
                         -1,
                         MessageObject.MessageMode.Backlog);
@@ -321,7 +319,7 @@ public class HDFSSnapshotProcessor {
         }
     }
 
-    public static DFSCloseFile generateSnapshot(@NonNull DFSFileState state,
+    public static DFSFileClose generateSnapshot(@NonNull DFSFileState state,
                                                 @NonNull DFSFile file,
                                                 long txId) throws Exception {
         DFSTransaction tx = DFSTransaction.newBuilder()
@@ -330,7 +328,7 @@ public class HDFSSnapshotProcessor {
                 .setTimestamp(System.currentTimeMillis())
                 .build();
 
-        DFSCloseFile.Builder builder = DFSCloseFile.newBuilder();
+        DFSFileClose.Builder builder = DFSFileClose.newBuilder();
         builder.setOverwrite(false)
                 .setModifiedTime(state.getUpdatedTime())
                 .setBlockSize(state.getBlockSize())
@@ -345,7 +343,7 @@ public class HDFSSnapshotProcessor {
         return builder.build();
     }
 
-    public static DFSCloseFile generateSnapshot(@NonNull DFSFileState state,
+    public static DFSFileClose generateSnapshot(@NonNull DFSFileState state,
                                                 boolean addBlocks,
                                                 long txId) throws Exception {
         DFSTransaction tx = DFSTransaction.newBuilder()
@@ -355,7 +353,7 @@ public class HDFSSnapshotProcessor {
                 .build();
 
         DFSFile file = state.getFileInfo().proto();
-        DFSCloseFile.Builder builder = DFSCloseFile.newBuilder();
+        DFSFileClose.Builder builder = DFSFileClose.newBuilder();
         builder.setOverwrite(false)
                 .setModifiedTime(state.getUpdatedTime())
                 .setBlockSize(state.getBlockSize())

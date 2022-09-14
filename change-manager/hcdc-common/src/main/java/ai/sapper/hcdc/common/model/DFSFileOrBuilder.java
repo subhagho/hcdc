@@ -3,75 +3,66 @@
 
 package ai.sapper.hcdc.common.model;
 
-public interface DFSFileOrBuilder
-    extends com.google.protobuf.MessageOrBuilder {
+public interface DFSFileOrBuilder extends
+    // @@protoc_insertion_point(interface_extends:ai_sapper_hcdc_common_model.DFSFile)
+    com.google.protobuf.MessageOrBuilder {
 
-  // required string namespace = 1;
   /**
-   * <code>required string namespace = 1;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSSchemaEntity entity = 1;</code>
+   * @return Whether the entity field is set.
    */
-  boolean hasNamespace();
+  boolean hasEntity();
   /**
-   * <code>required string namespace = 1;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSSchemaEntity entity = 1;</code>
+   * @return The entity.
    */
-  java.lang.String getNamespace();
+  ai.sapper.hcdc.common.model.DFSSchemaEntity getEntity();
   /**
-   * <code>required string namespace = 1;</code>
+   * <code>required .ai_sapper_hcdc_common_model.DFSSchemaEntity entity = 1;</code>
    */
-  com.google.protobuf.ByteString
-      getNamespaceBytes();
+  ai.sapper.hcdc.common.model.DFSSchemaEntityOrBuilder getEntityOrBuilder();
 
-  // required string path = 2;
   /**
-   * <code>required string path = 2;</code>
-   */
-  boolean hasPath();
-  /**
-   * <code>required string path = 2;</code>
-   */
-  java.lang.String getPath();
-  /**
-   * <code>required string path = 2;</code>
-   */
-  com.google.protobuf.ByteString
-      getPathBytes();
-
-  // required int64 inodeId = 3;
-  /**
-   * <code>required int64 inodeId = 3;</code>
+   * <code>required int64 inodeId = 2;</code>
+   * @return Whether the inodeId field is set.
    */
   boolean hasInodeId();
   /**
-   * <code>required int64 inodeId = 3;</code>
+   * <code>required int64 inodeId = 2;</code>
+   * @return The inodeId.
    */
   long getInodeId();
 
-  // optional string fileType = 4;
   /**
-   * <code>optional string fileType = 4;</code>
+   * <code>optional string fileType = 3;</code>
+   * @return Whether the fileType field is set.
    */
   boolean hasFileType();
   /**
-   * <code>optional string fileType = 4;</code>
+   * <code>optional string fileType = 3;</code>
+   * @return The fileType.
    */
   java.lang.String getFileType();
   /**
-   * <code>optional string fileType = 4;</code>
+   * <code>optional string fileType = 3;</code>
+   * @return The bytes for fileType.
    */
   com.google.protobuf.ByteString
       getFileTypeBytes();
 
-  // optional string schemaLocation = 5;
   /**
-   * <code>optional string schemaLocation = 5;</code>
+   * <code>optional string schemaLocation = 4;</code>
+   * @return Whether the schemaLocation field is set.
    */
   boolean hasSchemaLocation();
   /**
-   * <code>optional string schemaLocation = 5;</code>
+   * <code>optional string schemaLocation = 4;</code>
+   * @return The schemaLocation.
    */
   java.lang.String getSchemaLocation();
   /**
-   * <code>optional string schemaLocation = 5;</code>
+   * <code>optional string schemaLocation = 4;</code>
+   * @return The bytes for schemaLocation.
    */
   com.google.protobuf.ByteString
       getSchemaLocationBytes();

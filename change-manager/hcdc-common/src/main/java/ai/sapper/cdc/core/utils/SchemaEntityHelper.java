@@ -1,28 +1,24 @@
 package ai.sapper.cdc.core.utils;
 
 import ai.sapper.cdc.common.model.SchemaEntity;
-import ai.sapper.hcdc.common.model.DFSSchema;
-import com.google.common.base.Strings;
+import ai.sapper.hcdc.common.model.DFSSchemaEntity;
 import lombok.NonNull;
 
 public class SchemaEntityHelper {
-    public static DFSSchema proto(@NonNull SchemaEntity schemaEntity) {
-        DFSSchema.Builder builder = DFSSchema.newBuilder()
+    public static DFSSchemaEntity proto(@NonNull SchemaEntity schemaEntity) {
+        DFSSchemaEntity.Builder builder = DFSSchemaEntity.newBuilder()
                 .setDomain(schemaEntity.getDomain())
-                .setEntity(schemaEntity.getEntity());
-        if (!Strings.isNullOrEmpty(schemaEntity.getGroup())) {
-            builder.setGroup(schemaEntity.getGroup());
-        }
+                .setEntity(schemaEntity.getEntity())
+                .setSchema(schemaEntity.getSchema());
         return builder.build();
     }
 
-    public static SchemaEntity parse(@NonNull DFSSchema schema) {
+    public static SchemaEntity parse(@NonNull DFSSchemaEntity schema) {
         SchemaEntity se = new SchemaEntity();
         se.setDomain(schema.getDomain());
         se.setEntity(schema.getEntity());
-        if (schema.hasGroup()) {
-            se.setGroup(schema.getGroup());
-        }
+        if (schema.hasSchema())
+            se.setSchema(schema.getSchema());
         return se;
     }
 }

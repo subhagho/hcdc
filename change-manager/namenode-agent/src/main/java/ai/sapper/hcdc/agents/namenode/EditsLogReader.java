@@ -107,8 +107,7 @@ public class EditsLogReader extends HDFSEditsReader {
             for (DFSTransactionType<?> tnx : batch.transactions()) {
                 if (tnx.id() <= lastTxId) continue;
                 Object proto = tnx.convertToProto();
-                MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(NameNodeEnv.get(name).source(),
-                        proto,
+                MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(proto,
                         proto.getClass(),
                         null,
                         -1,

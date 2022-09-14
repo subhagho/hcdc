@@ -43,7 +43,9 @@ public abstract class TransactionProcessor {
         return this;
     }
 
-    public abstract void processAddFileTxMessage(DFSAddFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception;
+    public abstract void processAddFileTxMessage(@NonNull DFSFileAdd data,
+                                                 @NonNull MessageObject<String, DFSChangeDelta> message,
+                                                 long txId) throws Exception;
 
     public SchemaEntity isRegistered(String hdfsPath) throws Exception {
         Preconditions.checkState(stateManager instanceof ProcessorStateManager);
@@ -52,27 +54,45 @@ public abstract class TransactionProcessor {
         return dm.matches(hdfsPath);
     }
 
-    public abstract void processAppendFileTxMessage(DFSAppendFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception;
+    public abstract void processAppendFileTxMessage(@NonNull DFSFileAppend data,
+                                                    MessageObject<String, DFSChangeDelta> message,
+                                                    long txId) throws Exception;
 
-    public abstract void processDeleteFileTxMessage(DFSDeleteFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception;
+    public abstract void processDeleteFileTxMessage(@NonNull DFSFileDelete data,
+                                                    @NonNull MessageObject<String, DFSChangeDelta> message,
+                                                    long txId) throws Exception;
 
-    public abstract void processAddBlockTxMessage(DFSAddBlock data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception;
+    public abstract void processAddBlockTxMessage(@NonNull DFSBlockAdd data,
+                                                  @NonNull MessageObject<String, DFSChangeDelta> message,
+                                                  long txId) throws Exception;
 
-    public abstract void processUpdateBlocksTxMessage(DFSUpdateBlocks data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception;
+    public abstract void processUpdateBlocksTxMessage(@NonNull DFSBlockUpdate data,
+                                                      @NonNull MessageObject<String, DFSChangeDelta> message,
+                                                      long txId) throws Exception;
 
-    public abstract void processTruncateBlockTxMessage(DFSTruncateBlock data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception;
+    public abstract void processTruncateBlockTxMessage(@NonNull DFSBlockTruncate data,
+                                                       @NonNull MessageObject<String, DFSChangeDelta> message,
+                                                       long txId) throws Exception;
 
-    public abstract void processCloseFileTxMessage(DFSCloseFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception;
+    public abstract void processCloseFileTxMessage(@NonNull DFSFileClose data,
+                                                   @NonNull MessageObject<String, DFSChangeDelta> message,
+                                                   long txId) throws Exception;
 
-    public abstract void processRenameFileTxMessage(DFSRenameFile data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception;
+    public abstract void processRenameFileTxMessage(@NonNull DFSFileRename data,
+                                                    @NonNull MessageObject<String, DFSChangeDelta> message,
+                                                    long txId) throws Exception;
 
-    public abstract void processIgnoreTxMessage(DFSIgnoreTx data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception;
+    public abstract void processIgnoreTxMessage(@NonNull DFSIgnoreTx data,
+                                                @NonNull MessageObject<String, DFSChangeDelta> message,
+                                                long txId) throws Exception;
 
-    public abstract void processErrorTxMessage(DFSError data, MessageObject<String, DFSChangeDelta> message, long txId) throws Exception;
+    public abstract void processErrorTxMessage(@NonNull DFSError data,
+                                               @NonNull MessageObject<String, DFSChangeDelta> message,
+                                               long txId) throws Exception;
 
-    public abstract void handleError(MessageObject<String, DFSChangeDelta> message,
-                                     Object data,
-                                     InvalidTransactionError te) throws Exception;
+    public abstract void handleError(@NonNull MessageObject<String, DFSChangeDelta> message,
+                                     @NonNull Object data,
+                                     @NonNull InvalidTransactionError te) throws Exception;
 
     public void updateTransaction(long txId,
                                   @NonNull MessageObject<String, DFSChangeDelta> message) throws Exception {
@@ -93,22 +113,22 @@ public abstract class TransactionProcessor {
     }
 
     public DFSTransaction extractTransaction(Object data) {
-        if (data instanceof DFSAddFile) {
-            return ((DFSAddFile) data).getTransaction();
-        } else if (data instanceof DFSAppendFile) {
-            return ((DFSAppendFile) data).getTransaction();
-        } else if (data instanceof DFSDeleteFile) {
-            return ((DFSDeleteFile) data).getTransaction();
-        } else if (data instanceof DFSAddBlock) {
-            return ((DFSAddBlock) data).getTransaction();
-        } else if (data instanceof DFSUpdateBlocks) {
-            return ((DFSUpdateBlocks) data).getTransaction();
-        } else if (data instanceof DFSTruncateBlock) {
-            return ((DFSTruncateBlock) data).getTransaction();
-        } else if (data instanceof DFSCloseFile) {
-            return ((DFSCloseFile) data).getTransaction();
-        } else if (data instanceof DFSRenameFile) {
-            return ((DFSRenameFile) data).getTransaction();
+        if (data instanceof DFSFileAdd) {
+            return ((DFSFileAdd) data).getTransaction();
+        } else if (data instanceof DFSFileAppend) {
+            return ((DFSFileAppend) data).getTransaction();
+        } else if (data instanceof DFSFileDelete) {
+            return ((DFSFileDelete) data).getTransaction();
+        } else if (data instanceof DFSBlockAdd) {
+            return ((DFSBlockAdd) data).getTransaction();
+        } else if (data instanceof DFSBlockUpdate) {
+            return ((DFSBlockUpdate) data).getTransaction();
+        } else if (data instanceof DFSBlockTruncate) {
+            return ((DFSBlockTruncate) data).getTransaction();
+        } else if (data instanceof DFSFileClose) {
+            return ((DFSFileClose) data).getTransaction();
+        } else if (data instanceof DFSFileRename) {
+            return ((DFSFileRename) data).getTransaction();
         } else if (data instanceof DFSIgnoreTx) {
             return ((DFSIgnoreTx) data).getTransaction();
         } else if (data instanceof DFSError) {
@@ -118,28 +138,29 @@ public abstract class TransactionProcessor {
     }
 
     public void processTxMessage(MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
-        Object data = ChangeDeltaSerDe.parse(message.value());
+        Object data = ChangeDeltaSerDe.parse(message.value(),
+                Class.forName(message.value().getType()));
         DFSTransaction tnx = extractTransaction(data);
         if (tnx != null)
             LOGGER.debug(getClass(), txId,
                     String.format("PROCESSING: [TXID=%d][OP=%s]", tnx.getTransactionId(), tnx.getOp().name()));
         try {
-            if (data instanceof DFSAddFile) {
-                processAddFileTxMessage((DFSAddFile) data, message, txId);
-            } else if (data instanceof DFSAppendFile) {
-                processAppendFileTxMessage((DFSAppendFile) data, message, txId);
-            } else if (data instanceof DFSDeleteFile) {
-                processDeleteFileTxMessage((DFSDeleteFile) data, message, txId);
-            } else if (data instanceof DFSAddBlock) {
-                processAddBlockTxMessage((DFSAddBlock) data, message, txId);
-            } else if (data instanceof DFSUpdateBlocks) {
-                processUpdateBlocksTxMessage((DFSUpdateBlocks) data, message, txId);
-            } else if (data instanceof DFSTruncateBlock) {
-                processTruncateBlockTxMessage((DFSTruncateBlock) data, message, txId);
-            } else if (data instanceof DFSCloseFile) {
-                processCloseFileTxMessage((DFSCloseFile) data, message, txId);
-            } else if (data instanceof DFSRenameFile) {
-                processRenameFileTxMessage((DFSRenameFile) data, message, txId);
+            if (data instanceof DFSFileAdd) {
+                processAddFileTxMessage((DFSFileAdd) data, message, txId);
+            } else if (data instanceof DFSFileAppend) {
+                processAppendFileTxMessage((DFSFileAppend) data, message, txId);
+            } else if (data instanceof DFSFileDelete) {
+                processDeleteFileTxMessage((DFSFileDelete) data, message, txId);
+            } else if (data instanceof DFSBlockAdd) {
+                processAddBlockTxMessage((DFSBlockAdd) data, message, txId);
+            } else if (data instanceof DFSBlockUpdate) {
+                processUpdateBlocksTxMessage((DFSBlockUpdate) data, message, txId);
+            } else if (data instanceof DFSBlockTruncate) {
+                processTruncateBlockTxMessage((DFSBlockTruncate) data, message, txId);
+            } else if (data instanceof DFSFileClose) {
+                processCloseFileTxMessage((DFSFileClose) data, message, txId);
+            } else if (data instanceof DFSFileRename) {
+                processRenameFileTxMessage((DFSFileRename) data, message, txId);
             } else if (data instanceof DFSIgnoreTx) {
                 processIgnoreTxMessage((DFSIgnoreTx) data, message, txId);
             } else if (data instanceof DFSError) {

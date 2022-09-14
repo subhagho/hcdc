@@ -3,16 +3,18 @@
 
 package ai.sapper.hcdc.common.model;
 
-public interface DFSDeleteFileOrBuilder
-    extends com.google.protobuf.MessageOrBuilder {
+public interface DFSFileDeleteOrBuilder extends
+    // @@protoc_insertion_point(interface_extends:ai_sapper_hcdc_common_model.DFSFileDelete)
+    com.google.protobuf.MessageOrBuilder {
 
-  // required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * @return Whether the transaction field is set.
    */
   boolean hasTransaction();
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * @return The transaction.
    */
   ai.sapper.hcdc.common.model.DFSTransaction getTransaction();
   /**
@@ -20,13 +22,14 @@ public interface DFSDeleteFileOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSTransactionOrBuilder getTransactionOrBuilder();
 
-  // required .ai_sapper_hcdc_common_model.DFSFile file = 2;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * @return Whether the file field is set.
    */
   boolean hasFile();
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * @return The file.
    */
   ai.sapper.hcdc.common.model.DFSFile getFile();
   /**
@@ -34,13 +37,14 @@ public interface DFSDeleteFileOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSFileOrBuilder getFileOrBuilder();
 
-  // required uint64 timestamp = 3;
   /**
    * <code>required uint64 timestamp = 3;</code>
+   * @return Whether the timestamp field is set.
    */
   boolean hasTimestamp();
   /**
    * <code>required uint64 timestamp = 3;</code>
+   * @return The timestamp.
    */
   long getTimestamp();
 }

@@ -3,16 +3,18 @@
 
 package ai.sapper.hcdc.common.model;
 
-public interface DFSAddBlockOrBuilder
-    extends com.google.protobuf.MessageOrBuilder {
+public interface DFSBlockAddOrBuilder extends
+    // @@protoc_insertion_point(interface_extends:ai_sapper_hcdc_common_model.DFSBlockAdd)
+    com.google.protobuf.MessageOrBuilder {
 
-  // required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * @return Whether the transaction field is set.
    */
   boolean hasTransaction();
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * @return The transaction.
    */
   ai.sapper.hcdc.common.model.DFSTransaction getTransaction();
   /**
@@ -20,13 +22,14 @@ public interface DFSAddBlockOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSTransactionOrBuilder getTransactionOrBuilder();
 
-  // required .ai_sapper_hcdc_common_model.DFSFile file = 2;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * @return Whether the file field is set.
    */
   boolean hasFile();
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * @return The file.
    */
   ai.sapper.hcdc.common.model.DFSFile getFile();
   /**
@@ -34,13 +37,14 @@ public interface DFSAddBlockOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSFileOrBuilder getFileOrBuilder();
 
-  // optional .ai_sapper_hcdc_common_model.DFSBlock penultimateBlock = 3;
   /**
    * <code>optional .ai_sapper_hcdc_common_model.DFSBlock penultimateBlock = 3;</code>
+   * @return Whether the penultimateBlock field is set.
    */
   boolean hasPenultimateBlock();
   /**
    * <code>optional .ai_sapper_hcdc_common_model.DFSBlock penultimateBlock = 3;</code>
+   * @return The penultimateBlock.
    */
   ai.sapper.hcdc.common.model.DFSBlock getPenultimateBlock();
   /**
@@ -48,13 +52,14 @@ public interface DFSAddBlockOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSBlockOrBuilder getPenultimateBlockOrBuilder();
 
-  // required .ai_sapper_hcdc_common_model.DFSBlock lastBlock = 4;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSBlock lastBlock = 4;</code>
+   * @return Whether the lastBlock field is set.
    */
   boolean hasLastBlock();
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSBlock lastBlock = 4;</code>
+   * @return The lastBlock.
    */
   ai.sapper.hcdc.common.model.DFSBlock getLastBlock();
   /**

@@ -3,16 +3,18 @@
 
 package ai.sapper.hcdc.common.model;
 
-public interface DFSChangeDataOrBuilder
-    extends com.google.protobuf.MessageOrBuilder {
+public interface DFSChangeDataOrBuilder extends
+    // @@protoc_insertion_point(interface_extends:ai_sapper_hcdc_common_model.DFSChangeData)
+    com.google.protobuf.MessageOrBuilder {
 
-  // required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * @return Whether the transaction field is set.
    */
   boolean hasTransaction();
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * @return The transaction.
    */
   ai.sapper.hcdc.common.model.DFSTransaction getTransaction();
   /**
@@ -20,13 +22,14 @@ public interface DFSChangeDataOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSTransactionOrBuilder getTransactionOrBuilder();
 
-  // required .ai_sapper_hcdc_common_model.DFSFile file = 2;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * @return Whether the file field is set.
    */
   boolean hasFile();
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * @return The file.
    */
   ai.sapper.hcdc.common.model.DFSFile getFile();
   /**
@@ -34,58 +37,84 @@ public interface DFSChangeDataOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSFileOrBuilder getFileOrBuilder();
 
-  // required string domain = 3;
   /**
    * <code>required string domain = 3;</code>
+   * @return Whether the domain field is set.
    */
   boolean hasDomain();
   /**
    * <code>required string domain = 3;</code>
+   * @return The domain.
    */
   java.lang.String getDomain();
   /**
    * <code>required string domain = 3;</code>
+   * @return The bytes for domain.
    */
   com.google.protobuf.ByteString
       getDomainBytes();
 
-  // required string entityName = 4;
   /**
    * <code>required string entityName = 4;</code>
+   * @return Whether the entityName field is set.
    */
   boolean hasEntityName();
   /**
    * <code>required string entityName = 4;</code>
+   * @return The entityName.
    */
   java.lang.String getEntityName();
   /**
    * <code>required string entityName = 4;</code>
+   * @return The bytes for entityName.
    */
   com.google.protobuf.ByteString
       getEntityNameBytes();
 
-  // required .ai_sapper_hcdc_common_model.DFSChangeData.FileSystemCode fileSystem = 5;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSChangeData.FileSystemCode fileSystem = 5;</code>
+   * @return Whether the fileSystem field is set.
    */
   boolean hasFileSystem();
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSChangeData.FileSystemCode fileSystem = 5;</code>
+   * @return The fileSystem.
    */
   ai.sapper.hcdc.common.model.DFSChangeData.FileSystemCode getFileSystem();
 
-  // required string outputPath = 6;
   /**
-   * <code>required string outputPath = 6;</code>
+   * <code>map&lt;string, string&gt; outputPath = 6;</code>
    */
-  boolean hasOutputPath();
+  int getOutputPathCount();
   /**
-   * <code>required string outputPath = 6;</code>
+   * <code>map&lt;string, string&gt; outputPath = 6;</code>
    */
-  java.lang.String getOutputPath();
+  boolean containsOutputPath(
+      java.lang.String key);
   /**
-   * <code>required string outputPath = 6;</code>
+   * Use {@link #getOutputPathMap()} instead.
    */
-  com.google.protobuf.ByteString
-      getOutputPathBytes();
+  @java.lang.Deprecated
+  java.util.Map<java.lang.String, java.lang.String>
+  getOutputPath();
+  /**
+   * <code>map&lt;string, string&gt; outputPath = 6;</code>
+   */
+  java.util.Map<java.lang.String, java.lang.String>
+  getOutputPathMap();
+  /**
+   * <code>map&lt;string, string&gt; outputPath = 6;</code>
+   */
+
+  /* nullable */
+java.lang.String getOutputPathOrDefault(
+      java.lang.String key,
+      /* nullable */
+java.lang.String defaultValue);
+  /**
+   * <code>map&lt;string, string&gt; outputPath = 6;</code>
+   */
+
+  java.lang.String getOutputPathOrThrow(
+      java.lang.String key);
 }

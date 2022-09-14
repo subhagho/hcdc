@@ -4,38 +4,40 @@
 package ai.sapper.hcdc.common.model;
 
 /**
- * Protobuf type {@code ai_sapper_hcdc_common_model.DFSAppendFile}
+ * Protobuf type {@code ai_sapper_hcdc_common_model.DFSFileDelete}
  */
-public  final class DFSAppendFile extends
-    com.google.protobuf.GeneratedMessage
-    implements DFSAppendFileOrBuilder {
-  // Use DFSAppendFile.newBuilder() to construct.
-  private DFSAppendFile(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+public final class DFSFileDelete extends
+    com.google.protobuf.GeneratedMessageV3 implements
+    // @@protoc_insertion_point(message_implements:ai_sapper_hcdc_common_model.DFSFileDelete)
+    DFSFileDeleteOrBuilder {
+private static final long serialVersionUID = 0L;
+  // Use DFSFileDelete.newBuilder() to construct.
+  private DFSFileDelete(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
-    this.unknownFields = builder.getUnknownFields();
   }
-  private DFSAppendFile(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-  private static final DFSAppendFile defaultInstance;
-  public static DFSAppendFile getDefaultInstance() {
-    return defaultInstance;
+  private DFSFileDelete() {
   }
 
-  public DFSAppendFile getDefaultInstanceForType() {
-    return defaultInstance;
+  @java.lang.Override
+  @SuppressWarnings({"unused"})
+  protected java.lang.Object newInstance(
+      UnusedPrivateParameter unused) {
+    return new DFSFileDelete();
   }
 
-  private final com.google.protobuf.UnknownFieldSet unknownFields;
   @java.lang.Override
   public final com.google.protobuf.UnknownFieldSet
-      getUnknownFields() {
+  getUnknownFields() {
     return this.unknownFields;
   }
-  private DFSAppendFile(
+  private DFSFileDelete(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
-    initFields();
+    this();
+    if (extensionRegistry == null) {
+      throw new java.lang.NullPointerException();
+    }
     int mutable_bitField0_ = 0;
     com.google.protobuf.UnknownFieldSet.Builder unknownFields =
         com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -47,16 +49,9 @@ public  final class DFSAppendFile extends
           case 0:
             done = true;
             break;
-          default: {
-            if (!parseUnknownField(input, unknownFields,
-                                   extensionRegistry, tag)) {
-              done = true;
-            }
-            break;
-          }
           case 10: {
             ai.sapper.hcdc.common.model.DFSTransaction.Builder subBuilder = null;
-            if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            if (((bitField0_ & 0x00000001) != 0)) {
               subBuilder = transaction_.toBuilder();
             }
             transaction_ = input.readMessage(ai.sapper.hcdc.common.model.DFSTransaction.PARSER, extensionRegistry);
@@ -69,7 +64,7 @@ public  final class DFSAppendFile extends
           }
           case 18: {
             ai.sapper.hcdc.common.model.DFSFile.Builder subBuilder = null;
-            if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            if (((bitField0_ & 0x00000002) != 0)) {
               subBuilder = file_.toBuilder();
             }
             file_ = input.readMessage(ai.sapper.hcdc.common.model.DFSFile.PARSER, extensionRegistry);
@@ -82,16 +77,25 @@ public  final class DFSAppendFile extends
           }
           case 24: {
             bitField0_ |= 0x00000004;
-            newBlock_ = input.readBool();
+            timestamp_ = input.readUInt64();
+            break;
+          }
+          default: {
+            if (!parseUnknownField(
+                input, unknownFields, extensionRegistry, tag)) {
+              done = true;
+            }
             break;
           }
         }
       }
     } catch (com.google.protobuf.InvalidProtocolBufferException e) {
       throw e.setUnfinishedMessage(this);
+    } catch (com.google.protobuf.UninitializedMessageException e) {
+      throw e.asInvalidProtocolBufferException().setUnfinishedMessage(this);
     } catch (java.io.IOException e) {
       throw new com.google.protobuf.InvalidProtocolBufferException(
-          e.getMessage()).setUnfinishedMessage(this);
+          e).setUnfinishedMessage(this);
     } finally {
       this.unknownFields = unknownFields.build();
       makeExtensionsImmutable();
@@ -99,107 +103,105 @@ public  final class DFSAppendFile extends
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return ai.sapper.hcdc.common.model.DFSBlockProto.internal_static_ai_sapper_hcdc_common_model_DFSAppendFile_descriptor;
+    return ai.sapper.hcdc.common.model.DFSBlockProto.internal_static_ai_sapper_hcdc_common_model_DFSFileDelete_descriptor;
   }
-
-  protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internalGetFieldAccessorTable() {
-    return ai.sapper.hcdc.common.model.DFSBlockProto.internal_static_ai_sapper_hcdc_common_model_DFSAppendFile_fieldAccessorTable
-        .ensureFieldAccessorsInitialized(
-            ai.sapper.hcdc.common.model.DFSAppendFile.class, ai.sapper.hcdc.common.model.DFSAppendFile.Builder.class);
-  }
-
-  public static com.google.protobuf.Parser<DFSAppendFile> PARSER =
-      new com.google.protobuf.AbstractParser<DFSAppendFile>() {
-    public DFSAppendFile parsePartialFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return new DFSAppendFile(input, extensionRegistry);
-    }
-  };
 
   @java.lang.Override
-  public com.google.protobuf.Parser<DFSAppendFile> getParserForType() {
-    return PARSER;
+  protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internalGetFieldAccessorTable() {
+    return ai.sapper.hcdc.common.model.DFSBlockProto.internal_static_ai_sapper_hcdc_common_model_DFSFileDelete_fieldAccessorTable
+        .ensureFieldAccessorsInitialized(
+            ai.sapper.hcdc.common.model.DFSFileDelete.class, ai.sapper.hcdc.common.model.DFSFileDelete.Builder.class);
   }
 
   private int bitField0_;
-  // required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;
   public static final int TRANSACTION_FIELD_NUMBER = 1;
   private ai.sapper.hcdc.common.model.DFSTransaction transaction_;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * @return Whether the transaction field is set.
    */
+  @java.lang.Override
   public boolean hasTransaction() {
-    return ((bitField0_ & 0x00000001) == 0x00000001);
+    return ((bitField0_ & 0x00000001) != 0);
   }
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * @return The transaction.
    */
+  @java.lang.Override
   public ai.sapper.hcdc.common.model.DFSTransaction getTransaction() {
-    return transaction_;
+    return transaction_ == null ? ai.sapper.hcdc.common.model.DFSTransaction.getDefaultInstance() : transaction_;
   }
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
    */
+  @java.lang.Override
   public ai.sapper.hcdc.common.model.DFSTransactionOrBuilder getTransactionOrBuilder() {
-    return transaction_;
+    return transaction_ == null ? ai.sapper.hcdc.common.model.DFSTransaction.getDefaultInstance() : transaction_;
   }
 
-  // required .ai_sapper_hcdc_common_model.DFSFile file = 2;
   public static final int FILE_FIELD_NUMBER = 2;
   private ai.sapper.hcdc.common.model.DFSFile file_;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * @return Whether the file field is set.
    */
+  @java.lang.Override
   public boolean hasFile() {
-    return ((bitField0_ & 0x00000002) == 0x00000002);
+    return ((bitField0_ & 0x00000002) != 0);
   }
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * @return The file.
    */
+  @java.lang.Override
   public ai.sapper.hcdc.common.model.DFSFile getFile() {
-    return file_;
+    return file_ == null ? ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance() : file_;
   }
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
    */
+  @java.lang.Override
   public ai.sapper.hcdc.common.model.DFSFileOrBuilder getFileOrBuilder() {
-    return file_;
+    return file_ == null ? ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance() : file_;
   }
 
-  // optional bool newBlock = 3;
-  public static final int NEWBLOCK_FIELD_NUMBER = 3;
-  private boolean newBlock_;
+  public static final int TIMESTAMP_FIELD_NUMBER = 3;
+  private long timestamp_;
   /**
-   * <code>optional bool newBlock = 3;</code>
+   * <code>required uint64 timestamp = 3;</code>
+   * @return Whether the timestamp field is set.
    */
-  public boolean hasNewBlock() {
-    return ((bitField0_ & 0x00000004) == 0x00000004);
+  @java.lang.Override
+  public boolean hasTimestamp() {
+    return ((bitField0_ & 0x00000004) != 0);
   }
   /**
-   * <code>optional bool newBlock = 3;</code>
+   * <code>required uint64 timestamp = 3;</code>
+   * @return The timestamp.
    */
-  public boolean getNewBlock() {
-    return newBlock_;
+  @java.lang.Override
+  public long getTimestamp() {
+    return timestamp_;
   }
 
-  private void initFields() {
-    transaction_ = ai.sapper.hcdc.common.model.DFSTransaction.getDefaultInstance();
-    file_ = ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance();
-    newBlock_ = false;
-  }
   private byte memoizedIsInitialized = -1;
+  @java.lang.Override
   public final boolean isInitialized() {
     byte isInitialized = memoizedIsInitialized;
-    if (isInitialized != -1) return isInitialized == 1;
+    if (isInitialized == 1) return true;
+    if (isInitialized == 0) return false;
 
     if (!hasTransaction()) {
       memoizedIsInitialized = 0;
       return false;
     }
     if (!hasFile()) {
+      memoizedIsInitialized = 0;
+      return false;
+    }
+    if (!hasTimestamp()) {
       memoizedIsInitialized = 0;
       return false;
     }
@@ -215,278 +217,384 @@ public  final class DFSAppendFile extends
     return true;
   }
 
+  @java.lang.Override
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
-    getSerializedSize();
-    if (((bitField0_ & 0x00000001) == 0x00000001)) {
-      output.writeMessage(1, transaction_);
+    if (((bitField0_ & 0x00000001) != 0)) {
+      output.writeMessage(1, getTransaction());
     }
-    if (((bitField0_ & 0x00000002) == 0x00000002)) {
-      output.writeMessage(2, file_);
+    if (((bitField0_ & 0x00000002) != 0)) {
+      output.writeMessage(2, getFile());
     }
-    if (((bitField0_ & 0x00000004) == 0x00000004)) {
-      output.writeBool(3, newBlock_);
+    if (((bitField0_ & 0x00000004) != 0)) {
+      output.writeUInt64(3, timestamp_);
     }
-    getUnknownFields().writeTo(output);
+    unknownFields.writeTo(output);
   }
 
-  private int memoizedSerializedSize = -1;
+  @java.lang.Override
   public int getSerializedSize() {
-    int size = memoizedSerializedSize;
+    int size = memoizedSize;
     if (size != -1) return size;
 
     size = 0;
-    if (((bitField0_ & 0x00000001) == 0x00000001)) {
+    if (((bitField0_ & 0x00000001) != 0)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeMessageSize(1, transaction_);
+        .computeMessageSize(1, getTransaction());
     }
-    if (((bitField0_ & 0x00000002) == 0x00000002)) {
+    if (((bitField0_ & 0x00000002) != 0)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeMessageSize(2, file_);
+        .computeMessageSize(2, getFile());
     }
-    if (((bitField0_ & 0x00000004) == 0x00000004)) {
+    if (((bitField0_ & 0x00000004) != 0)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeBoolSize(3, newBlock_);
+        .computeUInt64Size(3, timestamp_);
     }
-    size += getUnknownFields().getSerializedSize();
-    memoizedSerializedSize = size;
+    size += unknownFields.getSerializedSize();
+    memoizedSize = size;
     return size;
   }
 
-  private static final long serialVersionUID = 0L;
   @java.lang.Override
-  protected java.lang.Object writeReplace()
-      throws java.io.ObjectStreamException {
-    return super.writeReplace();
+  public boolean equals(final java.lang.Object obj) {
+    if (obj == this) {
+     return true;
+    }
+    if (!(obj instanceof ai.sapper.hcdc.common.model.DFSFileDelete)) {
+      return super.equals(obj);
+    }
+    ai.sapper.hcdc.common.model.DFSFileDelete other = (ai.sapper.hcdc.common.model.DFSFileDelete) obj;
+
+    if (hasTransaction() != other.hasTransaction()) return false;
+    if (hasTransaction()) {
+      if (!getTransaction()
+          .equals(other.getTransaction())) return false;
+    }
+    if (hasFile() != other.hasFile()) return false;
+    if (hasFile()) {
+      if (!getFile()
+          .equals(other.getFile())) return false;
+    }
+    if (hasTimestamp() != other.hasTimestamp()) return false;
+    if (hasTimestamp()) {
+      if (getTimestamp()
+          != other.getTimestamp()) return false;
+    }
+    if (!unknownFields.equals(other.unknownFields)) return false;
+    return true;
   }
 
-  public static ai.sapper.hcdc.common.model.DFSAppendFile parseFrom(
+  @java.lang.Override
+  public int hashCode() {
+    if (memoizedHashCode != 0) {
+      return memoizedHashCode;
+    }
+    int hash = 41;
+    hash = (19 * hash) + getDescriptor().hashCode();
+    if (hasTransaction()) {
+      hash = (37 * hash) + TRANSACTION_FIELD_NUMBER;
+      hash = (53 * hash) + getTransaction().hashCode();
+    }
+    if (hasFile()) {
+      hash = (37 * hash) + FILE_FIELD_NUMBER;
+      hash = (53 * hash) + getFile().hashCode();
+    }
+    if (hasTimestamp()) {
+      hash = (37 * hash) + TIMESTAMP_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getTimestamp());
+    }
+    hash = (29 * hash) + unknownFields.hashCode();
+    memoizedHashCode = hash;
+    return hash;
+  }
+
+  public static ai.sapper.hcdc.common.model.DFSFileDelete parseFrom(
+      java.nio.ByteBuffer data)
+      throws com.google.protobuf.InvalidProtocolBufferException {
+    return PARSER.parseFrom(data);
+  }
+  public static ai.sapper.hcdc.common.model.DFSFileDelete parseFrom(
+      java.nio.ByteBuffer data,
+      com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+      throws com.google.protobuf.InvalidProtocolBufferException {
+    return PARSER.parseFrom(data, extensionRegistry);
+  }
+  public static ai.sapper.hcdc.common.model.DFSFileDelete parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static ai.sapper.hcdc.common.model.DFSAppendFile parseFrom(
+  public static ai.sapper.hcdc.common.model.DFSFileDelete parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static ai.sapper.hcdc.common.model.DFSAppendFile parseFrom(byte[] data)
+  public static ai.sapper.hcdc.common.model.DFSFileDelete parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static ai.sapper.hcdc.common.model.DFSAppendFile parseFrom(
+  public static ai.sapper.hcdc.common.model.DFSFileDelete parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static ai.sapper.hcdc.common.model.DFSAppendFile parseFrom(java.io.InputStream input)
+  public static ai.sapper.hcdc.common.model.DFSFileDelete parseFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
-  public static ai.sapper.hcdc.common.model.DFSAppendFile parseFrom(
+  public static ai.sapper.hcdc.common.model.DFSFileDelete parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
-  public static ai.sapper.hcdc.common.model.DFSAppendFile parseDelimitedFrom(java.io.InputStream input)
+  public static ai.sapper.hcdc.common.model.DFSFileDelete parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input);
   }
-  public static ai.sapper.hcdc.common.model.DFSAppendFile parseDelimitedFrom(
+  public static ai.sapper.hcdc.common.model.DFSFileDelete parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static ai.sapper.hcdc.common.model.DFSAppendFile parseFrom(
+  public static ai.sapper.hcdc.common.model.DFSFileDelete parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
-    return PARSER.parseFrom(input);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input);
   }
-  public static ai.sapper.hcdc.common.model.DFSAppendFile parseFrom(
+  public static ai.sapper.hcdc.common.model.DFSFileDelete parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
-    return PARSER.parseFrom(input, extensionRegistry);
+    return com.google.protobuf.GeneratedMessageV3
+        .parseWithIOException(PARSER, input, extensionRegistry);
   }
 
-  public static Builder newBuilder() { return Builder.create(); }
+  @java.lang.Override
   public Builder newBuilderForType() { return newBuilder(); }
-  public static Builder newBuilder(ai.sapper.hcdc.common.model.DFSAppendFile prototype) {
-    return newBuilder().mergeFrom(prototype);
+  public static Builder newBuilder() {
+    return DEFAULT_INSTANCE.toBuilder();
   }
-  public Builder toBuilder() { return newBuilder(this); }
+  public static Builder newBuilder(ai.sapper.hcdc.common.model.DFSFileDelete prototype) {
+    return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+  }
+  @java.lang.Override
+  public Builder toBuilder() {
+    return this == DEFAULT_INSTANCE
+        ? new Builder() : new Builder().mergeFrom(this);
+  }
 
   @java.lang.Override
   protected Builder newBuilderForType(
-      com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
     Builder builder = new Builder(parent);
     return builder;
   }
   /**
-   * Protobuf type {@code ai_sapper_hcdc_common_model.DFSAppendFile}
+   * Protobuf type {@code ai_sapper_hcdc_common_model.DFSFileDelete}
    */
   public static final class Builder extends
-      com.google.protobuf.GeneratedMessage.Builder<Builder>
-     implements ai.sapper.hcdc.common.model.DFSAppendFileOrBuilder {
+      com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+      // @@protoc_insertion_point(builder_implements:ai_sapper_hcdc_common_model.DFSFileDelete)
+      ai.sapper.hcdc.common.model.DFSFileDeleteOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return ai.sapper.hcdc.common.model.DFSBlockProto.internal_static_ai_sapper_hcdc_common_model_DFSAppendFile_descriptor;
+      return ai.sapper.hcdc.common.model.DFSBlockProto.internal_static_ai_sapper_hcdc_common_model_DFSFileDelete_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return ai.sapper.hcdc.common.model.DFSBlockProto.internal_static_ai_sapper_hcdc_common_model_DFSAppendFile_fieldAccessorTable
+      return ai.sapper.hcdc.common.model.DFSBlockProto.internal_static_ai_sapper_hcdc_common_model_DFSFileDelete_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              ai.sapper.hcdc.common.model.DFSAppendFile.class, ai.sapper.hcdc.common.model.DFSAppendFile.Builder.class);
+              ai.sapper.hcdc.common.model.DFSFileDelete.class, ai.sapper.hcdc.common.model.DFSFileDelete.Builder.class);
     }
 
-    // Construct using ai.sapper.hcdc.common.model.DFSAppendFile.newBuilder()
+    // Construct using ai.sapper.hcdc.common.model.DFSFileDelete.newBuilder()
     private Builder() {
       maybeForceBuilderInitialization();
     }
 
     private Builder(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
       maybeForceBuilderInitialization();
     }
     private void maybeForceBuilderInitialization() {
-      if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
         getTransactionFieldBuilder();
         getFileFieldBuilder();
       }
     }
-    private static Builder create() {
-      return new Builder();
-    }
-
+    @java.lang.Override
     public Builder clear() {
       super.clear();
       if (transactionBuilder_ == null) {
-        transaction_ = ai.sapper.hcdc.common.model.DFSTransaction.getDefaultInstance();
+        transaction_ = null;
       } else {
         transactionBuilder_.clear();
       }
       bitField0_ = (bitField0_ & ~0x00000001);
       if (fileBuilder_ == null) {
-        file_ = ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance();
+        file_ = null;
       } else {
         fileBuilder_.clear();
       }
       bitField0_ = (bitField0_ & ~0x00000002);
-      newBlock_ = false;
+      timestamp_ = 0L;
       bitField0_ = (bitField0_ & ~0x00000004);
       return this;
     }
 
-    public Builder clone() {
-      return create().mergeFrom(buildPartial());
-    }
-
+    @java.lang.Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return ai.sapper.hcdc.common.model.DFSBlockProto.internal_static_ai_sapper_hcdc_common_model_DFSAppendFile_descriptor;
+      return ai.sapper.hcdc.common.model.DFSBlockProto.internal_static_ai_sapper_hcdc_common_model_DFSFileDelete_descriptor;
     }
 
-    public ai.sapper.hcdc.common.model.DFSAppendFile getDefaultInstanceForType() {
-      return ai.sapper.hcdc.common.model.DFSAppendFile.getDefaultInstance();
+    @java.lang.Override
+    public ai.sapper.hcdc.common.model.DFSFileDelete getDefaultInstanceForType() {
+      return ai.sapper.hcdc.common.model.DFSFileDelete.getDefaultInstance();
     }
 
-    public ai.sapper.hcdc.common.model.DFSAppendFile build() {
-      ai.sapper.hcdc.common.model.DFSAppendFile result = buildPartial();
+    @java.lang.Override
+    public ai.sapper.hcdc.common.model.DFSFileDelete build() {
+      ai.sapper.hcdc.common.model.DFSFileDelete result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
       return result;
     }
 
-    public ai.sapper.hcdc.common.model.DFSAppendFile buildPartial() {
-      ai.sapper.hcdc.common.model.DFSAppendFile result = new ai.sapper.hcdc.common.model.DFSAppendFile(this);
+    @java.lang.Override
+    public ai.sapper.hcdc.common.model.DFSFileDelete buildPartial() {
+      ai.sapper.hcdc.common.model.DFSFileDelete result = new ai.sapper.hcdc.common.model.DFSFileDelete(this);
       int from_bitField0_ = bitField0_;
       int to_bitField0_ = 0;
-      if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+      if (((from_bitField0_ & 0x00000001) != 0)) {
+        if (transactionBuilder_ == null) {
+          result.transaction_ = transaction_;
+        } else {
+          result.transaction_ = transactionBuilder_.build();
+        }
         to_bitField0_ |= 0x00000001;
       }
-      if (transactionBuilder_ == null) {
-        result.transaction_ = transaction_;
-      } else {
-        result.transaction_ = transactionBuilder_.build();
-      }
-      if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+      if (((from_bitField0_ & 0x00000002) != 0)) {
+        if (fileBuilder_ == null) {
+          result.file_ = file_;
+        } else {
+          result.file_ = fileBuilder_.build();
+        }
         to_bitField0_ |= 0x00000002;
       }
-      if (fileBuilder_ == null) {
-        result.file_ = file_;
-      } else {
-        result.file_ = fileBuilder_.build();
-      }
-      if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+      if (((from_bitField0_ & 0x00000004) != 0)) {
+        result.timestamp_ = timestamp_;
         to_bitField0_ |= 0x00000004;
       }
-      result.newBlock_ = newBlock_;
       result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
     }
 
+    @java.lang.Override
+    public Builder clone() {
+      return super.clone();
+    }
+    @java.lang.Override
+    public Builder setField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        java.lang.Object value) {
+      return super.setField(field, value);
+    }
+    @java.lang.Override
+    public Builder clearField(
+        com.google.protobuf.Descriptors.FieldDescriptor field) {
+      return super.clearField(field);
+    }
+    @java.lang.Override
+    public Builder clearOneof(
+        com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+      return super.clearOneof(oneof);
+    }
+    @java.lang.Override
+    public Builder setRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        int index, java.lang.Object value) {
+      return super.setRepeatedField(field, index, value);
+    }
+    @java.lang.Override
+    public Builder addRepeatedField(
+        com.google.protobuf.Descriptors.FieldDescriptor field,
+        java.lang.Object value) {
+      return super.addRepeatedField(field, value);
+    }
+    @java.lang.Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof ai.sapper.hcdc.common.model.DFSAppendFile) {
-        return mergeFrom((ai.sapper.hcdc.common.model.DFSAppendFile)other);
+      if (other instanceof ai.sapper.hcdc.common.model.DFSFileDelete) {
+        return mergeFrom((ai.sapper.hcdc.common.model.DFSFileDelete)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(ai.sapper.hcdc.common.model.DFSAppendFile other) {
-      if (other == ai.sapper.hcdc.common.model.DFSAppendFile.getDefaultInstance()) return this;
+    public Builder mergeFrom(ai.sapper.hcdc.common.model.DFSFileDelete other) {
+      if (other == ai.sapper.hcdc.common.model.DFSFileDelete.getDefaultInstance()) return this;
       if (other.hasTransaction()) {
         mergeTransaction(other.getTransaction());
       }
       if (other.hasFile()) {
         mergeFile(other.getFile());
       }
-      if (other.hasNewBlock()) {
-        setNewBlock(other.getNewBlock());
+      if (other.hasTimestamp()) {
+        setTimestamp(other.getTimestamp());
       }
-      this.mergeUnknownFields(other.getUnknownFields());
+      this.mergeUnknownFields(other.unknownFields);
+      onChanged();
       return this;
     }
 
+    @java.lang.Override
     public final boolean isInitialized() {
       if (!hasTransaction()) {
-        
         return false;
       }
       if (!hasFile()) {
-        
+        return false;
+      }
+      if (!hasTimestamp()) {
         return false;
       }
       if (!getTransaction().isInitialized()) {
-        
         return false;
       }
       if (!getFile().isInitialized()) {
-        
         return false;
       }
       return true;
     }
 
+    @java.lang.Override
     public Builder mergeFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      ai.sapper.hcdc.common.model.DFSAppendFile parsedMessage = null;
+      ai.sapper.hcdc.common.model.DFSFileDelete parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (ai.sapper.hcdc.common.model.DFSAppendFile) e.getUnfinishedMessage();
-        throw e;
+        parsedMessage = (ai.sapper.hcdc.common.model.DFSFileDelete) e.getUnfinishedMessage();
+        throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
           mergeFrom(parsedMessage);
@@ -496,22 +604,23 @@ public  final class DFSAppendFile extends
     }
     private int bitField0_;
 
-    // required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;
-    private ai.sapper.hcdc.common.model.DFSTransaction transaction_ = ai.sapper.hcdc.common.model.DFSTransaction.getDefaultInstance();
-    private com.google.protobuf.SingleFieldBuilder<
+    private ai.sapper.hcdc.common.model.DFSTransaction transaction_;
+    private com.google.protobuf.SingleFieldBuilderV3<
         ai.sapper.hcdc.common.model.DFSTransaction, ai.sapper.hcdc.common.model.DFSTransaction.Builder, ai.sapper.hcdc.common.model.DFSTransactionOrBuilder> transactionBuilder_;
     /**
      * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+     * @return Whether the transaction field is set.
      */
     public boolean hasTransaction() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
+      return ((bitField0_ & 0x00000001) != 0);
     }
     /**
      * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+     * @return The transaction.
      */
     public ai.sapper.hcdc.common.model.DFSTransaction getTransaction() {
       if (transactionBuilder_ == null) {
-        return transaction_;
+        return transaction_ == null ? ai.sapper.hcdc.common.model.DFSTransaction.getDefaultInstance() : transaction_;
       } else {
         return transactionBuilder_.getMessage();
       }
@@ -551,7 +660,8 @@ public  final class DFSAppendFile extends
      */
     public Builder mergeTransaction(ai.sapper.hcdc.common.model.DFSTransaction value) {
       if (transactionBuilder_ == null) {
-        if (((bitField0_ & 0x00000001) == 0x00000001) &&
+        if (((bitField0_ & 0x00000001) != 0) &&
+            transaction_ != null &&
             transaction_ != ai.sapper.hcdc.common.model.DFSTransaction.getDefaultInstance()) {
           transaction_ =
             ai.sapper.hcdc.common.model.DFSTransaction.newBuilder(transaction_).mergeFrom(value).buildPartial();
@@ -570,7 +680,7 @@ public  final class DFSAppendFile extends
      */
     public Builder clearTransaction() {
       if (transactionBuilder_ == null) {
-        transaction_ = ai.sapper.hcdc.common.model.DFSTransaction.getDefaultInstance();
+        transaction_ = null;
         onChanged();
       } else {
         transactionBuilder_.clear();
@@ -593,19 +703,20 @@ public  final class DFSAppendFile extends
       if (transactionBuilder_ != null) {
         return transactionBuilder_.getMessageOrBuilder();
       } else {
-        return transaction_;
+        return transaction_ == null ?
+            ai.sapper.hcdc.common.model.DFSTransaction.getDefaultInstance() : transaction_;
       }
     }
     /**
      * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
      */
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         ai.sapper.hcdc.common.model.DFSTransaction, ai.sapper.hcdc.common.model.DFSTransaction.Builder, ai.sapper.hcdc.common.model.DFSTransactionOrBuilder> 
         getTransactionFieldBuilder() {
       if (transactionBuilder_ == null) {
-        transactionBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+        transactionBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             ai.sapper.hcdc.common.model.DFSTransaction, ai.sapper.hcdc.common.model.DFSTransaction.Builder, ai.sapper.hcdc.common.model.DFSTransactionOrBuilder>(
-                transaction_,
+                getTransaction(),
                 getParentForChildren(),
                 isClean());
         transaction_ = null;
@@ -613,22 +724,23 @@ public  final class DFSAppendFile extends
       return transactionBuilder_;
     }
 
-    // required .ai_sapper_hcdc_common_model.DFSFile file = 2;
-    private ai.sapper.hcdc.common.model.DFSFile file_ = ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance();
-    private com.google.protobuf.SingleFieldBuilder<
+    private ai.sapper.hcdc.common.model.DFSFile file_;
+    private com.google.protobuf.SingleFieldBuilderV3<
         ai.sapper.hcdc.common.model.DFSFile, ai.sapper.hcdc.common.model.DFSFile.Builder, ai.sapper.hcdc.common.model.DFSFileOrBuilder> fileBuilder_;
     /**
      * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+     * @return Whether the file field is set.
      */
     public boolean hasFile() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
+      return ((bitField0_ & 0x00000002) != 0);
     }
     /**
      * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+     * @return The file.
      */
     public ai.sapper.hcdc.common.model.DFSFile getFile() {
       if (fileBuilder_ == null) {
-        return file_;
+        return file_ == null ? ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance() : file_;
       } else {
         return fileBuilder_.getMessage();
       }
@@ -668,7 +780,8 @@ public  final class DFSAppendFile extends
      */
     public Builder mergeFile(ai.sapper.hcdc.common.model.DFSFile value) {
       if (fileBuilder_ == null) {
-        if (((bitField0_ & 0x00000002) == 0x00000002) &&
+        if (((bitField0_ & 0x00000002) != 0) &&
+            file_ != null &&
             file_ != ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance()) {
           file_ =
             ai.sapper.hcdc.common.model.DFSFile.newBuilder(file_).mergeFrom(value).buildPartial();
@@ -687,7 +800,7 @@ public  final class DFSAppendFile extends
      */
     public Builder clearFile() {
       if (fileBuilder_ == null) {
-        file_ = ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance();
+        file_ = null;
         onChanged();
       } else {
         fileBuilder_.clear();
@@ -710,19 +823,20 @@ public  final class DFSAppendFile extends
       if (fileBuilder_ != null) {
         return fileBuilder_.getMessageOrBuilder();
       } else {
-        return file_;
+        return file_ == null ?
+            ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance() : file_;
       }
     }
     /**
      * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
      */
-    private com.google.protobuf.SingleFieldBuilder<
+    private com.google.protobuf.SingleFieldBuilderV3<
         ai.sapper.hcdc.common.model.DFSFile, ai.sapper.hcdc.common.model.DFSFile.Builder, ai.sapper.hcdc.common.model.DFSFileOrBuilder> 
         getFileFieldBuilder() {
       if (fileBuilder_ == null) {
-        fileBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+        fileBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
             ai.sapper.hcdc.common.model.DFSFile, ai.sapper.hcdc.common.model.DFSFile.Builder, ai.sapper.hcdc.common.model.DFSFileOrBuilder>(
-                file_,
+                getFile(),
                 getParentForChildren(),
                 isClean());
         file_ = null;
@@ -730,47 +844,94 @@ public  final class DFSAppendFile extends
       return fileBuilder_;
     }
 
-    // optional bool newBlock = 3;
-    private boolean newBlock_ ;
+    private long timestamp_ ;
     /**
-     * <code>optional bool newBlock = 3;</code>
+     * <code>required uint64 timestamp = 3;</code>
+     * @return Whether the timestamp field is set.
      */
-    public boolean hasNewBlock() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
+    @java.lang.Override
+    public boolean hasTimestamp() {
+      return ((bitField0_ & 0x00000004) != 0);
     }
     /**
-     * <code>optional bool newBlock = 3;</code>
+     * <code>required uint64 timestamp = 3;</code>
+     * @return The timestamp.
      */
-    public boolean getNewBlock() {
-      return newBlock_;
+    @java.lang.Override
+    public long getTimestamp() {
+      return timestamp_;
     }
     /**
-     * <code>optional bool newBlock = 3;</code>
+     * <code>required uint64 timestamp = 3;</code>
+     * @param value The timestamp to set.
+     * @return This builder for chaining.
      */
-    public Builder setNewBlock(boolean value) {
+    public Builder setTimestamp(long value) {
       bitField0_ |= 0x00000004;
-      newBlock_ = value;
+      timestamp_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>optional bool newBlock = 3;</code>
+     * <code>required uint64 timestamp = 3;</code>
+     * @return This builder for chaining.
      */
-    public Builder clearNewBlock() {
+    public Builder clearTimestamp() {
       bitField0_ = (bitField0_ & ~0x00000004);
-      newBlock_ = false;
+      timestamp_ = 0L;
       onChanged();
       return this;
     }
+    @java.lang.Override
+    public final Builder setUnknownFields(
+        final com.google.protobuf.UnknownFieldSet unknownFields) {
+      return super.setUnknownFields(unknownFields);
+    }
 
-    // @@protoc_insertion_point(builder_scope:ai_sapper_hcdc_common_model.DFSAppendFile)
+    @java.lang.Override
+    public final Builder mergeUnknownFields(
+        final com.google.protobuf.UnknownFieldSet unknownFields) {
+      return super.mergeUnknownFields(unknownFields);
+    }
+
+
+    // @@protoc_insertion_point(builder_scope:ai_sapper_hcdc_common_model.DFSFileDelete)
   }
 
+  // @@protoc_insertion_point(class_scope:ai_sapper_hcdc_common_model.DFSFileDelete)
+  private static final ai.sapper.hcdc.common.model.DFSFileDelete DEFAULT_INSTANCE;
   static {
-    defaultInstance = new DFSAppendFile(true);
-    defaultInstance.initFields();
+    DEFAULT_INSTANCE = new ai.sapper.hcdc.common.model.DFSFileDelete();
   }
 
-  // @@protoc_insertion_point(class_scope:ai_sapper_hcdc_common_model.DFSAppendFile)
+  public static ai.sapper.hcdc.common.model.DFSFileDelete getDefaultInstance() {
+    return DEFAULT_INSTANCE;
+  }
+
+  @java.lang.Deprecated public static final com.google.protobuf.Parser<DFSFileDelete>
+      PARSER = new com.google.protobuf.AbstractParser<DFSFileDelete>() {
+    @java.lang.Override
+    public DFSFileDelete parsePartialFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return new DFSFileDelete(input, extensionRegistry);
+    }
+  };
+
+  public static com.google.protobuf.Parser<DFSFileDelete> parser() {
+    return PARSER;
+  }
+
+  @java.lang.Override
+  public com.google.protobuf.Parser<DFSFileDelete> getParserForType() {
+    return PARSER;
+  }
+
+  @java.lang.Override
+  public ai.sapper.hcdc.common.model.DFSFileDelete getDefaultInstanceForType() {
+    return DEFAULT_INSTANCE;
+  }
+
 }
 

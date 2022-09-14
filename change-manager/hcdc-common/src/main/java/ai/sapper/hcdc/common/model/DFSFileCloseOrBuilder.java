@@ -3,16 +3,18 @@
 
 package ai.sapper.hcdc.common.model;
 
-public interface DFSCloseFileOrBuilder
-    extends com.google.protobuf.MessageOrBuilder {
+public interface DFSFileCloseOrBuilder extends
+    // @@protoc_insertion_point(interface_extends:ai_sapper_hcdc_common_model.DFSFileClose)
+    com.google.protobuf.MessageOrBuilder {
 
-  // required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * @return Whether the transaction field is set.
    */
   boolean hasTransaction();
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSTransaction transaction = 1;</code>
+   * @return The transaction.
    */
   ai.sapper.hcdc.common.model.DFSTransaction getTransaction();
   /**
@@ -20,13 +22,14 @@ public interface DFSCloseFileOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSTransactionOrBuilder getTransactionOrBuilder();
 
-  // required .ai_sapper_hcdc_common_model.DFSFile file = 2;
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * @return Whether the file field is set.
    */
   boolean hasFile();
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSFile file = 2;</code>
+   * @return The file.
    */
   ai.sapper.hcdc.common.model.DFSFile getFile();
   /**
@@ -34,47 +37,50 @@ public interface DFSCloseFileOrBuilder
    */
   ai.sapper.hcdc.common.model.DFSFileOrBuilder getFileOrBuilder();
 
-  // required uint64 length = 3;
   /**
    * <code>required uint64 length = 3;</code>
+   * @return Whether the length field is set.
    */
   boolean hasLength();
   /**
    * <code>required uint64 length = 3;</code>
+   * @return The length.
    */
   long getLength();
 
-  // required uint64 blockSize = 4;
   /**
    * <code>required uint64 blockSize = 4;</code>
+   * @return Whether the blockSize field is set.
    */
   boolean hasBlockSize();
   /**
    * <code>required uint64 blockSize = 4;</code>
+   * @return The blockSize.
    */
   long getBlockSize();
 
-  // required uint64 modifiedTime = 5;
   /**
    * <code>required uint64 modifiedTime = 5;</code>
+   * @return Whether the modifiedTime field is set.
    */
   boolean hasModifiedTime();
   /**
    * <code>required uint64 modifiedTime = 5;</code>
+   * @return The modifiedTime.
    */
   long getModifiedTime();
 
-  // required uint64 accessedTime = 6;
   /**
    * <code>required uint64 accessedTime = 6;</code>
+   * @return Whether the accessedTime field is set.
    */
   boolean hasAccessedTime();
   /**
    * <code>required uint64 accessedTime = 6;</code>
+   * @return The accessedTime.
    */
   long getAccessedTime();
 
-  // repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;
   /**
    * <code>repeated .ai_sapper_hcdc_common_model.DFSBlock blocks = 7;</code>
    */
@@ -99,13 +105,14 @@ public interface DFSCloseFileOrBuilder
   ai.sapper.hcdc.common.model.DFSBlockOrBuilder getBlocksOrBuilder(
       int index);
 
-  // optional bool overwrite = 8;
   /**
    * <code>optional bool overwrite = 8;</code>
+   * @return Whether the overwrite field is set.
    */
   boolean hasOverwrite();
   /**
    * <code>optional bool overwrite = 8;</code>
+   * @return The overwrite.
    */
   boolean getOverwrite();
 }

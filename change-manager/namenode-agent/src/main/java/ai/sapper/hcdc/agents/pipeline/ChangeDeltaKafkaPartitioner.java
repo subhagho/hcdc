@@ -38,7 +38,7 @@ public class ChangeDeltaKafkaPartitioner implements KafkaPartitioner<DFSChangeDe
      */
     @Override
     public int partition(@NonNull DFSChangeDelta key) {
-        SchemaEntity schemaEntity = SchemaEntityHelper.parse(key.getSchema());
+        SchemaEntity schemaEntity = SchemaEntityHelper.parse(key.getEntity());
         String entity = schemaEntity.getEntity();
         if (!Strings.isNullOrEmpty(schemaEntity.getGroup())) {
             entity = schemaEntity.getGroup();

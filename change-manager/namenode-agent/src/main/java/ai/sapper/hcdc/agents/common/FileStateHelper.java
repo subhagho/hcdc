@@ -67,21 +67,21 @@ public class FileStateHelper {
                                boolean updateIfExists) throws StateManagerError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
+        String path = file.getEntity().getEntity();
         synchronized (this) {
             try {
                 CuratorFramework client = connection().client();
-
-                String zp = getFilePath(file.getPath());
+                String zp = getFilePath(path);
                 DFSFileState fs = null;
                 if (client.checkExists().forPath(zp) != null) {
-                    fs = get(file.getPath());
+                    fs = get(path);
                     if (!updateIfExists) {
                         if (!fs.checkDeleted()) {
                             throw new InvalidTransactionError(txId,
                                     DFSError.ErrorCode.SYNC_STOPPED,
-                                    file.getPath(),
+                                    path,
                                     new Exception(String.format("Valid File already exists. [path=%s]",
-                                            file.getPath())))
+                                            path)))
                                     .withFile(file);
                         } else {
                             client.delete().forPath(zp);
@@ -104,7 +104,7 @@ public class FileStateHelper {
                 client.create().creatingParentContainersIfNeeded().forPath(zp, data);
                 return fs;
             } catch (Exception ex) {
-                throw new StateManagerError(String.format("Error creating new file entry. [path=%s]", file.getPath()));
+                throw new StateManagerError(String.format("Error creating new file entry. [path=%s]", path));
             }
         }
     }
