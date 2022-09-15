@@ -4,6 +4,7 @@ import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
+import ai.sapper.cdc.core.model.AgentTxState;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
@@ -11,6 +12,7 @@ import ai.sapper.hcdc.agents.model.DFSFileState;
 import ai.sapper.hcdc.agents.model.EFileState;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -74,33 +76,34 @@ public class EntityChangeDeltaProcessor extends ChangeDeltaProcessor {
                 LOG.debug(String.format("Received messages. [count=%d]", batch.size()));
                 for (MessageObject<String, DFSChangeDelta> message : batch) {
                     stateManager().stateLock();
+                    long txId = -1;
                     try {
                         try {
-                            long txId = process(message);
-                            if (txId > 0) {
-                                if (message.mode() == MessageObject.MessageMode.New) {
-                                    processor.updateTransaction(txId, message);
-                                    stateManager().updateCurrentTx(txId);
-                                    LOGGER.info(getClass(), txId,
-                                            String.format("Processed transaction delta. [TXID=%d]", txId));
-                                } else if (message.mode() == MessageObject.MessageMode.Snapshot) {
-                                    if (stateManager().agentTxState().getProcessedTxId() < txId) {
-                                        stateManager().updateCurrentTx(txId);
-                                        stateManager().update(txId);
-                                        LOGGER.info(getClass(), txId,
-                                                String.format("Processed transaction delta. [TXID=%d]", txId));
-                                    }
-                                    if (stateManager().getModuleState().getSnapshotTxId() < txId) {
-                                        stateManager().updateSnapshotTx(txId);
-                                    }
-                                }
-                            }
+                            txId = process(message);
                         } catch (InvalidMessageError ie) {
                             LOG.error("Error processing message.", ie);
                             DefaultLogger.stacktrace(LOG, ie);
                             errorSender().send(message);
                         }
                         receiver().ack(message.id());
+                        if (txId > 0) {
+                            if (message.mode() == MessageObject.MessageMode.New) {
+                                processor.updateTransaction(txId, message);
+                                stateManager().updateCurrentTx(txId);
+                                LOGGER.info(getClass(), txId,
+                                        String.format("Processed transaction delta. [TXID=%d]", txId));
+                            } else if (message.mode() == MessageObject.MessageMode.Snapshot) {
+                                if (stateManager().agentTxState().getProcessedTxId() < txId) {
+                                    stateManager().updateCurrentTx(txId);
+                                    stateManager().update(txId);
+                                    LOGGER.info(getClass(), txId,
+                                            String.format("Processed transaction delta. [TXID=%d]", txId));
+                                }
+                                if (stateManager().getModuleState().getSnapshotTxId() < txId) {
+                                    stateManager().updateSnapshotTx(txId);
+                                }
+                            }
+                        }
                     } finally {
                         stateManager().stateUnlock();
                     }
@@ -121,9 +124,14 @@ public class EntityChangeDeltaProcessor extends ChangeDeltaProcessor {
             throw new InvalidMessageError(message.id(),
                     String.format("Invalid Message mode. [id=%s][mode=%s]", message.id(), message.mode().name()));
         }
-        txId = processor.checkMessageSequence(message, true);
+        AgentTxState state = updateReadState(message.id());
+        boolean retry = false;
+        if (!Strings.isNullOrEmpty(state.getCurrentMessageId()) &&
+                !Strings.isNullOrEmpty(lastMessageId()))
+            retry = state.getCurrentMessageId().compareTo(lastMessageId()) == 0;
+        txId = processor.checkMessageSequence(message, false, retry);
 
-        processor.processTxMessage(message, txId);
+        processor.processTxMessage(message, txId, retry);
 
         return txId;
     }

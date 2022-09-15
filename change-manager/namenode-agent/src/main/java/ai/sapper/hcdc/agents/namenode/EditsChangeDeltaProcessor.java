@@ -7,19 +7,18 @@ import ai.sapper.cdc.core.filters.DomainManager;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
+import ai.sapper.cdc.core.model.AgentTxState;
 import ai.sapper.cdc.core.model.BlockTransactionDelta;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ProcessorStateManager;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
-import ai.sapper.hcdc.agents.model.DFSBlockState;
-import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
-import ai.sapper.hcdc.agents.model.DFSFileState;
-import ai.sapper.hcdc.agents.model.DFSTransactionType;
+import ai.sapper.hcdc.agents.model.*;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
 import ai.sapper.hcdc.common.model.DFSFileClose;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -92,13 +91,13 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
                     try {
                         try {
                             txId = process(message);
-                            processor.updateTransaction(txId, message);
                             LOGGER.info(getClass(), txId, "Transaction read successfully...");
                         } catch (InvalidMessageError ie) {
                             LOG.error("Error processing message.", ie);
                             DefaultLogger.stacktrace(LOG, ie);
                             errorSender().send(message);
                         }
+                        processor.updateTransaction(txId, message);
                         receiver().ack(message.id());
                     } finally {
                         stateManager().stateUnlock();
@@ -120,13 +119,17 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
             throw new InvalidMessageError(message.id(),
                     String.format("Invalid Message mode. [id=%s][mode=%s]", message.id(), message.mode().name()));
         }
-        txId = processor.checkMessageSequence(message, false);
-
+        AgentTxState state = updateReadState(message.id());
+        boolean retry = false;
+        if (!Strings.isNullOrEmpty(state.getCurrentMessageId()) &&
+                !Strings.isNullOrEmpty(lastMessageId()))
+            retry = state.getCurrentMessageId().compareTo(lastMessageId()) == 0;
+        txId = processor.checkMessageSequence(message, false, retry);
         if (message.mode() == MessageObject.MessageMode.Backlog) {
             processBacklogMessage(message, txId);
             txId = -1;
         } else {
-            processor.processTxMessage(message, txId);
+            processor.processTxMessage(message, txId, retry);
         }
         return txId;
     }

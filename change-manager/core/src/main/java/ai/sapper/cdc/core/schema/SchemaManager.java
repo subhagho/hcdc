@@ -217,12 +217,24 @@ public class SchemaManager {
                                       SchemaVersion version) throws Exception {
         SchemaVersion next = new SchemaVersion(version);
         if (current != null) {
+            if (current.getVersion() == null) {
+                throw new Exception(
+                        String.format("Invalid Schema object: version is null. [path=%s]",
+                                current.getZkPath()));
+            }
             if (schema.compare(current)) return next;
             List<AvroSchema> schemas = findSchemas(entity);
             if (schemas != null && !schemas.isEmpty()) {
                 for (AvroSchema avs : schemas) {
                     if (avs.compare(current)) continue;
-                    if (avs.compare(schema)) return schema.getVersion();
+                    if (avs.compare(schema)) {
+                        if (avs.getVersion() == null) {
+                            throw new Exception(
+                                    String.format("Invalid Schema object: version is null. [path=%s]",
+                                            avs.getZkPath()));
+                        }
+                        return avs.getVersion();
+                    }
                 }
             }
             List<SchemaEvolutionValidator.Message> messages

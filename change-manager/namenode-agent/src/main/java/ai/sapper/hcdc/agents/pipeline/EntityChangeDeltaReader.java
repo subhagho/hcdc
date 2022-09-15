@@ -8,6 +8,7 @@ import ai.sapper.cdc.core.io.Archiver;
 import ai.sapper.cdc.core.io.CDCFileSystem;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
+import ai.sapper.cdc.core.model.AgentTxState;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
@@ -65,7 +66,7 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
 
             super.init(config, manger);
 
-            processor  = new EntityChangeTransactionReader(name());
+            processor = new EntityChangeTransactionReader(name());
 
             connection = manger.getConnection(config.hdfsConnection, HdfsConnection.class);
             if (connection == null) {
@@ -140,27 +141,28 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
                     Thread.sleep(receiveBatchTimeout);
                     continue;
                 }
+                long txId = -1;
                 LOG.debug(String.format("Received messages. [count=%d]", batch.size()));
                 for (MessageObject<String, DFSChangeDelta> message : batch) {
                     try {
-                        long txId = process(message);
-                        if (txId > 0) {
-                            if (message.mode() == MessageObject.MessageMode.New) {
-                                processor.updateTransaction(txId, message);
-                                LOGGER.info(getClass(), txId,
-                                        String.format("Processed transaction delta. [TXID=%d]", txId));
-                            } else if (message.mode() == MessageObject.MessageMode.Snapshot) {
-                                if (stateManager().agentTxState().getProcessedTxId() < txId) {
-                                    stateManager().update(txId);
-                                    LOGGER.info(getClass(), txId,
-                                            String.format("Processed transaction delta. [TXID=%d]", txId));
-                                }
-                            }
-                        }
+                        txId = process(message);
                     } catch (InvalidMessageError ie) {
                         LOG.error("Error processing message.", ie);
                         DefaultLogger.stacktrace(LOG, ie);
                         errorSender().send(message);
+                    }
+                    if (txId > 0) {
+                        if (message.mode() == MessageObject.MessageMode.New) {
+                            processor.updateTransaction(txId, message);
+                            LOGGER.info(getClass(), txId,
+                                    String.format("Processed transaction delta. [TXID=%d]", txId));
+                        } else if (message.mode() == MessageObject.MessageMode.Snapshot) {
+                            if (stateManager().agentTxState().getProcessedTxId() < txId) {
+                                stateManager().update(txId);
+                                LOGGER.info(getClass(), txId,
+                                        String.format("Processed transaction delta. [TXID=%d]", txId));
+                            }
+                        }
                     }
                     receiver().ack(message.id());
                 }
@@ -178,9 +180,14 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
             throw new InvalidMessageError(message.id(),
                     String.format("Invalid Message mode. [id=%s][mode=%s]", message.id(), message.mode().name()));
         }
-        txId = processor.checkMessageSequence(message, true);
+        AgentTxState state = updateReadState(message.id());
+        boolean retry = false;
+        if (!Strings.isNullOrEmpty(state.getCurrentMessageId()) &&
+                !Strings.isNullOrEmpty(lastMessageId()))
+            retry = state.getCurrentMessageId().compareTo(lastMessageId()) == 0;
+        txId = processor.checkMessageSequence(message, false, retry);
 
-        processor.processTxMessage(message, txId);
+        processor.processTxMessage(message, txId, retry);
 
         return txId;
     }

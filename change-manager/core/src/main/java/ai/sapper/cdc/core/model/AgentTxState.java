@@ -10,6 +10,7 @@ import lombok.ToString;
 public class AgentTxState {
     private String namespace;
     private long updatedTime;
+    private String currentMessageId;
     private long processedTxId = 0;
     private ModuleInstance moduleInstance;
 }

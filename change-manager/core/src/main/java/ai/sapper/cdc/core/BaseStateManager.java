@@ -169,6 +169,20 @@ public abstract class BaseStateManager {
         }
     }
 
+    public AgentTxState updateReadTx(String messageId) throws ManagerStateError {
+        Preconditions.checkNotNull(connection);
+        Preconditions.checkState(connection.isConnected());
+
+        synchronized (this) {
+            try {
+                agentTxState.setCurrentMessageId(messageId);
+                return update(agentTxState);
+            } catch (Exception ex) {
+                throw new ManagerStateError(ex);
+            }
+        }
+    }
+
     private AgentTxState readState() throws ManagerStateError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());

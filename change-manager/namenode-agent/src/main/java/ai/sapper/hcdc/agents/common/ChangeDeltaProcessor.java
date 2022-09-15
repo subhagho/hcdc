@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.core.ManagerStateError;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.messaging.HCDCMessagingBuilders;
 import ai.sapper.cdc.core.messaging.MessageReceiver;
@@ -33,6 +34,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     private MessageReceiver<String, DFSChangeDelta> receiver;
     private long receiveBatchTimeout = 1000;
     private NameNodeEnv env;
+    private String lastMessageId = null;
 
     public ChangeDeltaProcessor(@NonNull ZkStateManager stateManager, @NonNull String name) {
         this.stateManager = stateManager;
@@ -116,6 +118,13 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
                 env.LOG.error(ex.getLocalizedMessage(), ex);
             }
         }
+    }
+
+    public AgentTxState updateReadState(String messageId) throws ManagerStateError {
+        AgentTxState state = stateManager.agentTxState();
+        lastMessageId = state.getCurrentMessageId();
+
+        return stateManager.updateReadTx(messageId);
     }
 
     public abstract void doRun() throws Exception;
