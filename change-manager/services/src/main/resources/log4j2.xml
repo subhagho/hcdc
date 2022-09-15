@@ -95,19 +95,18 @@
     </Appenders>
 
     <Loggers>
-        <!--Logger name="ai.sapper.hcdc.agents.namenode" additivity="false" level="debug">
+        <Logger name="ai.sapper.hcdc.agents.namenode" additivity="false" level="debug">
             <AppenderRef ref="NameNodeLog"/>
         </Logger>
         <Logger name="ai.sapper.hcdc.agents.pipeline" additivity="false" level="debug">
             <AppenderRef ref="PipelineLog"/>
-        </Logger-->
+        </Logger>
         <Logger name="ai.sapper.cdc.common.audit" additivity="false" level="info">
             <AppenderRef ref="audit"/>
         </Logger>
         <Logger name="ai.sapper" additivity="false" level="debug">
             <AppenderRef ref="ServiceLog"/>
         </Logger>
-
         <Logger name="org.springframework.boot" level="warn" additivity="false">
             <AppenderRef ref="ContainerLog"/>
         </Logger>
@@ -119,6 +118,7 @@
         </Logger>
         <Root level="debug">
             <AppenderRef ref="Console"/>
+            <AppenderRef ref="ContainerLog"/>
         </Root>
     </Loggers>
 </Configuration>

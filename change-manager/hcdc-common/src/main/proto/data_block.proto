@@ -149,7 +149,6 @@ message DFSChangeData {
 message DFSSchemaChange {
   required DFSTransaction transaction = 1;
   required DFSFile file = 2;
-  required string group = 3;
   required int32 op = 4;
   optional string currentSchemaPath = 5;
   required string updatedSchemaPath = 6;

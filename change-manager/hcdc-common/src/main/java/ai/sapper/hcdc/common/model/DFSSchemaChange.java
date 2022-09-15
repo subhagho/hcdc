@@ -16,7 +16,6 @@ private static final long serialVersionUID = 0L;
     super(builder);
   }
   private DFSSchemaChange() {
-    group_ = "";
     currentSchemaPath_ = "";
     updatedSchemaPath_ = "";
   }
@@ -78,26 +77,20 @@ private static final long serialVersionUID = 0L;
             bitField0_ |= 0x00000002;
             break;
           }
-          case 26: {
-            com.google.protobuf.ByteString bs = input.readBytes();
-            bitField0_ |= 0x00000004;
-            group_ = bs;
-            break;
-          }
           case 32: {
-            bitField0_ |= 0x00000008;
+            bitField0_ |= 0x00000004;
             op_ = input.readInt32();
             break;
           }
           case 42: {
             com.google.protobuf.ByteString bs = input.readBytes();
-            bitField0_ |= 0x00000010;
+            bitField0_ |= 0x00000008;
             currentSchemaPath_ = bs;
             break;
           }
           case 50: {
             com.google.protobuf.ByteString bs = input.readBytes();
-            bitField0_ |= 0x00000020;
+            bitField0_ |= 0x00000010;
             updatedSchemaPath_ = bs;
             break;
           }
@@ -188,54 +181,6 @@ private static final long serialVersionUID = 0L;
     return file_ == null ? ai.sapper.hcdc.common.model.DFSFile.getDefaultInstance() : file_;
   }
 
-  public static final int GROUP_FIELD_NUMBER = 3;
-  private volatile java.lang.Object group_;
-  /**
-   * <code>required string group = 3;</code>
-   * @return Whether the group field is set.
-   */
-  @java.lang.Override
-  public boolean hasGroup() {
-    return ((bitField0_ & 0x00000004) != 0);
-  }
-  /**
-   * <code>required string group = 3;</code>
-   * @return The group.
-   */
-  @java.lang.Override
-  public java.lang.String getGroup() {
-    java.lang.Object ref = group_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        group_ = s;
-      }
-      return s;
-    }
-  }
-  /**
-   * <code>required string group = 3;</code>
-   * @return The bytes for group.
-   */
-  @java.lang.Override
-  public com.google.protobuf.ByteString
-      getGroupBytes() {
-    java.lang.Object ref = group_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      group_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
-  }
-
   public static final int OP_FIELD_NUMBER = 4;
   private int op_;
   /**
@@ -244,7 +189,7 @@ private static final long serialVersionUID = 0L;
    */
   @java.lang.Override
   public boolean hasOp() {
-    return ((bitField0_ & 0x00000008) != 0);
+    return ((bitField0_ & 0x00000004) != 0);
   }
   /**
    * <code>required int32 op = 4;</code>
@@ -263,7 +208,7 @@ private static final long serialVersionUID = 0L;
    */
   @java.lang.Override
   public boolean hasCurrentSchemaPath() {
-    return ((bitField0_ & 0x00000010) != 0);
+    return ((bitField0_ & 0x00000008) != 0);
   }
   /**
    * <code>optional string currentSchemaPath = 5;</code>
@@ -311,7 +256,7 @@ private static final long serialVersionUID = 0L;
    */
   @java.lang.Override
   public boolean hasUpdatedSchemaPath() {
-    return ((bitField0_ & 0x00000020) != 0);
+    return ((bitField0_ & 0x00000010) != 0);
   }
   /**
    * <code>required string updatedSchemaPath = 6;</code>
@@ -366,10 +311,6 @@ private static final long serialVersionUID = 0L;
       memoizedIsInitialized = 0;
       return false;
     }
-    if (!hasGroup()) {
-      memoizedIsInitialized = 0;
-      return false;
-    }
     if (!hasOp()) {
       memoizedIsInitialized = 0;
       return false;
@@ -400,15 +341,12 @@ private static final long serialVersionUID = 0L;
       output.writeMessage(2, getFile());
     }
     if (((bitField0_ & 0x00000004) != 0)) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, group_);
-    }
-    if (((bitField0_ & 0x00000008) != 0)) {
       output.writeInt32(4, op_);
     }
-    if (((bitField0_ & 0x00000010) != 0)) {
+    if (((bitField0_ & 0x00000008) != 0)) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 5, currentSchemaPath_);
     }
-    if (((bitField0_ & 0x00000020) != 0)) {
+    if (((bitField0_ & 0x00000010) != 0)) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 6, updatedSchemaPath_);
     }
     unknownFields.writeTo(output);
@@ -429,16 +367,13 @@ private static final long serialVersionUID = 0L;
         .computeMessageSize(2, getFile());
     }
     if (((bitField0_ & 0x00000004) != 0)) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, group_);
-    }
-    if (((bitField0_ & 0x00000008) != 0)) {
       size += com.google.protobuf.CodedOutputStream
         .computeInt32Size(4, op_);
     }
-    if (((bitField0_ & 0x00000010) != 0)) {
+    if (((bitField0_ & 0x00000008) != 0)) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, currentSchemaPath_);
     }
-    if (((bitField0_ & 0x00000020) != 0)) {
+    if (((bitField0_ & 0x00000010) != 0)) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, updatedSchemaPath_);
     }
     size += unknownFields.getSerializedSize();
@@ -465,11 +400,6 @@ private static final long serialVersionUID = 0L;
     if (hasFile()) {
       if (!getFile()
           .equals(other.getFile())) return false;
-    }
-    if (hasGroup() != other.hasGroup()) return false;
-    if (hasGroup()) {
-      if (!getGroup()
-          .equals(other.getGroup())) return false;
     }
     if (hasOp() != other.hasOp()) return false;
     if (hasOp()) {
@@ -504,10 +434,6 @@ private static final long serialVersionUID = 0L;
     if (hasFile()) {
       hash = (37 * hash) + FILE_FIELD_NUMBER;
       hash = (53 * hash) + getFile().hashCode();
-    }
-    if (hasGroup()) {
-      hash = (37 * hash) + GROUP_FIELD_NUMBER;
-      hash = (53 * hash) + getGroup().hashCode();
     }
     if (hasOp()) {
       hash = (37 * hash) + OP_FIELD_NUMBER;
@@ -668,14 +594,12 @@ private static final long serialVersionUID = 0L;
         fileBuilder_.clear();
       }
       bitField0_ = (bitField0_ & ~0x00000002);
-      group_ = "";
-      bitField0_ = (bitField0_ & ~0x00000004);
       op_ = 0;
-      bitField0_ = (bitField0_ & ~0x00000008);
+      bitField0_ = (bitField0_ & ~0x00000004);
       currentSchemaPath_ = "";
-      bitField0_ = (bitField0_ & ~0x00000010);
+      bitField0_ = (bitField0_ & ~0x00000008);
       updatedSchemaPath_ = "";
-      bitField0_ = (bitField0_ & ~0x00000020);
+      bitField0_ = (bitField0_ & ~0x00000010);
       return this;
     }
 
@@ -721,19 +645,15 @@ private static final long serialVersionUID = 0L;
         to_bitField0_ |= 0x00000002;
       }
       if (((from_bitField0_ & 0x00000004) != 0)) {
+        result.op_ = op_;
         to_bitField0_ |= 0x00000004;
       }
-      result.group_ = group_;
       if (((from_bitField0_ & 0x00000008) != 0)) {
-        result.op_ = op_;
         to_bitField0_ |= 0x00000008;
       }
+      result.currentSchemaPath_ = currentSchemaPath_;
       if (((from_bitField0_ & 0x00000010) != 0)) {
         to_bitField0_ |= 0x00000010;
-      }
-      result.currentSchemaPath_ = currentSchemaPath_;
-      if (((from_bitField0_ & 0x00000020) != 0)) {
-        to_bitField0_ |= 0x00000020;
       }
       result.updatedSchemaPath_ = updatedSchemaPath_;
       result.bitField0_ = to_bitField0_;
@@ -791,21 +711,16 @@ private static final long serialVersionUID = 0L;
       if (other.hasFile()) {
         mergeFile(other.getFile());
       }
-      if (other.hasGroup()) {
-        bitField0_ |= 0x00000004;
-        group_ = other.group_;
-        onChanged();
-      }
       if (other.hasOp()) {
         setOp(other.getOp());
       }
       if (other.hasCurrentSchemaPath()) {
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000008;
         currentSchemaPath_ = other.currentSchemaPath_;
         onChanged();
       }
       if (other.hasUpdatedSchemaPath()) {
-        bitField0_ |= 0x00000020;
+        bitField0_ |= 0x00000010;
         updatedSchemaPath_ = other.updatedSchemaPath_;
         onChanged();
       }
@@ -820,9 +735,6 @@ private static final long serialVersionUID = 0L;
         return false;
       }
       if (!hasFile()) {
-        return false;
-      }
-      if (!hasGroup()) {
         return false;
       }
       if (!hasOp()) {
@@ -1100,90 +1012,6 @@ private static final long serialVersionUID = 0L;
       return fileBuilder_;
     }
 
-    private java.lang.Object group_ = "";
-    /**
-     * <code>required string group = 3;</code>
-     * @return Whether the group field is set.
-     */
-    public boolean hasGroup() {
-      return ((bitField0_ & 0x00000004) != 0);
-    }
-    /**
-     * <code>required string group = 3;</code>
-     * @return The group.
-     */
-    public java.lang.String getGroup() {
-      java.lang.Object ref = group_;
-      if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          group_ = s;
-        }
-        return s;
-      } else {
-        return (java.lang.String) ref;
-      }
-    }
-    /**
-     * <code>required string group = 3;</code>
-     * @return The bytes for group.
-     */
-    public com.google.protobuf.ByteString
-        getGroupBytes() {
-      java.lang.Object ref = group_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        group_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-    /**
-     * <code>required string group = 3;</code>
-     * @param value The group to set.
-     * @return This builder for chaining.
-     */
-    public Builder setGroup(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000004;
-      group_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>required string group = 3;</code>
-     * @return This builder for chaining.
-     */
-    public Builder clearGroup() {
-      bitField0_ = (bitField0_ & ~0x00000004);
-      group_ = getDefaultInstance().getGroup();
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>required string group = 3;</code>
-     * @param value The bytes for group to set.
-     * @return This builder for chaining.
-     */
-    public Builder setGroupBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000004;
-      group_ = value;
-      onChanged();
-      return this;
-    }
-
     private int op_ ;
     /**
      * <code>required int32 op = 4;</code>
@@ -1191,7 +1019,7 @@ private static final long serialVersionUID = 0L;
      */
     @java.lang.Override
     public boolean hasOp() {
-      return ((bitField0_ & 0x00000008) != 0);
+      return ((bitField0_ & 0x00000004) != 0);
     }
     /**
      * <code>required int32 op = 4;</code>
@@ -1207,7 +1035,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder setOp(int value) {
-      bitField0_ |= 0x00000008;
+      bitField0_ |= 0x00000004;
       op_ = value;
       onChanged();
       return this;
@@ -1217,7 +1045,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder clearOp() {
-      bitField0_ = (bitField0_ & ~0x00000008);
+      bitField0_ = (bitField0_ & ~0x00000004);
       op_ = 0;
       onChanged();
       return this;
@@ -1229,7 +1057,7 @@ private static final long serialVersionUID = 0L;
      * @return Whether the currentSchemaPath field is set.
      */
     public boolean hasCurrentSchemaPath() {
-      return ((bitField0_ & 0x00000010) != 0);
+      return ((bitField0_ & 0x00000008) != 0);
     }
     /**
      * <code>optional string currentSchemaPath = 5;</code>
@@ -1276,7 +1104,7 @@ private static final long serialVersionUID = 0L;
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000010;
+  bitField0_ |= 0x00000008;
       currentSchemaPath_ = value;
       onChanged();
       return this;
@@ -1286,7 +1114,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder clearCurrentSchemaPath() {
-      bitField0_ = (bitField0_ & ~0x00000010);
+      bitField0_ = (bitField0_ & ~0x00000008);
       currentSchemaPath_ = getDefaultInstance().getCurrentSchemaPath();
       onChanged();
       return this;
@@ -1301,7 +1129,7 @@ private static final long serialVersionUID = 0L;
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000010;
+  bitField0_ |= 0x00000008;
       currentSchemaPath_ = value;
       onChanged();
       return this;
@@ -1313,7 +1141,7 @@ private static final long serialVersionUID = 0L;
      * @return Whether the updatedSchemaPath field is set.
      */
     public boolean hasUpdatedSchemaPath() {
-      return ((bitField0_ & 0x00000020) != 0);
+      return ((bitField0_ & 0x00000010) != 0);
     }
     /**
      * <code>required string updatedSchemaPath = 6;</code>
@@ -1360,7 +1188,7 @@ private static final long serialVersionUID = 0L;
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000020;
+  bitField0_ |= 0x00000010;
       updatedSchemaPath_ = value;
       onChanged();
       return this;
@@ -1370,7 +1198,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder clearUpdatedSchemaPath() {
-      bitField0_ = (bitField0_ & ~0x00000020);
+      bitField0_ = (bitField0_ & ~0x00000010);
       updatedSchemaPath_ = getDefaultInstance().getUpdatedSchemaPath();
       onChanged();
       return this;
@@ -1385,7 +1213,7 @@ private static final long serialVersionUID = 0L;
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000020;
+  bitField0_ |= 0x00000010;
       updatedSchemaPath_ = value;
       onChanged();
       return this;

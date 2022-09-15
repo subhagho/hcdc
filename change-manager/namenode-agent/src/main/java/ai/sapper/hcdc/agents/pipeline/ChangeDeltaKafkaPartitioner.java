@@ -43,7 +43,8 @@ public class ChangeDeltaKafkaPartitioner implements KafkaPartitioner<DFSChangeDe
         if (!Strings.isNullOrEmpty(schemaEntity.getGroup())) {
             entity = schemaEntity.getGroup();
         }
-        String pk = String.format("%s::%s", schemaEntity.getDomain(), entity);
+        String pk = String.format("%s::%s::%s",
+                schemaEntity.getDomain(), schemaEntity.getSchema(), entity);
         int hash = pk.hashCode();
         if (hash < 0) {
             hash *= -1;

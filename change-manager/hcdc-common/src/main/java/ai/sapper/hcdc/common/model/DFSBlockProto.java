@@ -198,38 +198,38 @@ public final class DFSBlockProto {
       "model.DFSChangeData.OutputPathEntry\0321\n\017O" +
       "utputPathEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001" +
       "(\t:\0028\001\"#\n\016FileSystemCode\022\t\n\005LOCAL\020\000\022\006\n\002S" +
-      "3\020\001\"\330\001\n\017DFSSchemaChange\022@\n\013transaction\030\001" +
+      "3\020\001\"\311\001\n\017DFSSchemaChange\022@\n\013transaction\030\001" +
       " \002(\0132+.ai_sapper_hcdc_common_model.DFSTr" +
       "ansaction\0222\n\004file\030\002 \002(\0132$.ai_sapper_hcdc" +
-      "_common_model.DFSFile\022\r\n\005group\030\003 \002(\t\022\n\n\002" +
-      "op\030\004 \002(\005\022\031\n\021currentSchemaPath\030\005 \001(\t\022\031\n\021u" +
-      "pdatedSchemaPath\030\006 \002(\t\"\337\007\n\016DFSChangeDelt" +
-      "a\022\014\n\004txId\030\002 \002(\t\022\020\n\010sequence\030\003 \002(\003\022<\n\006ent" +
-      "ity\030\004 \002(\0132,.ai_sapper_hcdc_common_model." +
-      "DFSSchemaEntity\022\014\n\004type\030\005 \002(\t\022\021\n\ttimesta" +
-      "mp\030\006 \002(\004\022D\n\014schemaChange\030\010 \001(\0132,.ai_sapp" +
-      "er_hcdc_common_model.DFSSchemaChangeH\000\022@" +
-      "\n\ndataChange\030\t \001(\0132*.ai_sapper_hcdc_comm" +
-      "on_model.DFSChangeDataH\000\022:\n\007fileAdd\030\n \001(" +
-      "\0132\'.ai_sapper_hcdc_common_model.DFSFileA" +
-      "ddH\000\022@\n\nfileAppend\030\013 \001(\0132*.ai_sapper_hcd" +
-      "c_common_model.DFSFileAppendH\000\022>\n\tfileCl" +
-      "ose\030\014 \001(\0132).ai_sapper_hcdc_common_model." +
-      "DFSFileCloseH\000\022@\n\nfileDelete\030\r \001(\0132*.ai_" +
-      "sapper_hcdc_common_model.DFSFileDeleteH\000" +
-      "\022@\n\nfileRename\030\016 \001(\0132*.ai_sapper_hcdc_co" +
-      "mmon_model.DFSFileRenameH\000\022<\n\010blockAdd\030\017" +
-      " \001(\0132(.ai_sapper_hcdc_common_model.DFSBl" +
-      "ockAddH\000\022B\n\013blockUpdate\030\020 \001(\0132+.ai_sappe" +
-      "r_hcdc_common_model.DFSBlockUpdateH\000\022F\n\r" +
-      "blockTruncate\030\021 \001(\0132-.ai_sapper_hcdc_com" +
-      "mon_model.DFSBlockTruncateH\000\022:\n\006ignore\030\022" +
-      " \001(\0132(.ai_sapper_hcdc_common_model.DFSIg" +
-      "noreTxH\000\0226\n\005error\030\023 \001(\0132%.ai_sapper_hcdc" +
-      "_common_model.DFSErrorH\000\022<\n\006target\030\007 \001(\013" +
-      "2,.ai_sapper_hcdc_common_model.DFSSchema" +
-      "EntityB\010\n\006changeB.\n\033ai.sapper.hcdc.commo" +
-      "n.modelB\rDFSBlockProtoP\001"
+      "_common_model.DFSFile\022\n\n\002op\030\004 \002(\005\022\031\n\021cur" +
+      "rentSchemaPath\030\005 \001(\t\022\031\n\021updatedSchemaPat" +
+      "h\030\006 \002(\t\"\337\007\n\016DFSChangeDelta\022\014\n\004txId\030\002 \002(\t" +
+      "\022\020\n\010sequence\030\003 \002(\003\022<\n\006entity\030\004 \002(\0132,.ai_" +
+      "sapper_hcdc_common_model.DFSSchemaEntity" +
+      "\022\014\n\004type\030\005 \002(\t\022\021\n\ttimestamp\030\006 \002(\004\022D\n\014sch" +
+      "emaChange\030\010 \001(\0132,.ai_sapper_hcdc_common_" +
+      "model.DFSSchemaChangeH\000\022@\n\ndataChange\030\t " +
+      "\001(\0132*.ai_sapper_hcdc_common_model.DFSCha" +
+      "ngeDataH\000\022:\n\007fileAdd\030\n \001(\0132\'.ai_sapper_h" +
+      "cdc_common_model.DFSFileAddH\000\022@\n\nfileApp" +
+      "end\030\013 \001(\0132*.ai_sapper_hcdc_common_model." +
+      "DFSFileAppendH\000\022>\n\tfileClose\030\014 \001(\0132).ai_" +
+      "sapper_hcdc_common_model.DFSFileCloseH\000\022" +
+      "@\n\nfileDelete\030\r \001(\0132*.ai_sapper_hcdc_com" +
+      "mon_model.DFSFileDeleteH\000\022@\n\nfileRename\030" +
+      "\016 \001(\0132*.ai_sapper_hcdc_common_model.DFSF" +
+      "ileRenameH\000\022<\n\010blockAdd\030\017 \001(\0132(.ai_sappe" +
+      "r_hcdc_common_model.DFSBlockAddH\000\022B\n\013blo" +
+      "ckUpdate\030\020 \001(\0132+.ai_sapper_hcdc_common_m" +
+      "odel.DFSBlockUpdateH\000\022F\n\rblockTruncate\030\021" +
+      " \001(\0132-.ai_sapper_hcdc_common_model.DFSBl" +
+      "ockTruncateH\000\022:\n\006ignore\030\022 \001(\0132(.ai_sappe" +
+      "r_hcdc_common_model.DFSIgnoreTxH\000\0226\n\005err" +
+      "or\030\023 \001(\0132%.ai_sapper_hcdc_common_model.D" +
+      "FSErrorH\000\022<\n\006target\030\007 \001(\0132,.ai_sapper_hc" +
+      "dc_common_model.DFSSchemaEntityB\010\n\006chang" +
+      "eB.\n\033ai.sapper.hcdc.common.modelB\rDFSBlo" +
+      "ckProtoP\001"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -336,7 +336,7 @@ public final class DFSBlockProto {
     internal_static_ai_sapper_hcdc_common_model_DFSSchemaChange_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ai_sapper_hcdc_common_model_DFSSchemaChange_descriptor,
-        new java.lang.String[] { "Transaction", "File", "Group", "Op", "CurrentSchemaPath", "UpdatedSchemaPath", });
+        new java.lang.String[] { "Transaction", "File", "Op", "CurrentSchemaPath", "UpdatedSchemaPath", });
     internal_static_ai_sapper_hcdc_common_model_DFSChangeDelta_descriptor =
       getDescriptor().getMessageTypes().get(16);
     internal_static_ai_sapper_hcdc_common_model_DFSChangeDelta_fieldAccessorTable = new

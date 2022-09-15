@@ -278,7 +278,8 @@ public class HDFSSnapshotProcessor {
             }
             DFSFileReplicaState rState = stateManager
                     .replicaStateHelper()
-                    .get(entity, fileState.getFileInfo().getInodeId());
+                    .get(entity,
+                            fileState.getFileInfo().getInodeId());
             if (rState == null) {
                 throw new SnapshotError(String.format("HDFS File replication record not found. [path=%s]", hdfsPath));
             }

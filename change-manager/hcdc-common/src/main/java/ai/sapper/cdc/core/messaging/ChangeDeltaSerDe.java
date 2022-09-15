@@ -106,6 +106,7 @@ public class ChangeDeltaSerDe {
         } else {
             throw new MessagingError(String.format("Invalid Message DataType. [type=%s]", type.getCanonicalName()));
         }
+        builder.setEntity(SchemaEntityHelper.proto(schemaEntity));
         delta = builder.build();
         key = getMessageKey(schemaEntity);
         if (Strings.isNullOrEmpty(id)) {
@@ -147,8 +148,10 @@ public class ChangeDeltaSerDe {
                                                                @NonNull SchemaEntity schemaEntity,
                                                                @NonNull MessageObject.MessageMode mode) throws Exception {
         DFSChangeDelta delta = message.value();
+        DFSSchemaEntity entity = SchemaEntityHelper.proto(schemaEntity);
         delta = delta.toBuilder()
-                .setTarget(SchemaEntityHelper.proto(schemaEntity))
+                .setEntity(entity)
+                .setTarget(entity)
                 .build();
         MessageObject<String, DFSChangeDelta> m = new KafkaMessage<>(message);
         m.correlationId(message.correlationId());
@@ -164,7 +167,6 @@ public class ChangeDeltaSerDe {
         builder
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
                 .setDataChange(data);
         return String.valueOf(data.getFile().getInodeId());
@@ -175,7 +177,6 @@ public class ChangeDeltaSerDe {
         builder
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
                 .setFileAdd(data);
         return String.valueOf(data.getFile().getInodeId());
@@ -186,7 +187,6 @@ public class ChangeDeltaSerDe {
         builder
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
                 .setFileAppend(data);
         return String.valueOf(data.getFile().getInodeId());
@@ -197,7 +197,6 @@ public class ChangeDeltaSerDe {
         builder
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
                 .setFileDelete(data);
         return String.valueOf(data.getFile().getInodeId());
@@ -208,7 +207,6 @@ public class ChangeDeltaSerDe {
         builder
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
                 .setBlockAdd(data);
         return String.valueOf(data.getFile().getInodeId());
@@ -219,7 +217,6 @@ public class ChangeDeltaSerDe {
         builder
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
                 .setBlockUpdate(data);
         return String.valueOf(data.getFile().getInodeId());
@@ -230,7 +227,6 @@ public class ChangeDeltaSerDe {
         builder
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
                 .setBlockTruncate(data);
         return String.valueOf(data.getFile().getInodeId());
@@ -241,7 +237,6 @@ public class ChangeDeltaSerDe {
         builder
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
                 .setFileClose(data);
         return String.valueOf(data.getFile().getInodeId());
@@ -252,7 +247,6 @@ public class ChangeDeltaSerDe {
         builder
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getSrcFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
                 .setFileRename(data);
         return String.valueOf(data.getSrcFile().getInodeId());
@@ -263,7 +257,6 @@ public class ChangeDeltaSerDe {
         builder
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
                 .setIgnore(data);
         return String.valueOf(data.getFile().getInodeId());
@@ -274,7 +267,6 @@ public class ChangeDeltaSerDe {
         builder
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
                 .setError(data);
         return UUID.randomUUID().toString();
@@ -285,7 +277,6 @@ public class ChangeDeltaSerDe {
         builder
                 .setTimestamp(System.currentTimeMillis())
                 .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
-                .setEntity(data.getFile().getEntity())
                 .setType(data.getClass().getCanonicalName())
                 .setSchemaChange(data);
         return UUID.randomUUID().toString();

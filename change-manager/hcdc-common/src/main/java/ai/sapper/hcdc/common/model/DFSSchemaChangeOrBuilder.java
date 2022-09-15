@@ -38,23 +38,6 @@ public interface DFSSchemaChangeOrBuilder extends
   ai.sapper.hcdc.common.model.DFSFileOrBuilder getFileOrBuilder();
 
   /**
-   * <code>required string group = 3;</code>
-   * @return Whether the group field is set.
-   */
-  boolean hasGroup();
-  /**
-   * <code>required string group = 3;</code>
-   * @return The group.
-   */
-  java.lang.String getGroup();
-  /**
-   * <code>required string group = 3;</code>
-   * @return The bytes for group.
-   */
-  com.google.protobuf.ByteString
-      getGroupBytes();
-
-  /**
    * <code>required int32 op = 4;</code>
    * @return Whether the op field is set.
    */

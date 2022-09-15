@@ -412,6 +412,7 @@ public class SchemaManager {
     public String getZkPath(SchemaEntity schema) {
         return new PathUtils.ZkPathBuilder(getZkPath())
                 .withPath(schema.getDomain())
+                .withPath(schema.getSchema())
                 .withPath(schema.getEntity())
                 .build();
     }
