@@ -226,7 +226,7 @@ public abstract class TransactionProcessor {
                 }
             }
             if (txId <= txState.getProcessedTxId()) {
-                if (retry && txId == txState.getProcessedTxId()) {
+                if (retry) {
                     return txId;
                 }
                 throw new InvalidMessageError(message.id(),

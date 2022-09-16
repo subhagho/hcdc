@@ -63,7 +63,7 @@ task fatJar(type: Jar) {
     manifest {
         attributes 'Main-Class': 'ai.sapper.hcdc.agents.namenode.main.SnapshotRunner'
     }
-    baseName = 'namenode-agent-ALL-jar'
+    baseName = 'hadoop-agent-ALL'
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
