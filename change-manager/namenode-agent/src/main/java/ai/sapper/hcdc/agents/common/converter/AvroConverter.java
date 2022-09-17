@@ -1,9 +1,9 @@
 package ai.sapper.hcdc.agents.common.converter;
 
 import ai.sapper.cdc.common.model.AvroChangeType;
-import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.schema.AvroSchema;
 import ai.sapper.cdc.common.schema.AvroUtils;
+import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.model.HDFSBlockData;

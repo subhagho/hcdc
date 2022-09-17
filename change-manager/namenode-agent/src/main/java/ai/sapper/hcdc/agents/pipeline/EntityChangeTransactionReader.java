@@ -1,9 +1,9 @@
 package ai.sapper.hcdc.agents.pipeline;
 
 import ai.sapper.cdc.common.model.AvroChangeType;
-import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.model.services.SnapshotDoneRequest;
 import ai.sapper.cdc.common.schema.AvroSchema;
+import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.core.WebServiceClient;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
@@ -17,10 +17,10 @@ import ai.sapper.cdc.core.messaging.MessageSender;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.model.HDFSBlockData;
 import ai.sapper.cdc.core.schema.SchemaManager;
+import ai.sapper.cdc.core.utils.SchemaEntityHelper;
 import ai.sapper.hcdc.agents.common.*;
 import ai.sapper.hcdc.agents.model.*;
 import ai.sapper.hcdc.common.model.*;
-import ai.sapper.cdc.core.utils.SchemaEntityHelper;
 import ai.sapper.hcdc.io.FSBlock;
 import ai.sapper.hcdc.io.FSFile;
 import ai.sapper.hcdc.io.HCDCFsUtils;

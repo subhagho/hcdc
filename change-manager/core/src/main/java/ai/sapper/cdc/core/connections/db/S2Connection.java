@@ -7,7 +7,6 @@ import ai.sapper.cdc.core.connections.settngs.JdbcConnectionSettings;
 import ai.sapper.cdc.core.keystore.KeyStore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.singlestore.jdbc.SingleStorePoolDataSource;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;

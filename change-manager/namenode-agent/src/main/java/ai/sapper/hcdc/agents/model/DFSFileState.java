@@ -3,7 +3,6 @@ package ai.sapper.hcdc.agents.model;
 import ai.sapper.cdc.core.model.BlockTransactionDelta;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.hcdc.common.model.DFSFile;
-import ai.sapper.hcdc.common.model.DFSSchemaEntity;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;

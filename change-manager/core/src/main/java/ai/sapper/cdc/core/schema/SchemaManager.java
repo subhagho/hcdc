@@ -2,10 +2,10 @@ package ai.sapper.cdc.core.schema;
 
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.cache.LRUCache;
-import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.model.services.PathOrSchema;
 import ai.sapper.cdc.common.model.services.PathWithSchema;
 import ai.sapper.cdc.common.schema.AvroSchema;
+import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.schema.SchemaEvolutionValidator;
 import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.common.utils.DefaultLogger;

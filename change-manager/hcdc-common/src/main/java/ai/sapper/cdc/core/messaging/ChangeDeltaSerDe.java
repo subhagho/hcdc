@@ -2,8 +2,8 @@ package ai.sapper.cdc.core.messaging;
 
 import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.hcdc.common.model.*;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
+import ai.sapper.hcdc.common.model.*;
 import com.google.common.base.Strings;
 import com.google.protobuf.MessageOrBuilder;
 import com.google.protobuf.util.JsonFormat;
