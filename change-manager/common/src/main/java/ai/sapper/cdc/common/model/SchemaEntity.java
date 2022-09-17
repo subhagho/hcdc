@@ -17,6 +17,7 @@ public class SchemaEntity {
     private String schema = "DEFAULT";
     private String group = "DEFAULT";
     private String entity;
+    private boolean enabled = false;
 
     public SchemaEntity() {
     }
