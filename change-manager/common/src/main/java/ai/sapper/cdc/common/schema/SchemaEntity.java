@@ -1,4 +1,4 @@
-package ai.sapper.cdc.common.model;
+package ai.sapper.cdc.common.schema;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
@@ -14,7 +14,6 @@ import java.util.Objects;
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
 public class SchemaEntity {
     private String domain;
-    private String schema = "DEFAULT";
     private String group = "DEFAULT";
     private String entity;
     private boolean enabled = false;

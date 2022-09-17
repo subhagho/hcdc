@@ -1,5 +1,6 @@
 package ai.sapper.cdc.common.model;
 
+import ai.sapper.cdc.common.schema.SchemaEntity;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;

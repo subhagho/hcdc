@@ -1,7 +1,7 @@
 package ai.sapper.cdc.core.io.impl.glacier;
 
 import ai.sapper.cdc.common.ConfigReader;
-import ai.sapper.cdc.common.model.SchemaEntity;
+import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.utils.ChecksumUtils;
 import ai.sapper.cdc.core.io.Archiver;
 import ai.sapper.cdc.core.io.FileSystem;

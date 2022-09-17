@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.cdc.common.model.SchemaEntity;
+import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.core.filters.DomainManager;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;

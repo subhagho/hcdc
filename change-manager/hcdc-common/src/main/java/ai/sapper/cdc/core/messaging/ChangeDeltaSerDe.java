@@ -1,10 +1,9 @@
 package ai.sapper.cdc.core.messaging;
 
-import ai.sapper.cdc.common.model.SchemaEntity;
+import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.protobuf.MessageOrBuilder;
 import com.google.protobuf.util.JsonFormat;
@@ -131,16 +130,14 @@ public class ChangeDeltaSerDe {
     }
 
     public static String getMessageKey(@NonNull SchemaEntity schemaEntity) {
-        return String.format("%s::%s::%s",
+        return String.format("%s::%s",
                 schemaEntity.getDomain(),
-                schemaEntity.getSchema(),
                 schemaEntity.getEntity());
     }
 
     public static String getMessageKey(@NonNull DFSSchemaEntity schemaEntity) {
-        return String.format("%s::%s::%s",
+        return String.format("%s::%s",
                 schemaEntity.getDomain(),
-                schemaEntity.getSchema(),
                 schemaEntity.getEntity());
     }
 

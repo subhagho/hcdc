@@ -17,8 +17,8 @@ private static final long serialVersionUID = 0L;
   }
   private DFSSchemaEntity() {
     domain_ = "";
-    schema_ = "";
     entity_ = "";
+    group_ = "";
   }
 
   @java.lang.Override
@@ -61,13 +61,13 @@ private static final long serialVersionUID = 0L;
           case 18: {
             com.google.protobuf.ByteString bs = input.readBytes();
             bitField0_ |= 0x00000002;
-            schema_ = bs;
+            entity_ = bs;
             break;
           }
           case 26: {
             com.google.protobuf.ByteString bs = input.readBytes();
             bitField0_ |= 0x00000004;
-            entity_ = bs;
+            group_ = bs;
             break;
           }
           default: {
@@ -153,66 +153,18 @@ private static final long serialVersionUID = 0L;
     }
   }
 
-  public static final int SCHEMA_FIELD_NUMBER = 2;
-  private volatile java.lang.Object schema_;
-  /**
-   * <code>optional string schema = 2;</code>
-   * @return Whether the schema field is set.
-   */
-  @java.lang.Override
-  public boolean hasSchema() {
-    return ((bitField0_ & 0x00000002) != 0);
-  }
-  /**
-   * <code>optional string schema = 2;</code>
-   * @return The schema.
-   */
-  @java.lang.Override
-  public java.lang.String getSchema() {
-    java.lang.Object ref = schema_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        schema_ = s;
-      }
-      return s;
-    }
-  }
-  /**
-   * <code>optional string schema = 2;</code>
-   * @return The bytes for schema.
-   */
-  @java.lang.Override
-  public com.google.protobuf.ByteString
-      getSchemaBytes() {
-    java.lang.Object ref = schema_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      schema_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
-  }
-
-  public static final int ENTITY_FIELD_NUMBER = 3;
+  public static final int ENTITY_FIELD_NUMBER = 2;
   private volatile java.lang.Object entity_;
   /**
-   * <code>required string entity = 3;</code>
+   * <code>required string entity = 2;</code>
    * @return Whether the entity field is set.
    */
   @java.lang.Override
   public boolean hasEntity() {
-    return ((bitField0_ & 0x00000004) != 0);
+    return ((bitField0_ & 0x00000002) != 0);
   }
   /**
-   * <code>required string entity = 3;</code>
+   * <code>required string entity = 2;</code>
    * @return The entity.
    */
   @java.lang.Override
@@ -231,7 +183,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>required string entity = 3;</code>
+   * <code>required string entity = 2;</code>
    * @return The bytes for entity.
    */
   @java.lang.Override
@@ -243,6 +195,54 @@ private static final long serialVersionUID = 0L;
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       entity_ = b;
+      return b;
+    } else {
+      return (com.google.protobuf.ByteString) ref;
+    }
+  }
+
+  public static final int GROUP_FIELD_NUMBER = 3;
+  private volatile java.lang.Object group_;
+  /**
+   * <code>optional string group = 3;</code>
+   * @return Whether the group field is set.
+   */
+  @java.lang.Override
+  public boolean hasGroup() {
+    return ((bitField0_ & 0x00000004) != 0);
+  }
+  /**
+   * <code>optional string group = 3;</code>
+   * @return The group.
+   */
+  @java.lang.Override
+  public java.lang.String getGroup() {
+    java.lang.Object ref = group_;
+    if (ref instanceof java.lang.String) {
+      return (java.lang.String) ref;
+    } else {
+      com.google.protobuf.ByteString bs = 
+          (com.google.protobuf.ByteString) ref;
+      java.lang.String s = bs.toStringUtf8();
+      if (bs.isValidUtf8()) {
+        group_ = s;
+      }
+      return s;
+    }
+  }
+  /**
+   * <code>optional string group = 3;</code>
+   * @return The bytes for group.
+   */
+  @java.lang.Override
+  public com.google.protobuf.ByteString
+      getGroupBytes() {
+    java.lang.Object ref = group_;
+    if (ref instanceof java.lang.String) {
+      com.google.protobuf.ByteString b = 
+          com.google.protobuf.ByteString.copyFromUtf8(
+              (java.lang.String) ref);
+      group_ = b;
       return b;
     } else {
       return (com.google.protobuf.ByteString) ref;
@@ -275,10 +275,10 @@ private static final long serialVersionUID = 0L;
       com.google.protobuf.GeneratedMessageV3.writeString(output, 1, domain_);
     }
     if (((bitField0_ & 0x00000002) != 0)) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, schema_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, entity_);
     }
     if (((bitField0_ & 0x00000004) != 0)) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, entity_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, group_);
     }
     unknownFields.writeTo(output);
   }
@@ -293,10 +293,10 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, domain_);
     }
     if (((bitField0_ & 0x00000002) != 0)) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, schema_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, entity_);
     }
     if (((bitField0_ & 0x00000004) != 0)) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, entity_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, group_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -318,15 +318,15 @@ private static final long serialVersionUID = 0L;
       if (!getDomain()
           .equals(other.getDomain())) return false;
     }
-    if (hasSchema() != other.hasSchema()) return false;
-    if (hasSchema()) {
-      if (!getSchema()
-          .equals(other.getSchema())) return false;
-    }
     if (hasEntity() != other.hasEntity()) return false;
     if (hasEntity()) {
       if (!getEntity()
           .equals(other.getEntity())) return false;
+    }
+    if (hasGroup() != other.hasGroup()) return false;
+    if (hasGroup()) {
+      if (!getGroup()
+          .equals(other.getGroup())) return false;
     }
     if (!unknownFields.equals(other.unknownFields)) return false;
     return true;
@@ -343,13 +343,13 @@ private static final long serialVersionUID = 0L;
       hash = (37 * hash) + DOMAIN_FIELD_NUMBER;
       hash = (53 * hash) + getDomain().hashCode();
     }
-    if (hasSchema()) {
-      hash = (37 * hash) + SCHEMA_FIELD_NUMBER;
-      hash = (53 * hash) + getSchema().hashCode();
-    }
     if (hasEntity()) {
       hash = (37 * hash) + ENTITY_FIELD_NUMBER;
       hash = (53 * hash) + getEntity().hashCode();
+    }
+    if (hasGroup()) {
+      hash = (37 * hash) + GROUP_FIELD_NUMBER;
+      hash = (53 * hash) + getGroup().hashCode();
     }
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
@@ -486,9 +486,9 @@ private static final long serialVersionUID = 0L;
       super.clear();
       domain_ = "";
       bitField0_ = (bitField0_ & ~0x00000001);
-      schema_ = "";
-      bitField0_ = (bitField0_ & ~0x00000002);
       entity_ = "";
+      bitField0_ = (bitField0_ & ~0x00000002);
+      group_ = "";
       bitField0_ = (bitField0_ & ~0x00000004);
       return this;
     }
@@ -525,11 +525,11 @@ private static final long serialVersionUID = 0L;
       if (((from_bitField0_ & 0x00000002) != 0)) {
         to_bitField0_ |= 0x00000002;
       }
-      result.schema_ = schema_;
+      result.entity_ = entity_;
       if (((from_bitField0_ & 0x00000004) != 0)) {
         to_bitField0_ |= 0x00000004;
       }
-      result.entity_ = entity_;
+      result.group_ = group_;
       result.bitField0_ = to_bitField0_;
       onBuilt();
       return result;
@@ -584,14 +584,14 @@ private static final long serialVersionUID = 0L;
         domain_ = other.domain_;
         onChanged();
       }
-      if (other.hasSchema()) {
+      if (other.hasEntity()) {
         bitField0_ |= 0x00000002;
-        schema_ = other.schema_;
+        entity_ = other.entity_;
         onChanged();
       }
-      if (other.hasEntity()) {
+      if (other.hasGroup()) {
         bitField0_ |= 0x00000004;
-        entity_ = other.entity_;
+        group_ = other.group_;
         onChanged();
       }
       this.mergeUnknownFields(other.unknownFields);
@@ -714,100 +714,16 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private java.lang.Object schema_ = "";
-    /**
-     * <code>optional string schema = 2;</code>
-     * @return Whether the schema field is set.
-     */
-    public boolean hasSchema() {
-      return ((bitField0_ & 0x00000002) != 0);
-    }
-    /**
-     * <code>optional string schema = 2;</code>
-     * @return The schema.
-     */
-    public java.lang.String getSchema() {
-      java.lang.Object ref = schema_;
-      if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          schema_ = s;
-        }
-        return s;
-      } else {
-        return (java.lang.String) ref;
-      }
-    }
-    /**
-     * <code>optional string schema = 2;</code>
-     * @return The bytes for schema.
-     */
-    public com.google.protobuf.ByteString
-        getSchemaBytes() {
-      java.lang.Object ref = schema_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        schema_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-    /**
-     * <code>optional string schema = 2;</code>
-     * @param value The schema to set.
-     * @return This builder for chaining.
-     */
-    public Builder setSchema(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-      schema_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>optional string schema = 2;</code>
-     * @return This builder for chaining.
-     */
-    public Builder clearSchema() {
-      bitField0_ = (bitField0_ & ~0x00000002);
-      schema_ = getDefaultInstance().getSchema();
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>optional string schema = 2;</code>
-     * @param value The bytes for schema to set.
-     * @return This builder for chaining.
-     */
-    public Builder setSchemaBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-      schema_ = value;
-      onChanged();
-      return this;
-    }
-
     private java.lang.Object entity_ = "";
     /**
-     * <code>required string entity = 3;</code>
+     * <code>required string entity = 2;</code>
      * @return Whether the entity field is set.
      */
     public boolean hasEntity() {
-      return ((bitField0_ & 0x00000004) != 0);
+      return ((bitField0_ & 0x00000002) != 0);
     }
     /**
-     * <code>required string entity = 3;</code>
+     * <code>required string entity = 2;</code>
      * @return The entity.
      */
     public java.lang.String getEntity() {
@@ -825,7 +741,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>required string entity = 3;</code>
+     * <code>required string entity = 2;</code>
      * @return The bytes for entity.
      */
     public com.google.protobuf.ByteString
@@ -842,7 +758,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>required string entity = 3;</code>
+     * <code>required string entity = 2;</code>
      * @param value The entity to set.
      * @return This builder for chaining.
      */
@@ -851,23 +767,23 @@ private static final long serialVersionUID = 0L;
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000004;
+  bitField0_ |= 0x00000002;
       entity_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>required string entity = 3;</code>
+     * <code>required string entity = 2;</code>
      * @return This builder for chaining.
      */
     public Builder clearEntity() {
-      bitField0_ = (bitField0_ & ~0x00000004);
+      bitField0_ = (bitField0_ & ~0x00000002);
       entity_ = getDefaultInstance().getEntity();
       onChanged();
       return this;
     }
     /**
-     * <code>required string entity = 3;</code>
+     * <code>required string entity = 2;</code>
      * @param value The bytes for entity to set.
      * @return This builder for chaining.
      */
@@ -876,8 +792,92 @@ private static final long serialVersionUID = 0L;
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000004;
+  bitField0_ |= 0x00000002;
       entity_ = value;
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object group_ = "";
+    /**
+     * <code>optional string group = 3;</code>
+     * @return Whether the group field is set.
+     */
+    public boolean hasGroup() {
+      return ((bitField0_ & 0x00000004) != 0);
+    }
+    /**
+     * <code>optional string group = 3;</code>
+     * @return The group.
+     */
+    public java.lang.String getGroup() {
+      java.lang.Object ref = group_;
+      if (!(ref instanceof java.lang.String)) {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          group_ = s;
+        }
+        return s;
+      } else {
+        return (java.lang.String) ref;
+      }
+    }
+    /**
+     * <code>optional string group = 3;</code>
+     * @return The bytes for group.
+     */
+    public com.google.protobuf.ByteString
+        getGroupBytes() {
+      java.lang.Object ref = group_;
+      if (ref instanceof String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        group_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+    /**
+     * <code>optional string group = 3;</code>
+     * @param value The group to set.
+     * @return This builder for chaining.
+     */
+    public Builder setGroup(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+      group_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional string group = 3;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearGroup() {
+      bitField0_ = (bitField0_ & ~0x00000004);
+      group_ = getDefaultInstance().getGroup();
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>optional string group = 3;</code>
+     * @param value The bytes for group to set.
+     * @return This builder for chaining.
+     */
+    public Builder setGroupBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+      group_ = value;
       onChanged();
       return this;
     }

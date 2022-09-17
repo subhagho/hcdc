@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.agents.model;
 
-import ai.sapper.cdc.common.model.SchemaEntity;
+import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.core.messaging.ChangeDeltaMessage;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
@@ -9,7 +9,6 @@ import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.common.model.*;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.Getter;
 import lombok.NonNull;
@@ -17,7 +16,6 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
-import java.io.InvalidClassException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;

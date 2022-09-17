@@ -2,7 +2,7 @@ package ai.sapper.cdc.core.schema;
 
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.cache.LRUCache;
-import ai.sapper.cdc.common.model.SchemaEntity;
+import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.model.services.PathOrSchema;
 import ai.sapper.cdc.common.model.services.PathWithSchema;
 import ai.sapper.cdc.common.schema.AvroSchema;
@@ -20,7 +20,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.apache.avro.Schema;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
@@ -424,7 +423,6 @@ public class SchemaManager {
     public String getZkPath(SchemaEntity schema) {
         return new PathUtils.ZkPathBuilder(getZkPath())
                 .withPath(schema.getDomain())
-                .withPath(schema.getSchema())
                 .withPath(schema.getEntity())
                 .build();
     }

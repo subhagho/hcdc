@@ -1,6 +1,5 @@
 package ai.sapper.hcdc.agents.model;
 
-import ai.sapper.cdc.common.model.SchemaEntity;
 import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.hcdc.common.model.DFSFile;

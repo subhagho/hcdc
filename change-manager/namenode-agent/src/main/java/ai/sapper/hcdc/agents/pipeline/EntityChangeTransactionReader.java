@@ -1,11 +1,10 @@
 package ai.sapper.hcdc.agents.pipeline;
 
 import ai.sapper.cdc.common.model.AvroChangeType;
-import ai.sapper.cdc.common.model.SchemaEntity;
+import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.model.services.SnapshotDoneRequest;
 import ai.sapper.cdc.common.schema.AvroSchema;
 import ai.sapper.cdc.common.schema.SchemaVersion;
-import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.core.WebServiceClient;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.io.Archiver;
@@ -33,7 +32,6 @@ import org.apache.hadoop.hdfs.HDFSBlockReader;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 

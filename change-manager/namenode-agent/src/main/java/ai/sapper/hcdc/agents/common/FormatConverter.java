@@ -2,7 +2,7 @@ package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.cdc.common.model.AvroChangeRecord;
 import ai.sapper.cdc.common.model.AvroChangeType;
-import ai.sapper.cdc.common.model.SchemaEntity;
+import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.schema.AvroSchema;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.schema.SchemaManager;

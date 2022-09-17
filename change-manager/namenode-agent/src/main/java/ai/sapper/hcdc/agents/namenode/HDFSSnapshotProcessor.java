@@ -5,7 +5,7 @@ import ai.sapper.cdc.common.filters.DomainFilter;
 import ai.sapper.cdc.common.filters.DomainFilterMatcher;
 import ai.sapper.cdc.common.filters.DomainFilters;
 import ai.sapper.cdc.common.filters.Filter;
-import ai.sapper.cdc.common.model.SchemaEntity;
+import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.core.DistributedLock;

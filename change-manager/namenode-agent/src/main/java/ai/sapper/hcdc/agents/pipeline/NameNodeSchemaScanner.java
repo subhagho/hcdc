@@ -1,7 +1,7 @@
 package ai.sapper.hcdc.agents.pipeline;
 
 import ai.sapper.cdc.common.ConfigReader;
-import ai.sapper.cdc.common.model.SchemaEntity;
+import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.cdc.core.connections.ConnectionManager;

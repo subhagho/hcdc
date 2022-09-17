@@ -27,8 +27,8 @@ message DFSTransaction {
 
 message DFSSchemaEntity {
   required string domain = 1;
-  optional string schema = 2;
-  required string entity = 3;
+  required string entity = 2;
+  optional string group = 3;
 }
 
 message DFSFile {

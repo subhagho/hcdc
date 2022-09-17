@@ -25,36 +25,36 @@ public interface DFSSchemaEntityOrBuilder extends
       getDomainBytes();
 
   /**
-   * <code>optional string schema = 2;</code>
-   * @return Whether the schema field is set.
-   */
-  boolean hasSchema();
-  /**
-   * <code>optional string schema = 2;</code>
-   * @return The schema.
-   */
-  java.lang.String getSchema();
-  /**
-   * <code>optional string schema = 2;</code>
-   * @return The bytes for schema.
-   */
-  com.google.protobuf.ByteString
-      getSchemaBytes();
-
-  /**
-   * <code>required string entity = 3;</code>
+   * <code>required string entity = 2;</code>
    * @return Whether the entity field is set.
    */
   boolean hasEntity();
   /**
-   * <code>required string entity = 3;</code>
+   * <code>required string entity = 2;</code>
    * @return The entity.
    */
   java.lang.String getEntity();
   /**
-   * <code>required string entity = 3;</code>
+   * <code>required string entity = 2;</code>
    * @return The bytes for entity.
    */
   com.google.protobuf.ByteString
       getEntityBytes();
+
+  /**
+   * <code>optional string group = 3;</code>
+   * @return Whether the group field is set.
+   */
+  boolean hasGroup();
+  /**
+   * <code>optional string group = 3;</code>
+   * @return The group.
+   */
+  java.lang.String getGroup();
+  /**
+   * <code>optional string group = 3;</code>
+   * @return The bytes for group.
+   */
+  com.google.protobuf.ByteString
+      getGroupBytes();
 }
