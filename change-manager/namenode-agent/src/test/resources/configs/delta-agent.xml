@@ -29,7 +29,7 @@
                         <connectionType>kafka</connectionType>
                         <connection>producer-delta-queue</connection>
                         <!--partitioner>
-                            <type>ai.sapper.hcdc.agents.pipeline.ChangeDeltaKafkaPartitioner</type>
+                            <type>ai.sapper.cdc.core.messaging.ChangeDeltaKafkaPartitioner</type>
                             <config>
                                 <partitions>3</partitions>
                             </config>

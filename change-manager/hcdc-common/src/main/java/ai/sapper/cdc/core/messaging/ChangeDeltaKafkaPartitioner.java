@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.agents.pipeline;
+package ai.sapper.cdc.core.messaging;
 
 import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.core.messaging.KafkaPartitioner;
@@ -40,7 +40,8 @@ public class ChangeDeltaKafkaPartitioner implements KafkaPartitioner<DFSChangeDe
     public int partition(@NonNull DFSChangeDelta key) {
         SchemaEntity schemaEntity = SchemaEntityHelper.parse(key.getEntity());
         String entity = schemaEntity.getEntity();
-        if (!Strings.isNullOrEmpty(schemaEntity.getGroup())) {
+        if (!Strings.isNullOrEmpty(schemaEntity.getGroup()) &&
+                schemaEntity.getGroup().compareToIgnoreCase(SchemaEntity.DEFAULT) != 0) {
             entity = schemaEntity.getGroup();
         }
         String pk = String.format("%s::%s",
