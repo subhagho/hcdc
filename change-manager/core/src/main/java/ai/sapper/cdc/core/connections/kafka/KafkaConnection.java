@@ -6,6 +6,7 @@ import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.connections.*;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import ai.sapper.cdc.core.connections.settngs.EConnectionType;
+import ai.sapper.cdc.core.connections.settngs.KafkaPartitionsParser;
 import ai.sapper.cdc.core.connections.settngs.KafkaSettings;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -154,12 +155,11 @@ public abstract class KafkaConnection implements MessageConnection {
 
     @Getter
     @Accessors(fluent = true)
-    public static class KafkaConfig extends ConfigReader {
+    public static class KafkaConfig extends ConnectionConfig {
         private static final String __CONFIG_PATH = "kafka";
 
-        private static class Constants {
-            private static final String CONFIG_NAME = "name";
-            private static final String CONFIG_MODE = "mode";
+        public static class Constants {
+            public static final String CONFIG_MODE = "mode";
             public static final String CONFIG_FILE_CONFIG = "config";
             public static final String CONFIG_PRODUCER_CONFIG = String.format("producer.%s", CONFIG_FILE_CONFIG);
             public static final String CONFIG_CONSUMER = "consumer";
@@ -178,11 +178,8 @@ public abstract class KafkaConnection implements MessageConnection {
                 throw new ConfigurationException("Kafka Configuration not set or is NULL");
             }
             try {
-                settings.setName(get().getString(Constants.CONFIG_NAME));
-                if (Strings.isNullOrEmpty(settings.getName())) {
-                    throw new ConfigurationException(String.format("Kafka Configuration Error: missing [%s]",
-                            Constants.CONFIG_NAME));
-                }
+                settings.setName(get().getString(CONFIG_NAME));
+                checkStringValue(settings.getName(), getClass(), CONFIG_NAME);
                 String s = get().getString(Constants.CONFIG_MODE);
                 if (!Strings.isNullOrEmpty(s)) {
                     settings.setMode(EKafkaClientMode.valueOf(s));
@@ -217,15 +214,8 @@ public abstract class KafkaConnection implements MessageConnection {
                     settings.setPartitions(new ArrayList<>());
                     if (cnode.containsKey(Constants.CONFIG_PARTITIONS)) {
                         ps = cnode.getString(Constants.CONFIG_PARTITIONS);
-                    }
-                    if (!Strings.isNullOrEmpty(ps)) {
-                        String[] parts = ps.split(";");
-                        for (String part : parts) {
-                            Integer p = Integer.parseInt(part);
-                            settings.getPartitions().add(p);
-                        }
-                    } else {
-                        settings.getPartitions().add(0);
+                        KafkaPartitionsParser parser = new KafkaPartitionsParser();
+                        settings.setPartitions(parser.parse(ps));
                     }
                 }
 
@@ -235,7 +225,7 @@ public abstract class KafkaConnection implements MessageConnection {
                 }
 
                 settings.setParameters(readParameters());
-
+                settings.validate();
                 return settings;
             } catch (Throwable t) {
                 throw new ConfigurationException("Error processing Kafka configuration.", t);

@@ -342,6 +342,8 @@ public class ReflectionUtils {
             setCharValue(source, f, value);
         } else if (type.equals(Class.class)) {
             setClassValue(source, f, value);
+        } else if (type.equals(String.class)) {
+            setStringValue(source, f, value);
         }
     }
 

@@ -228,18 +228,17 @@ public class ZookeeperConnection implements Connection {
     }
 
 
-    public static class ZookeeperConfig extends ConfigReader {
-        private static final class Constants {
-            private static final String CONFIG_NAME = "name";
-            private static final String CONFIG_CONNECTION = "connectionString";
-            private static final String CONFIG_AUTH_HANDLER = "authenticationHandler";
-            private static final String CONFIG_RETRY = "retry";
-            private static final String CONFIG_RETRY_INTERVAL = "retry.interval";
-            private static final String CONFIG_RETRY_TRIES = "retry.retries";
-            private static final String CONFIG_CONN_TIMEOUT = "connectionTimeout";
-            private static final String CONFIG_SESSION_TIMEOUT = "sessionTimeout";
-            private static final String CONFIG_NAMESPACE = "namespace";
-            private static final String CONFIG_ZK_CONFIG = "zookeeperConfigFile";
+    public static class ZookeeperConfig extends ConnectionConfig {
+        public static final class Constants {
+            public static final String CONFIG_CONNECTION = "connectionString";
+            public static final String CONFIG_AUTH_HANDLER = "authenticationHandler";
+            public static final String CONFIG_RETRY = "retry";
+            public static final String CONFIG_RETRY_INTERVAL = "retry.interval";
+            public static final String CONFIG_RETRY_TRIES = "retry.retries";
+            public static final String CONFIG_CONN_TIMEOUT = "connectionTimeout";
+            public static final String CONFIG_SESSION_TIMEOUT = "sessionTimeout";
+            public static final String CONFIG_NAMESPACE = "namespace";
+            public static final String CONFIG_ZK_CONFIG = "zookeeperConfigFile";
         }
 
         private static final String __CONFIG_PATH = "zookeeper";
@@ -251,14 +250,10 @@ public class ZookeeperConnection implements Connection {
                 throw new ConfigurationException("HDFS Configuration not drt or is NULL");
             }
             try {
-                settings.setName(get().getString(Constants.CONFIG_NAME));
-                if (Strings.isNullOrEmpty(settings.getName())) {
-                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.CONFIG_NAME));
-                }
+                settings.setName(get().getString(CONFIG_NAME));
+                checkStringValue(settings.getName(), getClass(), CONFIG_NAME);
                 settings.setConnectionString(get().getString(Constants.CONFIG_CONNECTION));
-                if (Strings.isNullOrEmpty(settings.getConnectionString())) {
-                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.CONFIG_CONNECTION));
-                }
+                checkStringValue(settings.getConnectionString(), getClass(), Constants.CONFIG_CONNECTION);
                 if (checkIfNodeExists((String) null, Constants.CONFIG_AUTH_HANDLER)) {
                     settings.setAuthenticationHandler(get().getString(Constants.CONFIG_AUTH_HANDLER));
                 }

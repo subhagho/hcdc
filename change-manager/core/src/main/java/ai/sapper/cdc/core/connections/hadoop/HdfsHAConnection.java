@@ -3,12 +3,10 @@ package ai.sapper.cdc.core.connections.hadoop;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
-import ai.sapper.cdc.core.connections.Connection;
-import ai.sapper.cdc.core.connections.ConnectionError;
-import ai.sapper.cdc.core.connections.ConnectionManager;
-import ai.sapper.cdc.core.connections.ZookeeperConnection;
+import ai.sapper.cdc.core.connections.*;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import ai.sapper.cdc.core.connections.settngs.HdfsConnectionSettings;
+import ai.sapper.cdc.core.connections.settngs.HdfsUrlParser;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -28,11 +26,11 @@ import java.net.URI;
 @Getter
 @Accessors(fluent = true)
 public class HdfsHAConnection extends HdfsConnection {
-    private static class Constants {
-        private static final String DFS_NAME_SERVICES = "dfs.nameservices";
-        private static final String DFS_FAILOVER_PROVIDER = "dfs.client.failover.proxy.provider.%s";
-        private static final String DFS_NAME_NODES = "dfs.ha.namenodes.%s";
-        private static final String DFS_NAME_NODE_ADDRESS = "dfs.namenode.rpc-address.%s.%s";
+    public static class Constants {
+        public static final String DFS_NAME_SERVICES = "dfs.nameservices";
+        public static final String DFS_FAILOVER_PROVIDER = "dfs.client.failover.proxy.provider.%s";
+        public static final String DFS_NAME_NODES = "dfs.ha.namenodes.%s";
+        public static final String DFS_NAME_NODE_ADDRESS = "dfs.namenode.rpc-address.%s.%s";
     }
 
     private HdfsHAConfig config;
@@ -200,14 +198,10 @@ public class HdfsHAConnection extends HdfsConnection {
     public static final class HdfsHAConfig extends HdfsConfig {
         private static final String __CONFIG_PATH = "hdfs_ha";
 
-        private static class Constants {
-            private static final String CONN_NAME = "name";
-            private static final String DFS_NAME_SERVICES = "nameservice";
-            private static final String DFS_FAILOVER_PROVIDER = "failoverProvider";
-            private static final String DFS_NAME_NODES = "namenodes";
-
-            private static final String CONN_SECURITY_ENABLED = "security.enabled";
-            private static final String CONN_ADMIN_CLIENT_ENABLED = "enableAdmin";
+        public static class Constants {
+            public static final String DFS_NAME_SERVICES = "nameservice";
+            public static final String DFS_FAILOVER_PROVIDER = "failoverProvider";
+            public static final String DFS_NAME_NODES = "namenodes";
         }
 
         public HdfsHAConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
@@ -221,47 +215,21 @@ public class HdfsHAConnection extends HdfsConnection {
             }
             try {
                 HdfsConnectionSettings.HdfsHASettings settings = (HdfsConnectionSettings.HdfsHASettings) settings();
-                settings.setName(get().getString(Constants.CONN_NAME));
-                if (Strings.isNullOrEmpty(settings.getName())) {
-                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.CONN_NAME));
-                }
+                settings.setName(get().getString(ConnectionConfig.CONFIG_NAME));
                 settings.setNameService(get().getString(Constants.DFS_NAME_SERVICES));
-                if (Strings.isNullOrEmpty(settings.getNameService())) {
-                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.DFS_NAME_SERVICES));
-                }
                 settings.setFailoverProvider(get().getString(Constants.DFS_FAILOVER_PROVIDER));
-                if (Strings.isNullOrEmpty(settings.getFailoverProvider())) {
-                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.DFS_FAILOVER_PROVIDER));
-                }
                 String nn = get().getString(Constants.DFS_NAME_NODES);
-                if (Strings.isNullOrEmpty(nn)) {
-                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.DFS_NAME_NODES));
-                }
-                String[] nns = nn.split(";");
-                if (nns.length != 2) {
-                    throw new ConfigurationException(String.format("Invalid NameNode(s) specified. Expected count = 2, specified = %d", nns.length));
-                }
-                settings.setNameNodeAddresses(new String[2][2]);
-
-                for (int ii = 0; ii < nns.length; ii++) {
-                    String n = nns[ii];
-                    String[] parts = n.split("=");
-                    if (parts.length != 2) {
-                        throw new ConfigurationException(String.format("Invalid NameNode specified. Expected count = 2, specified = %d", parts.length));
-                    }
-                    String key = parts[0].trim();
-                    String address = parts[1].trim();
-
-                    DefaultLogger.LOGGER.info(String.format("Registering namenode [%s -> %s]...", key, address));
-                    settings.getNameNodeAddresses()[ii][0] = key;
-                    settings.getNameNodeAddresses()[ii][1] = address;
-                }
-                if (checkIfNodeExists((String) null, Constants.CONN_SECURITY_ENABLED))
-                    settings.setSecurityEnabled(get().getBoolean(Constants.CONN_SECURITY_ENABLED));
-                if (checkIfNodeExists((String) null, Constants.CONN_ADMIN_CLIENT_ENABLED))
-                    settings.setAdminEnabled(get().getBoolean(Constants.CONN_ADMIN_CLIENT_ENABLED));
+                checkStringValue(nn, getClass(), Constants.DFS_NAME_NODES);
+                HdfsUrlParser parser = new HdfsUrlParser();
+                settings.setNameNodeAddresses(parser.parse(nn));
+                if (checkIfNodeExists((String) null, HdfsConfig.Constants.CONN_SECURITY_ENABLED))
+                    settings.setSecurityEnabled(get().getBoolean(HdfsConfig.Constants.CONN_SECURITY_ENABLED));
+                if (checkIfNodeExists((String) null, HdfsConfig.Constants.CONN_ADMIN_CLIENT_ENABLED))
+                    settings.setAdminEnabled(get().getBoolean(HdfsConfig.Constants.CONN_ADMIN_CLIENT_ENABLED));
 
                 settings.setParameters(readParameters());
+
+                settings.validate();
 
                 return settings;
             } catch (Throwable t) {

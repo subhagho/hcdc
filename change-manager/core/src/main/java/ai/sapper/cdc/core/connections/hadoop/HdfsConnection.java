@@ -3,10 +3,7 @@ package ai.sapper.cdc.core.connections.hadoop;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
-import ai.sapper.cdc.core.connections.Connection;
-import ai.sapper.cdc.core.connections.ConnectionError;
-import ai.sapper.cdc.core.connections.ConnectionManager;
-import ai.sapper.cdc.core.connections.ZookeeperConnection;
+import ai.sapper.cdc.core.connections.*;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import ai.sapper.cdc.core.connections.settngs.EConnectionType;
 import ai.sapper.cdc.core.connections.settngs.HdfsConnectionSettings;
@@ -255,13 +252,12 @@ public class HdfsConnection implements Connection {
 
     @Getter
     @Accessors(fluent = true)
-    public static class HdfsConfig extends ConfigReader {
-        private static final class Constants {
-            private static final String CONN_NAME = "name";
-            private static final String CONN_PRI_NAME_NODE_URI = "namenode.primary.URI";
-            private static final String CONN_SEC_NAME_NODE_URI = "namenode.secondary.URI";
-            private static final String CONN_SECURITY_ENABLED = "security.enabled";
-            private static final String CONN_ADMIN_CLIENT_ENABLED = "enableAdmin";
+    public static class HdfsConfig extends ConnectionConfig {
+        public static final class Constants {
+            public static final String CONN_PRI_NAME_NODE_URI = "namenode.primary.URI";
+            public static final String CONN_SEC_NAME_NODE_URI = "namenode.secondary.URI";
+            public static final String CONN_SECURITY_ENABLED = "security.enabled";
+            public static final String CONN_ADMIN_CLIENT_ENABLED = "enableAdmin";
         }
 
         private static final String __CONFIG_PATH = "hdfs";
@@ -287,19 +283,12 @@ public class HdfsConnection implements Connection {
             }
             try {
                 HdfsConnectionSettings.HdfsSettings settings = (HdfsConnectionSettings.HdfsSettings) this.settings;
-                settings.setName(get().getString(Constants.CONN_NAME));
-                if (Strings.isNullOrEmpty(settings.getName())) {
-                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.CONN_NAME));
-                }
+                settings.setName(get().getString(ConnectionConfig.CONFIG_NAME));
                 settings.setPrimaryNameNodeUri(get().getString(Constants.CONN_PRI_NAME_NODE_URI));
-                if (Strings.isNullOrEmpty(settings.getPrimaryNameNodeUri())) {
-                    throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.CONN_PRI_NAME_NODE_URI));
-                }
+                checkStringValue(settings.getPrimaryNameNodeUri(), getClass(), Constants.CONN_PRI_NAME_NODE_URI);
                 if (get().containsKey(Constants.CONN_SEC_NAME_NODE_URI)) {
                     settings.setSecondaryNameNodeUri(get().getString(Constants.CONN_SEC_NAME_NODE_URI));
-                    if (Strings.isNullOrEmpty(settings.getSecondaryNameNodeUri())) {
-                        throw new ConfigurationException(String.format("HDFS Configuration Error: missing [%s]", Constants.CONN_SEC_NAME_NODE_URI));
-                    }
+                    checkStringValue(settings.getSecondaryNameNodeUri(), getClass(), Constants.CONN_SEC_NAME_NODE_URI);
                 }
                 if (checkIfNodeExists((String) null, Constants.CONN_SECURITY_ENABLED))
                     settings.setSecurityEnabled(get().getBoolean(Constants.CONN_SECURITY_ENABLED));
@@ -308,6 +297,7 @@ public class HdfsConnection implements Connection {
 
                 settings.setParameters(readParameters());
 
+                settings.validate();
                 return settings;
             } catch (Throwable t) {
                 throw new ConfigurationException("Error processing HDFS configuration.", t);

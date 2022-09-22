@@ -207,11 +207,10 @@ public class WebServiceConnection implements Connection {
 
     @Getter
     @Accessors(fluent = true)
-    public static class WebServiceConnectionConfig extends ConfigReader {
+    public static class WebServiceConnectionConfig extends ConnectionConfig {
         private static final String __CONFIG_PATH = "rest";
 
         public static class Constants {
-            public static final String CONFIG_NAME = "name";
             public static final String CONFIG_URL = "endpoint";
         }
 
@@ -225,16 +224,10 @@ public class WebServiceConnection implements Connection {
             if (get() == null) {
                 throw new ConfigurationException("WebService connection Configuration not set or is NULL");
             }
-            settings.setName(get().getString(Constants.CONFIG_NAME));
-            if (Strings.isNullOrEmpty(settings.getName())) {
-                throw new ConfigurationException(String.format("WebService connection Configuration Error: missing [%s]",
-                        Constants.CONFIG_NAME));
-            }
+            settings.setName(get().getString(CONFIG_NAME));
+            checkStringValue(settings.getName(), getClass(), CONFIG_NAME);
             settings.setEndpoint(get().getString(Constants.CONFIG_URL));
-            if (Strings.isNullOrEmpty(settings.getEndpoint())) {
-                throw new ConfigurationException(String.format("WebService connection Configuration Error: missing [%s]",
-                        Constants.CONFIG_URL));
-            }
+            checkStringValue(settings.getEndpoint(), getClass(), Constants.CONFIG_URL);
             return settings;
         }
     }

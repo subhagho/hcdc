@@ -191,8 +191,12 @@ public class ConfigReader {
     public static File readFileNode(@NonNull HierarchicalConfiguration<ImmutableNode> config,
                                     @NonNull String name) throws Exception {
         String value = config.getString(name);
-        if (!Strings.isNullOrEmpty(value)) {
-            return PathUtils.readFile(value);
+        return readFileNode(value);
+    }
+
+    public static File readFileNode(@NonNull String path) throws Exception {
+        if (!Strings.isNullOrEmpty(path)) {
+            return PathUtils.readFile(path);
         }
         return null;
     }

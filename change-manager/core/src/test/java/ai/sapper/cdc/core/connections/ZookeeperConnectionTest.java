@@ -1,19 +1,26 @@
 package ai.sapper.cdc.core.connections;
 
+import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.core.DemoEnv;
+import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
+import ai.sapper.cdc.core.connections.settngs.ZookeeperSettings;
 import com.google.common.base.Preconditions;
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.curator.utils.ZKPaths;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class ZookeeperConnectionTest {
-    private static final String __CONFIG_FILE = "src/test/resources/connection-test.xml";
+    private static final String __CONFIG_FILE = "src/test/resources/test-env.xml";
     private static final String __CONNECTION_NAME = "test-zk";
     private static final String __UUID = UUID.randomUUID().toString();
     private static final String __BASE_PATH = "/test/hcdc/core/zookeeper";
@@ -21,13 +28,19 @@ class ZookeeperConnectionTest {
 
     private static XMLConfiguration xmlConfiguration = null;
 
-    private static ConnectionManager manager = new ConnectionManager();
-
+    private static ConnectionManager manager;
+    private static DemoEnv env = new DemoEnv();
     @BeforeAll
     public static void setup() throws Exception {
-        xmlConfiguration = TestUtils.readFile(__CONFIG_FILE);
+        xmlConfiguration = ConfigReader.read(__CONFIG_FILE, EConfigFileType.File);
         Preconditions.checkState(xmlConfiguration != null);
-        manager.init(xmlConfiguration, null);
+        env.init(xmlConfiguration);
+        manager = env.connectionManager();
+    }
+
+    @AfterAll
+    public static void stop() throws Exception {
+        env.close();
     }
 
 
@@ -50,6 +63,14 @@ class ZookeeperConnectionTest {
             connection.close();
             assertEquals(Connection.EConnectionState.Closed, connection.connectionState());
 
+            ZookeeperSettings settings = connection.settings();
+            Map<String, String> values = ConnectionSettings.serialize(settings);
+            assertNotNull(values);
+            assertFalse(values.isEmpty());
+
+            settings = (ZookeeperSettings) ConnectionSettings.read(values);
+            assertNotNull(settings);
+            settings.validate();
         } catch (Throwable t) {
             DefaultLogger.LOGGER.error(DefaultLogger.stacktrace(t));
             fail(t);
