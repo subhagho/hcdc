@@ -80,7 +80,7 @@ public class EditsLogReader extends HDFSEditsReader {
                         NameNodeEnv.get(name));
                 DFSEditLogBatch batch = reader.batch();
                 if (batch.transactions() != null && !batch.transactions().isEmpty()) {
-                    long tid = processBatch(batch, txId);
+                    long tid = processBatch(batch, txId, stateManager.source());
                     if (tid > 0) {
                         txId = tid;
                         stateManager.update(txId);
@@ -101,7 +101,7 @@ public class EditsLogReader extends HDFSEditsReader {
         return txId;
     }
 
-    private long processBatch(DFSEditLogBatch batch, long lastTxId) throws Exception {
+    private long processBatch(DFSEditLogBatch batch, long lastTxId, String source) throws Exception {
         if (batch != null && batch.transactions() != null && !batch.transactions().isEmpty()) {
             long txid = -1;
             for (DFSTransactionType<?> tnx : batch.transactions()) {
@@ -109,7 +109,7 @@ public class EditsLogReader extends HDFSEditsReader {
                 Object proto = tnx.convertToProto();
                 MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(proto,
                         proto.getClass(),
-                        null,
+                        tnx.entity(source),
                         -1,
                         MessageObject.MessageMode.New);
                 sender.send(message);

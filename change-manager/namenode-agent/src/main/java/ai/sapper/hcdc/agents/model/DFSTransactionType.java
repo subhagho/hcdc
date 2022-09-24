@@ -96,6 +96,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
 
     public abstract ChangeDeltaMessage getMessage(@NonNull String source) throws DFSAgentError;
 
+    public abstract SchemaEntity entity(@NonNull String source);
 
     /**
      * @param message
@@ -317,6 +318,11 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             return message;
         }
 
+        @Override
+        public SchemaEntity entity(@NonNull String source) {
+            return new SchemaEntity(source, file.path);
+        }
+
     }
 
     @Getter
@@ -420,6 +426,11 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
 
             return message;
         }
+
+        @Override
+        public SchemaEntity entity(@NonNull String source) {
+            return new SchemaEntity(source, file.path);
+        }
     }
 
     @Getter
@@ -495,6 +506,11 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             message.setData(builder.build());
 
             return message;
+        }
+
+        @Override
+        public SchemaEntity entity(@NonNull String source) {
+            return new SchemaEntity(source, file.path);
         }
     }
 
@@ -605,6 +621,11 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
 
             return message;
         }
+
+        @Override
+        public SchemaEntity entity(@NonNull String source) {
+            return new SchemaEntity(source, file.path);
+        }
     }
 
     @Getter
@@ -681,6 +702,11 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             message.setData(builder.build());
 
             return message;
+        }
+
+        @Override
+        public SchemaEntity entity(@NonNull String source) {
+            return new SchemaEntity(source, file.path);
         }
     }
 
@@ -766,6 +792,11 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
 
             return message;
         }
+
+        @Override
+        public SchemaEntity entity(@NonNull String source) {
+            return new SchemaEntity(source, file.path);
+        }
     }
 
     @Getter
@@ -850,6 +881,11 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             message.setData(builder.build());
 
             return message;
+        }
+
+        @Override
+        public SchemaEntity entity(@NonNull String source) {
+            return new SchemaEntity(source, file.path);
         }
     }
 
@@ -938,6 +974,11 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
 
             return message;
         }
+
+        @Override
+        public SchemaEntity entity(@NonNull String source) {
+            return new SchemaEntity(source, this.source.path);
+        }
     }
 
     @Getter
@@ -1011,6 +1052,11 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             message.setData(builder.build());
 
             return message;
+        }
+
+        @Override
+        public SchemaEntity entity(@NonNull String source) {
+            return new SchemaEntity(source, opCode);
         }
     }
 }
