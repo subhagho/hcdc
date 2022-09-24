@@ -302,8 +302,8 @@ public class ConnectionManager implements Closeable {
         }
     }
 
-    public void create(@NonNull Class<? extends Connection> type,
-                       @NonNull ConnectionSettings settings) throws ConnectionError {
+    public void createOrUpdate(@NonNull Class<? extends Connection> type,
+                               @NonNull ConnectionSettings settings) throws ConnectionError {
         synchronized (connections) {
             try {
                 try (Connection connection = type
