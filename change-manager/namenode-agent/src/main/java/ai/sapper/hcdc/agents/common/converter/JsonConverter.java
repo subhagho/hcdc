@@ -14,6 +14,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.NonNull;
 import org.apache.avro.Schema;
+import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
@@ -69,6 +70,7 @@ public class JsonConverter extends FormatConverter {
             Schema wrapper = AvroUtils.createSchema(schema.getSchema());
             final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema.getSchema());
             try (DataFileWriter<GenericRecord> fos = new DataFileWriter<>(writer)) {
+                fos.setCodec(CodecFactory.snappyCodec());
                 fos.create(schema.getSchema(), output);
                 try (BufferedReader br = new BufferedReader(new FileReader(source))) {
                     String line;

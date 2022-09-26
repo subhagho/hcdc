@@ -9,9 +9,15 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
+import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.io.BinaryEncoder;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.EncoderFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 @Getter
 @Setter
@@ -82,5 +88,18 @@ public class AvroChangeRecord {
         wrapper.put(AvroChangeRecord.AVRO_FIELD_DATA, data);
 
         return wrapper;
+    }
+
+    public static byte[] serialize(@NonNull GenericRecord record) throws Exception {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Schema schema = record.getSchema();
+            EncoderFactory encoderfactory = new EncoderFactory();
+            BinaryEncoder encoder = encoderfactory.binaryEncoder(out, null);
+            DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema);
+            writer.write(record, encoder);
+            encoder.flush();
+
+            return out.toByteArray();
+        }
     }
 }

@@ -13,6 +13,7 @@ import ai.sapper.hcdc.agents.model.DFSFileState;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import org.apache.avro.Schema;
+import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericDatumReader;
@@ -69,6 +70,7 @@ public class AvroConverter extends FormatConverter {
             Schema wrapper = AvroUtils.createSchema(schema.getSchema());
             final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(wrapper);
             try (DataFileWriter<GenericRecord> fos = new DataFileWriter<>(writer)) {
+                fos.setCodec(CodecFactory.snappyCodec());
                 fos.create(wrapper, output);
                 GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema.getSchema());
                 try (DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(source, reader)) {

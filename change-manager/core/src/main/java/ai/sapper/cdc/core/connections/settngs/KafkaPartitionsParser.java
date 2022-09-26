@@ -18,7 +18,7 @@ public class KafkaPartitionsParser implements SettingParser<List<Integer>> {
             }
         }
         if (partitions.isEmpty()) partitions.add(0);
-        return null;
+        return partitions;
     }
 
     @Override
