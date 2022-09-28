@@ -1,5 +1,7 @@
 package ai.sapper.cdc.core.connections.settngs;
 
+import ai.sapper.cdc.common.audit.DefaultAuditLogger;
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import com.google.common.base.Strings;
 import lombok.NonNull;
 
@@ -11,10 +13,18 @@ public class KafkaPartitionsParser implements SettingParser<List<Integer>> {
     public List<Integer> parse(@NonNull String value) throws Exception {
         List<Integer> partitions = new ArrayList<>();
         if (Strings.isNullOrEmpty(value)) {
-            String[] parts = value.split(";");
-            for (String part : parts) {
-                Integer p = Integer.parseInt(part.trim());
+            if (value.indexOf(';') >= 0) {
+                String[] parts = value.split(";");
+                for (String part : parts) {
+                    if (Strings.isNullOrEmpty(part)) continue;
+                    Integer p = Integer.parseInt(part.trim());
+                    partitions.add(p);
+                    DefaultLogger.LOGGER.debug(String.format("Added partition; [%d]", p));
+                }
+            } else {
+                Integer p = Integer.parseInt(value.trim());
                 partitions.add(p);
+                DefaultLogger.LOGGER.debug(String.format("Added partition; [%d]", p));
             }
         }
         if (partitions.isEmpty()) partitions.add(0);
