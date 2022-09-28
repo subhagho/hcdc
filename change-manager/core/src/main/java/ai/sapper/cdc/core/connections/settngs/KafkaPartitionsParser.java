@@ -12,7 +12,7 @@ public class KafkaPartitionsParser implements SettingParser<List<Integer>> {
     @Override
     public List<Integer> parse(@NonNull String value) throws Exception {
         List<Integer> partitions = new ArrayList<>();
-        if (Strings.isNullOrEmpty(value)) {
+        if (!Strings.isNullOrEmpty(value)) {
             if (value.indexOf(';') >= 0) {
                 String[] parts = value.split(";");
                 for (String part : parts) {
