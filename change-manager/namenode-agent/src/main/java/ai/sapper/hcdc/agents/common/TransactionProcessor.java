@@ -207,6 +207,7 @@ public abstract class TransactionProcessor {
                 throw new InvalidMessageError(message.id(), String.format("Message Body type not supported. [type=%s]", data.getClass().getCanonicalName()));
             }
             NameNodeEnv.audit(name, getClass(), (MessageOrBuilder) data);
+            updateTransaction(txId, message);
         } catch (InvalidTransactionError te) {
             LOGGER.error(getClass(), te.getTxId(), te);
             handleError(message, data, te);

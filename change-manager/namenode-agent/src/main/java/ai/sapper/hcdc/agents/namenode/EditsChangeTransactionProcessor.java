@@ -144,29 +144,32 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                 .fileStateHelper()
                 .updateState(fileState.getFileInfo().getHdfsPath(), EFileState.Updating);
         SchemaEntity schemaEntity = isRegistered(fileState.getFileInfo().getHdfsPath());
-        if (schemaEntity == null) {
-            throw new InvalidMessageError(message.id(),
-                    String.format("HDFS File Not registered. [path=%s]", path));
-        }
-        DFSFileReplicaState rState = stateManager()
-                .replicaStateHelper()
-                .get(schemaEntity, fileState.getFileInfo().getInodeId());
-        if (!fileState.hasError() && rState != null && rState.isEnabled()) {
-            DFSFile df = fileState.getFileInfo().proto();
-            data = data.toBuilder().setFile(df).build();
-            message = ChangeDeltaSerDe.create(data,
-                    DFSFileAppend.class,
-                    rState.getEntity(),
-                    message.value().getSequence(),
-                    message.mode());
-            sender.send(message);
-        } else if (fileState.hasError()) {
-            throw new InvalidTransactionError(txId,
-                    DFSError.ErrorCode.SYNC_STOPPED,
-                    fileState.getFileInfo().getHdfsPath(),
-                    new Exception(String.format("FileSystem sync error. [path=%s]",
-                            fileState.getFileInfo().getHdfsPath())))
-                    .withFile(data.getFile());
+        if (schemaEntity != null) {
+            DFSFileReplicaState rState = stateManager()
+                    .replicaStateHelper()
+                    .get(schemaEntity, fileState.getFileInfo().getInodeId());
+            if (rState == null) {
+                throw new InvalidMessageError(message.id(),
+                        String.format("HDFS File Not registered. [path=%s]",
+                                fileState.getFileInfo().getHdfsPath()));
+            }
+            if (!fileState.hasError() && rState.isEnabled()) {
+                DFSFile df = fileState.getFileInfo().proto();
+                data = data.toBuilder().setFile(df).build();
+                message = ChangeDeltaSerDe.create(data,
+                        DFSFileAppend.class,
+                        rState.getEntity(),
+                        message.value().getSequence(),
+                        message.mode());
+                sender.send(message);
+            } else if (fileState.hasError()) {
+                throw new InvalidTransactionError(txId,
+                        DFSError.ErrorCode.SYNC_STOPPED,
+                        fileState.getFileInfo().getHdfsPath(),
+                        new Exception(String.format("FileSystem sync error. [path=%s]",
+                                fileState.getFileInfo().getHdfsPath())))
+                        .withFile(data.getFile());
+            }
         } else {
             sendIgnoreTx(message, data);
         }
@@ -331,44 +334,42 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
         }
         SchemaEntity schemaEntity = isRegistered(fileState.getFileInfo().getHdfsPath());
         if (schemaEntity == null) {
-            throw new InvalidMessageError(message.id(),
-                    String.format("HDFS File Not registered. [path=%s]", fileState.getFileInfo().getHdfsPath()));
-        }
-        DFSFileReplicaState rState = stateManager()
-                .replicaStateHelper()
-                .get(schemaEntity, fileState.getFileInfo().getInodeId());
-        if (rState == null && retry) {
-            fileState = stateManager()
-                    .fileStateHelper()
-                    .delete(fileState.getFileInfo().getHdfsPath());
-            return;
-        }
-        if (!fileState.hasError() && rState != null && rState.isEnabled()) {
-            stateManager()
-                    .replicaStateHelper()
-                    .delete(schemaEntity, fileState.getFileInfo().getInodeId());
-
-            DFSFile df = fileState.getFileInfo().proto();
-            data = data.toBuilder().setFile(df).build();
-
-            message = ChangeDeltaSerDe.create(data,
-                    DFSFileDelete.class,
-                    rState.getEntity(),
-                    message.value().getSequence(),
-                    message.mode());
-
-            sender.send(message);
-
-            stateManager().replicaStateHelper().delete(schemaEntity, rState.getFileInfo().getInodeId());
-        } else if (fileState.hasError()) {
-            throw new InvalidTransactionError(txId,
-                    DFSError.ErrorCode.SYNC_STOPPED,
-                    fileState.getFileInfo().getHdfsPath(),
-                    new Exception(String.format("FileSystem sync error. [path=%s]",
-                            fileState.getFileInfo().getHdfsPath())))
-                    .withFile(data.getFile());
-        } else {
             sendIgnoreTx(message, data);
+        } else {
+            DFSFileReplicaState rState = stateManager()
+                    .replicaStateHelper()
+                    .get(schemaEntity, fileState.getFileInfo().getInodeId());
+            if (rState == null && retry) {
+                fileState = stateManager()
+                        .fileStateHelper()
+                        .delete(fileState.getFileInfo().getHdfsPath());
+                return;
+            }
+            if (!fileState.hasError() && rState != null && rState.isEnabled()) {
+                stateManager()
+                        .replicaStateHelper()
+                        .delete(schemaEntity, fileState.getFileInfo().getInodeId());
+
+                DFSFile df = fileState.getFileInfo().proto();
+                data = data.toBuilder().setFile(df).build();
+
+                message = ChangeDeltaSerDe.create(data,
+                        DFSFileDelete.class,
+                        rState.getEntity(),
+                        message.value().getSequence(),
+                        message.mode());
+
+                sender.send(message);
+
+                stateManager().replicaStateHelper().delete(schemaEntity, rState.getFileInfo().getInodeId());
+            } else if (fileState.hasError()) {
+                throw new InvalidTransactionError(txId,
+                        DFSError.ErrorCode.SYNC_STOPPED,
+                        fileState.getFileInfo().getHdfsPath(),
+                        new Exception(String.format("FileSystem sync error. [path=%s]",
+                                fileState.getFileInfo().getHdfsPath())))
+                        .withFile(data.getFile());
+            }
         }
         fileState = stateManager()
                 .fileStateHelper()
@@ -417,39 +418,42 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
 
         SchemaEntity schemaEntity = isRegistered(fileState.getFileInfo().getHdfsPath());
         if (schemaEntity == null) {
-            throw new InvalidMessageError(message.id(),
-                    String.format("HDFS File Not registered. [path=%s]", fileState.getFileInfo().getHdfsPath()));
-        }
-        DFSFileReplicaState rState = stateManager()
-                .replicaStateHelper()
-                .get(schemaEntity, fileState.getFileInfo().getInodeId());
-        if (!fileState.hasError() && rState != null && rState.isEnabled()) {
-            if (fileState.hasBlocks()) {
-                for (DFSBlockState bs : fileState.getBlocks()) {
-                    if (bs.getState() != EBlockState.New) continue;
-                    rState.copyBlock(bs);
-                }
-            }
-            DFSFile df = fileState.getFileInfo().proto();
-            data = data.toBuilder().setFile(df).build();
-
-            message = ChangeDeltaSerDe.create(data,
-                    DFSBlockAdd.class,
-                    rState.getEntity(),
-                    message.value().getSequence(),
-                    message.mode());
-            sender.send(message);
-
-            rState = stateManager().replicaStateHelper().update(rState);
-        } else if (fileState.hasError()) {
-            throw new InvalidTransactionError(txId,
-                    DFSError.ErrorCode.SYNC_STOPPED,
-                    fileState.getFileInfo().getHdfsPath(),
-                    new Exception(String.format("File State is in error. [path=%s]",
-                            fileState.getFileInfo().getHdfsPath())))
-                    .withFile(data.getFile());
-        } else {
             sendIgnoreTx(message, data);
+        } else {
+            DFSFileReplicaState rState = stateManager()
+                    .replicaStateHelper()
+                    .get(schemaEntity, fileState.getFileInfo().getInodeId());
+            if (rState == null) {
+                throw new InvalidMessageError(message.id(),
+                        String.format("HDFS File Not registered. [path=%s]",
+                                fileState.getFileInfo().getHdfsPath()));
+            }
+            if (!fileState.hasError() && rState.isEnabled()) {
+                if (fileState.hasBlocks()) {
+                    for (DFSBlockState bs : fileState.getBlocks()) {
+                        if (bs.getState() != EBlockState.New) continue;
+                        rState.copyBlock(bs);
+                    }
+                }
+                DFSFile df = fileState.getFileInfo().proto();
+                data = data.toBuilder().setFile(df).build();
+
+                message = ChangeDeltaSerDe.create(data,
+                        DFSBlockAdd.class,
+                        rState.getEntity(),
+                        message.value().getSequence(),
+                        message.mode());
+                sender.send(message);
+
+                rState = stateManager().replicaStateHelper().update(rState);
+            } else if (fileState.hasError()) {
+                throw new InvalidTransactionError(txId,
+                        DFSError.ErrorCode.SYNC_STOPPED,
+                        fileState.getFileInfo().getHdfsPath(),
+                        new Exception(String.format("File State is in error. [path=%s]",
+                                fileState.getFileInfo().getHdfsPath())))
+                        .withFile(data.getFile());
+            }
         }
     }
 
@@ -507,39 +511,42 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
         }
         SchemaEntity schemaEntity = isRegistered(fileState.getFileInfo().getHdfsPath());
         if (schemaEntity == null) {
-            throw new InvalidMessageError(message.id(),
-                    String.format("HDFS File Not registered. [path=%s]", fileState.getFileInfo().getHdfsPath()));
-        }
-        DFSFileReplicaState rState = stateManager()
-                .replicaStateHelper()
-                .get(schemaEntity, fileState.getFileInfo().getInodeId());
-        if (!fileState.hasError() && rState != null && rState.isEnabled()) {
-            if (fileState.hasBlocks()) {
-                for (DFSBlockState bs : fileState.getBlocks()) {
-                    if (bs.getState() != EBlockState.Updating) continue;
-                    rState.copyBlock(bs);
-                }
-            }
-            DFSFile df = fileState.getFileInfo().proto();
-            data = data.toBuilder().setFile(df).build();
-
-            message = ChangeDeltaSerDe.create(data,
-                    DFSBlockUpdate.class,
-                    rState.getEntity(),
-                    message.value().getSequence(),
-                    message.mode());
-            sender.send(message);
-
-            rState = stateManager().replicaStateHelper().update(rState);
-        } else if (fileState.hasError()) {
-            throw new InvalidTransactionError(txId,
-                    DFSError.ErrorCode.SYNC_STOPPED,
-                    fileState.getFileInfo().getHdfsPath(),
-                    new Exception(String.format("FileSystem sync error. [path=%s]",
-                            fileState.getFileInfo().getHdfsPath())))
-                    .withFile(data.getFile());
-        } else {
             sendIgnoreTx(message, data);
+        } else {
+            DFSFileReplicaState rState = stateManager()
+                    .replicaStateHelper()
+                    .get(schemaEntity, fileState.getFileInfo().getInodeId());
+            if (rState == null) {
+                throw new InvalidMessageError(message.id(),
+                        String.format("HDFS File Not registered. [path=%s]",
+                                fileState.getFileInfo().getHdfsPath()));
+            }
+            if (!fileState.hasError() && rState.isEnabled()) {
+                if (fileState.hasBlocks()) {
+                    for (DFSBlockState bs : fileState.getBlocks()) {
+                        if (bs.getState() != EBlockState.Updating) continue;
+                        rState.copyBlock(bs);
+                    }
+                }
+                DFSFile df = fileState.getFileInfo().proto();
+                data = data.toBuilder().setFile(df).build();
+
+                message = ChangeDeltaSerDe.create(data,
+                        DFSBlockUpdate.class,
+                        rState.getEntity(),
+                        message.value().getSequence(),
+                        message.mode());
+                sender.send(message);
+
+                rState = stateManager().replicaStateHelper().update(rState);
+            } else if (fileState.hasError()) {
+                throw new InvalidTransactionError(txId,
+                        DFSError.ErrorCode.SYNC_STOPPED,
+                        fileState.getFileInfo().getHdfsPath(),
+                        new Exception(String.format("FileSystem sync error. [path=%s]",
+                                fileState.getFileInfo().getHdfsPath())))
+                        .withFile(data.getFile());
+            }
         }
     }
 
@@ -625,57 +632,60 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                 .updateState(fileState.getFileInfo().getHdfsPath(), EFileState.Finalized);
         SchemaEntity schemaEntity = isRegistered(fileState.getFileInfo().getHdfsPath());
         if (schemaEntity == null) {
-            throw new InvalidMessageError(message.id(),
-                    String.format("HDFS File Not registered. [path=%s]", fileState.getFileInfo().getHdfsPath()));
-        }
-        DFSFileReplicaState rState = stateManager()
-                .replicaStateHelper()
-                .get(schemaEntity, fileState.getFileInfo().getInodeId());
-        if (!fileState.hasError() && rState != null && rState.isEnabled()) {
-            DFSFile df = fileState.getFileInfo().proto();
-
-            DFSFileClose.Builder builder = data.toBuilder();
-            builder.clearBlocks();
-
-            builder.setFile(df);
-            for (DFSBlock block : blocks) {
-                DFSBlockReplicaState brs = rState.get(block.getBlockId());
-                if (brs == null) continue;
-
-                DFSBlock.Builder bb = block.toBuilder();
-                DFSBlockState bs = fileState.get(block.getBlockId());
-
-                BlockTransactionDelta bd = bs.delta(txId);
-                if (bd == null) {
-                    throw new InvalidTransactionError(txId,
-                            DFSError.ErrorCode.SYNC_STOPPED,
-                            fileState.getFileInfo().getHdfsPath(),
-                            new Exception(String.format("Block State out of sync, missing transaction delta. [path=%s][blockID=%d]",
-                                    fileState.getFileInfo().getHdfsPath(), block.getBlockId())))
-                            .withFile(data.getFile());
-                }
-                bb.setStartOffset(bd.getStartOffset())
-                        .setEndOffset(bd.getEndOffset())
-                        .setDeltaSize(bd.getEndOffset() - bd.getStartOffset() + 1);
-                builder.addBlocks(bb.build());
-            }
-            data = builder.build();
-            message = ChangeDeltaSerDe.create(data,
-                    DFSFileClose.class,
-                    rState.getEntity(),
-                    message.value().getSequence(),
-                    message.mode());
-            sender.send(message);
-
-            rState = stateManager().replicaStateHelper().update(rState);
-        } else if (fileState.hasError()) {
-            throw new InvalidTransactionError(txId,
-                    DFSError.ErrorCode.SYNC_STOPPED,
-                    fileState.getFileInfo().getHdfsPath(),
-                    new Exception(String.format("FileSystem sync error. [path=%s]", fileState.getFileInfo().getHdfsPath())))
-                    .withFile(data.getFile());
-        } else {
             sendIgnoreTx(message, data);
+        } else {
+            DFSFileReplicaState rState = stateManager()
+                    .replicaStateHelper()
+                    .get(schemaEntity, fileState.getFileInfo().getInodeId());
+            if (rState == null) {
+                throw new InvalidMessageError(message.id(),
+                        String.format("HDFS File Not registered. [path=%s]",
+                                fileState.getFileInfo().getHdfsPath()));
+            }
+            if (!fileState.hasError() && rState != null && rState.isEnabled()) {
+                DFSFile df = fileState.getFileInfo().proto();
+
+                DFSFileClose.Builder builder = data.toBuilder();
+                builder.clearBlocks();
+
+                builder.setFile(df);
+                for (DFSBlock block : blocks) {
+                    DFSBlockReplicaState brs = rState.get(block.getBlockId());
+                    if (brs == null) continue;
+
+                    DFSBlock.Builder bb = block.toBuilder();
+                    DFSBlockState bs = fileState.get(block.getBlockId());
+
+                    BlockTransactionDelta bd = bs.delta(txId);
+                    if (bd == null) {
+                        throw new InvalidTransactionError(txId,
+                                DFSError.ErrorCode.SYNC_STOPPED,
+                                fileState.getFileInfo().getHdfsPath(),
+                                new Exception(String.format("Block State out of sync, missing transaction delta. [path=%s][blockID=%d]",
+                                        fileState.getFileInfo().getHdfsPath(), block.getBlockId())))
+                                .withFile(data.getFile());
+                    }
+                    bb.setStartOffset(bd.getStartOffset())
+                            .setEndOffset(bd.getEndOffset())
+                            .setDeltaSize(bd.getEndOffset() - bd.getStartOffset() + 1);
+                    builder.addBlocks(bb.build());
+                }
+                data = builder.build();
+                message = ChangeDeltaSerDe.create(data,
+                        DFSFileClose.class,
+                        rState.getEntity(),
+                        message.value().getSequence(),
+                        message.mode());
+                sender.send(message);
+
+                rState = stateManager().replicaStateHelper().update(rState);
+            } else if (fileState.hasError()) {
+                throw new InvalidTransactionError(txId,
+                        DFSError.ErrorCode.SYNC_STOPPED,
+                        fileState.getFileInfo().getHdfsPath(),
+                        new Exception(String.format("FileSystem sync error. [path=%s]", fileState.getFileInfo().getHdfsPath())))
+                        .withFile(data.getFile());
+            }
         }
     }
 

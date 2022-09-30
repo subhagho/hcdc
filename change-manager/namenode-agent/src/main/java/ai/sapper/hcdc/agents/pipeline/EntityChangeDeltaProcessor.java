@@ -88,7 +88,6 @@ public class EntityChangeDeltaProcessor extends ChangeDeltaProcessor {
                         receiver().ack(message.id());
                         if (txId > 0) {
                             if (message.mode() == MessageObject.MessageMode.New) {
-                                processor.updateTransaction(txId, message);
                                 stateManager().updateCurrentTx(txId);
                                 LOGGER.info(getClass(), txId,
                                         String.format("Processed transaction delta. [TXID=%d]", txId));

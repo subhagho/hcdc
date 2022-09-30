@@ -100,7 +100,6 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
                             DefaultLogger.stacktrace(LOG, ie);
                             errorSender().send(message);
                         }
-                        processor.updateTransaction(txId, message);
                         receiver().ack(message.id());
                     } finally {
                         stateManager().stateUnlock();
