@@ -13,6 +13,7 @@ import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
+import ai.sapper.hcdc.common.model.DFSTransaction;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -32,8 +33,7 @@ import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 @Accessors(fluent = true)
 public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
     private static Logger LOG = LoggerFactory.getLogger(EntityChangeDeltaReader.class);
-    private EntityChangeTransactionReader processor;
-    private long receiveBatchTimeout = 1000;
+
     private CDCFileSystem fs;
     private Archiver archiver;
 
@@ -66,7 +66,7 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
 
             super.init(config, manger);
 
-            processor = new EntityChangeTransactionReader(name());
+            EntityChangeTransactionReader processor = new EntityChangeTransactionReader(name());
 
             connection = manger.getConnection(config.hdfsConnection, HdfsConnection.class);
             if (connection == null) {
@@ -101,97 +101,13 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
                     .withStateManager(stateManager())
                     .withErrorQueue(errorSender());
 
-            return this;
+            return withProcessor(processor);
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
         }
     }
 
-    /**
-     * When an object implementing interface <code>Runnable</code> is used
-     * to create a thread, starting the thread causes the object's
-     * <code>run</code> method to be called in that separately executing
-     * thread.
-     * <p>
-     * The general contract of the method <code>run</code> is that it may
-     * take any action whatsoever.
-     *
-     * @see Thread#run()
-     */
-    @Override
-    public void doRun() throws Exception {
-        try {
-            run(false);
-        } catch (Exception ex) {
-            LOG.error(ex.getLocalizedMessage(), ex);
-            throw ex;
-        }
-    }
-
-    public void run(boolean once) throws Exception {
-        Preconditions.checkState(sender() != null);
-        Preconditions.checkState(receiver() != null);
-        Preconditions.checkState(errorSender() != null);
-        Preconditions.checkArgument(fs != null);
-        try {
-            while (NameNodeEnv.get(name()).state().isAvailable()) {
-                List<MessageObject<String, DFSChangeDelta>> batch = receiver().nextBatch(receiveBatchTimeout);
-                if (batch == null || batch.isEmpty()) {
-                    if (once) break;
-                    Thread.sleep(receiveBatchTimeout);
-                    continue;
-                }
-                long txId = -1;
-                LOG.debug(String.format("Received messages. [count=%d]", batch.size()));
-                for (MessageObject<String, DFSChangeDelta> message : batch) {
-                    try {
-                        txId = process(message);
-                    } catch (InvalidMessageError ie) {
-                        LOG.error("Error processing message.", ie);
-                        DefaultLogger.stacktrace(LOG, ie);
-                        errorSender().send(message);
-                    }
-                    if (txId > 0) {
-                        if (message.mode() == MessageObject.MessageMode.New) {
-                            LOGGER.info(getClass(), txId,
-                                    String.format("Processed transaction delta. [TXID=%d]", txId));
-                        } else if (message.mode() == MessageObject.MessageMode.Snapshot) {
-                            if (stateManager().agentTxState().getProcessedTxId() < txId) {
-                                stateManager().update(txId);
-                                LOGGER.info(getClass(), txId,
-                                        String.format("Processed transaction delta. [TXID=%d]", txId));
-                            }
-                        }
-                    }
-                    receiver().ack(message.id());
-                }
-            }
-            LOG.warn(String.format("File Delta Processor thread stopped. [env state=%s]", NameNodeEnv.get(name()).state().state().name()));
-        } catch (Throwable t) {
-            LOG.error("Delta Change Processor terminated with error", t);
-            DefaultLogger.stacktrace(LOG, t);
-        }
-    }
-
-    private long process(MessageObject<String, DFSChangeDelta> message) throws Exception {
-        long txId = -1;
-        if (!isValidMessage(message)) {
-            throw new InvalidMessageError(message.id(),
-                    String.format("Invalid Message mode. [id=%s][mode=%s]", message.id(), message.mode().name()));
-        }
-        AgentTxState state = updateReadState(message.id());
-        boolean retry = false;
-        if (!Strings.isNullOrEmpty(state.getCurrentMessageId()) &&
-                !Strings.isNullOrEmpty(lastMessageId()))
-            retry = state.getCurrentMessageId().compareTo(lastMessageId()) == 0;
-        txId = processor.checkMessageSequence(message, false, retry);
-
-        processor.processTxMessage(message, txId, retry);
-
-        return txId;
-    }
-
-    private boolean isValidMessage(MessageObject<String, DFSChangeDelta> message) {
+    public boolean isValidMessage(MessageObject<String, DFSChangeDelta> message) {
         boolean ret = false;
         if (message.mode() != null) {
             ret = (message.mode() == MessageObject.MessageMode.New
@@ -204,6 +120,26 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
             ret = message.value().hasTxId();
         }
         return ret;
+    }
+
+    @Override
+    public void batchStart() throws Exception {
+
+    }
+
+    @Override
+    public void batchEnd() throws Exception {
+
+    }
+
+    @Override
+    public void process(@NonNull MessageObject<String, DFSChangeDelta> message,
+                        @NonNull Object data,
+                        DFSTransaction tnx,
+                        boolean retry) throws Exception {
+        EntityChangeTransactionReader processor
+                = (EntityChangeTransactionReader) processor();
+        processor.processTxMessage(message, data, tnx, retry);
     }
 
     @Getter

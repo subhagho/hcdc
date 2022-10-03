@@ -10,16 +10,14 @@ import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.model.AgentTxState;
 import ai.sapper.cdc.core.model.BlockTransactionDelta;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
-import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
-import ai.sapper.hcdc.agents.common.NameNodeEnv;
-import ai.sapper.hcdc.agents.common.ProcessorStateManager;
-import ai.sapper.hcdc.agents.common.ZkStateManager;
+import ai.sapper.hcdc.agents.common.*;
 import ai.sapper.hcdc.agents.model.DFSBlockState;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.agents.model.DFSFileState;
 import ai.sapper.hcdc.agents.model.DFSTransactionType;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSFileClose;
+import ai.sapper.hcdc.common.model.DFSTransaction;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -41,102 +39,65 @@ import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(EditsChangeDeltaProcessor.class.getCanonicalName());
 
-    private EditsChangeTransactionProcessor processor;
-
-    private long receiveBatchTimeout = 1000;
-
-    public EditsChangeDeltaProcessor(@NonNull ZkStateManager stateManager, @NonNull String name) {
+    public EditsChangeDeltaProcessor(@NonNull ZkStateManager stateManager,
+                                     @NonNull String name) {
         super(stateManager, name);
     }
 
-    public EditsChangeDeltaProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                                          @NonNull ConnectionManager manger) throws ConfigurationException {
+    @Override
+    public boolean isValidMessage(@NonNull MessageObject<String, DFSChangeDelta> message) {
+        boolean ret = false;
+        if (message.mode() != null) {
+            ret = (message.mode() == MessageObject.MessageMode.New
+                    || message.mode() == MessageObject.MessageMode.Backlog);
+        }
+        if (ret) {
+            ret = message.value().hasTxId();
+        }
+        return ret;
+    }
+
+
+    public ChangeDeltaProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                                     @NonNull ConnectionManager manger) throws ConfigurationException {
         ChangeDeltaProcessorConfig config = new ChangeDeltaProcessorConfig(xmlConfig);
         super.init(config, manger);
-        processor = (EditsChangeTransactionProcessor) new EditsChangeTransactionProcessor(name())
+        EditsChangeTransactionProcessor processor = (EditsChangeTransactionProcessor) new EditsChangeTransactionProcessor(name())
                 .withSenderQueue(sender())
                 .withStateManager(stateManager())
                 .withErrorQueue(errorSender());
-        return this;
+        return withProcessor(processor);
     }
 
-    /**
-     * When an object implementing interface <code>Runnable</code> is used
-     * to create a thread, starting the thread causes the object's
-     * <code>run</code> method to be called in that separately executing
-     * thread.
-     * <p>
-     * The general contract of the method <code>run</code> is that it may
-     * take any action whatsoever.
-     *
-     * @see Thread#run()
-     */
     @Override
-    public void doRun() throws Exception {
-        Preconditions.checkState(sender() != null);
-        Preconditions.checkState(receiver() != null);
-        Preconditions.checkState(errorSender() != null);
+    public void batchStart() throws Exception {
         Preconditions.checkState(stateManager() instanceof ProcessorStateManager);
-        try {
-            while (NameNodeEnv.get(name()).state().isAvailable()) {
-                List<MessageObject<String, DFSChangeDelta>> batch = receiver().nextBatch(receiveBatchTimeout);
-                if (batch == null || batch.isEmpty()) {
-                    Thread.sleep(receiveBatchTimeout);
-                    continue;
-                }
-                DomainManager dm = ((ProcessorStateManager) stateManager()).domainManager();
-                dm.refresh();
-
-                LOG.debug(String.format("Received messages. [count=%d]", batch.size()));
-                for (MessageObject<String, DFSChangeDelta> message : batch) {
-                    long txId = -1;
-                    stateManager().stateLock();
-                    try {
-                        try {
-                            txId = process(message);
-                            LOGGER.info(getClass(), txId, "Transaction read successfully...");
-                        } catch (InvalidMessageError ie) {
-                            LOG.error("Error processing message.", ie);
-                            DefaultLogger.stacktrace(LOG, ie);
-                            errorSender().send(message);
-                        }
-                        receiver().ack(message.id());
-                    } finally {
-                        stateManager().stateUnlock();
-                    }
-                }
-            }
-            LOG.warn("Delta Change Processor thread stopped.");
-        } catch (Throwable t) {
-            LOG.error("Delta Change Processor terminated with error", t);
-            DefaultLogger.stacktrace(LOG, t);
-            throw t;
-        }
+        DomainManager dm = ((ProcessorStateManager) stateManager()).domainManager();
+        dm.refresh();
     }
 
+    @Override
+    public void batchEnd() throws Exception {
 
-    private long process(MessageObject<String, DFSChangeDelta> message) throws Exception {
-        long txId = -1;
-        if (!isValidMessage(message)) {
-            throw new InvalidMessageError(message.id(),
-                    String.format("Invalid Message mode. [id=%s][mode=%s]", message.id(), message.mode().name()));
-        }
-        AgentTxState state = updateReadState(message.id());
-        boolean retry = false;
-        if (!Strings.isNullOrEmpty(state.getCurrentMessageId()) &&
-                !Strings.isNullOrEmpty(lastMessageId()))
-            retry = state.getCurrentMessageId().compareTo(lastMessageId()) == 0;
-        txId = processor.checkMessageSequence(message, false, retry);
+    }
+
+    @Override
+    public void process(@NonNull MessageObject<String, DFSChangeDelta> message,
+                        @NonNull Object data,
+                        DFSTransaction tnx,
+                        boolean retry) throws Exception {
+        EditsChangeTransactionProcessor processor
+                = (EditsChangeTransactionProcessor) processor();
         if (message.mode() == MessageObject.MessageMode.Backlog) {
-            processBacklogMessage(message, txId);
-            txId = -1;
+            processBacklogMessage(message, (tnx == null ? -1 : tnx.getTransactionId()));
         } else {
-            processor.processTxMessage(message, txId, retry);
+            processor.processTxMessage(message, data, tnx, retry);
         }
-        return txId;
     }
 
     private void processBacklogMessage(MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+        EditsChangeTransactionProcessor processor
+                = (EditsChangeTransactionProcessor) processor();
         DFSFileClose closeFile = ChangeDeltaSerDe.parse(message.value(), DFSFileClose.class);
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
@@ -232,17 +193,6 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
         return closeFile;
     }
 
-    private boolean isValidMessage(MessageObject<String, DFSChangeDelta> message) {
-        boolean ret = false;
-        if (message.mode() != null) {
-            ret = (message.mode() == MessageObject.MessageMode.New
-                    || message.mode() == MessageObject.MessageMode.Backlog);
-        }
-        if (ret) {
-            ret = message.value().hasTxId();
-        }
-        return ret;
-    }
 
     @Override
     public void close() throws IOException {

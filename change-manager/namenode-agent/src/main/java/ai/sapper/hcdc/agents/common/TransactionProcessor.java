@@ -173,46 +173,36 @@ public abstract class TransactionProcessor {
         return null;
     }
 
-    public void processTxMessage(MessageObject<String, DFSChangeDelta> message,
-                                 long txId,
+    public void processTxMessage(@NonNull MessageObject<String, DFSChangeDelta> message,
+                                 @NonNull Object data,
+                                 DFSTransaction tnx,
                                  boolean retry) throws Exception {
-        Object data = ChangeDeltaSerDe.parse(message.value(),
-                Class.forName(message.value().getType()));
-        DFSTransaction tnx = extractTransaction(data);
-        if (tnx != null)
-            LOGGER.debug(getClass(), txId,
-                    String.format("PROCESSING: [TXID=%d][OP=%s]", tnx.getTransactionId(), tnx.getOp().name()));
-        try {
-            if (data instanceof DFSFileAdd) {
-                processAddFileTxMessage((DFSFileAdd) data, message, txId, retry);
-            } else if (data instanceof DFSFileAppend) {
-                processAppendFileTxMessage((DFSFileAppend) data, message, txId, retry);
-            } else if (data instanceof DFSFileDelete) {
-                processDeleteFileTxMessage((DFSFileDelete) data, message, txId, retry);
-            } else if (data instanceof DFSBlockAdd) {
-                processAddBlockTxMessage((DFSBlockAdd) data, message, txId, retry);
-            } else if (data instanceof DFSBlockUpdate) {
-                processUpdateBlocksTxMessage((DFSBlockUpdate) data, message, txId, retry);
-            } else if (data instanceof DFSBlockTruncate) {
-                processTruncateBlockTxMessage((DFSBlockTruncate) data, message, txId, retry);
-            } else if (data instanceof DFSFileClose) {
-                processCloseFileTxMessage((DFSFileClose) data, message, txId, retry);
-            } else if (data instanceof DFSFileRename) {
-                processRenameFileTxMessage((DFSFileRename) data, message, txId, retry);
-            } else if (data instanceof DFSIgnoreTx) {
-                processIgnoreTxMessage((DFSIgnoreTx) data, message, txId);
-            } else if (data instanceof DFSError) {
-                processErrorTxMessage((DFSError) data, message, txId);
-            } else {
-                throw new InvalidMessageError(message.id(), String.format("Message Body type not supported. [type=%s]", data.getClass().getCanonicalName()));
-            }
-            NameNodeEnv.audit(name, getClass(), (MessageOrBuilder) data);
-            updateTransaction(txId, message);
-        } catch (InvalidTransactionError te) {
-            LOGGER.error(getClass(), te.getTxId(), te);
-            handleError(message, data, te);
-            updateTransaction(txId, message);
-            throw new InvalidMessageError(message.id(), te);
+        long txId = -1;
+        if (tnx != null) {
+            txId = tnx.getTransactionId();
+        }
+        if (data instanceof DFSFileAdd) {
+            processAddFileTxMessage((DFSFileAdd) data, message, txId, retry);
+        } else if (data instanceof DFSFileAppend) {
+            processAppendFileTxMessage((DFSFileAppend) data, message, txId, retry);
+        } else if (data instanceof DFSFileDelete) {
+            processDeleteFileTxMessage((DFSFileDelete) data, message, txId, retry);
+        } else if (data instanceof DFSBlockAdd) {
+            processAddBlockTxMessage((DFSBlockAdd) data, message, txId, retry);
+        } else if (data instanceof DFSBlockUpdate) {
+            processUpdateBlocksTxMessage((DFSBlockUpdate) data, message, txId, retry);
+        } else if (data instanceof DFSBlockTruncate) {
+            processTruncateBlockTxMessage((DFSBlockTruncate) data, message, txId, retry);
+        } else if (data instanceof DFSFileClose) {
+            processCloseFileTxMessage((DFSFileClose) data, message, txId, retry);
+        } else if (data instanceof DFSFileRename) {
+            processRenameFileTxMessage((DFSFileRename) data, message, txId, retry);
+        } else if (data instanceof DFSIgnoreTx) {
+            processIgnoreTxMessage((DFSIgnoreTx) data, message, txId);
+        } else if (data instanceof DFSError) {
+            processErrorTxMessage((DFSError) data, message, txId);
+        } else {
+            throw new InvalidMessageError(message.id(), String.format("Message Body type not supported. [type=%s]", data.getClass().getCanonicalName()));
         }
     }
 
