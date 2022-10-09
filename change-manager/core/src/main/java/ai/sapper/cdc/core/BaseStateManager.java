@@ -5,10 +5,7 @@ import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
-import ai.sapper.cdc.core.model.AgentTxState;
-import ai.sapper.cdc.core.model.CDCAgentState;
-import ai.sapper.cdc.core.model.Heartbeat;
-import ai.sapper.cdc.core.model.ModuleInstance;
+import ai.sapper.cdc.core.model.*;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -23,7 +20,7 @@ import java.nio.charset.StandardCharsets;
 
 @Getter
 @Accessors(fluent = true)
-public abstract class BaseStateManager {
+public abstract class BaseStateManager<T> {
     public static class Constants {
         public static final String ZK_PATH_HEARTBEAT = "/heartbeat";
         public static final String ZK_PATH_PROCESS_STATE = "state";
@@ -38,13 +35,13 @@ public abstract class BaseStateManager {
     private String zkModulePath;
     private String zkAgentPath;
 
-    private AgentTxState agentTxState;
+    private ProcessingState<T> processingState;
     private ModuleInstance moduleInstance;
     private String name;
     private String environment;
 
-    public BaseStateManager withEnvironment(@NonNull String environment,
-                                            @NonNull String name) {
+    public BaseStateManager<T> withEnvironment(@NonNull String environment,
+                                               @NonNull String name) {
         this.environment = environment;
         this.name = name;
 
@@ -52,12 +49,12 @@ public abstract class BaseStateManager {
     }
 
 
-    public BaseStateManager withModuleInstance(@NonNull ModuleInstance moduleInstance) {
+    public BaseStateManager<T> withModuleInstance(@NonNull ModuleInstance moduleInstance) {
         this.moduleInstance = moduleInstance;
         return this;
     }
 
-    public BaseStateManager withConfig(@NonNull BaseStateManagerConfig config) {
+    public BaseStateManager<T> withConfig(@NonNull BaseStateManagerConfig config) {
         this.config = config;
         return this;
     }
@@ -66,7 +63,7 @@ public abstract class BaseStateManager {
         return config().basePath();
     }
 
-    public BaseStateManager init(@NonNull ConnectionManager manger) throws ManagerStateError {
+    public BaseStateManager<T> init(@NonNull ConnectionManager manger) throws ManagerStateError {
         try {
             Preconditions.checkNotNull(moduleInstance);
             Preconditions.checkNotNull(config);
@@ -106,7 +103,7 @@ public abstract class BaseStateManager {
         Preconditions.checkState(connection.isConnected());
     }
 
-    public void checkAgentState() throws Exception {
+    public void checkAgentState(@NonNull Class<? extends ProcessingState<T>> type) throws Exception {
         CuratorFramework client = connection().client();
 
         if (client.checkExists().forPath(zkAgentStatePath) == null) {
@@ -114,76 +111,77 @@ public abstract class BaseStateManager {
             if (Strings.isNullOrEmpty(path)) {
                 throw new ManagerStateError(String.format("Error creating ZK base path. [path=%s]", basePath()));
             }
-            agentTxState = new AgentTxState();
-            agentTxState.setNamespace(moduleInstance.getModule());
-            agentTxState.setUpdatedTime(0);
+            processingState = type.getDeclaredConstructor().newInstance();
+            processingState.setNamespace(moduleInstance.getModule());
+            processingState.setUpdatedTime(0);
 
-            String json = JSONUtils.asString(agentTxState, AgentTxState.class);
+            String json = JSONUtils.asString(processingState, LongTxState.class);
             client.setData().forPath(zkAgentStatePath, json.getBytes(StandardCharsets.UTF_8));
         } else {
-            agentTxState = readState();
+            processingState = readState();
         }
-        agentTxState.setModuleInstance(moduleInstance);
-        update(agentTxState);
+        processingState.setInstance(moduleInstance);
+        update(processingState);
     }
 
-    public AgentTxState initState(long txId) throws ManagerStateError {
+    public ProcessingState<T> initState(T txId) throws ManagerStateError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
-        if (txId < agentTxState.getProcessedTxId()) return agentTxState;
+        if (processingState.compareTx(txId) >= 0) return processingState;
 
         synchronized (this) {
             try {
-                agentTxState.setProcessedTxId(txId);
-                agentTxState.setUpdatedTime(System.currentTimeMillis());
+                processingState.setProcessedTxId(txId);
+                processingState.setUpdatedTime(System.currentTimeMillis());
 
-                return update(agentTxState);
+                return update(processingState);
             } catch (Exception ex) {
                 throw new ManagerStateError(ex);
             }
         }
     }
 
-    private AgentTxState update(AgentTxState agentTxState) throws Exception {
-        agentTxState.setUpdatedTime(System.currentTimeMillis());
+    private ProcessingState<T> update(ProcessingState<T> state) throws Exception {
+        state.setUpdatedTime(System.currentTimeMillis());
 
         CuratorFramework client = connection().client();
-        String json = JSONUtils.asString(agentTxState, AgentTxState.class);
+        String json = JSONUtils.asString(state, ProcessingState.class);
         client.setData().forPath(zkAgentStatePath, json.getBytes(StandardCharsets.UTF_8));
 
-        return agentTxState;
+        return state;
     }
 
-    public AgentTxState update(long processedTxId) throws ManagerStateError {
+    public ProcessingState<T> update(T processedTxId) throws ManagerStateError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
-        if (processedTxId < agentTxState.getProcessedTxId()) return agentTxState;
+        if (processingState.compareTx(processedTxId) >= 0) return processingState;;
 
         synchronized (this) {
             try {
-                agentTxState.setProcessedTxId(processedTxId);
-                return update(agentTxState);
+                processingState.setProcessedTxId(processedTxId);
+                return update(processingState);
             } catch (Exception ex) {
                 throw new ManagerStateError(ex);
             }
         }
     }
 
-    public AgentTxState updateReadTx(String messageId) throws ManagerStateError {
+    public ProcessingState<T> updateReadTx(String messageId) throws ManagerStateError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
 
         synchronized (this) {
             try {
-                agentTxState.setCurrentMessageId(messageId);
-                return update(agentTxState);
+                processingState.setCurrentMessageId(messageId);
+                return update(processingState);
             } catch (Exception ex) {
                 throw new ManagerStateError(ex);
             }
         }
     }
 
-    private AgentTxState readState() throws ManagerStateError {
+    @SuppressWarnings("unchecked")
+    private ProcessingState<T> readState() throws ManagerStateError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
         synchronized (this) {
@@ -192,7 +190,7 @@ public abstract class BaseStateManager {
                 byte[] data = client.getData().forPath(zkAgentStatePath);
                 if (data != null && data.length > 0) {
                     String json = new String(data, StandardCharsets.UTF_8);
-                    return JSONUtils.read(json, AgentTxState.class);
+                    return JSONUtils.read(json, ProcessingState.class);
                 }
                 throw new ManagerStateError(String.format("NameNode State not found. [path=%s]", zkPath));
             } catch (Exception ex) {
@@ -266,7 +264,7 @@ public abstract class BaseStateManager {
 
 
     private String getHeartbeatPath(String name) {
-        return new PathUtils.ZkPathBuilder(zkPath)
+        return new PathUtils.ZkPathBuilder(zkModulePath)
                 .withPath(Constants.ZK_PATH_HEARTBEAT)
                 .withPath(name)
                 .build();

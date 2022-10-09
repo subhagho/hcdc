@@ -24,7 +24,7 @@ import java.nio.charset.StandardCharsets;
 
 @Getter
 @Accessors(fluent = true)
-public class ZkStateManager extends BaseStateManager {
+public class ZkStateManager extends BaseStateManager<Long> {
     public static class Constants {
         public static final String ZK_PATH_FILES = "/files";
         public static final String ZK_PATH_REPLICATION = "/replication";

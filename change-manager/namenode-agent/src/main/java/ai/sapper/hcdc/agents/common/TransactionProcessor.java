@@ -5,7 +5,7 @@ import ai.sapper.cdc.core.filters.DomainManager;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.MessageSender;
-import ai.sapper.cdc.core.model.AgentTxState;
+import ai.sapper.cdc.core.model.LongTxState;
 import ai.sapper.hcdc.agents.model.DFSBlockState;
 import ai.sapper.hcdc.agents.model.DFSFileState;
 import ai.sapper.hcdc.agents.model.EBlockState;
@@ -209,7 +209,7 @@ public abstract class TransactionProcessor {
                                      boolean retry) throws Exception {
         long txId = Long.parseLong(message.value().getTxId());
         if (message.mode() == MessageObject.MessageMode.New) {
-            AgentTxState txState = stateManager().agentTxState();
+            LongTxState txState = (LongTxState) stateManager().processingState();
             if (txId != txState.getProcessedTxId() + 1) {
                 if (!ignoreMissing) {
                     throw new InvalidMessageError(message.id(),

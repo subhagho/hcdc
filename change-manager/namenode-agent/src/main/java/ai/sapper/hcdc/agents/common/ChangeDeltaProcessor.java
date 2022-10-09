@@ -5,7 +5,7 @@ import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.ManagerStateError;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.messaging.*;
-import ai.sapper.cdc.core.model.AgentTxState;
+import ai.sapper.cdc.core.model.LongTxState;
 import ai.sapper.cdc.core.model.CDCAgentState;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSTransaction;
@@ -106,9 +106,9 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
                     .build();
 
             long txId = stateManager().getSnapshotTxId();
-            AgentTxState state = stateManager.agentTxState();
+            LongTxState state = (LongTxState) stateManager.processingState();
             if (txId > state.getProcessedTxId()) {
-                state = stateManager.update(txId);
+                state = (LongTxState) stateManager.update(txId);
             }
             return this;
         } catch (Exception ex) {
@@ -150,11 +150,11 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
         }
     }
 
-    public AgentTxState updateReadState(String messageId) throws ManagerStateError {
-        AgentTxState state = stateManager.agentTxState();
+    public LongTxState updateReadState(String messageId) throws ManagerStateError {
+        LongTxState state = (LongTxState) stateManager.processingState();
         lastMessageId = state.getCurrentMessageId();
 
-        return stateManager.updateReadTx(messageId);
+        return (LongTxState) stateManager.updateReadTx(messageId);
     }
 
     public void doRun() throws Throwable {
@@ -181,7 +181,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
                                     String.format("Invalid Message mode. [id=%s][mode=%s]", message.id(), message.mode().name()));
                         }
 
-                        AgentTxState state = updateReadState(message.id());
+                        LongTxState state = updateReadState(message.id());
                         boolean retry = false;
                         if (!Strings.isNullOrEmpty(state.getCurrentMessageId()) &&
                                 !Strings.isNullOrEmpty(lastMessageId()))
@@ -229,14 +229,14 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     public void commitReceived(@NonNull MessageObject<String, DFSChangeDelta> message,
                                long txId) throws Exception {
         if (txId > 0) {
-            if (stateManager().agentTxState().getProcessedTxId() < txId) {
+            if (stateManager().processingState().getProcessedTxId() < txId) {
                 stateManager().update(txId);
                 if (message.mode() == MessageObject.MessageMode.New) {
                     stateManager().updateReceivedTx(txId);
                     LOGGER.info(getClass(), txId,
                             String.format("Received transaction delta. [TXID=%d]", txId));
                 } else if (message.mode() == MessageObject.MessageMode.Snapshot) {
-                    if (stateManager().agentTxState().getProcessedTxId() < txId) {
+                    if (stateManager().processingState().getProcessedTxId() < txId) {
                         stateManager().updateReceivedTx(txId);
                         LOGGER.info(getClass(), txId,
                                 String.format("Received transaction delta. [TXID=%d]", txId));
@@ -253,7 +253,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     public void commit(@NonNull MessageObject<String, DFSChangeDelta> message,
                        long txId) throws Exception {
         if (txId > 0) {
-            if (stateManager().agentTxState().getProcessedTxId() < txId) {
+            if (stateManager().processingState().getProcessedTxId() < txId) {
                 stateManager().update(txId);
                 if (message.mode() == MessageObject.MessageMode.New) {
                     stateManager().updateCommittedTx(txId);

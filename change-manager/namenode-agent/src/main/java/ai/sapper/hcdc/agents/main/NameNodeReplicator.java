@@ -7,7 +7,7 @@ import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.cdc.core.Service;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
-import ai.sapper.cdc.core.model.AgentTxState;
+import ai.sapper.cdc.core.model.LongTxState;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.NameNodeError;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
@@ -185,7 +185,7 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
 
                     copy();
 
-                    AgentTxState nnTxState = stateManager.initState(txnId);
+                    LongTxState nnTxState = (LongTxState) stateManager.initState(txnId);
                     ModuleTxState mTx = stateManager.updateReceivedTx(txnId);
                     DefaultLogger.info(env.LOG,
                             String.format("NameNode replication done. [state=%s][module state=%s]", nnTxState, mTx));

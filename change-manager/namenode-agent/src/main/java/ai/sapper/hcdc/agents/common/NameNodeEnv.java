@@ -8,6 +8,7 @@ import ai.sapper.cdc.common.utils.NetUtils;
 import ai.sapper.cdc.core.*;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.model.CDCAgentState;
+import ai.sapper.cdc.core.model.LongTxState;
 import ai.sapper.cdc.core.model.ModuleInstance;
 import ai.sapper.cdc.core.schema.SchemaManager;
 import ai.sapper.hcdc.agents.model.NameNodeStatus;
@@ -131,7 +132,7 @@ public class NameNodeEnv extends BaseEnv {
 
             stateManager
                     .withReplicationLock(lock);
-            stateManager.checkAgentState();
+            stateManager.checkAgentState(LongTxState.class);
 
             if (ConfigReader.checkIfNodeExists(configNode,
                     SchemaManager.SchemaManagerConfig.Constants.__CONFIG_PATH)) {
