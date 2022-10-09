@@ -11,6 +11,7 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.EncoderFactory;
@@ -28,6 +29,7 @@ public class AvroChangeRecord {
     public static final String AVRO_FIELD_TIMESTAMP = "timestamp";
     public static final String AVRO_FIELD_TARGET_DOMAIN = "targetDomain";
     public static final String AVRO_FIELD_TARGET_ENTITY = "targetEntity";
+    public static final String AVRO_FIELD_TARGET_GROUP = "group";
     public static final String AVRO_FIELD_SOURCE_DOMAIN = "sourceDomain";
     public static final String AVRO_FIELD_SOURCE_ENTITY = "sourceEntity";
     public static final String AVRO_FIELD_DATA = "data";
@@ -63,6 +65,9 @@ public class AvroChangeRecord {
         if (Strings.isNullOrEmpty(e)) {
             throw new IOException(String.format("Data Error: missing field. [field=%s]", AVRO_FIELD_SOURCE_ENTITY));
         }
+        String g = record.get(AVRO_FIELD_TARGET_GROUP).toString();
+        targetEntity.setGroup(g);
+
         sourceEntity = new SchemaEntity(d, e);
         data = (GenericRecord) record.get(AVRO_FIELD_DATA);
         if (data == null) {
@@ -77,17 +82,19 @@ public class AvroChangeRecord {
         Preconditions.checkNotNull(sourceEntity);
         Preconditions.checkNotNull(data);
 
-        GenericRecord wrapper = new GenericData.Record(schema);
-        wrapper.put(AvroChangeRecord.AVRO_FIELD_TXID, txId);
-        wrapper.put(AvroChangeRecord.AVRO_FIELD_OP, op.opCode());
-        wrapper.put(AvroChangeRecord.AVRO_FIELD_TARGET_DOMAIN, targetEntity.getDomain());
-        wrapper.put(AvroChangeRecord.AVRO_FIELD_TARGET_ENTITY, targetEntity.getEntity());
-        wrapper.put(AvroChangeRecord.AVRO_FIELD_SOURCE_DOMAIN, sourceEntity.getDomain());
-        wrapper.put(AvroChangeRecord.AVRO_FIELD_SOURCE_ENTITY, sourceEntity.getEntity());
-        wrapper.put(AvroChangeRecord.AVRO_FIELD_TIMESTAMP, timestamp);
-        wrapper.put(AvroChangeRecord.AVRO_FIELD_DATA, data);
+        GenericRecordBuilder builder = new GenericRecordBuilder(schema);
+        builder.set(AvroChangeRecord.AVRO_FIELD_TXID, txId);
+        builder.set(AvroChangeRecord.AVRO_FIELD_OP, op.opCode());
+        builder.set(AvroChangeRecord.AVRO_FIELD_TARGET_DOMAIN, targetEntity.getDomain());
+        builder.set(AvroChangeRecord.AVRO_FIELD_TARGET_ENTITY, targetEntity.getEntity());
+        builder.set(AvroChangeRecord.AVRO_FIELD_TARGET_GROUP, targetEntity.getGroup());
+        builder.set(AvroChangeRecord.AVRO_FIELD_SOURCE_DOMAIN, sourceEntity.getDomain());
+        builder.set(AvroChangeRecord.AVRO_FIELD_SOURCE_ENTITY, sourceEntity.getEntity());
+        builder.set(AvroChangeRecord.AVRO_FIELD_TIMESTAMP, timestamp);
+        builder.set(AvroChangeRecord.AVRO_FIELD_DATA,
+                GenericData.get().deepCopy(data.getSchema(), data));
 
-        return wrapper;
+        return builder.build();
     }
 
     public static byte[] serialize(@NonNull GenericRecord record) throws Exception {

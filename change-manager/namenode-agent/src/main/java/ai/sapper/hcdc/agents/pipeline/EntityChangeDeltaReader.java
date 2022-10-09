@@ -43,7 +43,7 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
     private WebServiceClient client;
 
     public EntityChangeDeltaReader(@NonNull ZkStateManager stateManager, @NonNull String name) {
-        super(stateManager, name);
+        super(stateManager, name, false);
     }
 
     public EntityChangeDeltaReader withMockFileSystem(@NonNull CDCFileSystem.FileSystemMocker fileSystemMocker) {
@@ -77,7 +77,7 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
 
             if (fileSystemMocker == null) {
                 Class<? extends CDCFileSystem> fsc = (Class<? extends CDCFileSystem>) Class.forName(config.fsType);
-                fs = fsc.newInstance();
+                fs = fsc.getDeclaredConstructor().newInstance();
                 fs.init(config.config(), EntityChangeDeltaReaderConfig.Constants.CONFIG_PATH_FS);
             } else {
                 fs = (CDCFileSystem) fileSystemMocker.create(config.config());
@@ -89,7 +89,7 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
 
             if (!Strings.isNullOrEmpty(config.archiverClass)) {
                 Class<? extends Archiver> cls = (Class<? extends Archiver>) Class.forName(config.archiverClass);
-                archiver = cls.newInstance();
+                archiver = cls.getDeclaredConstructor().newInstance();
                 archiver.init(config.config(), Archiver.CONFIG_ARCHIVER);
             }
 

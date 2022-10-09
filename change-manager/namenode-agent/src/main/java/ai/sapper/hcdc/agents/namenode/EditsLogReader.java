@@ -61,7 +61,7 @@ public class EditsLogReader extends HDFSEditsReader {
     public long doRun() throws Exception {
         ModuleTxState state = stateManager.getModuleState();
         EditsLogFileReader reader = new EditsLogFileReader();
-        long txId = state.getCurrentTxId();
+        long txId = state.getReceivedTxId();
         if (txId < 0) {
             LOGGER.warn(getClass(), txId,
                     String.format("Name Node replication not initialized. [source=%s]",
@@ -69,13 +69,14 @@ public class EditsLogReader extends HDFSEditsReader {
         }
         List<DFSEditsFileFinder.EditsLogFile> files = DFSEditsFileFinder
                 .findEditsFiles(getPathNnCurrentDir(editsDir.getAbsolutePath()),
-                        state.getCurrentTxId() + 1, -1);
+                        state.getReceivedTxId() + 1, -1);
         if (files != null && !files.isEmpty()) {
             for (DFSEditsFileFinder.EditsLogFile file : files) {
-                LOGGER.debug(getClass(), state.getCurrentTxId(),
-                        String.format("Reading edits file [path=%s][startTx=%d]", file, state.getCurrentTxId()));
+                LOGGER.debug(getClass(), state.getReceivedTxId(),
+                        String.format("Reading edits file [path=%s][startTx=%d]",
+                                file, state.getReceivedTxId()));
                 reader.run(file,
-                        state.getCurrentTxId(),
+                        state.getReceivedTxId(),
                         file.endTxId(),
                         NameNodeEnv.get(name));
                 DFSEditLogBatch batch = reader.batch();
@@ -84,7 +85,7 @@ public class EditsLogReader extends HDFSEditsReader {
                     if (tid > 0) {
                         txId = tid;
                         stateManager.update(txId);
-                        stateManager.updateCurrentTx(txId);
+                        stateManager.updateReceivedTx(txId);
                     }
                 }
             }

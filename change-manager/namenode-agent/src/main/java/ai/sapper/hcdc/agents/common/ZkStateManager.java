@@ -168,11 +168,22 @@ public class ZkStateManager extends BaseStateManager {
         return moduleTxState;
     }
 
-    public ModuleTxState updateCurrentTx(long currentTx) throws Exception {
+    public ModuleTxState updateReceivedTx(long currentTx) throws Exception {
         checkState();
         synchronized (this) {
-            if (moduleTxState.getCurrentTxId() < currentTx) {
-                moduleTxState.setCurrentTxId(currentTx);
+            if (moduleTxState.getReceivedTxId() < currentTx) {
+                moduleTxState.setReceivedTxId(currentTx);
+                update(moduleTxState);
+            }
+        }
+        return moduleTxState;
+    }
+
+    public ModuleTxState updateCommittedTx(long currentTx) throws Exception {
+        checkState();
+        synchronized (this) {
+            if (moduleTxState.getCommittedTxId() < currentTx) {
+                moduleTxState.setCommittedTxId(currentTx);
                 update(moduleTxState);
             }
         }

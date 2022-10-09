@@ -34,7 +34,7 @@ public class EntityChangeDeltaProcessor extends ChangeDeltaProcessor {
 
 
     public EntityChangeDeltaProcessor(@NonNull ZkStateManager stateManager, @NonNull String name) {
-        super(stateManager, name);
+        super(stateManager, name, true);
     }
 
     public ChangeDeltaProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,

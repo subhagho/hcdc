@@ -43,11 +43,14 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     private NameNodeEnv env;
     private String lastMessageId = null;
     private TransactionProcessor processor;
+    private boolean receiverMode;
 
     public ChangeDeltaProcessor(@NonNull ZkStateManager stateManager,
-                                @NonNull String name) {
+                                @NonNull String name,
+                                boolean receiverMode) {
         this.stateManager = stateManager;
         this.name = name;
+        this.receiverMode = receiverMode;
     }
 
     public ChangeDeltaProcessor withProcessor(@NonNull TransactionProcessor processor) {
@@ -133,6 +136,13 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
             } catch (Exception ex) {
                 env.LOG.error(ex.getLocalizedMessage(), ex);
             }
+        } finally {
+            try {
+                close();
+            } catch (Exception ex) {
+                DefaultLogger.stacktrace(ex);
+                DefaultLogger.LOGGER.error(ex.getLocalizedMessage());
+            }
         }
     }
 
@@ -189,8 +199,10 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
                             }
                             process(message, data, tnx, retry);
                             NameNodeEnv.audit(name, getClass(), (MessageOrBuilder) data);
-
-                            commit(message, txId);
+                            if (receiverMode) {
+                                commitReceived(message, txId);
+                            } else
+                                commit(message, txId);
                         } catch (Exception ex) {
                             error(message, data, ex, txId);
                         }
@@ -210,22 +222,43 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
 
     public abstract boolean isValidMessage(@NonNull MessageObject<String, DFSChangeDelta> message);
 
+    public void commitReceived(@NonNull MessageObject<String, DFSChangeDelta> message,
+                               long txId) throws Exception {
+        if (txId > 0) {
+            if (stateManager().agentTxState().getProcessedTxId() < txId) {
+                stateManager().update(txId);
+                if (message.mode() == MessageObject.MessageMode.New) {
+                    stateManager().updateReceivedTx(txId);
+                    LOGGER.info(getClass(), txId,
+                            String.format("Received transaction delta. [TXID=%d]", txId));
+                } else if (message.mode() == MessageObject.MessageMode.Snapshot) {
+                    if (stateManager().agentTxState().getProcessedTxId() < txId) {
+                        stateManager().updateReceivedTx(txId);
+                        LOGGER.info(getClass(), txId,
+                                String.format("Received transaction delta. [TXID=%d]", txId));
+                    }
+                    if (stateManager().getModuleState().getSnapshotTxId() < txId) {
+                        stateManager().updateSnapshotTx(txId);
+                    }
+                }
+            }
+        }
+        receiver.ack(message.id());
+    }
+
     public void commit(@NonNull MessageObject<String, DFSChangeDelta> message,
                        long txId) throws Exception {
         if (txId > 0) {
-            if (message.mode() == MessageObject.MessageMode.New) {
-                stateManager().updateCurrentTx(txId);
-                LOGGER.info(getClass(), txId,
-                        String.format("Processed transaction delta. [TXID=%d]", txId));
-            } else if (message.mode() == MessageObject.MessageMode.Snapshot) {
-                if (stateManager().agentTxState().getProcessedTxId() < txId) {
-                    stateManager().updateCurrentTx(txId);
-                    stateManager().update(txId);
+            if (stateManager().agentTxState().getProcessedTxId() < txId) {
+                stateManager().update(txId);
+                if (message.mode() == MessageObject.MessageMode.New) {
+                    stateManager().updateCommittedTx(txId);
                     LOGGER.info(getClass(), txId,
-                            String.format("Processed transaction delta. [TXID=%d]", txId));
-                }
-                if (stateManager().getModuleState().getSnapshotTxId() < txId) {
-                    stateManager().updateSnapshotTx(txId);
+                            String.format("Received transaction delta. [TXID=%d]", txId));
+                } else if (message.mode() == MessageObject.MessageMode.Snapshot) {
+                    stateManager().updateReceivedTx(txId);
+                    LOGGER.info(getClass(), txId,
+                            String.format("Received transaction delta. [TXID=%d]", txId));
                 }
             }
         }

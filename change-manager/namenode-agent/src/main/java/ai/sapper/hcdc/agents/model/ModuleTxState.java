@@ -9,7 +9,8 @@ import lombok.ToString;
 @ToString
 public class ModuleTxState {
     private String module;
-    private long currentTxId = -1;
+    private long receivedTxId = -1;
+    private long committedTxId = -1;
     private long snapshotTxId = -1;
     private long updateTimestamp;
     private String agentInstance;

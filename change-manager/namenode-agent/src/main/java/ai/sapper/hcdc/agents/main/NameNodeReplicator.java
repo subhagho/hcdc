@@ -186,9 +186,7 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
                     copy();
 
                     AgentTxState nnTxState = stateManager.initState(txnId);
-                    ModuleTxState mTx = stateManager.updateSnapshotTxId(txnId);
-                    mTx = stateManager.updateCurrentTx(txnId);
-
+                    ModuleTxState mTx = stateManager.updateReceivedTx(txnId);
                     DefaultLogger.info(env.LOG,
                             String.format("NameNode replication done. [state=%s][module state=%s]", nnTxState, mTx));
 

@@ -93,7 +93,7 @@ public class HDFSSnapshotProcessor {
         Preconditions.checkNotNull(domainManager.hdfsConnection());
 
         int count = 0;
-        long txId = stateManager.getModuleState().getCurrentTxId();
+        long txId = stateManager.getModuleState().getReceivedTxId();
         try (DistributedLock lock = NameNodeEnv.get(name).globalLock()
                 .withLockTimeout(processorConfig.defaultLockTimeout)) {
             lock.lock();
@@ -110,6 +110,7 @@ public class HDFSSnapshotProcessor {
                         }
                     }
                 }
+                stateManager.updateSnapshotTxId(txId);
                 return count;
             } finally {
                 lock.unlock();
