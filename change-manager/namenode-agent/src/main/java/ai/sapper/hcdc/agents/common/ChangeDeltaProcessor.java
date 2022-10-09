@@ -31,6 +31,10 @@ import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 @Getter
 @Accessors(fluent = true)
 public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
+    public enum EProcessorMode {
+        Reader, Committer
+    }
+
     private static Logger LOG;
 
     private final String name;
@@ -43,14 +47,14 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     private NameNodeEnv env;
     private String lastMessageId = null;
     private TransactionProcessor processor;
-    private boolean receiverMode;
+    private final EProcessorMode mode;
 
     public ChangeDeltaProcessor(@NonNull ZkStateManager stateManager,
                                 @NonNull String name,
-                                boolean receiverMode) {
+                                @NonNull EProcessorMode mode) {
         this.stateManager = stateManager;
         this.name = name;
-        this.receiverMode = receiverMode;
+        this.mode = mode;
     }
 
     public ChangeDeltaProcessor withProcessor(@NonNull TransactionProcessor processor) {
@@ -199,7 +203,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
                             }
                             process(message, data, tnx, retry);
                             NameNodeEnv.audit(name, getClass(), (MessageOrBuilder) data);
-                            if (receiverMode) {
+                            if (mode == EProcessorMode.Reader) {
                                 commitReceived(message, txId);
                             } else
                                 commit(message, txId);

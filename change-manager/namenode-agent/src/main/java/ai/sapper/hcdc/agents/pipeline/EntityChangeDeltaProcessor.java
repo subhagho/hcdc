@@ -1,19 +1,14 @@
 package ai.sapper.hcdc.agents.pipeline;
 
-import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.connections.ConnectionManager;
-import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
-import ai.sapper.cdc.core.model.AgentTxState;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
-import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
 import ai.sapper.hcdc.agents.model.DFSFileState;
 import ai.sapper.hcdc.agents.model.EFileState;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSTransaction;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -25,8 +20,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
-
 @Getter
 @Accessors(fluent = true)
 public class EntityChangeDeltaProcessor extends ChangeDeltaProcessor {
@@ -34,7 +27,7 @@ public class EntityChangeDeltaProcessor extends ChangeDeltaProcessor {
 
 
     public EntityChangeDeltaProcessor(@NonNull ZkStateManager stateManager, @NonNull String name) {
-        super(stateManager, name, true);
+        super(stateManager, name, EProcessorMode.Reader);
     }
 
     public ChangeDeltaProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,

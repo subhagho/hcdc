@@ -2,7 +2,6 @@ package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.core.filters.DomainManager;
-import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.MessageSender;
@@ -13,7 +12,6 @@ import ai.sapper.hcdc.agents.model.EBlockState;
 import ai.sapper.hcdc.agents.model.EFileState;
 import ai.sapper.hcdc.common.model.*;
 import com.google.common.base.Preconditions;
-import com.google.protobuf.MessageOrBuilder;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;

@@ -1,6 +1,5 @@
 package ai.sapper.cdc.core.connections.db;
 
-import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.core.connections.ConnectionConfig;
 import ai.sapper.cdc.core.connections.settngs.JdbcConnectionSettings;
 import com.google.common.base.Strings;

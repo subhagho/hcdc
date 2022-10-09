@@ -18,7 +18,6 @@ import org.apache.avro.io.EncoderFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 @Getter
 @Setter

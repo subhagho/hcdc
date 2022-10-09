@@ -1,6 +1,5 @@
 package ai.sapper.cdc.core.connections.settngs;
 
-import ai.sapper.cdc.common.audit.DefaultAuditLogger;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import com.google.common.base.Strings;
 import lombok.NonNull;

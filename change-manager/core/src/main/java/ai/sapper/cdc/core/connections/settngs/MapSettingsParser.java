@@ -1,7 +1,6 @@
 package ai.sapper.cdc.core.connections.settngs;
 
 import com.google.common.base.Strings;
-import lombok.NonNull;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,16 +1,16 @@
 package ai.sapper.hcdc.agents.namenode;
 
 import ai.sapper.cdc.common.schema.SchemaEntity;
-import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.filters.DomainManager;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
-import ai.sapper.cdc.core.model.AgentTxState;
 import ai.sapper.cdc.core.model.BlockTransactionDelta;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
-import ai.sapper.hcdc.agents.common.*;
+import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
+import ai.sapper.hcdc.agents.common.ProcessorStateManager;
+import ai.sapper.hcdc.agents.common.ZkStateManager;
 import ai.sapper.hcdc.agents.model.DFSBlockState;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.agents.model.DFSFileState;
@@ -19,7 +19,6 @@ import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSFileClose;
 import ai.sapper.hcdc.common.model.DFSTransaction;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -30,9 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.List;
-
-import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 
 @Getter
 @Accessors(fluent = true)
@@ -41,7 +37,7 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
 
     public EditsChangeDeltaProcessor(@NonNull ZkStateManager stateManager,
                                      @NonNull String name) {
-        super(stateManager, name, false);
+        super(stateManager, name, EProcessorMode.Committer);
     }
 
     @Override

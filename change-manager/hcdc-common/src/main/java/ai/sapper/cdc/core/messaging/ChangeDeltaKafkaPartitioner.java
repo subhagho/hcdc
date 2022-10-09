@@ -1,7 +1,6 @@
 package ai.sapper.cdc.core.messaging;
 
 import ai.sapper.cdc.common.schema.SchemaEntity;
-import ai.sapper.cdc.core.messaging.KafkaPartitioner;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import lombok.NonNull;

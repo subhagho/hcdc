@@ -1,6 +1,5 @@
 package ai.sapper.cdc.core.connections.hadoop;
 
-import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.connections.*;
@@ -8,7 +7,6 @@ import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import ai.sapper.cdc.core.connections.settngs.HdfsConnectionSettings;
 import ai.sapper.cdc.core.connections.settngs.HdfsUrlParser;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;

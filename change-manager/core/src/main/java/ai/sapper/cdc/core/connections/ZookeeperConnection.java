@@ -1,6 +1,5 @@
 package ai.sapper.cdc.core.connections;
 
-import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
