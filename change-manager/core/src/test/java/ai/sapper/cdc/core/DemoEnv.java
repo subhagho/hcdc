@@ -11,7 +11,10 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 
 @Getter
 @Accessors(fluent = true)
-public class DemoEnv extends BaseEnv {
+public class DemoEnv extends BaseEnv<DemoEnv.DemoState> {
+    public static class DemoState {
+
+    }
     public static final String __CONFIG_PATH = "agent";
     private static final String CONFIG_CONNECTIONS = "connections.path";
     private static final String TEST_PASSWD = "test1234";
@@ -19,8 +22,8 @@ public class DemoEnv extends BaseEnv {
     private HierarchicalConfiguration<ImmutableNode> config;
     private final String module = "TEST";
 
-    public BaseEnv init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
-        super.init(xmlConfig);
+    public BaseEnv<DemoState> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
+        super.init(xmlConfig, new DemoState());
 
         withStoreKey(TEST_PASSWD);
         config = rootConfig().configurationAt(__CONFIG_PATH);

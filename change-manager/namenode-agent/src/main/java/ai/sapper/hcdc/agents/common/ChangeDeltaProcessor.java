@@ -154,7 +154,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
         LongTxState state = (LongTxState) stateManager.processingState();
         lastMessageId = state.getCurrentMessageId();
 
-        return (LongTxState) stateManager.updateReadTx(messageId);
+        return (LongTxState) stateManager.updateMessageId(messageId);
     }
 
     public void doRun() throws Throwable {

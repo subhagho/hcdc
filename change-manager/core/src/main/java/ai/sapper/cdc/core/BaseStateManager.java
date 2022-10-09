@@ -118,7 +118,7 @@ public abstract class BaseStateManager<T> {
             String json = JSONUtils.asString(processingState, LongTxState.class);
             client.setData().forPath(zkAgentStatePath, json.getBytes(StandardCharsets.UTF_8));
         } else {
-            processingState = readState();
+            processingState = readState(type);
         }
         processingState.setInstance(moduleInstance);
         update(processingState);
@@ -145,7 +145,7 @@ public abstract class BaseStateManager<T> {
         state.setUpdatedTime(System.currentTimeMillis());
 
         CuratorFramework client = connection().client();
-        String json = JSONUtils.asString(state, ProcessingState.class);
+        String json = JSONUtils.asString(state, state.getClass());
         client.setData().forPath(zkAgentStatePath, json.getBytes(StandardCharsets.UTF_8));
 
         return state;
@@ -166,7 +166,7 @@ public abstract class BaseStateManager<T> {
         }
     }
 
-    public ProcessingState<T> updateReadTx(String messageId) throws ManagerStateError {
+    public ProcessingState<T> updateMessageId(String messageId) throws ManagerStateError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
 
@@ -181,7 +181,7 @@ public abstract class BaseStateManager<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private ProcessingState<T> readState() throws ManagerStateError {
+    private ProcessingState<T> readState(Class<? extends ProcessingState<T>> type) throws ManagerStateError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
         synchronized (this) {
@@ -190,7 +190,7 @@ public abstract class BaseStateManager<T> {
                 byte[] data = client.getData().forPath(zkAgentStatePath);
                 if (data != null && data.length > 0) {
                     String json = new String(data, StandardCharsets.UTF_8);
-                    return JSONUtils.read(json, ProcessingState.class);
+                    return JSONUtils.read(json, type);
                 }
                 throw new ManagerStateError(String.format("NameNode State not found. [path=%s]", zkPath));
             } catch (Exception ex) {

@@ -3,6 +3,7 @@ package ai.sapper.cdc.core;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.keystore.KeyStore;
+import ai.sapper.cdc.core.model.ModuleInstance;
 import ai.sapper.cdc.core.utils.DistributedLockBuilder;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -18,7 +19,7 @@ import java.util.List;
 
 @Getter
 @Accessors(fluent = true)
-public abstract class BaseEnv {
+public abstract class BaseEnv<T> {
     public static class Constants {
         public static final String CONFIG_ENV = "env";
         public static final String CONFIG_ENV_NAME = String.format("%s.name", CONFIG_ENV);
@@ -30,14 +31,22 @@ public abstract class BaseEnv {
     private final DistributedLockBuilder lockBuilder = new DistributedLockBuilder();
     private String environment;
     private HierarchicalConfiguration<ImmutableNode> rootConfig;
-    private List<ExitCallback> exitCallbacks;
+    private List<ExitCallback<T>> exitCallbacks;
+    private T state;
+    private ModuleInstance moduleInstance;
 
-    public BaseEnv withStoreKey(@NonNull String storeKey) {
+    public BaseEnv<T> withModuleInstance(@NonNull ModuleInstance moduleInstance) {
+        this.moduleInstance = moduleInstance;
+        return this;
+    }
+
+    public BaseEnv<T> withStoreKey(@NonNull String storeKey) {
         this.storeKey = storeKey;
         return this;
     }
 
-    public BaseEnv init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
+    public BaseEnv<T> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                           @NonNull T state) throws ConfigurationException {
         String temp = System.getProperty("java.io.tmpdir");
         temp = String.format("%s/sapper/cdc/%s", temp, getClass().getSimpleName());
         File tdir = new File(temp);
@@ -51,6 +60,8 @@ public abstract class BaseEnv {
                     String.format("Base Env: missing parameter. [name=%s]", Constants.CONFIG_ENV_NAME));
         }
         rootConfig = xmlConfig.configurationAt(Constants.CONFIG_ENV);
+
+        this.state = state;
 
         return this;
     }
@@ -107,5 +118,24 @@ public abstract class BaseEnv {
         if (connectionManager != null) {
             connectionManager.close();
         }
+        if (exitCallbacks != null && !exitCallbacks.isEmpty()) {
+            for (ExitCallback<T> callback : exitCallbacks) {
+                callback.call(state);
+            }
+        }
     }
+
+
+    public String module() {
+        return moduleInstance.getModule();
+    }
+
+    public String instance() {
+        return moduleInstance.getName();
+    }
+
+    public String source() {
+        return moduleInstance.getSource();
+    }
+
 }

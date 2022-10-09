@@ -35,7 +35,7 @@ import java.util.Map;
 
 @Getter
 @Accessors(fluent = true)
-public class NameNodeEnv extends BaseEnv {
+public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
     public Logger LOG = LoggerFactory.getLogger(NameNodeEnv.class);
 
     public static final String NN_IGNORE_TNX = "%s.IGNORE";
@@ -55,7 +55,7 @@ public class NameNodeEnv extends BaseEnv {
     private List<InetAddress> hostIPs;
     private HadoopEnvConfig hadoopConfig;
     private NameNodeAdminClient adminClient;
-    private ModuleInstance moduleInstance;
+
     private final CDCAgentState.AgentState agentState = new CDCAgentState.AgentState();
 
     public NameNodeEnv(@NonNull String name) {
@@ -73,7 +73,7 @@ public class NameNodeEnv extends BaseEnv {
                     new Thread(new ShutdownThread()
                             .name(name)
                             .env(this)));
-            super.init(xmlConfig);
+            super.init(xmlConfig, state);
 
             configNode = rootConfig().configurationAt(NameNEnvConfig.Constants.__CONFIG_PATH);
 
@@ -108,13 +108,14 @@ public class NameNodeEnv extends BaseEnv {
             }
 
 
-            moduleInstance = new ModuleInstance()
+            ModuleInstance moduleInstance = new ModuleInstance()
                     .withIp(NetUtils.getInetAddress(hostIPs))
                     .withStartTime(System.currentTimeMillis());
             moduleInstance.setSource(config.source);
             moduleInstance.setModule(config.module());
             moduleInstance.setName(config.instance());
             moduleInstance.setInstanceId(moduleInstance.id());
+            withModuleInstance(moduleInstance);
 
             stateManager = config.stateManagerClass
                     .getDeclaredConstructor().newInstance();
@@ -188,7 +189,7 @@ public class NameNodeEnv extends BaseEnv {
             }
             if (state.isAvailable()) {
                 try {
-                    stateManager.heartbeat(moduleInstance.getInstanceId(), agentState);
+                    stateManager.heartbeat(moduleInstance().getInstanceId(), agentState);
                 } catch (Exception ex) {
                     LOG.error(ex.getLocalizedMessage());
                     LOG.debug(DefaultLogger.stacktrace(ex));
@@ -201,18 +202,6 @@ public class NameNodeEnv extends BaseEnv {
             LOG.error("Error disposing NameNodeEnv...", ex);
         }
         return state.state();
-    }
-
-    public String module() {
-        return moduleInstance.getModule();
-    }
-
-    public String instance() {
-        return moduleInstance.getName();
-    }
-
-    public String source() {
-        return moduleInstance.getSource();
     }
 
     public DistributedLock createLock(@NonNull String name) throws NameNodeError {
