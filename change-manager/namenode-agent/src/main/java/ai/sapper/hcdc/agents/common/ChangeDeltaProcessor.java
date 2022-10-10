@@ -106,10 +106,12 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
                     .build();
 
             long txId = stateManager().getSnapshotTxId();
+            /*
             LongTxState state = (LongTxState) stateManager.processingState();
             if (txId > state.getProcessedTxId()) {
                 state = (LongTxState) stateManager.update(txId);
             }
+             */
             return this;
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
@@ -229,18 +231,17 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     public void commitReceived(@NonNull MessageObject<String, DFSChangeDelta> message,
                                long txId) throws Exception {
         if (txId > 0) {
-            if (stateManager().processingState().getProcessedTxId() < txId) {
-                stateManager().update(txId);
-                if (message.mode() == MessageObject.MessageMode.New) {
+            if (message.mode() == MessageObject.MessageMode.New ||
+                    message.mode() == MessageObject.MessageMode.Snapshot) {
+                if (stateManager().processingState().getProcessedTxId() < txId) {
+                    stateManager().update(txId);
+                }
+                if (stateManager.moduleTxState().getReceivedTxId() < txId) {
                     stateManager().updateReceivedTx(txId);
                     LOGGER.info(getClass(), txId,
                             String.format("Received transaction delta. [TXID=%d]", txId));
-                } else if (message.mode() == MessageObject.MessageMode.Snapshot) {
-                    if (stateManager().processingState().getProcessedTxId() < txId) {
-                        stateManager().updateReceivedTx(txId);
-                        LOGGER.info(getClass(), txId,
-                                String.format("Received transaction delta. [TXID=%d]", txId));
-                    }
+                }
+                if (message.mode() == MessageObject.MessageMode.Snapshot) {
                     if (stateManager().getModuleState().getSnapshotTxId() < txId) {
                         stateManager().updateSnapshotTx(txId);
                     }
@@ -253,16 +254,15 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     public void commit(@NonNull MessageObject<String, DFSChangeDelta> message,
                        long txId) throws Exception {
         if (txId > 0) {
-            if (stateManager().processingState().getProcessedTxId() < txId) {
-                stateManager().update(txId);
-                if (message.mode() == MessageObject.MessageMode.New) {
+            if (message.mode() == MessageObject.MessageMode.New ||
+                    message.mode() == MessageObject.MessageMode.Snapshot) {
+                if (stateManager().processingState().getProcessedTxId() < txId) {
+                    stateManager().update(txId);
+                }
+                if (stateManager.moduleTxState().getCommittedTxId() < txId) {
                     stateManager().updateCommittedTx(txId);
                     LOGGER.info(getClass(), txId,
-                            String.format("Received transaction delta. [TXID=%d]", txId));
-                } else if (message.mode() == MessageObject.MessageMode.Snapshot) {
-                    stateManager().updateReceivedTx(txId);
-                    LOGGER.info(getClass(), txId,
-                            String.format("Received transaction delta. [TXID=%d]", txId));
+                            String.format("Committed transaction delta. [TXID=%d]", txId));
                 }
             }
         }

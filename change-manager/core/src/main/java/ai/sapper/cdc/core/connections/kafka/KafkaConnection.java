@@ -217,6 +217,9 @@ public abstract class KafkaConnection implements MessageConnection {
                         KafkaPartitionsParser parser = new KafkaPartitionsParser();
                         settings.setPartitions(parser.parse(ps));
                     }
+                    if (settings.getPartitions().isEmpty()) {
+                        settings.getPartitions().add(0);
+                    }
                 }
 
                 settings.setTopic(get().getString(Constants.CONFIG_TOPIC));

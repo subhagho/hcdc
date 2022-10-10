@@ -264,9 +264,9 @@ public class ZkStateManager extends BaseStateManager<Long> {
     }
 
     @Override
-    public Heartbeat heartbeat(@NonNull String name) throws ManagerStateError {
+    public Heartbeat heartbeat(@NonNull String instance) throws ManagerStateError {
         try {
-            return heartbeat(name, NameNodeEnv.get(name).agentState());
+            return heartbeat(instance, NameNodeEnv.get(name()).agentState());
         } catch (Exception ex) {
             throw new ManagerStateError(ex);
         }

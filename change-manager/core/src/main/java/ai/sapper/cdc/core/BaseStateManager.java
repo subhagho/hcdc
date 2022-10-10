@@ -202,7 +202,7 @@ public abstract class BaseStateManager<T> {
         }
     }
 
-    public abstract Heartbeat heartbeat(@NonNull String name) throws ManagerStateError;
+    public abstract Heartbeat heartbeat(@NonNull String instance) throws ManagerStateError;
 
     public Heartbeat heartbeat(@NonNull String name, @NonNull CDCAgentState.AgentState state) throws ManagerStateError {
         Preconditions.checkNotNull(connection);

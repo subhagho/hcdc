@@ -21,6 +21,7 @@ public class AvroUtils {
                     "\t\t{ \"name\" : \"%s\", \"type\" : \"int\" }, \n" +
                     "\t\t{ \"name\" : \"%s\", \"type\" : \"string\" }, \n" +
                     "\t\t{ \"name\" : \"%s\", \"type\" : \"string\" }, \n" +
+                    "\t\t{ \"name\" : \"%s\", \"type\" : [\"null\", \"string\"], \"default\": null }, \n" +
                     "\t\t{ \"name\" : \"%s\", \"type\" : \"string\" }, \n" +
                     "\t\t{ \"name\" : \"%s\", \"type\" : \"string\" }, \n" +
                     "\t\t{ \"name\" : \"%s\", \"type\" : \"long\" }, \n" +
@@ -30,6 +31,7 @@ public class AvroUtils {
             AvroChangeRecord.AVRO_FIELD_OP,
             AvroChangeRecord.AVRO_FIELD_TARGET_DOMAIN,
             AvroChangeRecord.AVRO_FIELD_TARGET_ENTITY,
+            AvroChangeRecord.AVRO_FIELD_TARGET_GROUP,
             AvroChangeRecord.AVRO_FIELD_SOURCE_DOMAIN,
             AvroChangeRecord.AVRO_FIELD_SOURCE_ENTITY,
             AvroChangeRecord.AVRO_FIELD_TIMESTAMP,

@@ -86,7 +86,8 @@ public class AvroChangeRecord {
         builder.set(AvroChangeRecord.AVRO_FIELD_OP, op.opCode());
         builder.set(AvroChangeRecord.AVRO_FIELD_TARGET_DOMAIN, targetEntity.getDomain());
         builder.set(AvroChangeRecord.AVRO_FIELD_TARGET_ENTITY, targetEntity.getEntity());
-        builder.set(AvroChangeRecord.AVRO_FIELD_TARGET_GROUP, targetEntity.getGroup());
+        if (!Strings.isNullOrEmpty(targetEntity.getGroup()))
+            builder.set(AvroChangeRecord.AVRO_FIELD_TARGET_GROUP, targetEntity.getGroup());
         builder.set(AvroChangeRecord.AVRO_FIELD_SOURCE_DOMAIN, sourceEntity.getDomain());
         builder.set(AvroChangeRecord.AVRO_FIELD_SOURCE_ENTITY, sourceEntity.getEntity());
         builder.set(AvroChangeRecord.AVRO_FIELD_TIMESTAMP, timestamp);

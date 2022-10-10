@@ -91,6 +91,7 @@ public class HDFSSnapshotProcessor {
         Preconditions.checkState(stateManager instanceof ProcessorStateManager);
         DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
         Preconditions.checkNotNull(domainManager.hdfsConnection());
+        domainManager.refresh();
 
         int count = 0;
         long txId = stateManager.getModuleState().getReceivedTxId();

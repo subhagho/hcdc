@@ -120,7 +120,6 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         checkStaleInode(message, fileState, file);
 
         FSFile fsf = FileSystemHelper.createFile(fileState, fs, schemaEntity);
-        stateManager().stateLock();
         try {
             DFSFileReplicaState rState = null;
             if (retry) {
@@ -150,8 +149,6 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             throw new InvalidTransactionError(txId,
                     DFSError.ErrorCode.SYNC_STOPPED,
                     hdfsPath, ex);
-        } finally {
-            stateManager().stateUnlock();
         }
     }
 
@@ -221,18 +218,15 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 message, txId, retry);
         if (!fileState.hasError() && rState.isEnabled()) {
             FSFile file = HCDCFsUtils.get(fileState, schemaEntity, fs);
-            stateManager().stateLock();
-            try {
-                rState = stateManager()
-                        .replicaStateHelper()
-                        .get(schemaEntity, fileState.getFileInfo().getInodeId());
-                rState.setState(EFileState.Updating);
-                rState.setLastReplicatedTx(txId);
-                rState.setLastReplicationTime(System.currentTimeMillis());
-                rState = stateManager().replicaStateHelper().update(rState);
-            } finally {
-                stateManager().stateUnlock();
-            }
+
+            rState = stateManager()
+                    .replicaStateHelper()
+                    .get(schemaEntity, fileState.getFileInfo().getInodeId());
+            rState.setState(EFileState.Updating);
+            rState.setLastReplicatedTx(txId);
+            rState.setLastReplicationTime(System.currentTimeMillis());
+            rState = stateManager().replicaStateHelper().update(rState);
+
             LOGGER.debug(getClass(), txId, String.format("Updating file. [path=%s]",
                     fileState.getFileInfo().getHdfsPath()));
         } else if (fileState.hasError()) {
@@ -375,18 +369,15 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 rState.setStoragePath(ap.pathConfig());
             }
             file.delete();
-            stateManager().stateLock();
-            try {
-                rState.setEnabled(false);
-                rState.setLastReplicatedTx(txId);
-                rState.setLastReplicationTime(System.currentTimeMillis());
 
-                stateManager()
-                        .replicaStateHelper()
-                        .update(rState);
-            } finally {
-                stateManager().stateUnlock();
-            }
+            rState.setEnabled(false);
+            rState.setLastReplicatedTx(txId);
+            rState.setLastReplicationTime(System.currentTimeMillis());
+
+            stateManager()
+                    .replicaStateHelper()
+                    .update(rState);
+
             LOGGER.debug(getClass(), txId,
                     String.format("Deleted file. [path=%s]", fileState.getFileInfo().getHdfsPath()));
         } else if (fileState.hasError()) {

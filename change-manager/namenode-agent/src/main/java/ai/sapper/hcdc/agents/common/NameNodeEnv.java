@@ -93,19 +93,20 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
                 }
             }
 
-            stateManager = (ZkStateManager) super.stateManager();
+            if (super.stateManager() != null) {
+                stateManager = (ZkStateManager) super.stateManager();
 
-            DistributedLock lock = createLock(BaseStateManager.Constants.LOCK_REPLICATION);
-            if (lock == null) {
-                throw new ConfigurationException(
-                        String.format("Replication Lock not defined. [name=%s]",
-                                BaseStateManager.Constants.LOCK_REPLICATION));
+                DistributedLock lock = createLock(BaseStateManager.Constants.LOCK_REPLICATION);
+                if (lock == null) {
+                    throw new ConfigurationException(
+                            String.format("Replication Lock not defined. [name=%s]",
+                                    BaseStateManager.Constants.LOCK_REPLICATION));
+                }
+
+                stateManager
+                        .withReplicationLock(lock);
+                stateManager.checkAgentState(LongTxState.class);
             }
-
-            stateManager
-                    .withReplicationLock(lock);
-            stateManager.checkAgentState(LongTxState.class);
-
             if (ConfigReader.checkIfNodeExists(config().config(),
                     SchemaManager.SchemaManagerConfig.Constants.__CONFIG_PATH)) {
                 schemaManager = new SchemaManager();

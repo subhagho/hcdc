@@ -13,6 +13,10 @@ import lombok.ToString;
         property = "@class")
 public class LongTxState extends ProcessingState<Long> {
 
+    public LongTxState() {
+        setProcessedTxId(-1L);
+    }
+
     @Override
     public int compareTx(Long target) {
         if (getProcessedTxId() == null) {

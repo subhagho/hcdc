@@ -85,13 +85,14 @@ public abstract class BaseEnv<T> {
             moduleInstance.setName(config.instance());
             moduleInstance.setInstanceId(moduleInstance.id());
 
-            stateManager = config.stateManagerClass
-                    .getDeclaredConstructor().newInstance();
-            stateManager.withEnvironment(environment(), name)
-                    .withModuleInstance(moduleInstance);
-            stateManager
-                    .init(config.config(), connectionManager(), config.source);
-
+            if (config.stateManagerClass != null) {
+                stateManager = config.stateManagerClass
+                        .getDeclaredConstructor().newInstance();
+                stateManager.withEnvironment(environment(), name)
+                        .withModuleInstance(moduleInstance);
+                stateManager
+                        .init(config.config(), connectionManager(), config.source);
+            }
             if (ConfigReader.checkIfNodeExists(rootConfig,
                     AuditLogger.__CONFIG_PATH)) {
                 String c = rootConfig.getString(AuditLogger.CONFIG_AUDIT_CLASS);
@@ -236,11 +237,12 @@ public abstract class BaseEnv<T> {
             if (get().containsKey(Constants.CONFIG_HEARTBEAT)) {
                 enableHeartbeat = get().getBoolean(Constants.CONFIG_HEARTBEAT);
             }
-            managersConfig = get().configurationAt(Constants.__CONFIG_PATH_MANAGERS);
-            String s = managersConfig.getString(Constants.CONFIG_STATE_MANAGER_TYPE);
-            ConfigReader.checkStringValue(s, getClass(), Constants.CONFIG_STATE_MANAGER_TYPE);
-            if (!Strings.isNullOrEmpty(s)) {
-                stateManagerClass = (Class<? extends BaseStateManager<?>>) Class.forName(s);
+            if (ConfigReader.checkIfNodeExists(get(), Constants.__CONFIG_PATH_MANAGERS)) {
+                managersConfig = get().configurationAt(Constants.__CONFIG_PATH_MANAGERS);
+                String s = managersConfig.getString(Constants.CONFIG_STATE_MANAGER_TYPE);
+                if (!Strings.isNullOrEmpty(s)) {
+                    stateManagerClass = (Class<? extends BaseStateManager<?>>) Class.forName(s);
+                }
             }
         }
     }
