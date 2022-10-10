@@ -98,6 +98,9 @@ public abstract class BaseStateManager<T> {
         }
     }
 
+    public abstract BaseStateManager<T> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                                    @NonNull ConnectionManager manger,
+                                    @NonNull String source) throws StateManagerError;
     public synchronized void checkState() {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
@@ -275,6 +278,7 @@ public abstract class BaseStateManager<T> {
     public static abstract class BaseStateManagerConfig extends ConfigReader {
 
         public static final class Constants {
+            public static final String __CONFIG_PATH = "state";
             public static final String CONFIG_ZK_BASE = "basePath";
             public static final String CONFIG_ZK_CONNECTION = "connection";
         }

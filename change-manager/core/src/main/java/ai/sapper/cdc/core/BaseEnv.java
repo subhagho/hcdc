@@ -1,6 +1,8 @@
 package ai.sapper.cdc.core;
 
 import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.audit.AuditLogger;
+import ai.sapper.cdc.common.utils.NetUtils;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.keystore.KeyStore;
 import ai.sapper.cdc.core.model.ModuleInstance;
@@ -14,6 +16,7 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 
 import java.io.File;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,10 +37,16 @@ public abstract class BaseEnv<T> {
     private List<ExitCallback<T>> exitCallbacks;
     private T state;
     private ModuleInstance moduleInstance;
+    private BaseStateManager<?> stateManager;
+    private AuditLogger auditLogger;
+    private BaseEnvConfig config;
+    private List<InetAddress> hostIPs;
+    private final String name;
+    private Thread heartbeatThread;
+    private HeartbeatThread heartbeat;
 
-    public BaseEnv<T> withModuleInstance(@NonNull ModuleInstance moduleInstance) {
-        this.moduleInstance = moduleInstance;
-        return this;
+    public BaseEnv(@NonNull String name) {
+        this.name = name;
     }
 
     public BaseEnv<T> withStoreKey(@NonNull String storeKey) {
@@ -47,23 +56,68 @@ public abstract class BaseEnv<T> {
 
     public BaseEnv<T> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                            @NonNull T state) throws ConfigurationException {
-        String temp = System.getProperty("java.io.tmpdir");
-        temp = String.format("%s/sapper/cdc/%s", temp, getClass().getSimpleName());
-        File tdir = new File(temp);
-        if (!tdir.exists()) {
-            tdir.mkdirs();
-        }
-        System.setProperty("java.io.tmpdir", temp);
-        environment = xmlConfig.getString(Constants.CONFIG_ENV_NAME);
-        if (Strings.isNullOrEmpty(environment)) {
-            throw new ConfigurationException(
-                    String.format("Base Env: missing parameter. [name=%s]", Constants.CONFIG_ENV_NAME));
-        }
-        rootConfig = xmlConfig.configurationAt(Constants.CONFIG_ENV);
+        try {
+            String temp = System.getProperty("java.io.tmpdir");
+            temp = String.format("%s/sapper/cdc/%s", temp, getClass().getSimpleName());
+            File tdir = new File(temp);
+            if (!tdir.exists()) {
+                tdir.mkdirs();
+            }
+            System.setProperty("java.io.tmpdir", temp);
+            environment = xmlConfig.getString(Constants.CONFIG_ENV_NAME);
+            if (Strings.isNullOrEmpty(environment)) {
+                throw new ConfigurationException(
+                        String.format("Base Env: missing parameter. [name=%s]", Constants.CONFIG_ENV_NAME));
+            }
+            config = new BaseEnvConfig(xmlConfig);
+            config.read();
 
-        this.state = state;
+            setup(config.module, config.connectionConfigPath);
 
-        return this;
+            hostIPs = NetUtils.getInetAddresses();
+
+            moduleInstance = new ModuleInstance()
+                    .withIp(NetUtils.getInetAddress(hostIPs))
+                    .withStartTime(System.currentTimeMillis());
+            moduleInstance.setSource(config.source);
+            moduleInstance.setModule(config.module());
+            moduleInstance.setName(config.instance());
+            moduleInstance.setInstanceId(moduleInstance.id());
+
+            stateManager = config.stateManagerClass
+                    .getDeclaredConstructor().newInstance();
+            stateManager.withEnvironment(environment(), name)
+                    .withModuleInstance(moduleInstance);
+            stateManager
+                    .init(config.config(), connectionManager(), config.source);
+
+            rootConfig = config.config();
+
+            if (ConfigReader.checkIfNodeExists(rootConfig,
+                    AuditLogger.__CONFIG_PATH)) {
+                String c = rootConfig.getString(AuditLogger.CONFIG_AUDIT_CLASS);
+                if (Strings.isNullOrEmpty(c)) {
+                    throw new ConfigurationException(
+                            String.format("Audit Logger class not specified. [node=%s]",
+                                    AuditLogger.CONFIG_AUDIT_CLASS));
+                }
+                Class<? extends AuditLogger> cls = (Class<? extends AuditLogger>) Class.forName(c);
+                AuditLogger auditLogger = cls.getDeclaredConstructor().newInstance();
+                auditLogger.init(rootConfig);
+            }
+
+            this.state = state;
+
+            if (config.enableHeartbeat) {
+                heartbeat = new HeartbeatThread(name()).withStateManager(stateManager);
+                heartbeatThread = new Thread(heartbeat);
+                heartbeatThread.start();
+            }
+
+            return this;
+        } catch (Exception ex) {
+            throw new ConfigurationException(ex);
+        }
     }
 
     public void setup(@NonNull String module,
@@ -115,6 +169,11 @@ public abstract class BaseEnv<T> {
     }
 
     public void close() throws Exception {
+        if (heartbeatThread != null) {
+            heartbeat().terminate();
+            heartbeatThread().join();
+            heartbeatThread = null;
+        }
         if (connectionManager != null) {
             connectionManager.close();
         }
@@ -138,4 +197,60 @@ public abstract class BaseEnv<T> {
         return moduleInstance.getSource();
     }
 
+    @Getter
+    @Accessors(fluent = true)
+    public static class BaseEnvConfig extends ConfigReader {
+        public static class Constants {
+            private static final String CONFIG_MODULE = "module";
+            private static final String CONFIG_INSTANCE = "instance";
+            private static final String CONFIG_HEARTBEAT = "enableHeartbeat";
+            private static final String CONFIG_SOURCE_NAME = "source";
+            private static final String CONFIG_STATE_MANAGER_TYPE =
+                    String.format("%s.stateManagerClass",
+                            BaseStateManager.BaseStateManagerConfig.Constants.__CONFIG_PATH);
+            private static final String CONFIG_CONNECTIONS = "connections.path";
+
+        }
+
+        private String module;
+        private String instance;
+        private String source;
+        private String connectionConfigPath;
+        private boolean enableHeartbeat = false;
+        private Class<? extends BaseStateManager<?>> stateManagerClass;
+
+        public BaseEnvConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
+            super(config, BaseEnv.Constants.CONFIG_ENV);
+        }
+
+        public void read() throws Exception {
+            module = get().getString(Constants.CONFIG_MODULE);
+            if (Strings.isNullOrEmpty(module)) {
+                throw new ConfigurationException(
+                        String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_MODULE));
+            }
+            instance = get().getString(Constants.CONFIG_INSTANCE);
+            if (Strings.isNullOrEmpty(instance)) {
+                throw new ConfigurationException(
+                        String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_INSTANCE));
+            }
+            source = get().getString(Constants.CONFIG_SOURCE_NAME);
+            if (Strings.isNullOrEmpty(source)) {
+                throw new ConfigurationException(
+                        String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_SOURCE_NAME));
+            }
+            connectionConfigPath = get().getString(Constants.CONFIG_CONNECTIONS);
+            if (Strings.isNullOrEmpty(connectionConfigPath)) {
+                throw new ConfigurationException(
+                        String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_CONNECTIONS));
+            }
+            if (get().containsKey(Constants.CONFIG_HEARTBEAT)) {
+                enableHeartbeat = get().getBoolean(Constants.CONFIG_HEARTBEAT);
+            }
+            String s = get().getString(Constants.CONFIG_STATE_MANAGER_TYPE);
+            if (!Strings.isNullOrEmpty(s)) {
+                stateManagerClass = (Class<? extends BaseStateManager<?>>) Class.forName(s);
+            }
+        }
+    }
 }

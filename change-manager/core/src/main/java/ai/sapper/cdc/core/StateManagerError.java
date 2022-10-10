@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.agents.common;
+package ai.sapper.cdc.core;
 
 import java.security.PrivilegedActionException;
 

@@ -2,14 +2,11 @@ package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.cdc.common.AbstractState;
 import ai.sapper.cdc.common.ConfigReader;
-import ai.sapper.cdc.common.audit.AuditLogger;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.cdc.common.utils.NetUtils;
 import ai.sapper.cdc.core.*;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.model.CDCAgentState;
 import ai.sapper.cdc.core.model.LongTxState;
-import ai.sapper.cdc.core.model.ModuleInstance;
 import ai.sapper.cdc.core.schema.SchemaManager;
 import ai.sapper.hcdc.agents.model.NameNodeStatus;
 import ai.sapper.hcdc.agents.namenode.HadoopEnvConfig;
@@ -36,18 +33,13 @@ import java.util.Map;
 @Getter
 @Accessors(fluent = true)
 public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
-    public Logger LOG = LoggerFactory.getLogger(NameNodeEnv.class);
+    public final Logger LOG;
 
     public static final String NN_IGNORE_TNX = "%s.IGNORE";
 
     private final NameNEnvState state = new NameNEnvState();
-    private final String name;
 
-    private Thread heartbeatThread;
-    private HeartbeatThread heartbeat;
-
-    private AuditLogger auditLogger;
-    private NameNEnvConfig config;
+    private NameNEnvConfig nEnvConfig;
     private HierarchicalConfiguration<ImmutableNode> configNode;
     private HdfsConnection hdfsConnection;
     private ZkStateManager stateManager;
@@ -58,8 +50,9 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
 
     private final CDCAgentState.AgentState agentState = new CDCAgentState.AgentState();
 
-    public NameNodeEnv(@NonNull String name) {
-        this.name = name;
+    public NameNodeEnv(@NonNull String name, @NonNull Class<?> caller) {
+        super(name);
+        LOG = LoggerFactory.getLogger(caller);
     }
 
     public synchronized NameNodeEnv init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
@@ -67,38 +60,32 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
         try {
             if (state.isAvailable()) return this;
 
-            LOG = LoggerFactory.getLogger(caller);
-
             Runtime.getRuntime().addShutdownHook(
                     new Thread(new ShutdownThread()
-                            .name(name)
+                            .name(name())
                             .env(this)));
             super.init(xmlConfig, state);
 
             configNode = rootConfig().configurationAt(NameNEnvConfig.Constants.__CONFIG_PATH);
 
-            this.config = new NameNEnvConfig(rootConfig());
-            this.config.read();
+            this.nEnvConfig = new NameNEnvConfig(rootConfig());
+            this.nEnvConfig.read();
 
-            hostIPs = NetUtils.getInetAddresses();
-
-            super.setup(config.module, config.connectionConfigPath);
-
-            if (config().readHadoopConfig) {
-                hdfsConnection = connectionManager().getConnection(config.hdfsAdminConnection, HdfsConnection.class);
+            if (nEnvConfig().readHadoopConfig) {
+                hdfsConnection = connectionManager().getConnection(nEnvConfig.hdfsAdminConnection, HdfsConnection.class);
                 if (hdfsConnection == null) {
                     throw new ConfigurationException("HDFS Admin connection not found.");
                 }
                 if (!hdfsConnection.isConnected()) hdfsConnection.connect();
 
-                hadoopConfig = new HadoopEnvConfig(config.hadoopHome,
-                        config.hadoopConfFile,
-                        config.hadoopNamespace,
-                        config.hadoopInstanceName,
-                        config.hadoopVersion)
-                        .withNameNodeAdminUrl(config.hadoopAdminUrl);
+                hadoopConfig = new HadoopEnvConfig(nEnvConfig.hadoopHome,
+                        nEnvConfig.hadoopConfFile,
+                        nEnvConfig.hadoopNamespace,
+                        nEnvConfig.hadoopInstanceName,
+                        nEnvConfig.hadoopVersion)
+                        .withNameNodeAdminUrl(nEnvConfig.hadoopAdminUrl);
                 hadoopConfig.read();
-                adminClient = new NameNodeAdminClient(hadoopConfig.nameNodeAdminUrl(), config.hadoopUseSSL);
+                adminClient = new NameNodeAdminClient(hadoopConfig.nameNodeAdminUrl(), nEnvConfig.hadoopUseSSL);
                 NameNodeStatus status = adminClient().status();
                 if (status != null) {
                     agentState.parseState(status.getState());
@@ -107,22 +94,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
                 }
             }
 
-
-            ModuleInstance moduleInstance = new ModuleInstance()
-                    .withIp(NetUtils.getInetAddress(hostIPs))
-                    .withStartTime(System.currentTimeMillis());
-            moduleInstance.setSource(config.source);
-            moduleInstance.setModule(config.module());
-            moduleInstance.setName(config.instance());
-            moduleInstance.setInstanceId(moduleInstance.id());
-            withModuleInstance(moduleInstance);
-
-            stateManager = config.stateManagerClass
-                    .getDeclaredConstructor().newInstance();
-            stateManager.withEnvironment(environment(), name)
-                    .withModuleInstance(moduleInstance);
-            stateManager
-                    .init(configNode, connectionManager(), config.source);
+            stateManager = (ZkStateManager) super.stateManager();
 
             DistributedLock lock = createLock(BaseStateManager.Constants.LOCK_REPLICATION);
             if (lock == null) {
@@ -141,28 +113,12 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
                 schemaManager.init(configNode,
                         connectionManager(),
                         environment(),
-                        config.source,
+                        source(),
                         lockBuilder().zkPath());
             }
 
-            if (ConfigReader.checkIfNodeExists(configNode,
-                    AuditLogger.__CONFIG_PATH)) {
-                String c = configNode.getString(AuditLogger.CONFIG_AUDIT_CLASS);
-                if (Strings.isNullOrEmpty(c)) {
-                    throw new ConfigurationException(
-                            String.format("Audit Logger class not specified. [node=%s]",
-                                    AuditLogger.CONFIG_AUDIT_CLASS));
-                }
-                Class<? extends AuditLogger> cls = (Class<? extends AuditLogger>) Class.forName(c);
-                auditLogger = cls.getDeclaredConstructor().newInstance();
-                auditLogger.init(configNode);
-            }
             state.state(ENameNEnvState.Initialized);
-            if (config.enableHeartbeat) {
-                heartbeat = new HeartbeatThread(name).withStateManager(stateManager);
-                heartbeatThread = new Thread(heartbeat);
-                heartbeatThread.start();
-            }
+
             return this;
         } catch (Throwable t) {
             state.error(t);
@@ -178,11 +134,6 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
 
     public synchronized ENameNEnvState stop() {
         try {
-            if (heartbeatThread != null) {
-                heartbeat.terminate();
-                heartbeatThread.join();
-                heartbeatThread = null;
-            }
             if (agentState.state() == CDCAgentState.EAgentState.Active
                     || agentState.state() == CDCAgentState.EAgentState.StandBy) {
                 agentState.state(CDCAgentState.EAgentState.Stopped);
@@ -224,7 +175,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
         synchronized (__instances) {
             NameNodeEnv env = __instances.get(name);
             if (env == null) {
-                env = new NameNodeEnv(name);
+                env = new NameNodeEnv(name, caller);
                 __instances.put(name, env);
             }
             return env.init(config, caller);
@@ -260,8 +211,8 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
 
     public static <T> void audit(@NonNull String name, @NonNull Class<?> caller, @NonNull T data) {
         try {
-            if (NameNodeEnv.get(name).auditLogger != null) {
-                NameNodeEnv.get(name).auditLogger.audit(caller, System.currentTimeMillis(), data);
+            if (NameNodeEnv.get(name).auditLogger() != null) {
+                NameNodeEnv.get(name).auditLogger().audit(caller, System.currentTimeMillis(), data);
             }
         } catch (Exception ex) {
             DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(ex));
@@ -271,8 +222,8 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
 
     public static void audit(@NonNull String name, @NonNull Class<?> caller, @NonNull MessageOrBuilder data) {
         try {
-            if (NameNodeEnv.get(name).auditLogger != null) {
-                NameNodeEnv.get(name).auditLogger.audit(caller, System.currentTimeMillis(), data);
+            if (NameNodeEnv.get(name).auditLogger() != null) {
+                NameNodeEnv.get(name).auditLogger().audit(caller, System.currentTimeMillis(), data);
             }
         } catch (Exception ex) {
             DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(ex));
@@ -329,13 +280,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
     public static class NameNEnvConfig extends ConfigReader {
         private static class Constants {
             private static final String __CONFIG_PATH = "agent";
-            private static final String CONFIG_MODULE = "module";
-            private static final String CONFIG_INSTANCE = "instance";
-            private static final String CONFIG_HEARTBEAT = "enableHeartbeat";
-            private static final String CONFIG_SOURCE_NAME = "source";
-            private static final String CONFIG_STATE_MANAGER_TYPE =
-                    String.format("%s.stateManagerClass", ZkStateManager.ZkStateManagerConfig.__CONFIG_PATH);
-            private static final String CONFIG_CONNECTIONS = "connections.path";
+
             private static final String CONFIG_CONNECTION_HDFS = "connections.hdfs-admin";
 
             private static final String CONFIG_HADOOP_HOME = "hadoop.home";
@@ -351,10 +296,6 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
             private static final String CONFIG_LOAD_HADOOP = "needHadoop";
         }
 
-        private String module;
-        private String instance;
-        private String source;
-        private String connectionConfigPath;
         private String hdfsAdminConnection;
         private String hadoopNamespace;
         private String hadoopInstanceName;
@@ -364,10 +305,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
         private File hadoopConfig;
         private boolean hadoopUseSSL = true;
         private boolean readHadoopConfig = true;
-        private boolean enableHeartbeat = false;
         private short hadoopVersion = 2;
-
-        private Class<? extends ZkStateManager> stateManagerClass = ZkStateManager.class;
 
         public NameNEnvConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, Constants.__CONFIG_PATH);
@@ -378,36 +316,10 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
                 throw new ConfigurationException("HDFS Configuration not set or is NULL");
             }
             try {
-                module = get().getString(Constants.CONFIG_MODULE);
-                if (Strings.isNullOrEmpty(module)) {
-                    throw new ConfigurationException(
-                            String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_MODULE));
-                }
-                instance = get().getString(Constants.CONFIG_INSTANCE);
-                if (Strings.isNullOrEmpty(instance)) {
-                    throw new ConfigurationException(
-                            String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_INSTANCE));
-                }
-                source = get().getString(Constants.CONFIG_SOURCE_NAME);
-                if (Strings.isNullOrEmpty(source)) {
-                    throw new ConfigurationException(
-                            String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_SOURCE_NAME));
-                }
+
                 String ss = get().getString(Constants.CONFIG_LOAD_HADOOP);
                 if (!Strings.isNullOrEmpty(ss)) {
                     readHadoopConfig = Boolean.parseBoolean(ss);
-                }
-                String s = get().getString(Constants.CONFIG_STATE_MANAGER_TYPE);
-                if (!Strings.isNullOrEmpty(s)) {
-                    stateManagerClass = (Class<? extends ZkStateManager>) Class.forName(s);
-                }
-                connectionConfigPath = get().getString(Constants.CONFIG_CONNECTIONS);
-                if (Strings.isNullOrEmpty(connectionConfigPath)) {
-                    throw new ConfigurationException(
-                            String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_CONNECTIONS));
-                }
-                if (get().containsKey(Constants.CONFIG_HEARTBEAT)) {
-                    enableHeartbeat = get().getBoolean(Constants.CONFIG_HEARTBEAT);
                 }
                 if (get().containsKey(Constants.CONFIG_HADOOP_VERSION)) {
                     hadoopVersion = get().getShort(Constants.CONFIG_HADOOP_VERSION);
@@ -431,7 +343,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
             hadoopInstanceName = get().getString(Constants.CONFIG_HADOOP_INSTANCE);
             if (Strings.isNullOrEmpty(hadoopInstanceName)) {
                 throw new ConfigurationException(
-                        String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_INSTANCE));
+                        String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_HADOOP_INSTANCE));
             }
 
             hdfsAdminConnection = get().getString(Constants.CONFIG_CONNECTION_HDFS);

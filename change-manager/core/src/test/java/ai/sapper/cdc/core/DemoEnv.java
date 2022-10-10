@@ -12,6 +12,10 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 @Getter
 @Accessors(fluent = true)
 public class DemoEnv extends BaseEnv<DemoEnv.DemoState> {
+    public DemoEnv() {
+        super("demo");
+    }
+
     public static class DemoState {
 
     }
@@ -19,16 +23,16 @@ public class DemoEnv extends BaseEnv<DemoEnv.DemoState> {
     private static final String CONFIG_CONNECTIONS = "connections.path";
     private static final String TEST_PASSWD = "test1234";
 
-    private HierarchicalConfiguration<ImmutableNode> config;
+    private HierarchicalConfiguration<ImmutableNode> configNode;
     private final String module = "TEST";
 
     public BaseEnv<DemoState> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
         super.init(xmlConfig, new DemoState());
 
         withStoreKey(TEST_PASSWD);
-        config = rootConfig().configurationAt(__CONFIG_PATH);
+        configNode = rootConfig().configurationAt(__CONFIG_PATH);
 
-        String cp = config.getString(CONFIG_CONNECTIONS);
+        String cp = configNode.getString(CONFIG_CONNECTIONS);
         Preconditions.checkState(!Strings.isNullOrEmpty(cp));
         super.setup(module, cp);
 

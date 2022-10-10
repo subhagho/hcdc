@@ -6,6 +6,7 @@ import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.BaseStateManager;
 import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.cdc.core.ManagerStateError;
+import ai.sapper.cdc.core.StateManagerError;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.model.Heartbeat;
 import ai.sapper.hcdc.agents.model.ModuleTxState;
