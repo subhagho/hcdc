@@ -44,7 +44,6 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
     private HdfsConnection hdfsConnection;
     private ZkStateManager stateManager;
     private SchemaManager schemaManager;
-    private List<InetAddress> hostIPs;
     private HadoopEnvConfig hadoopConfig;
     private NameNodeAdminClient adminClient;
 
@@ -107,14 +106,14 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
                     .withReplicationLock(lock);
             stateManager.checkAgentState(LongTxState.class);
 
-            if (ConfigReader.checkIfNodeExists(configNode,
+            if (ConfigReader.checkIfNodeExists(config().config(),
                     SchemaManager.SchemaManagerConfig.Constants.__CONFIG_PATH)) {
                 schemaManager = new SchemaManager();
-                schemaManager.init(configNode,
+                schemaManager.init(config().config(),
                         connectionManager(),
                         environment(),
                         source(),
-                        lockBuilder().zkPath());
+                        dLockBuilder().zkPath());
             }
 
             state.state(ENameNEnvState.Initialized);
@@ -281,7 +280,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
         private static class Constants {
             private static final String __CONFIG_PATH = "agent";
 
-            private static final String CONFIG_CONNECTION_HDFS = "connections.hdfs-admin";
+            private static final String CONFIG_CONNECTION_HDFS = "hadoop.hdfs-admin";
 
             private static final String CONFIG_HADOOP_HOME = "hadoop.home";
             private static final String CONFIG_HADOOP_INSTANCE = "hadoop.instance";

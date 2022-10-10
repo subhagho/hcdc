@@ -2,33 +2,36 @@
 <configuration>
     <env>
         <name>DEV</name>
+        <module>EDITS-LOG-PROCESSORS</module>
+        <instance>SnapshotService</instance>
+        <source>ha-cluster</source>
+        <enableHeartbeat>true</enableHeartbeat>
+        <paths>
+            <connections>config</connections>
+        </paths>
+        <managers>
+            <state>
+                <stateManagerClass>ai.sapper.hcdc.agents.common.ProcessorStateManager</stateManagerClass>
+                <basePath>/ai/sapper/cdc/edits</basePath>
+                <connection>zk-state-connection</connection>
+            </state>
+            <domain>
+                <basePath>/ai/sapper/cdc/registry</basePath>
+                <connection>zk-state-connection</connection>
+                <hdfs>source-hdfs-ha</hdfs>
+                <module>hdfs</module>
+            </domain>
+            <schema>
+                <basePath>/ai/sapper/cdc/registry</basePath>
+                <connection>zk-state-connection</connection>
+                <schema>hdfs</schema>
+            </schema>
+        </managers>
+        <audit>
+            <class>ai.sapper.cdc.common.audit.DefaultAuditLogger</class>
+        </audit>
         <agent>
-            <module>EDITS-LOG-PROCESSORS</module>
-            <instance>SnapshotService</instance>
-            <source>ha-cluster</source>
-            <enableHeartbeat>true</enableHeartbeat>
             <needHadoop>false</needHadoop>
-            <connections>
-                <path>config</path>
-            </connections>
-            <managers>
-                <state>
-                    <stateManagerClass>ai.sapper.hcdc.agents.common.ProcessorStateManager</stateManagerClass>
-                    <basePath>/ai/sapper/cdc/edits</basePath>
-                    <connection>zk-state-connection</connection>
-                </state>
-                <domain>
-                    <basePath>/ai/sapper/cdc/registry</basePath>
-                    <connection>zk-state-connection</connection>
-                    <hdfs>source-hdfs-ha</hdfs>
-                    <module>hdfs</module>
-                </domain>
-                <schema>
-                    <basePath>/ai/sapper/cdc/registry</basePath>
-                    <connection>zk-state-connection</connection>
-                    <schema>hdfs</schema>
-                </schema>
-            </managers>
             <useSSL>false</useSSL>
             <processor>
                 <snapshot>
@@ -45,9 +48,6 @@
                     <readBatchTimeout>5000</readBatchTimeout>
                 </snapshot>
             </processor>
-            <audit>
-                <class>ai.sapper.cdc.common.audit.DefaultAuditLogger</class>
-            </audit>
         </agent>
         <locks>
             <connection>zk-state-connection</connection>

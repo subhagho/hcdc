@@ -2,28 +2,29 @@
 <configuration>
     <env>
         <name>DEV</name>
+        <module>EDITS-LOG-PROCESSORS</module>
+        <instance>EditsLogProcessor</instance>
+        <source>ha-cluster</source>
+        <paths>
+            <connections>config</connections>
+        </paths>
+        <managers>
+            <state>
+                <stateManagerClass>ai.sapper.hcdc.agents.common.ZkStateManager</stateManagerClass>
+                <basePath>/ai/sapper/cdc/edits</basePath>
+                <connection>zk-state-connection</connection>
+            </state>
+        </managers>
         <agent>
-            <module>EDITS-LOG-PROCESSORS</module>
-            <instance>EditsLogProcessor</instance>
-            <source>ha-cluster</source>
             <hadoop>
                 <namespace>ha-cluster</namespace>
                 <instance>nn1</instance>
                 <home>/opt/hadoop/hadoop</home>
                 <!--adminUrl>localhost:9870</adminUrl-->
                 <config>src/test/resources/configs/hdfs-site.xml</config>
+                <hdfs-admin>source-hdfs-ha</hdfs-admin>
             </hadoop>
             <needHadoop>true</needHadoop>
-            <connections>
-                <path>config</path>
-                <hdfs-admin>source-hdfs-ha</hdfs-admin>
-            </connections>
-            <managers>
-                <state>
-                    <basePath>/ai/sapper/cdc/edits</basePath>
-                    <connection>zk-state-connection</connection>
-                </state>
-            </managers>
             <useSSL>false</useSSL>
             <processor>
                 <edits>

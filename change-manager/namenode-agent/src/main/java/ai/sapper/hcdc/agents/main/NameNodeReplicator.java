@@ -196,7 +196,7 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
             }
         } catch (Throwable t) {
             DefaultLogger.stacktrace(env.LOG, t);
-            DefaultLogger.error(env.LOG, t.getLocalizedMessage());
+            DefaultLogger.error(env.LOG, String.format("FATAL ERROR: %s", t.getLocalizedMessage()));
             throw new NameNodeError(t);
         }
     }

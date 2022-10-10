@@ -24,14 +24,14 @@ import java.util.List;
 @Accessors(fluent = true)
 public abstract class BaseEnv<T> {
     public static class Constants {
-        public static final String CONFIG_ENV = "env";
-        public static final String CONFIG_ENV_NAME = String.format("%s.name", CONFIG_ENV);
+        public static final String __CONFIG_PATH_ENV = "env";
+        public static final String CONFIG_ENV_NAME = String.format("%s.name", __CONFIG_PATH_ENV);
     }
 
     private ConnectionManager connectionManager;
     private String storeKey;
     private KeyStore keyStore;
-    private final DistributedLockBuilder lockBuilder = new DistributedLockBuilder();
+    private final DistributedLockBuilder dLockBuilder = new DistributedLockBuilder();
     private String environment;
     private HierarchicalConfiguration<ImmutableNode> rootConfig;
     private List<ExitCallback<T>> exitCallbacks;
@@ -71,6 +71,7 @@ public abstract class BaseEnv<T> {
             }
             config = new BaseEnvConfig(xmlConfig);
             config.read();
+            rootConfig = config.config();
 
             setup(config.module, config.connectionConfigPath);
 
@@ -91,8 +92,6 @@ public abstract class BaseEnv<T> {
             stateManager
                     .init(config.config(), connectionManager(), config.source);
 
-            rootConfig = config.config();
-
             if (ConfigReader.checkIfNodeExists(rootConfig,
                     AuditLogger.__CONFIG_PATH)) {
                 String c = rootConfig.getString(AuditLogger.CONFIG_AUDIT_CLASS);
@@ -102,7 +101,7 @@ public abstract class BaseEnv<T> {
                                     AuditLogger.CONFIG_AUDIT_CLASS));
                 }
                 Class<? extends AuditLogger> cls = (Class<? extends AuditLogger>) Class.forName(c);
-                AuditLogger auditLogger = cls.getDeclaredConstructor().newInstance();
+                auditLogger = cls.getDeclaredConstructor().newInstance();
                 auditLogger.init(rootConfig);
             }
 
@@ -142,7 +141,7 @@ public abstract class BaseEnv<T> {
                     .withEnv(environment);
             connectionManager.init(rootConfig, connectionsConfigPath);
 
-            lockBuilder.withEnv(environment)
+            dLockBuilder.withEnv(environment)
                     .init(rootConfig, module, connectionManager);
 
         } catch (Exception ex) {
@@ -161,11 +160,11 @@ public abstract class BaseEnv<T> {
     public DistributedLock createLock(@NonNull String path,
                                       @NonNull String module,
                                       @NonNull String name) throws Exception {
-        return lockBuilder.createLock(path, module, name);
+        return dLockBuilder.createLock(path, module, name);
     }
 
     public void saveLocks() throws Exception {
-        lockBuilder.save();
+        dLockBuilder.save();
     }
 
     public void close() throws Exception {
@@ -201,6 +200,7 @@ public abstract class BaseEnv<T> {
     @Accessors(fluent = true)
     public static class BaseEnvConfig extends ConfigReader {
         public static class Constants {
+            public static final String __CONFIG_PATH_MANAGERS = "managers";
             private static final String CONFIG_MODULE = "module";
             private static final String CONFIG_INSTANCE = "instance";
             private static final String CONFIG_HEARTBEAT = "enableHeartbeat";
@@ -208,7 +208,7 @@ public abstract class BaseEnv<T> {
             private static final String CONFIG_STATE_MANAGER_TYPE =
                     String.format("%s.stateManagerClass",
                             BaseStateManager.BaseStateManagerConfig.Constants.__CONFIG_PATH);
-            private static final String CONFIG_CONNECTIONS = "connections.path";
+            private static final String CONFIG_CONNECTIONS = "paths.connections";
 
         }
 
@@ -218,36 +218,27 @@ public abstract class BaseEnv<T> {
         private String connectionConfigPath;
         private boolean enableHeartbeat = false;
         private Class<? extends BaseStateManager<?>> stateManagerClass;
+        private HierarchicalConfiguration<ImmutableNode> managersConfig;
 
         public BaseEnvConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
-            super(config, BaseEnv.Constants.CONFIG_ENV);
+            super(config, BaseEnv.Constants.__CONFIG_PATH_ENV);
         }
 
         public void read() throws Exception {
             module = get().getString(Constants.CONFIG_MODULE);
-            if (Strings.isNullOrEmpty(module)) {
-                throw new ConfigurationException(
-                        String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_MODULE));
-            }
+            ConfigReader.checkStringValue(module, getClass(), Constants.CONFIG_MODULE);
             instance = get().getString(Constants.CONFIG_INSTANCE);
-            if (Strings.isNullOrEmpty(instance)) {
-                throw new ConfigurationException(
-                        String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_INSTANCE));
-            }
+            ConfigReader.checkStringValue(instance, getClass(), Constants.CONFIG_INSTANCE);
             source = get().getString(Constants.CONFIG_SOURCE_NAME);
-            if (Strings.isNullOrEmpty(source)) {
-                throw new ConfigurationException(
-                        String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_SOURCE_NAME));
-            }
+            ConfigReader.checkStringValue(source, getClass(), Constants.CONFIG_SOURCE_NAME);
             connectionConfigPath = get().getString(Constants.CONFIG_CONNECTIONS);
-            if (Strings.isNullOrEmpty(connectionConfigPath)) {
-                throw new ConfigurationException(
-                        String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_CONNECTIONS));
-            }
+            ConfigReader.checkStringValue(connectionConfigPath, getClass(), Constants.CONFIG_CONNECTIONS);
             if (get().containsKey(Constants.CONFIG_HEARTBEAT)) {
                 enableHeartbeat = get().getBoolean(Constants.CONFIG_HEARTBEAT);
             }
-            String s = get().getString(Constants.CONFIG_STATE_MANAGER_TYPE);
+            managersConfig = get().configurationAt(Constants.__CONFIG_PATH_MANAGERS);
+            String s = managersConfig.getString(Constants.CONFIG_STATE_MANAGER_TYPE);
+            ConfigReader.checkStringValue(s, getClass(), Constants.CONFIG_STATE_MANAGER_TYPE);
             if (!Strings.isNullOrEmpty(s)) {
                 stateManagerClass = (Class<? extends BaseStateManager<?>>) Class.forName(s);
             }

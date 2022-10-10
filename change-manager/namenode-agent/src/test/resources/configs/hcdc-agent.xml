@@ -2,28 +2,30 @@
 <configuration>
     <env>
         <name>DEV</name>
+        <module>EDITS-LOG-PROCESSORS</module>
+        <instance>EditsChangeConsumer</instance>
+        <source>ha-cluster</source>
+        <enableHeartbeat>true</enableHeartbeat>
+        <paths>
+            <connections>config</connections>
+        </paths>
+        <audit>
+            <class>ai.sapper.cdc.common.audit.DefaultAuditLogger</class>
+        </audit>
+        <managers>
+            <state>
+                <stateManagerClass>ai.sapper.hcdc.agents.common.ProcessorStateManager</stateManagerClass>
+                <basePath>/ai/sapper/cdc/edits</basePath>
+                <connection>zk-state-connection</connection>
+            </state>
+            <domain>
+                <basePath>/ai/sapper/cdc/registry</basePath>
+                <connection>zk-state-connection</connection>
+                <module>hdfs</module>
+            </domain>
+        </managers>
         <agent>
-            <module>EDITS-LOG-PROCESSORS</module>
-            <instance>EditsChangeConsumer</instance>
-
-            <source>ha-cluster</source>
-            <enableHeartbeat>true</enableHeartbeat>
             <needHadoop>false</needHadoop>
-            <connections>
-                <path>config</path>
-            </connections>
-            <managers>
-                <state>
-                    <stateManagerClass>ai.sapper.hcdc.agents.common.ProcessorStateManager</stateManagerClass>
-                    <basePath>/ai/sapper/cdc/edits</basePath>
-                    <connection>zk-state-connection</connection>
-                </state>
-                <domain>
-                    <basePath>/ai/sapper/cdc/registry</basePath>
-                    <connection>zk-state-connection</connection>
-                    <module>hdfs</module>
-                </domain>
-            </managers>
             <processor>
                 <source>
                     <sender>
@@ -45,9 +47,6 @@
                 </source>
             </processor>
             <useSSL>false</useSSL>
-            <audit>
-                <class>ai.sapper.cdc.common.audit.DefaultAuditLogger</class>
-            </audit>
         </agent>
         <locks>
             <connection>zk-state-connection</connection>

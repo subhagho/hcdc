@@ -15,5 +15,5 @@ public abstract class ProcessingState<T> {
     private T processedTxId;
     private long updatedTime;
 
-    public abstract int compareTx(@NonNull T target);
+    public abstract int compareTx(T target);
 }

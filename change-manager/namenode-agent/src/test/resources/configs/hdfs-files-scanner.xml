@@ -2,32 +2,32 @@
 <configuration>
     <env>
         <name>DEV</name>
+        <module>EDITS-LOG-PROCESSORS</module>
+        <instance>HDFSSchemaScanner</instance>
+        <source>ha-cluster</source>
+        <paths>
+            <connections>config</connections>
+        </paths>
+        <managers>
+            <state>
+                <stateManagerClass>ai.sapper.hcdc.agents.common.ProcessorStateManager</stateManagerClass>
+                <basePath>/ai/sapper/cdc/edits</basePath>
+                <connection>zk-state-connection</connection>
+            </state>
+            <domain>
+                <basePath>/ai/sapper/cdc/registry</basePath>
+                <connection>zk-state-connection</connection>
+                <hdfs>source-hdfs-ha</hdfs>
+                <module>hdfs</module>
+            </domain>
+            <schema>
+                <basePath>/ai/sapper/cdc/registry</basePath>
+                <connection>zk-state-connection</connection>
+                <schema>hdfs</schema>
+            </schema>
+        </managers>
         <agent>
-            <module>EDITS-LOG-PROCESSORS</module>
-            <instance>HDFSSchemaScanner</instance>
-            <source>ha-cluster</source>
             <needHadoop>false</needHadoop>
-            <connections>
-                <path>config</path>
-            </connections>
-            <managers>
-                <state>
-                    <stateManagerClass>ai.sapper.hcdc.agents.common.ProcessorStateManager</stateManagerClass>
-                    <basePath>/ai/sapper/cdc/edits</basePath>
-                    <connection>zk-state-connection</connection>
-                </state>
-                <domain>
-                    <basePath>/ai/sapper/cdc/registry</basePath>
-                    <connection>zk-state-connection</connection>
-                    <hdfs>source-hdfs-ha</hdfs>
-                    <module>hdfs</module>
-                </domain>
-                <schema>
-                    <basePath>/ai/sapper/cdc/registry</basePath>
-                    <connection>zk-state-connection</connection>
-                    <schema>hdfs</schema>
-                </schema>
-            </managers>
             <scanner>
                 <files>
                     <hdfs>source-hdfs-ha</hdfs>

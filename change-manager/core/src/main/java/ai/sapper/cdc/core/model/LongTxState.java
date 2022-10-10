@@ -14,7 +14,13 @@ import lombok.ToString;
 public class LongTxState extends ProcessingState<Long> {
 
     @Override
-    public int compareTx(@NonNull Long target) {
+    public int compareTx(Long target) {
+        if (getProcessedTxId() == null) {
+            if (target == null) return 0;
+            else
+                return Integer.MIN_VALUE;
+        }
+        if (target == null) return Integer.MAX_VALUE;
         return (int) (getProcessedTxId() - target);
     }
 }

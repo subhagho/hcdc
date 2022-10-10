@@ -2,32 +2,32 @@
 <configuration>
     <env>
         <name>DEV</name>
+        <module>CDC-PROCESSORS</module>
+        <instance>EntityChangeDeltaReader/0</instance>
+        <source>ha-cluster</source>
+        <enableHeartbeat>true</enableHeartbeat>
+        <paths>
+            <connections>config</connections>
+        </paths>
+        <managers>
+            <state>
+                <stateManagerClass>ai.sapper.hcdc.agents.common.ProcessorStateManager</stateManagerClass>
+                <basePath>/ai/sapper/cdc/processors</basePath>
+                <connection>zk-state-connection</connection>
+            </state>
+            <domain>
+                <basePath>/ai/sapper/cdc/registry</basePath>
+                <connection>zk-state-connection</connection>
+                <module>hdfs</module>
+            </domain>
+            <schema>
+                <basePath>/ai/sapper/cdc/registry</basePath>
+                <connection>zk-state-connection</connection>
+                <schema>output</schema>
+            </schema>
+        </managers>
         <agent>
-            <module>CDC-PROCESSORS</module>
-            <instance>EntityChangeDeltaReader/0</instance>
-            <source>ha-cluster</source>
-            <enableHeartbeat>true</enableHeartbeat>
             <needHadoop>false</needHadoop>
-            <connections>
-                <path>config</path>
-            </connections>
-            <managers>
-                <state>
-                    <stateManagerClass>ai.sapper.hcdc.agents.common.ProcessorStateManager</stateManagerClass>
-                    <basePath>/ai/sapper/cdc/processors</basePath>
-                    <connection>zk-state-connection</connection>
-                </state>
-                <domain>
-                    <basePath>/ai/sapper/cdc/registry</basePath>
-                    <connection>zk-state-connection</connection>
-                    <module>hdfs</module>
-                </domain>
-                <schema>
-                    <basePath>/ai/sapper/cdc/registry</basePath>
-                    <connection>zk-state-connection</connection>
-                    <schema>output</schema>
-                </schema>
-            </managers>
             <processor>
                 <files>
                     <filesystem>
