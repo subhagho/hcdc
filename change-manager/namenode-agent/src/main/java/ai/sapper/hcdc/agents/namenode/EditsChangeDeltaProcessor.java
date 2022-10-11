@@ -37,7 +37,7 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
 
     public EditsChangeDeltaProcessor(@NonNull ZkStateManager stateManager,
                                      @NonNull String name) {
-        super(stateManager, name, EProcessorMode.Committer);
+        super(stateManager, name, EProcessorMode.Committer, false);
     }
 
     @Override

@@ -48,13 +48,16 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     private String lastMessageId = null;
     private TransactionProcessor processor;
     private final EProcessorMode mode;
+    private final boolean ignoreMissing;
 
     public ChangeDeltaProcessor(@NonNull ZkStateManager stateManager,
                                 @NonNull String name,
-                                @NonNull EProcessorMode mode) {
+                                @NonNull EProcessorMode mode,
+                                boolean ignoreMissing) {
         this.stateManager = stateManager;
         this.name = name;
         this.mode = mode;
+        this.ignoreMissing = ignoreMissing;
     }
 
     public ChangeDeltaProcessor withProcessor(@NonNull TransactionProcessor processor) {
@@ -188,7 +191,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
                         if (!Strings.isNullOrEmpty(state.getCurrentMessageId()) &&
                                 !Strings.isNullOrEmpty(lastMessageId()))
                             retry = state.getCurrentMessageId().compareTo(lastMessageId()) == 0;
-                        txId = processor.checkMessageSequence(message, false, retry);
+                        txId = processor.checkMessageSequence(message, ignoreMissing, retry);
                         Object data = ChangeDeltaSerDe.parse(message.value(),
                                 Class.forName(message.value().getType()));
                         try {

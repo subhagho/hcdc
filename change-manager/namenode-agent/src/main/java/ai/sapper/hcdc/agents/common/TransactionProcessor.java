@@ -200,6 +200,9 @@ public abstract class TransactionProcessor {
         long txId = Long.parseLong(message.value().getTxId());
         if (message.mode() == MessageObject.MessageMode.New) {
             LongTxState txState = (LongTxState) stateManager().processingState();
+            if (txState.getProcessedTxId() < 0) {
+                return txId;
+            }
             if (txId != txState.getProcessedTxId() + 1) {
                 if (!ignoreMissing) {
                     throw new InvalidMessageError(message.id(),

@@ -34,7 +34,7 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
     private WebServiceClient client;
 
     public EntityChangeDeltaReader(@NonNull ZkStateManager stateManager, @NonNull String name) {
-        super(stateManager, name, EProcessorMode.Committer);
+        super(stateManager, name, EProcessorMode.Committer, true);
     }
 
     public EntityChangeDeltaReader withMockFileSystem(@NonNull CDCFileSystem.FileSystemMocker fileSystemMocker) {
