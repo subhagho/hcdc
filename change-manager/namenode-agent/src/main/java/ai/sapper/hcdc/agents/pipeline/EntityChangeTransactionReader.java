@@ -17,6 +17,7 @@ import ai.sapper.cdc.core.messaging.MessageSender;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.model.HDFSBlockData;
 import ai.sapper.cdc.core.schema.SchemaManager;
+import ai.sapper.cdc.core.utils.HFSHelper;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
 import ai.sapper.hcdc.agents.common.*;
 import ai.sapper.hcdc.agents.model.*;
@@ -351,7 +352,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     .setFile(dfile)
                     .setDomain(schemaEntity.getDomain())
                     .setEntityName(schemaEntity.getEntity())
-                    .setFileSystem(HCDCFsUtils.fileSystemCode(fs))
+                    .setFileSystem(HFSHelper.fileSystemCode(fs))
                     .putAllOutputPath(response.path().pathConfig());
 
             MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(delta.build(),
@@ -776,7 +777,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                             .setFile(dfile)
                             .setDomain(schemaEntity.getDomain())
                             .setEntityName(schemaEntity.getEntity())
-                            .setFileSystem(HCDCFsUtils.fileSystemCode(fs))
+                            .setFileSystem(HFSHelper.fileSystemCode(fs))
                             .putAllOutputPath(response.path().pathConfig())
                             .build();
 

@@ -39,13 +39,4 @@ public class HCDCFsUtils {
                               @NonNull FileSystem fs) throws IOException {
         return new FSBlock(blockState, dir, fs, entity.getDomain(), false);
     }
-
-    public static DFSChangeData.FileSystemCode fileSystemCode(@NonNull FileSystem fs) throws Exception {
-        if (fs.getClass().equals(LocalFileSystem.class)) {
-            return DFSChangeData.FileSystemCode.LOCAL;
-        } else if (fs.getClass().equals(S3FileSystem.class)) {
-            return DFSChangeData.FileSystemCode.S3;
-        }
-        throw new Exception(String.format("FileSystem not recognized: [type=%s]", fs.getClass().getCanonicalName()));
-    }
 }
