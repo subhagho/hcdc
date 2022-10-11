@@ -1,5 +1,9 @@
 package ai.sapper.cdc.common.cache;
 
+import lombok.NonNull;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -7,14 +11,20 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class LRUCache<K, V> implements Cache<K, V> {
     private int size;
-    private Map<K, LinkedListNode<CacheElement<K, V>>> nodeMap;
-    private DoublyLinkedList<CacheElement<K, V>> elementLinkedList;
-    private ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final Map<K, LinkedListNode<CacheElement<K, V>>> nodeMap;
+    private final DoublyLinkedList<CacheElement<K, V>> elements;
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final List<EvictionCallback<K, V>> evictionCallbacks = new ArrayList<>();
 
     public LRUCache(int size) {
         this.size = size;
         this.nodeMap = new ConcurrentHashMap<>(size);
-        this.elementLinkedList = new DoublyLinkedList<>();
+        this.elements = new DoublyLinkedList<>();
+    }
+
+    public LRUCache<K, V> withEvictionCallback(@NonNull EvictionCallback<K, V> callback) {
+        evictionCallbacks.add(callback);
+        return this;
     }
 
     @Override
@@ -25,12 +35,12 @@ public class LRUCache<K, V> implements Cache<K, V> {
             LinkedListNode<CacheElement<K, V>> newNode;
             if (this.nodeMap.containsKey(key)) {
                 LinkedListNode<CacheElement<K, V>> node = this.nodeMap.get(key);
-                newNode = elementLinkedList.updateAndMoveToFront(node, item);
+                newNode = elements.updateAndMoveToFront(node, item);
             } else {
                 if (this.size() >= this.size) {
                     this.evictElement();
                 }
-                newNode = this.elementLinkedList.add(item);
+                newNode = this.elements.add(item);
             }
             if (newNode.isEmpty()) {
                 return false;
@@ -48,7 +58,7 @@ public class LRUCache<K, V> implements Cache<K, V> {
         try {
             LinkedListNode<CacheElement<K, V>> linkedListNode = this.nodeMap.get(key);
             if (linkedListNode != null && !linkedListNode.isEmpty()) {
-                nodeMap.put(key, this.elementLinkedList.moveToFront(linkedListNode));
+                nodeMap.put(key, this.elements.moveToFront(linkedListNode));
                 return Optional.of(linkedListNode.getElement().getValue());
             }
             return Optional.empty();
@@ -70,7 +80,7 @@ public class LRUCache<K, V> implements Cache<K, V> {
     public int size() {
         this.lock.readLock().lock();
         try {
-            return elementLinkedList.size();
+            return elements.size();
         } finally {
             this.lock.readLock().unlock();
         }
@@ -86,21 +96,28 @@ public class LRUCache<K, V> implements Cache<K, V> {
         this.lock.writeLock().lock();
         try {
             nodeMap.clear();
-            elementLinkedList.clear();
+            elements.clear();
         } finally {
             this.lock.writeLock().unlock();
         }
     }
 
 
-    private boolean evictElement() {
+    private boolean evictElement()  {
         this.lock.writeLock().lock();
         try {
-            LinkedListNode<CacheElement<K, V>> linkedListNode = elementLinkedList.removeTail();
-            if (linkedListNode.isEmpty()) {
+            LinkedListNode<CacheElement<K, V>> node = elements.removeTail();
+            if (node.isEmpty()) {
                 return false;
             }
-            nodeMap.remove(linkedListNode.getElement().getKey());
+            node = nodeMap.remove(node.getElement().getKey());
+            if (node != null) {
+                if (!evictionCallbacks.isEmpty()) {
+                    for (EvictionCallback<K, V> callback : evictionCallbacks) {
+                        callback.evicted(node.getElement().getKey(), node.getElement().getValue());
+                    }
+                }
+            }
             return true;
         } finally {
             this.lock.writeLock().unlock();

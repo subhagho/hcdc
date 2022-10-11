@@ -154,7 +154,9 @@ public class SchemaManager {
         return null;
     }
 
-    private void putInCache(SchemaEntity schemaEntity, SchemaVersion version, AvroSchema entityDef) {
+    private void putInCache(SchemaEntity schemaEntity,
+                            SchemaVersion version,
+                            AvroSchema entityDef) {
         if (cache != null) {
             CacheEntity c = null;
             Optional<CacheEntity> ce = cache.get(schemaEntity);

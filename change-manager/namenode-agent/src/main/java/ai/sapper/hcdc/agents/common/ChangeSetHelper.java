@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.cdc.core.io.CDCFileSystem;
+import ai.sapper.cdc.core.io.impl.CDCFileSystem;
 import ai.sapper.cdc.core.io.PathInfo;
 import ai.sapper.cdc.core.io.Reader;
 import ai.sapper.cdc.core.model.BlockTransactionDelta;

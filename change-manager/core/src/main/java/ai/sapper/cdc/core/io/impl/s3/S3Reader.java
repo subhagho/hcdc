@@ -23,7 +23,7 @@ public class S3Reader extends LocalReader {
     @Override
     public Reader open() throws IOException {
         S3PathInfo s3path = S3FileSystem.checkPath(path());
-        fs.download(s3path);
+        fs.read(s3path);
 
         return super.open();
     }

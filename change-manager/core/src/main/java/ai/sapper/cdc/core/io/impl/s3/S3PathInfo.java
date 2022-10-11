@@ -62,6 +62,16 @@ public class S3PathInfo extends LocalPathInfo {
         file(temp);
     }
 
+    protected S3PathInfo withTemp(@NonNull File temp) {
+        if (file().exists()) {
+            file().delete();
+        }
+        this.temp = temp;
+        file(temp);
+
+        return this;
+    }
+
     /**
      * @return
      */

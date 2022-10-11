@@ -23,12 +23,7 @@ public class S3Writer extends LocalWriter {
     public Writer open(boolean overwrite) throws IOException {
         S3PathInfo s3path = S3FileSystem.checkPath(path());
         if (!overwrite && s3path.exists()) {
-            fs.download(s3path);
-            //FileOutputStream fos = new FileOutputStream(s3path.temp(), true);
-            //outputStream(fos);
-        } else {
-            //FileOutputStream fos = new FileOutputStream(s3path.temp());
-            //outputStream(fos);
+            fs.read(s3path);
         }
         return super.open(overwrite);
     }

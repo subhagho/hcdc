@@ -2,12 +2,11 @@ package ai.sapper.cdc.core.io.impl.s3;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.PathUtils;
-import ai.sapper.cdc.core.io.CDCFileSystem;
+import ai.sapper.cdc.core.io.impl.CDCFileSystem;
 import ai.sapper.cdc.core.io.PathInfo;
 import ai.sapper.cdc.core.io.Reader;
 import ai.sapper.cdc.core.io.Writer;
 import ai.sapper.cdc.core.io.impl.local.LocalFileSystem;
-import ai.sapper.hcdc.common.model.DFSChangeData;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.AccessLevel;
@@ -47,6 +46,7 @@ public class S3FileSystem extends LocalFileSystem {
     private String defaultBucket;
     @Getter(AccessLevel.PACKAGE)
     private Map<String, String> bucketMap = new HashMap<>();
+    private final S3ReadCache cache = new S3ReadCache(this);
 
     public S3FileSystem withClient(@NonNull S3Client client) {
         this.client = client;
@@ -340,7 +340,15 @@ public class S3FileSystem extends LocalFileSystem {
         return new S3PathInfo(client, domain, bucket, path);
     }
 
-    protected void download(S3PathInfo path) throws IOException {
+    protected S3PathInfo read(@NonNull S3PathInfo path) throws IOException {
+        try {
+            return cache.get(path);
+        } catch (Exception ex) {
+            throw new IOException(ex);
+        }
+    }
+
+    protected void download(@NonNull S3PathInfo path) throws IOException {
         if (path.temp().exists()) {
             path.temp().delete();
         }
@@ -353,6 +361,23 @@ public class S3FileSystem extends LocalFileSystem {
         }
     }
 
+    protected long updateTime(@NonNull S3PathInfo path) throws IOException {
+        ListObjectsRequest request = ListObjectsRequest.builder()
+                .bucket(path.bucket())
+                .prefix(path.path())
+                .build();
+        ListObjectsResponse response = client.listObjects(request);
+        if (response.hasContents()) {
+            for (S3Object obj : response.contents()) {
+                if (obj.key().compareTo(path.path()) == 0) {
+                    return obj.lastModified().toEpochMilli();
+                }
+            }
+        }
+        throw new IOException(String.format("S3 Object not found. [bucket=%s][path=%s]",
+                path.bucket(), path.path()));
+    }
+
     /**
      * @param source
      * @param directory
@@ -360,30 +385,37 @@ public class S3FileSystem extends LocalFileSystem {
      */
     @Override
     public PathInfo upload(@NonNull File source, @NonNull PathInfo directory) throws IOException {
-        S3PathInfo s3dir = (S3PathInfo) directory;
-        String path = String.format("%s/%s", directory.path(), FilenameUtils.getName(source.getAbsolutePath()));
-        PathInfo dest = get(path, directory.domain(), false);
-        S3PathInfo s3path = checkPath(dest);
-        if (s3path.exists()) {
-            delete(s3path);
+        try {
+            S3PathInfo s3dir = (S3PathInfo) directory;
+            String path = String.format("%s/%s", s3dir.path(), FilenameUtils.getName(source.getAbsolutePath()));
+            PathInfo dest = get(path, directory.domain(), false);
+            S3PathInfo s3path = checkPath(dest);
+            if (s3path.exists()) {
+                delete(s3path);
+            }
+            PutObjectRequest request = PutObjectRequest.builder()
+                    .bucket(s3path.bucket())
+                    .key(s3path.path())
+                    .build();
+            PutObjectResponse response = client()
+                    .putObject(request, RequestBody.fromFile(source));
+            S3Waiter waiter = client().waiter();
+            HeadObjectRequest requestWait = HeadObjectRequest.builder()
+                    .bucket(s3path.bucket())
+                    .key(s3path.path())
+                    .build();
+
+            WaiterResponse<HeadObjectResponse> waiterResponse = waiter.waitUntilObjectExists(requestWait);
+
+            waiterResponse.matched().response().ifPresent(this::debug);
+
+            s3path.withTemp(source);
+            cache.put(s3path, System.currentTimeMillis());
+
+            return s3path;
+        } catch (Exception ex) {
+            throw new IOException(ex);
         }
-        PutObjectRequest request = PutObjectRequest.builder()
-                .bucket(s3path.bucket())
-                .key(s3path.path())
-                .build();
-        PutObjectResponse response = client()
-                .putObject(request, RequestBody.fromFile(source));
-        S3Waiter waiter = client().waiter();
-        HeadObjectRequest requestWait = HeadObjectRequest.builder()
-                .bucket(s3path.bucket())
-                .key(s3path.path())
-                .build();
-
-        WaiterResponse<HeadObjectResponse> waiterResponse = waiter.waitUntilObjectExists(requestWait);
-
-        waiterResponse.matched().response().ifPresent(this::debug);
-
-        return dest;
     }
 
     private void debug(Object mesg) {
@@ -432,13 +464,5 @@ public class S3FileSystem extends LocalFileSystem {
                 mappings = readAsMap(get(), CONFIG_DOMAIN_MAP);
             }
         }
-    }
-
-    /**
-     * @return
-     */
-    @Override
-    public DFSChangeData.FileSystemCode fileSystemCode() {
-        return DFSChangeData.FileSystemCode.S3;
     }
 }

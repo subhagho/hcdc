@@ -4,7 +4,7 @@ import ai.sapper.cdc.core.WebServiceClient;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.io.Archiver;
-import ai.sapper.cdc.core.io.CDCFileSystem;
+import ai.sapper.cdc.core.io.impl.CDCFileSystem;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.common.ZkStateManager;

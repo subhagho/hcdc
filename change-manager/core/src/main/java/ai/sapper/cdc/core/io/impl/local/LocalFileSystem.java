@@ -1,11 +1,11 @@
 package ai.sapper.cdc.core.io.impl.local;
 
 import ai.sapper.cdc.common.utils.PathUtils;
-import ai.sapper.cdc.core.io.CDCFileSystem;
+import ai.sapper.cdc.core.io.impl.CDCFileSystem;
+import ai.sapper.cdc.core.io.FileSystem;
 import ai.sapper.cdc.core.io.PathInfo;
 import ai.sapper.cdc.core.io.Reader;
 import ai.sapper.cdc.core.io.Writer;
-import ai.sapper.hcdc.common.model.DFSChangeData;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -33,7 +33,7 @@ import java.util.Map;
 public class LocalFileSystem extends CDCFileSystem {
     public static final String TEMP_PATH = String.format("%s/HCDC/LOCAL",
             System.getProperty("java.io.tmpdir"));
-    private FileSystemConfig fsConfig = null;
+    private FileSystem.FileSystemConfig fsConfig = null;
 
     /**
      * @param config
@@ -163,14 +163,6 @@ public class LocalFileSystem extends CDCFileSystem {
             }
         }
         return false;
-    }
-
-    /**
-     * @return
-     */
-    @Override
-    public DFSChangeData.FileSystemCode fileSystemCode() {
-        return DFSChangeData.FileSystemCode.LOCAL;
     }
 
     /**
@@ -307,7 +299,7 @@ public class LocalFileSystem extends CDCFileSystem {
 
     }
 
-    public static class LocalFileSystemConfig extends FileSystemConfig {
+    public static class LocalFileSystemConfig extends FileSystem.FileSystemConfig {
         public LocalFileSystemConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config, @NonNull String path) {
             super(config, path);
         }
