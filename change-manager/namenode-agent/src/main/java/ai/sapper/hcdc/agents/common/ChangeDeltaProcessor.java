@@ -280,7 +280,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
             LOGGER.error(getClass(), ((InvalidTransactionError) error).getTxId(), error);
             processor.handleError(message, data, (InvalidTransactionError) error);
             processor.updateTransaction(txId, message);
-        } else if (!(error instanceof InvalidMessageError)) {
+        } else if (error instanceof InvalidMessageError) {
             LOG.error(
                     String.format("Invalid Message: [ID=%s] [error=%s]",
                             message.id(), error.getLocalizedMessage()));
