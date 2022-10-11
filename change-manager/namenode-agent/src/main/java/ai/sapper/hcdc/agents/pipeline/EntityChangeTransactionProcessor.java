@@ -398,21 +398,5 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
                         .updateState(fileState.getFileInfo().getHdfsPath(), EFileState.Error);
             }
         }
-        DFSTransaction tnx = extractTransaction(data);
-        if (tnx != null) {
-            SchemaEntity entity = null;
-            if (te.getFile() != null) {
-                entity = SchemaEntityHelper.parse(te.getFile().getEntity());
-            } else {
-                entity = SchemaEntityHelper.parse(message.value().getEntity());
-            }
-            MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.createErrorTx(message.id(),
-                    tnx,
-                    te.getErrorCode(),
-                    te.getMessage(),
-                    entity,
-                    te.getFile());
-            sender.send(m);
-        }
     }
 }
