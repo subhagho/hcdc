@@ -66,6 +66,10 @@ public class JsonConverter extends FormatConverter {
             if (schema == null) {
                 schema = parseSchema(source, fileState, schemaEntity);
             }
+            if (schema == null) {
+                throw new IOException(
+                        String.format("Error generating Avro Schema. [entity=%s]", schemaEntity.toString()));
+            }
             long count = 0;
             Schema wrapper = AvroUtils.createSchema(schema.getSchema());
             final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema.getSchema());

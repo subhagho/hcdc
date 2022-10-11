@@ -47,6 +47,21 @@ public class DFSFileInfo {
         return builder.build();
     }
 
+    public DFSFile proto(@NonNull String targetPath) {
+        Preconditions.checkState(!Strings.isNullOrEmpty(namespace));
+        DFSFile.Builder builder = DFSFile.newBuilder();
+        DFSSchemaEntity.Builder entity = DFSSchemaEntity.newBuilder();
+        entity.setDomain(namespace)
+                .setEntity(targetPath);
+        builder.setEntity(entity)
+                .setInodeId(inodeId)
+                .setFileType(fileType.name());
+        if (!Strings.isNullOrEmpty(schemaLocation)) {
+            builder.setSchemaLocation(schemaLocation);
+        }
+        return builder.build();
+    }
+
     public DFSFileInfo parse(@NonNull DFSFile file) {
         namespace = file.getEntity().getDomain();
         hdfsPath = file.getEntity().getEntity();

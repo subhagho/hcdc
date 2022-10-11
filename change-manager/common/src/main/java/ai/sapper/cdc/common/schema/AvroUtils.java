@@ -1,6 +1,7 @@
 package ai.sapper.cdc.common.schema;
 
 import ai.sapper.cdc.common.model.AvroChangeRecord;
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import lombok.NonNull;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
@@ -123,6 +124,7 @@ public class AvroUtils {
             try {
                 if (output != null) output.close();
             } catch (Exception e) {
+                DefaultLogger.LOGGER.error(e.getLocalizedMessage());
             }
         }
     }

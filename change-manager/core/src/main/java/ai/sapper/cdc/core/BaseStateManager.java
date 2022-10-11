@@ -183,7 +183,6 @@ public abstract class BaseStateManager<T> {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private ProcessingState<T> readState(Class<? extends ProcessingState<T>> type) throws ManagerStateError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());

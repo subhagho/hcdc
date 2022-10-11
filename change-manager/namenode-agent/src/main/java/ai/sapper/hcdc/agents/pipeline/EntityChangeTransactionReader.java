@@ -961,8 +961,8 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
      * @throws Exception
      */
     @Override
-    public void processIgnoreTxMessage(DFSIgnoreTx data,
-                                       MessageObject<String, DFSChangeDelta> message,
+    public void processIgnoreTxMessage(@NonNull DFSIgnoreTx data,
+                                       @NonNull MessageObject<String, DFSChangeDelta> message,
                                        long txId) throws Exception {
         LOGGER.debug(getClass(), txId, String.format("Received Ignore Transaction: [ID=%d]", txId));
     }

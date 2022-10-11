@@ -211,7 +211,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                             fileState.getFileInfo().getHdfsPath(),
                             fileState.getFileInfo().getInodeId(),
                             destFile));
-            DFSFile destF = fileState.getFileInfo().proto();
+            DFSFile destF = fileState.getFileInfo().proto(destFile);
             DFSFile srcF = fileState.getFileInfo().proto();
             DFSFileRename data = DFSFileRename.newBuilder()
                     .setTransaction(renameFile.getTransaction())
@@ -222,7 +222,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
 
             MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.create(data,
                             DFSFileRename.class,
-                            null,
+                            SchemaEntityHelper.parse(srcF.getEntity()),
                             message.value().getSequence(),
                             MessageObject.MessageMode.Recursive)
                     .correlationId(message.id());
@@ -642,7 +642,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                         String.format("HDFS File Not registered. [path=%s]",
                                 fileState.getFileInfo().getHdfsPath()));
             }
-            if (!fileState.hasError() && rState != null && rState.isEnabled()) {
+            if (!fileState.hasError() && rState.isEnabled()) {
                 DFSFile df = fileState.getFileInfo().proto();
 
                 DFSFileClose.Builder builder = data.toBuilder();
@@ -756,9 +756,10 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
             }
         }
         DFSFileAdd ams = builder.build();
+        SchemaEntity tEntity = SchemaEntityHelper.parse(ams.getFile().getEntity());
         MessageObject<String, DFSChangeDelta> am = ChangeDeltaSerDe.create(ams,
                         DFSFileAdd.class,
-                        null,
+                        tEntity,
                         message.value().getSequence(),
                         MessageObject.MessageMode.Snapshot)
                 .correlationId(message.id());
@@ -769,7 +770,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
         DFSFileClose cms = HDFSSnapshotProcessor.generateSnapshot(fileState, fa, txId);
         MessageObject<String, DFSChangeDelta> cm = ChangeDeltaSerDe.create(cms,
                         DFSFileClose.class,
-                        null,
+                        tEntity,
                         message.value().getSequence(),
                         MessageObject.MessageMode.Backlog)
                 .correlationId(message.id());

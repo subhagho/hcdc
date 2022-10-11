@@ -167,6 +167,9 @@ public class CDCDataConverter {
         } else {
             source = createSourceFile(fileState, replicaState, currentTxId);
         }
+        if (source == null) {
+            throw new Exception(String.format("Empty file content. [entity=%s]", fileState.getFileInfo().getHdfsPath()));
+        }
         String fname = FilenameUtils.getName(replicaState.getFileInfo().getHdfsPath());
         fname = FilenameUtils.removeExtension(fname);
         String path = PathUtils.formatPath(String.format("%s/%s-%d.avro", fs.tempPath(), fname, currentTxId));

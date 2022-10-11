@@ -229,7 +229,7 @@ public class ConnectionManager implements Closeable {
 
     @Override
     public void close() throws IOException {
-        if (connections != null && !connections.isEmpty()) {
+        if (!connections.isEmpty()) {
             for (String key : connections.keySet()) {
                 Connection c = connections.get(key);
                 if (c != null) {

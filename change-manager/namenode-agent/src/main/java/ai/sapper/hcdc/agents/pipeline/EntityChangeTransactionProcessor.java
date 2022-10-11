@@ -107,8 +107,9 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(path);
-        if (fileState == null && retry) {
-            return;
+        if (fileState == null) {
+            if (retry)
+                return;
         }
         if (!checkTransactionState(fileState, data.getFile(), message, txId, retry)) {
             return;
@@ -356,7 +357,7 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
      */
     @Override
     public void processErrorTxMessage(@NonNull DFSError data,
-                                      MessageObject<String, DFSChangeDelta> message,
+                                      @NonNull MessageObject<String, DFSChangeDelta> message,
                                       long txId) throws Exception {
         DFSTransaction tnx = extractTransaction(data);
         if (data.hasFile()) {

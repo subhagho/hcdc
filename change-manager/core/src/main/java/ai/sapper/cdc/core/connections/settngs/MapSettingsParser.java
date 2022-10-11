@@ -1,13 +1,14 @@
 package ai.sapper.cdc.core.connections.settngs;
 
 import com.google.common.base.Strings;
+import lombok.NonNull;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class MapSettingsParser implements SettingParser<Map<String, String>> {
     @Override
-    public Map<String, String> parse(String value) throws Exception {
+    public Map<String, String> parse(@NonNull String value) throws Exception {
         if (!Strings.isNullOrEmpty(value)) {
             String[] parts = value.split(";");
             if (parts.length > 0) {
@@ -27,7 +28,7 @@ public class MapSettingsParser implements SettingParser<Map<String, String>> {
     }
 
     @Override
-    public String serialize(Object source) throws Exception {
+    public String serialize(@NonNull Object source) throws Exception {
         Map<String, String> value = (Map<String, String>) source;
         if (value != null && !value.isEmpty()) {
             StringBuilder builder = new StringBuilder();
