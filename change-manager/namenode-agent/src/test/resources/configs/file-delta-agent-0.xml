@@ -79,6 +79,10 @@
         <locks>
             <connection>zk-state-connection</connection>
             <path>/ai/sapper/cdc/registry</path>
+            <lock>
+                <name>EntityChangeDeltaReader/0</name>
+                <lock-node>EntityChangeDeltaReader/0/__lock</lock-node>
+            </lock>
         </locks>
         <config>
             <connections>

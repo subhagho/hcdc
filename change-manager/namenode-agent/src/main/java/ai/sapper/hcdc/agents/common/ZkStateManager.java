@@ -3,10 +3,7 @@ package ai.sapper.hcdc.agents.common;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
-import ai.sapper.cdc.core.BaseStateManager;
-import ai.sapper.cdc.core.DistributedLock;
-import ai.sapper.cdc.core.ManagerStateError;
-import ai.sapper.cdc.core.StateManagerError;
+import ai.sapper.cdc.core.*;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.model.Heartbeat;
 import ai.sapper.hcdc.agents.model.ModuleTxState;
@@ -26,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 @Getter
 @Accessors(fluent = true)
 public class ZkStateManager extends BaseStateManager<Long> {
+
     public static class Constants {
         public static final String ZK_PATH_FILES = "/files";
         public static final String ZK_PATH_REPLICATION = "/replication";
@@ -37,15 +35,12 @@ public class ZkStateManager extends BaseStateManager<Long> {
     private String zkSnapshotStatePath;
     private SnapshotState snapshotState;
 
-    @Getter(AccessLevel.NONE)
-    private DistributedLock replicationLock;
-
     private final ReplicationStateHelper replicaStateHelper = new ReplicationStateHelper();
     private final FileStateHelper fileStateHelper = new FileStateHelper();
 
 
     public ZkStateManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                               @NonNull ConnectionManager manger,
+                               @NonNull BaseEnv<?> env,
                                @NonNull String source) throws StateManagerError {
         Preconditions.checkState(!Strings.isNullOrEmpty(name()));
         try {
@@ -53,7 +48,7 @@ public class ZkStateManager extends BaseStateManager<Long> {
             config.read();
 
             withConfig(config);
-            super.init(manger);
+            super.init(env);
 
             this.source = source;
             CuratorFramework client = connection().client();
@@ -92,24 +87,23 @@ public class ZkStateManager extends BaseStateManager<Long> {
         }
     }
 
-    public ZkStateManager withReplicationLock(@NonNull DistributedLock replicationLock) {
-        this.replicationLock = replicationLock;
-        return this;
-    }
-
     public long nextSnapshotSeq() throws Exception {
         checkState();
-        synchronized (this) {
+        stateLock();
+        try {
             long seq = snapshotState.getSnapshotSeq();
             snapshotState.setSnapshotSeq(seq + 1);
             snapshotState = save(snapshotState);
             return seq;
+        } finally {
+            stateUnlock();
         }
     }
 
     public SnapshotState getSnapshotState() throws Exception {
         checkState();
-        synchronized (this) {
+        stateLock();
+        try {
             if (snapshotState == null) {
                 zkSnapshotStatePath = new PathUtils.ZkPathBuilder(zkModulePath())
                         .withPath("snapshot")
@@ -122,6 +116,8 @@ public class ZkStateManager extends BaseStateManager<Long> {
                     snapshotState = save(snapshotState);
                 }
             }
+        } finally {
+            stateUnlock();
         }
         return snapshotState;
     }
@@ -152,7 +148,8 @@ public class ZkStateManager extends BaseStateManager<Long> {
 
     public ModuleTxState getModuleState() throws Exception {
         checkState();
-        synchronized (this) {
+        stateLock();
+        try {
             if (moduleTxState == null) {
                 zkModuleStatePath = new PathUtils.ZkPathBuilder(zkModulePath())
                         .withPath(BaseStateManager.Constants.ZK_PATH_PROCESS_STATE)
@@ -165,35 +162,44 @@ public class ZkStateManager extends BaseStateManager<Long> {
                     moduleTxState = update(moduleTxState);
                 }
             }
+        } finally {
+            stateUnlock();
         }
         return moduleTxState;
     }
 
     public ModuleTxState updateReceivedTx(long currentTx) throws Exception {
         checkState();
-        synchronized (this) {
+        stateLock();
+        try {
             if (moduleTxState.getReceivedTxId() < currentTx) {
                 moduleTxState.setReceivedTxId(currentTx);
                 update(moduleTxState);
             }
+        } finally {
+            stateUnlock();
         }
         return moduleTxState;
     }
 
     public ModuleTxState updateCommittedTx(long currentTx) throws Exception {
         checkState();
-        synchronized (this) {
+        stateLock();
+        try {
             if (moduleTxState.getCommittedTxId() < currentTx) {
                 moduleTxState.setCommittedTxId(currentTx);
                 update(moduleTxState);
             }
+        } finally {
+            stateUnlock();
         }
         return moduleTxState;
     }
 
     public ModuleTxState updateSnapshotTx(long snapshotTx) throws Exception {
         checkState();
-        synchronized (this) {
+        stateLock();
+        try {
             if (moduleTxState.getSnapshotTxId() < snapshotTx) {
                 moduleTxState.setSnapshotTxId(snapshotTx);
                 update(moduleTxState);
@@ -202,6 +208,8 @@ public class ZkStateManager extends BaseStateManager<Long> {
                 snapshotState.setSnapshotTxId(snapshotTx);
                 snapshotState = save(snapshotState);
             }
+        } finally {
+            stateUnlock();
         }
         return moduleTxState;
     }
@@ -232,15 +240,6 @@ public class ZkStateManager extends BaseStateManager<Long> {
         return null;
     }
 
-    public ModuleTxState updateSnapshotTxId(long txid) throws StateManagerError {
-        checkState();
-        try {
-            return updateSnapshotTx(txid);
-        } catch (Exception ex) {
-            throw new StateManagerError(ex);
-        }
-    }
-
     public long getSnapshotTxId() throws StateManagerError {
         checkState();
         return moduleTxState.getSnapshotTxId();
@@ -248,13 +247,16 @@ public class ZkStateManager extends BaseStateManager<Long> {
 
     public void deleteAll() throws StateManagerError {
         checkState();
-        synchronized (this) {
+        try {
+            stateLock();
             try {
                 fileStateHelper.deleteAll();
                 replicaStateHelper.deleteAll();
-            } catch (Exception ex) {
-                throw new StateManagerError(ex);
+            } finally {
+                stateUnlock();
             }
+        } catch (Exception ex) {
+            throw new StateManagerError(ex);
         }
     }
 
@@ -270,14 +272,6 @@ public class ZkStateManager extends BaseStateManager<Long> {
         } catch (Exception ex) {
             throw new ManagerStateError(ex);
         }
-    }
-
-    public void stateLock() {
-        replicationLock.lock();
-    }
-
-    public void stateUnlock() {
-        replicationLock.unlock();
     }
 
     @Getter

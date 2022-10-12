@@ -52,6 +52,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     private TransactionProcessor processor;
     private final EProcessorMode mode;
     private final boolean ignoreMissing;
+    private DistributedLock __lock;
 
     public ChangeDeltaProcessor(@NonNull ZkStateManager stateManager,
                                 @NonNull String name,
@@ -76,48 +77,54 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
             env = NameNodeEnv.get(name);
             Preconditions.checkNotNull(env);
 
-            this.processorConfig = config;
-            processorConfig.read();
+            __lock = env.createLock(name);
+            __lock.lock();
+            try {
+                this.processorConfig = config;
+                processorConfig.read();
 
-            sender = new HCDCMessagingBuilders.SenderBuilder()
-                    .config(processorConfig.senderConfig.config())
-                    .manager(manger)
-                    .connection(processorConfig().senderConfig.connection())
-                    .type(processorConfig().senderConfig.type())
-                    .partitioner(processorConfig().senderConfig.partitionerClass())
-                    .auditLogger(NameNodeEnv.get(name).auditLogger())
-                    .build();
+                sender = new HCDCMessagingBuilders.SenderBuilder()
+                        .config(processorConfig.senderConfig.config())
+                        .manager(manger)
+                        .connection(processorConfig().senderConfig.connection())
+                        .type(processorConfig().senderConfig.type())
+                        .partitioner(processorConfig().senderConfig.partitionerClass())
+                        .auditLogger(NameNodeEnv.get(name).auditLogger())
+                        .build();
 
-            receiver = new HCDCMessagingBuilders.ReceiverBuilder()
-                    .config(processorConfig().receiverConfig.config())
-                    .manager(manger)
-                    .connection(processorConfig.receiverConfig.connection())
-                    .type(processorConfig.receiverConfig.type())
-                    .saveState(true)
-                    .zkConnection(stateManager().connection())
-                    .zkStatePath(stateManager.zkPath())
-                    .batchSize(processorConfig.receiverConfig.batchSize())
-                    .auditLogger(NameNodeEnv.get(name).auditLogger())
-                    .build();
+                receiver = new HCDCMessagingBuilders.ReceiverBuilder()
+                        .config(processorConfig().receiverConfig.config())
+                        .manager(manger)
+                        .connection(processorConfig.receiverConfig.connection())
+                        .type(processorConfig.receiverConfig.type())
+                        .saveState(true)
+                        .zkConnection(stateManager().connection())
+                        .zkStatePath(stateManager.zkPath())
+                        .batchSize(processorConfig.receiverConfig.batchSize())
+                        .auditLogger(NameNodeEnv.get(name).auditLogger())
+                        .build();
 
-            if (!Strings.isNullOrEmpty(processorConfig.batchTimeout)) {
-                receiveBatchTimeout = Long.parseLong(processorConfig.batchTimeout);
-            }
-            errorSender = new HCDCMessagingBuilders.SenderBuilder()
-                    .config(processorConfig.errorConfig.config())
-                    .manager(manger)
-                    .connection(processorConfig().errorConfig.connection())
-                    .type(processorConfig().errorConfig.type())
-                    .partitioner(processorConfig().errorConfig.partitionerClass())
-                    .build();
+                if (!Strings.isNullOrEmpty(processorConfig.batchTimeout)) {
+                    receiveBatchTimeout = Long.parseLong(processorConfig.batchTimeout);
+                }
+                errorSender = new HCDCMessagingBuilders.SenderBuilder()
+                        .config(processorConfig.errorConfig.config())
+                        .manager(manger)
+                        .connection(processorConfig().errorConfig.connection())
+                        .type(processorConfig().errorConfig.type())
+                        .partitioner(processorConfig().errorConfig.partitionerClass())
+                        .build();
 
-            long txId = stateManager().getSnapshotTxId();
+                long txId = stateManager().getSnapshotTxId();
             /*
             LongTxState state = (LongTxState) stateManager.processingState();
             if (txId > state.getProcessedTxId()) {
                 state = (LongTxState) stateManager.update(txId);
             }
              */
+            } finally {
+                __lock.unlock();
+            }
             return this;
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
@@ -210,7 +217,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     }
 
     private void handleMessage(MessageObject<String, DFSChangeDelta> message) throws Throwable {
-        stateManager().stateLock();
+        __lock.lock();
         try {
             long txId = -1;
             if (!isValidMessage(message)) {
@@ -248,7 +255,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
                 error(message, data, ex, txId);
             }
         } finally {
-            stateManager().stateUnlock();
+            __lock.unlock();
         }
     }
 

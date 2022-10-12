@@ -51,6 +51,10 @@
         <locks>
             <connection>zk-state-connection</connection>
             <path>/ai/sapper/cdc/registry</path>
+            <lock>
+                <name>EditsChangeConsumer</name>
+                <lock-node>EditsChangeConsumer/__lock</lock-node>
+            </lock>
         </locks>
         <config>
             <connections>

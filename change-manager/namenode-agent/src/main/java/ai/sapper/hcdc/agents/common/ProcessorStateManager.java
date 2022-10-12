@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.agents.common;
 
+import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.StateManagerError;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.filters.DomainManager;
@@ -16,18 +17,18 @@ public class ProcessorStateManager extends ZkStateManager {
 
     /**
      * @param xmlConfig
-     * @param manger
+     * @param env
      * @return
      * @throws StateManagerError
      */
     @Override
     public ZkStateManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                               @NonNull ConnectionManager manger,
+                               @NonNull BaseEnv<?> env,
                                @NonNull String source) throws StateManagerError {
-        super.init(xmlConfig, manger, source);
+        super.init(xmlConfig, env, source);
         try {
             domainManager = new DomainManager();
-            domainManager.init(xmlConfig, manger, environment());
+            domainManager.init(xmlConfig, env.connectionManager(), environment());
 
             return this;
         } catch (Exception ex) {

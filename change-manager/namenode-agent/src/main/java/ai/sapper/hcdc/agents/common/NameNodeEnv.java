@@ -94,15 +94,6 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNodeEnvState> {
             if (super.stateManager() != null) {
                 stateManager = (ZkStateManager) super.stateManager();
 
-                DistributedLock lock = createLock(BaseStateManager.Constants.LOCK_REPLICATION);
-                if (lock == null) {
-                    throw new ConfigurationException(
-                            String.format("Replication Lock not defined. [name=%s]",
-                                    BaseStateManager.Constants.LOCK_REPLICATION));
-                }
-
-                stateManager
-                        .withReplicationLock(lock);
                 stateManager.checkAgentState(LongTxState.class);
             }
             if (ConfigReader.checkIfNodeExists(config().config(),
@@ -116,6 +107,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNodeEnvState> {
             }
 
             state.state(ENameNodeEnvState.Initialized);
+            postInit();
 
             return this;
         } catch (Throwable t) {
@@ -151,18 +143,6 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNodeEnvState> {
             LOG.error("Error disposing NameNodeEnv...", ex);
         }
         return state.state();
-    }
-
-    public DistributedLock createLock(@NonNull String name) throws NameNodeError {
-        try {
-            return createLock(stateManager.zkPath(), module(), name);
-        } catch (Exception ex) {
-            throw new NameNodeError(ex);
-        }
-    }
-
-    public DistributedLock globalLock() throws NameNodeError {
-        return createLock(NameNodeEnvConfig.Constants.LOCK_GLOBAL);
     }
 
     private static final Map<String, NameNodeEnv> __instances = new HashMap<>();
@@ -290,7 +270,6 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNodeEnvState> {
             private static final String CONFIG_HADOOP_CONFIG = "hadoop.config";
 
             private static final String HDFS_NN_USE_HTTPS = "useSSL";
-            private static final String LOCK_GLOBAL = "global";
             private static final String CONFIG_LOAD_HADOOP = "needHadoop";
         }
 

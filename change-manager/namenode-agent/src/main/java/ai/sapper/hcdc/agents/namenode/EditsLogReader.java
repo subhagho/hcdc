@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.agents.namenode;
 
+import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.MessageObject;
@@ -75,17 +76,26 @@ public class EditsLogReader extends HDFSEditsReader {
                 LOGGER.debug(getClass(), state.getReceivedTxId(),
                         String.format("Reading edits file [path=%s][startTx=%d]",
                                 file, state.getReceivedTxId()));
-                reader.run(file,
-                        state.getReceivedTxId(),
-                        file.endTxId(),
-                        NameNodeEnv.get(name));
-                DFSEditLogBatch batch = reader.batch();
-                if (batch.transactions() != null && !batch.transactions().isEmpty()) {
-                    long tid = processBatch(batch, txId, stateManager.source());
-                    if (tid > 0) {
-                        txId = tid;
-                        stateManager.update(txId);
-                        stateManager.updateReceivedTx(txId);
+                try (DistributedLock lock = NameNodeEnv.get(name).globalLock()
+                        .withLockTimeout(processorConfig().defaultLockTimeout())) {
+                    if (DistributedLock.withRetry(lock, 5, 500)) {
+                        try {
+                            reader.run(file,
+                                    state.getReceivedTxId(),
+                                    file.endTxId(),
+                                    NameNodeEnv.get(name));
+                            DFSEditLogBatch batch = reader.batch();
+                            if (batch.transactions() != null && !batch.transactions().isEmpty()) {
+                                long tid = processBatch(batch, txId, stateManager.source());
+                                if (tid > 0) {
+                                    txId = tid;
+                                    stateManager.update(txId);
+                                    stateManager.updateReceivedTx(txId);
+                                }
+                            }
+                        } finally {
+                            lock.unlock();
+                        }
                     }
                 }
             }
@@ -124,5 +134,4 @@ public class EditsLogReader extends HDFSEditsReader {
     private String getPathNnCurrentDir(String path) {
         return String.format("%s/%s", path, PATH_NN_CURRENT_DIR);
     }
-
 }

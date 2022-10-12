@@ -26,6 +26,7 @@ public abstract class BaseEnv<T> {
     public static class Constants {
         public static final String __CONFIG_PATH_ENV = "env";
         public static final String CONFIG_ENV_NAME = String.format("%s.name", __CONFIG_PATH_ENV);
+        private static final String LOCK_GLOBAL = "global";
     }
 
     private ConnectionManager connectionManager;
@@ -69,6 +70,7 @@ public abstract class BaseEnv<T> {
                 throw new ConfigurationException(
                         String.format("Base Env: missing parameter. [name=%s]", Constants.CONFIG_ENV_NAME));
             }
+
             config = new BaseEnvConfig(xmlConfig);
             config.read();
             rootConfig = config.config();
@@ -91,7 +93,9 @@ public abstract class BaseEnv<T> {
                 stateManager.withEnvironment(environment(), name)
                         .withModuleInstance(moduleInstance);
                 stateManager
-                        .init(config.config(), connectionManager(), config.source);
+                        .init(config.config(),
+                                this,
+                                config.source);
             }
             if (ConfigReader.checkIfNodeExists(rootConfig,
                     AuditLogger.__CONFIG_PATH)) {
@@ -108,16 +112,26 @@ public abstract class BaseEnv<T> {
 
             this.state = state;
 
-            if (config.enableHeartbeat) {
-                heartbeat = new HeartbeatThread(name()).withStateManager(stateManager);
-                heartbeatThread = new Thread(heartbeat);
-                heartbeatThread.start();
-            }
-
             return this;
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
         }
+    }
+
+    public void postInit() {
+        if (config.enableHeartbeat) {
+            heartbeat = new HeartbeatThread(name()).withStateManager(stateManager);
+            heartbeatThread = new Thread(heartbeat);
+            heartbeatThread.start();
+        }
+    }
+
+    public DistributedLock globalLock() throws Exception {
+        return createLock(Constants.LOCK_GLOBAL);
+    }
+
+    public DistributedLock createLock(@NonNull String name) throws Exception {
+        return createLock(stateManager.zkPath(), module(), name);
     }
 
     public void setup(@NonNull String module,
@@ -150,7 +164,7 @@ public abstract class BaseEnv<T> {
         }
     }
 
-    public synchronized BaseEnv addExitCallback(@NonNull ExitCallback callback) {
+    public synchronized BaseEnv<T> addExitCallback(@NonNull ExitCallback<T> callback) {
         if (exitCallbacks == null) {
             exitCallbacks = new ArrayList<>();
         }

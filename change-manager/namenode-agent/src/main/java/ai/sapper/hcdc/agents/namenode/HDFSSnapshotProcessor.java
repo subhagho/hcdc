@@ -97,24 +97,27 @@ public class HDFSSnapshotProcessor {
         long txId = stateManager.getModuleState().getReceivedTxId();
         try (DistributedLock lock = NameNodeEnv.get(name).globalLock()
                 .withLockTimeout(processorConfig.defaultLockTimeout)) {
-            lock.lock();
-            try {
-                for (String domain : domainManager.matchers().keySet()) {
-                    DefaultLogger.LOGGER.info(String.format("Running snapshot for domain. [domain=%s]", domain));
-                    DomainFilterMatcher matcher = domainManager.matchers().get(domain);
-                    if (matcher != null) {
-                        List<DomainFilterMatcher.PathFilter> filters = matcher.patterns();
-                        if (filters != null && !filters.isEmpty()) {
-                            for (DomainFilterMatcher.PathFilter filter : filters) {
-                                count += processFilter(filter, domain, txId);
+            if (DistributedLock.withRetry(lock, 5, 1000)) {
+                try {
+                    for (String domain : domainManager.matchers().keySet()) {
+                        DefaultLogger.LOGGER.info(String.format("Running snapshot for domain. [domain=%s]", domain));
+                        DomainFilterMatcher matcher = domainManager.matchers().get(domain);
+                        if (matcher != null) {
+                            List<DomainFilterMatcher.PathFilter> filters = matcher.patterns();
+                            if (filters != null && !filters.isEmpty()) {
+                                for (DomainFilterMatcher.PathFilter filter : filters) {
+                                    count += processFilter(filter, domain, txId);
+                                }
                             }
                         }
                     }
+                    stateManager.updateSnapshotTx(txId);
+                    return count;
+                } finally {
+                    lock.unlock();
                 }
-                stateManager.updateSnapshotTxId(txId);
-                return count;
-            } finally {
-                lock.unlock();
+            } else {
+                throw new Exception(String.format("Failed to acquire lock. [lock=%s]", lock.toString()));
             }
         }
     }
@@ -185,7 +188,7 @@ public class HDFSSnapshotProcessor {
                     SchemaEntity d = new SchemaEntity();
                     d.setDomain(domain);
                     d.setEntity(filter.filter().getEntity());
-                    snapshot(hdfsPath, d, txId);
+                    runSnapshot(hdfsPath, d, txId);
                     count++;
                 }
             }
@@ -198,20 +201,21 @@ public class HDFSSnapshotProcessor {
                                      long txId) throws Exception {
         try (DistributedLock lock = NameNodeEnv.get(name).globalLock()
                 .withLockTimeout(processorConfig().defaultLockTimeout())) {
-            lock.lock();
-            try {
-                return processFilter(filter, domain, txId);
-            } finally {
-                lock.unlock();
+            if (DistributedLock.withRetry(lock, 5, 500)) {
+                try {
+                    return processFilter(filter, domain, txId);
+                } finally {
+                    lock.unlock();
+                }
+            } else {
+                throw new Exception(String.format("Failed to acquire lock. [lock=%s]", lock.toString()));
             }
         }
     }
 
-    public void snapshot(@NonNull String hdfsPath,
-                         @NonNull SchemaEntity entity,
-                         long txId) throws SnapshotError {
-        Preconditions.checkState(sender != null);
-        stateManager.stateLock();
+    private void runSnapshot(@NonNull String hdfsPath,
+                             @NonNull SchemaEntity entity,
+                             long txId) throws SnapshotError {
         try {
             DefaultLogger.debug(LOG, String.format("Generating snapshot for file. [path=%s]", hdfsPath));
             DFSFileState fileState = stateManager
@@ -259,67 +263,79 @@ public class HDFSSnapshotProcessor {
                     .update(rState);
             DefaultLogger.info(LOG, String.format("Snapshot generated for path. [path=%s][inode=%d]",
                     fileState.getFileInfo().getHdfsPath(), fileState.getFileInfo().getInodeId()));
-        } catch (SnapshotError se) {
-            throw se;
         } catch (Exception ex) {
             throw new SnapshotError(ex);
-        } finally {
-            stateManager.stateUnlock();
         }
     }
 
-    public DFSFileReplicaState snapshotDone(@NonNull String hdfsPath, @NonNull SchemaEntity entity, long tnxId) throws SnapshotError {
+    public DFSFileReplicaState snapshotDone(@NonNull String hdfsPath,
+                                            @NonNull SchemaEntity entity,
+                                            long txId) throws SnapshotError {
         Preconditions.checkState(tnxSender != null);
-        stateManager.stateLock();
         try {
-            DFSFileState fileState = stateManager
-                    .fileStateHelper()
-                    .get(hdfsPath);
-            if (fileState == null) {
-                throw new SnapshotError(String.format("HDFS File State not found. [path=%s]", hdfsPath));
+            try (DistributedLock lock = NameNodeEnv.get(name).globalLock()
+                    .withLockTimeout(processorConfig().defaultLockTimeout())) {
+                if (DistributedLock.withRetry(lock, 5, 500)) {
+                    try {
+                        return processDone(hdfsPath, entity, txId);
+                    } finally {
+                        lock.unlock();
+                    }
+                } else {
+                    throw new SnapshotError(String.format("Failed to acquire lock. [lock=%s]", lock.toString()));
+                }
             }
-            DFSFileReplicaState rState = stateManager
-                    .replicaStateHelper()
-                    .get(entity,
-                            fileState.getFileInfo().getInodeId());
-            if (rState == null) {
-                throw new SnapshotError(String.format("HDFS File replication record not found. [path=%s]", hdfsPath));
-            }
-            if (tnxId != rState.getSnapshotTxId()) {
-                throw new SnapshotError(String.format("Snapshot transaction mismatch. [expected=%d][actual=%d]", rState.getSnapshotTxId(), tnxId));
-            }
-            if (rState.isSnapshotReady()) {
-                DefaultLogger.warn(LOG, String.format("Duplicate Call: Snapshot Done: [path=%s]", rState.getFileInfo().getHdfsPath()));
-                return rState;
-            }
-            long lastTxId = tnxId;
-            if (fileState.getLastTnxId() > rState.getSnapshotTxId()) {
-                DFSFileClose closeFile = generateSnapshot(fileState, true, tnxId);
-                MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(closeFile,
-                        DFSFileClose.class,
-                        entity,
-                        -1,
-                        MessageObject.MessageMode.Backlog);
-                tnxSender.send(message);
-                lastTxId = fileState.getLastTnxId();
-            }
-            rState.setSnapshotReady(true);
-            rState.setSnapshotTime(System.currentTimeMillis());
-            rState.setLastReplicationTime(System.currentTimeMillis());
-            rState.setLastReplicatedTx(lastTxId);
-            rState.setState(EFileState.Finalized);
-            ProtoBufUtils.update(fileState, rState);
-            stateManager
-                    .replicaStateHelper()
-                    .update(rState);
-            return rState;
         } catch (SnapshotError se) {
             throw se;
         } catch (Exception ex) {
             throw new SnapshotError(ex);
-        } finally {
-            stateManager.stateUnlock();
         }
+    }
+
+    private DFSFileReplicaState processDone(@NonNull String hdfsPath,
+                                            @NonNull SchemaEntity entity,
+                                            long tnxId) throws Exception {
+        DFSFileState fileState = stateManager
+                .fileStateHelper()
+                .get(hdfsPath);
+        if (fileState == null) {
+            throw new SnapshotError(String.format("HDFS File State not found. [path=%s]", hdfsPath));
+        }
+        DFSFileReplicaState rState = stateManager
+                .replicaStateHelper()
+                .get(entity,
+                        fileState.getFileInfo().getInodeId());
+        if (rState == null) {
+            throw new SnapshotError(String.format("HDFS File replication record not found. [path=%s]", hdfsPath));
+        }
+        if (tnxId != rState.getSnapshotTxId()) {
+            throw new SnapshotError(String.format("Snapshot transaction mismatch. [expected=%d][actual=%d]", rState.getSnapshotTxId(), tnxId));
+        }
+        if (rState.isSnapshotReady()) {
+            DefaultLogger.warn(LOG, String.format("Duplicate Call: Snapshot Done: [path=%s]", rState.getFileInfo().getHdfsPath()));
+            return rState;
+        }
+        long lastTxId = tnxId;
+        if (fileState.getLastTnxId() > rState.getSnapshotTxId()) {
+            DFSFileClose closeFile = generateSnapshot(fileState, true, tnxId);
+            MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(closeFile,
+                    DFSFileClose.class,
+                    entity,
+                    -1,
+                    MessageObject.MessageMode.Backlog);
+            tnxSender.send(message);
+            lastTxId = fileState.getLastTnxId();
+        }
+        rState.setSnapshotReady(true);
+        rState.setSnapshotTime(System.currentTimeMillis());
+        rState.setLastReplicationTime(System.currentTimeMillis());
+        rState.setLastReplicatedTx(lastTxId);
+        rState.setState(EFileState.Finalized);
+        ProtoBufUtils.update(fileState, rState);
+        stateManager
+                .replicaStateHelper()
+                .update(rState);
+        return rState;
     }
 
     public static DFSFileClose generateSnapshot(@NonNull DFSFileState state,

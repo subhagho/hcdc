@@ -5,10 +5,7 @@ import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.Accessors;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 
@@ -379,6 +376,29 @@ public class DistributedLock extends ReentrantLock implements Closeable {
                     "namespace='" + namespace + '\'' +
                     ", name='" + name + '\'' +
                     '}';
+        }
+    }
+
+    public static boolean withRetry(@NonNull DistributedLock lock,
+                                    int retryCount,
+                                    long sleepInterval) throws Exception {
+        int count = 0;
+        while (true) {
+            try {
+                lock.lock();
+                return true;
+            } catch (DistributedLock.LockError le) {
+                if (count > retryCount) {
+                    DefaultLogger.LOGGER.error(
+                            String.format("Error acquiring lock. [error=%s][retries=%d]",
+                                    le.getLocalizedMessage(), retryCount));
+                    return false;
+                }
+                DefaultLogger.LOGGER.warn(String.format("Failed to acquire lock, will retry... [error=%s][retries=%d]",
+                        le.getLocalizedMessage(), retryCount));
+                Thread.sleep(sleepInterval);
+                count++;
+            }
         }
     }
 }

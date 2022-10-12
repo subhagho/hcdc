@@ -1,6 +1,7 @@
 package ai.sapper.cdc.core;
 
 import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.connections.ConnectionManager;
@@ -8,6 +9,7 @@ import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import ai.sapper.cdc.core.model.*;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -22,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 @Accessors(fluent = true)
 public abstract class BaseStateManager<T> {
     public static class Constants {
+        public static final int LOCK_RETRY_COUNT = 8;
         public static final String ZK_PATH_HEARTBEAT = "/heartbeat";
         public static final String ZK_PATH_PROCESS_STATE = "state";
 
@@ -39,6 +42,32 @@ public abstract class BaseStateManager<T> {
     private ModuleInstance moduleInstance;
     private String name;
     private String environment;
+    @Getter(AccessLevel.NONE)
+    private DistributedLock replicationLock;
+
+    public void stateLock() throws Exception {
+        int retryCount = 0;
+        while (true) {
+            try {
+                replicationLock.lock();
+                break;
+            } catch (DistributedLock.LockError le) {
+                if (retryCount > Constants.LOCK_RETRY_COUNT) {
+                    throw new Exception(
+                            String.format("Error acquiring lock. [error=%s][retries=%d]",
+                                    le.getLocalizedMessage(), retryCount));
+                }
+                DefaultLogger.LOGGER.warn(String.format("Failed to acquire lock, will retry... [error=%s][retries=%d]",
+                        le.getLocalizedMessage(), retryCount));
+                Thread.sleep(500);
+                retryCount++;
+            }
+        }
+    }
+
+    public void stateUnlock() {
+        replicationLock.unlock();
+    }
 
     public BaseStateManager<T> withEnvironment(@NonNull String environment,
                                                @NonNull String name) {
@@ -63,13 +92,15 @@ public abstract class BaseStateManager<T> {
         return config().basePath();
     }
 
-    public BaseStateManager<T> init(@NonNull ConnectionManager manger) throws ManagerStateError {
+    public BaseStateManager<T> init(@NonNull BaseEnv<?> env) throws ManagerStateError {
         try {
             Preconditions.checkNotNull(moduleInstance);
             Preconditions.checkNotNull(config);
             Preconditions.checkState(!Strings.isNullOrEmpty(environment));
 
-            connection = manger.getConnection(config.zkConnection(), ZookeeperConnection.class);
+            connection = env.connectionManager()
+                    .getConnection(config.zkConnection(),
+                            ZookeeperConnection.class);
             Preconditions.checkNotNull(connection);
             if (!connection.isConnected()) connection.connect();
             CuratorFramework client = connection().client();
@@ -82,6 +113,13 @@ public abstract class BaseStateManager<T> {
             zkAgentPath = new PathUtils.ZkPathBuilder(zkModulePath)
                     .withPath(moduleInstance.getName())
                     .build();
+
+            replicationLock = env.createLock(Constants.LOCK_REPLICATION);
+            if (replicationLock == null) {
+                throw new ConfigurationException(
+                        String.format("Replication Lock not defined. [name=%s]",
+                                Constants.LOCK_REPLICATION));
+            }
 
             if (client.checkExists().forPath(zkAgentPath) == null) {
                 String path = client.create().creatingParentContainersIfNeeded().forPath(zkAgentPath);
@@ -99,8 +137,9 @@ public abstract class BaseStateManager<T> {
     }
 
     public abstract BaseStateManager<T> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                                    @NonNull ConnectionManager manger,
-                                    @NonNull String source) throws StateManagerError;
+                                             @NonNull BaseEnv<?> env,
+                                             @NonNull String source) throws StateManagerError;
+
     public synchronized void checkState() {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
@@ -157,7 +196,8 @@ public abstract class BaseStateManager<T> {
     public ProcessingState<T> update(T processedTxId) throws ManagerStateError {
         Preconditions.checkNotNull(connection);
         Preconditions.checkState(connection.isConnected());
-        if (processingState.compareTx(processedTxId) >= 0) return processingState;;
+        if (processingState.compareTx(processedTxId) >= 0) return processingState;
+        ;
 
         synchronized (this) {
             try {
