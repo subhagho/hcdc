@@ -98,7 +98,7 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
         }
     }
 
-    public boolean isValidMessage(MessageObject<String, DFSChangeDelta> message) {
+    public boolean isValidMessage(@NonNull MessageObject<String, DFSChangeDelta> message) {
         boolean ret = false;
         if (message.mode() != null) {
             ret = (message.mode() == MessageObject.MessageMode.New

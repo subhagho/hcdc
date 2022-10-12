@@ -23,7 +23,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @Getter
 @Accessors(fluent = true)
 public class DistributedLock extends ReentrantLock implements Closeable {
-    private static final int DEFAULT_LOCK_TIMEOUT = 5000;
+    private static final int DEFAULT_LOCK_TIMEOUT = 15000;
 
     private final LockId id;
     private long lockTimeout = DEFAULT_LOCK_TIMEOUT;
@@ -236,15 +236,15 @@ public class DistributedLock extends ReentrantLock implements Closeable {
     public void unlock() {
         Preconditions.checkState(mutex != null);
         try {
+            super.unlock();
             if (mutex.isAcquiredInThisProcess()) {
-                mutex.release();
+                if (getHoldCount() == 0)
+                    mutex.release();
             } else {
                 throw new LockError(String.format("[%s][%s] Lock not held by current thread.", id.namespace, id.name));
             }
         } catch (Throwable t) {
             throw new LockError(t);
-        } finally {
-            super.unlock();
         }
     }
 
@@ -287,15 +287,6 @@ public class DistributedLock extends ReentrantLock implements Closeable {
 
     public static final class LockError extends RuntimeException {
         private static final String __PREFIX = "Distributed Lock Error";
-
-        /**
-         * Constructs a new exception with {@code null} as its detail message.
-         * The cause is not initialized, and may subsequently be initialized by a
-         * call to {@link #initCause}.
-         */
-        public LockError() {
-            super(__PREFIX);
-        }
 
         /**
          * Constructs a new exception with the specified detail message.  The

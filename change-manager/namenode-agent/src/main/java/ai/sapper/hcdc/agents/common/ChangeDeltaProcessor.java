@@ -2,6 +2,7 @@ package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.cdc.core.ManagerStateError;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.messaging.*;
@@ -35,6 +36,8 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
         Reader, Committer
     }
 
+    public static final int LOCK_RETRY_COUNT = 16;
+
     private static Logger LOG;
 
     private final String name;
@@ -45,7 +48,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     private MessageReceiver<String, DFSChangeDelta> receiver;
     private long receiveBatchTimeout = 1000;
     private NameNodeEnv env;
-    private String lastMessageId = null;
+    private String processedMessageId = null;
     private TransactionProcessor processor;
     private final EProcessorMode mode;
     private final boolean ignoreMissing;
@@ -157,7 +160,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
 
     public LongTxState updateReadState(String messageId) throws ManagerStateError {
         LongTxState state = (LongTxState) stateManager.processingState();
-        lastMessageId = state.getCurrentMessageId();
+        processedMessageId = state.getCurrentMessageId();
 
         return (LongTxState) stateManager.updateMessageId(messageId);
     }
@@ -178,54 +181,74 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
                 LOG.debug(String.format("Received messages. [count=%d]", batch.size()));
                 batchStart();
                 for (MessageObject<String, DFSChangeDelta> message : batch) {
-                    long txId = -1;
-                    stateManager().stateLock();
-                    try {
-                        if (!isValidMessage(message)) {
-                            throw new InvalidMessageError(message.id(),
-                                    String.format("Invalid Message mode. [id=%s][mode=%s]", message.id(), message.mode().name()));
-                        }
-
-                        LongTxState state = updateReadState(message.id());
-                        boolean retry = false;
-                        if (!Strings.isNullOrEmpty(state.getCurrentMessageId()) &&
-                                !Strings.isNullOrEmpty(lastMessageId()))
-                            retry = state.getCurrentMessageId().compareTo(lastMessageId()) == 0;
-                        txId = processor.checkMessageSequence(message, ignoreMissing, retry);
-                        Object data = ChangeDeltaSerDe.parse(message.value(),
-                                Class.forName(message.value().getType()));
+                    int retryCount = 0;
+                    while (true) {
                         try {
-                            DFSTransaction tnx = processor.extractTransaction(data);
-                            if (tnx != null) {
-                                LOGGER.debug(getClass(), txId,
-                                        String.format("PROCESSING: [TXID=%d][OP=%s]",
-                                                tnx.getTransactionId(), tnx.getOp().name()));
-                                if (tnx.getTransactionId() != txId) {
-                                    throw new InvalidMessageError(message.id(),
-                                            String.format("Transaction ID mismatch: [expected=%d][actual=%d]",
-                                                    txId, tnx.getTransactionId()));
-                                }
+                            handleMessage(message);
+                            break;
+                        } catch (DistributedLock.LockError le) {
+                            if (retryCount > LOCK_RETRY_COUNT) {
+                                throw new Exception(
+                                        String.format("Error acquiring lock. [error=%s][retries=%d]",
+                                                le.getLocalizedMessage(), retryCount));
                             }
-                            process(message, data, tnx, retry);
-                            NameNodeEnv.audit(name, getClass(), (MessageOrBuilder) data);
-                            if (mode == EProcessorMode.Reader) {
-                                commitReceived(message, txId);
-                            } else
-                                commit(message, txId);
-                        } catch (Exception ex) {
-                            error(message, data, ex, txId);
+                            LOG.warn(String.format("Failed to acquire lock, will retry... [error=%s][retries=%d]",
+                                    le.getLocalizedMessage(), retryCount));
+                            Thread.sleep(receiveBatchTimeout);
+                            retryCount++;
                         }
-                    } finally {
-                        stateManager().stateUnlock();
                     }
                 }
                 batchEnd();
             }
-            LOG.warn("Delta Change Processor thread stopped.");
+            LOG.warn(String.format("[%s]] thread stopped.", name));
         } catch (Throwable t) {
-            LOG.error("Delta Change Processor terminated with error", t);
+            LOG.error(String.format("[%s]] thread terminated with error.", name), t);
             DefaultLogger.stacktrace(LOG, t);
             throw t;
+        }
+    }
+
+    private void handleMessage(MessageObject<String, DFSChangeDelta> message) throws Throwable {
+        stateManager().stateLock();
+        try {
+            long txId = -1;
+            if (!isValidMessage(message)) {
+                throw new InvalidMessageError(message.id(),
+                        String.format("Invalid Message mode. [id=%s][mode=%s]", message.id(), message.mode().name()));
+            }
+
+            LongTxState state = updateReadState(message.id());
+            boolean retry = false;
+            if (!Strings.isNullOrEmpty(state.getCurrentMessageId()) &&
+                    !Strings.isNullOrEmpty(processedMessageId()))
+                retry = state.getCurrentMessageId().compareTo(processedMessageId()) == 0;
+            txId = processor.checkMessageSequence(message, ignoreMissing, retry);
+            Object data = ChangeDeltaSerDe.parse(message.value(),
+                    Class.forName(message.value().getType()));
+            try {
+                DFSTransaction tnx = processor.extractTransaction(data);
+                if (tnx != null) {
+                    LOGGER.debug(getClass(), txId,
+                            String.format("PROCESSING: [TXID=%d][OP=%s]",
+                                    tnx.getTransactionId(), tnx.getOp().name()));
+                    if (tnx.getTransactionId() != txId) {
+                        throw new InvalidMessageError(message.id(),
+                                String.format("Transaction ID mismatch: [expected=%d][actual=%d]",
+                                        txId, tnx.getTransactionId()));
+                    }
+                }
+                process(message, data, tnx, retry);
+                NameNodeEnv.audit(name, getClass(), (MessageOrBuilder) data);
+                if (mode == EProcessorMode.Reader) {
+                    commitReceived(message, txId);
+                } else
+                    commit(message, txId);
+            } catch (Exception ex) {
+                error(message, data, ex, txId);
+            }
+        } finally {
+            stateManager().stateUnlock();
         }
     }
 
