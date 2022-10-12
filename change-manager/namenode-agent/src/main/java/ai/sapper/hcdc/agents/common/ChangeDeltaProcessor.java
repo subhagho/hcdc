@@ -186,27 +186,32 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
                     continue;
                 }
                 LOG.debug(String.format("Received messages. [count=%d]", batch.size()));
-                batchStart();
-                for (MessageObject<String, DFSChangeDelta> message : batch) {
-                    int retryCount = 0;
-                    while (true) {
-                        try {
-                            handleMessage(message);
-                            break;
-                        } catch (DistributedLock.LockError le) {
-                            if (retryCount > LOCK_RETRY_COUNT) {
-                                throw new Exception(
-                                        String.format("Error acquiring lock. [error=%s][retries=%d]",
-                                                le.getLocalizedMessage(), retryCount));
+                __lock.lock();
+                try {
+                    batchStart();
+                    for (MessageObject<String, DFSChangeDelta> message : batch) {
+                        int retryCount = 0;
+                        while (true) {
+                            try {
+                                handleMessage(message);
+                                break;
+                            } catch (DistributedLock.LockError le) {
+                                if (retryCount > LOCK_RETRY_COUNT) {
+                                    throw new Exception(
+                                            String.format("Error acquiring lock. [error=%s][retries=%d]",
+                                                    le.getLocalizedMessage(), retryCount));
+                                }
+                                LOG.warn(String.format("Failed to acquire lock, will retry... [error=%s][retries=%d]",
+                                        le.getLocalizedMessage(), retryCount));
+                                Thread.sleep(receiveBatchTimeout);
+                                retryCount++;
                             }
-                            LOG.warn(String.format("Failed to acquire lock, will retry... [error=%s][retries=%d]",
-                                    le.getLocalizedMessage(), retryCount));
-                            Thread.sleep(receiveBatchTimeout);
-                            retryCount++;
                         }
                     }
+                    batchEnd();
+                } finally {
+                    __lock.unlock();
                 }
-                batchEnd();
             }
             LOG.warn(String.format("[%s]] thread stopped.", name));
         } catch (Throwable t) {
@@ -217,45 +222,41 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     }
 
     private void handleMessage(MessageObject<String, DFSChangeDelta> message) throws Throwable {
-        __lock.lock();
-        try {
-            long txId = -1;
-            if (!isValidMessage(message)) {
-                throw new InvalidMessageError(message.id(),
-                        String.format("Invalid Message mode. [id=%s][mode=%s]", message.id(), message.mode().name()));
-            }
 
-            LongTxState state = updateReadState(message.id());
-            boolean retry = false;
-            if (!Strings.isNullOrEmpty(state.getCurrentMessageId()) &&
-                    !Strings.isNullOrEmpty(processedMessageId()))
-                retry = state.getCurrentMessageId().compareTo(processedMessageId()) == 0;
-            txId = processor.checkMessageSequence(message, ignoreMissing, retry);
-            Object data = ChangeDeltaSerDe.parse(message.value(),
-                    Class.forName(message.value().getType()));
-            try {
-                DFSTransaction tnx = processor.extractTransaction(data);
-                if (tnx != null) {
-                    LOGGER.debug(getClass(), txId,
-                            String.format("PROCESSING: [TXID=%d][OP=%s]",
-                                    tnx.getTransactionId(), tnx.getOp().name()));
-                    if (tnx.getTransactionId() != txId) {
-                        throw new InvalidMessageError(message.id(),
-                                String.format("Transaction ID mismatch: [expected=%d][actual=%d]",
-                                        txId, tnx.getTransactionId()));
-                    }
+        long txId = -1;
+        if (!isValidMessage(message)) {
+            throw new InvalidMessageError(message.id(),
+                    String.format("Invalid Message mode. [id=%s][mode=%s]", message.id(), message.mode().name()));
+        }
+
+        LongTxState state = updateReadState(message.id());
+        boolean retry = false;
+        if (!Strings.isNullOrEmpty(state.getCurrentMessageId()) &&
+                !Strings.isNullOrEmpty(processedMessageId()))
+            retry = state.getCurrentMessageId().compareTo(processedMessageId()) == 0;
+        txId = processor.checkMessageSequence(message, ignoreMissing, retry);
+        Object data = ChangeDeltaSerDe.parse(message.value(),
+                Class.forName(message.value().getType()));
+        try {
+            DFSTransaction tnx = processor.extractTransaction(data);
+            if (tnx != null) {
+                LOGGER.debug(getClass(), txId,
+                        String.format("PROCESSING: [TXID=%d][OP=%s]",
+                                tnx.getTransactionId(), tnx.getOp().name()));
+                if (tnx.getTransactionId() != txId) {
+                    throw new InvalidMessageError(message.id(),
+                            String.format("Transaction ID mismatch: [expected=%d][actual=%d]",
+                                    txId, tnx.getTransactionId()));
                 }
-                process(message, data, tnx, retry);
-                NameNodeEnv.audit(name, getClass(), (MessageOrBuilder) data);
-                if (mode == EProcessorMode.Reader) {
-                    commitReceived(message, txId);
-                } else
-                    commit(message, txId);
-            } catch (Exception ex) {
-                error(message, data, ex, txId);
             }
-        } finally {
-            __lock.unlock();
+            process(message, data, tnx, retry);
+            NameNodeEnv.audit(name, getClass(), (MessageOrBuilder) data);
+            if (mode == EProcessorMode.Reader) {
+                commitReceived(message, txId);
+            } else
+                commit(message, txId);
+        } catch (Exception ex) {
+            error(message, data, ex, txId);
         }
     }
 

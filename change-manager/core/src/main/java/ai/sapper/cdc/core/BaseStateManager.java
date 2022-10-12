@@ -113,7 +113,9 @@ public abstract class BaseStateManager<T> {
                     .withPath(moduleInstance.getName())
                     .build();
 
-            replicationLock = env.createLock(Constants.LOCK_REPLICATION);
+            replicationLock = env.createLock(zkPath,
+                    moduleInstance.getModule(),
+                    Constants.LOCK_REPLICATION);
             if (replicationLock == null) {
                 throw new ConfigurationException(
                         String.format("Replication Lock not defined. [name=%s]",
