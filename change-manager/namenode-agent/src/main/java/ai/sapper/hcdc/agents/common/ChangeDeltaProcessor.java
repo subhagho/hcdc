@@ -77,7 +77,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
             env = NameNodeEnv.get(name);
             Preconditions.checkNotNull(env);
 
-            __lock = env.createLock(name);
+            __lock = env.createLock(env.moduleInstance().getName());
             __lock.lock();
             try {
                 this.processorConfig = config;
