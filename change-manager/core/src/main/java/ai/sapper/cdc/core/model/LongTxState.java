@@ -2,7 +2,6 @@ package ai.sapper.cdc.core.model;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 

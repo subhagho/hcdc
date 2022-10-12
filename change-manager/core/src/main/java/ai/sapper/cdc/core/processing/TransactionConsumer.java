@@ -1,6 +1,5 @@
 package ai.sapper.cdc.core.processing;
 
-import ai.sapper.cdc.common.model.Context;
 import lombok.NonNull;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;

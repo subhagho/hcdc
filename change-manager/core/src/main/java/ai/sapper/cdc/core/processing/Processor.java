@@ -1,7 +1,6 @@
 package ai.sapper.cdc.core.processing;
 
 import ai.sapper.cdc.common.ConfigReader;
-import ai.sapper.cdc.common.model.Context;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.BaseStateManager;
 import ai.sapper.cdc.core.model.Heartbeat;

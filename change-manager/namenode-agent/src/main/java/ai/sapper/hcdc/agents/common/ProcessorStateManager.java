@@ -2,7 +2,6 @@ package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.StateManagerError;
-import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.filters.DomainManager;
 import lombok.Getter;
 import lombok.NonNull;

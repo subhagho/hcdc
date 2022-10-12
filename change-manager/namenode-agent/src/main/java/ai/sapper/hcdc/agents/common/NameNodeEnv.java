@@ -3,7 +3,8 @@ package ai.sapper.hcdc.agents.common;
 import ai.sapper.cdc.common.AbstractState;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.cdc.core.*;
+import ai.sapper.cdc.core.BaseEnv;
+import ai.sapper.cdc.core.ExitCallback;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.model.CDCAgentState;
 import ai.sapper.cdc.core.model.LongTxState;
@@ -35,8 +36,6 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNodeEnvState> {
 
     public static final String NN_IGNORE_TNX = "%s.IGNORE";
 
-    private final NameNodeEnvState state = new NameNodeEnvState();
-
     private NameNodeEnvConfig nEnvConfig;
     private HierarchicalConfiguration<ImmutableNode> configNode;
     private HdfsConnection hdfsConnection;
@@ -55,13 +54,13 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNodeEnvState> {
     public synchronized NameNodeEnv init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                                          @NonNull Class<?> caller) throws NameNodeError {
         try {
-            if (state.isAvailable()) return this;
+            if (state() != null && state().isAvailable()) return this;
 
             Runtime.getRuntime().addShutdownHook(
                     new Thread(new ShutdownThread()
                             .name(name())
                             .env(this)));
-            super.init(xmlConfig, state);
+            super.init(xmlConfig, new NameNodeEnvState());
 
             configNode = rootConfig().configurationAt(NameNodeEnvConfig.Constants.__CONFIG_PATH);
 
@@ -93,7 +92,6 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNodeEnvState> {
 
             if (super.stateManager() != null) {
                 stateManager = (ZkStateManager) super.stateManager();
-
                 stateManager.checkAgentState(LongTxState.class);
             }
             if (ConfigReader.checkIfNodeExists(config().config(),
@@ -106,20 +104,20 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNodeEnvState> {
                         dLockBuilder().zkPath());
             }
 
-            state.state(ENameNodeEnvState.Initialized);
+            state().state(ENameNodeEnvState.Initialized);
             postInit();
 
             return this;
         } catch (Throwable t) {
-            state.error(t);
+            state().error(t);
             throw new NameNodeError(t);
         }
     }
 
 
     public ENameNodeEnvState error(@NonNull Throwable t) {
-        state.error(t);
-        return state.state();
+        state().error(t);
+        return state().state();
     }
 
     public synchronized ENameNodeEnvState stop() {
@@ -128,21 +126,21 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNodeEnvState> {
                     || agentState.state() == CDCAgentState.EAgentState.StandBy) {
                 agentState.state(CDCAgentState.EAgentState.Stopped);
             }
-            if (state.isAvailable()) {
+            if (state().isAvailable()) {
                 try {
                     stateManager.heartbeat(moduleInstance().getInstanceId(), agentState);
                 } catch (Exception ex) {
                     LOG.error(ex.getLocalizedMessage());
                     LOG.debug(DefaultLogger.stacktrace(ex));
                 }
-                state.state(ENameNodeEnvState.Disposed);
+                state().state(ENameNodeEnvState.Disposed);
             }
             close();
 
         } catch (Exception ex) {
             LOG.error("Error disposing NameNodeEnv...", ex);
         }
-        return state.state();
+        return state().state();
     }
 
     private static final Map<String, NameNodeEnv> __instances = new HashMap<>();
@@ -175,7 +173,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNodeEnvState> {
         if (env == null) {
             throw new NameNodeError(String.format("NameNode Env instance not found. [name=%s]", name));
         }
-        Preconditions.checkState(env.state.isAvailable());
+        Preconditions.checkState(env.state().isAvailable());
         return env;
     }
 
@@ -184,7 +182,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNodeEnvState> {
         if (env == null) {
             throw new NameNodeError(String.format("NameNode Env instance not found. [name=%s]", name));
         }
-        return env.state;
+        return env.state();
     }
 
     public static <T> void audit(@NonNull String name, @NonNull Class<?> caller, @NonNull T data) {
@@ -224,8 +222,8 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNodeEnvState> {
         public void run() {
             try {
                 if (env.exitCallbacks() != null) {
-                    for (ExitCallback callback : env.exitCallbacks()) {
-                        callback.call(env.state);
+                    for (ExitCallback<NameNodeEnvState> callback : env.exitCallbacks()) {
+                        callback.call(env.state());
                     }
                 }
                 NameNodeEnv.dispose(name);

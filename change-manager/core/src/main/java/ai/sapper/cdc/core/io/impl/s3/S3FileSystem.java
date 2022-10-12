@@ -2,10 +2,10 @@ package ai.sapper.cdc.core.io.impl.s3;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.PathUtils;
-import ai.sapper.cdc.core.io.impl.CDCFileSystem;
 import ai.sapper.cdc.core.io.PathInfo;
 import ai.sapper.cdc.core.io.Reader;
 import ai.sapper.cdc.core.io.Writer;
+import ai.sapper.cdc.core.io.impl.CDCFileSystem;
 import ai.sapper.cdc.core.io.impl.local.LocalFileSystem;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;

@@ -5,7 +5,10 @@ import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 
