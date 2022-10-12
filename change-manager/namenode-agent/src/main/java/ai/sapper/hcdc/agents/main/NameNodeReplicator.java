@@ -44,7 +44,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Getter
-public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
+public class NameNodeReplicator implements Service<NameNodeEnv.ENameNodeEnvState> {
     private static final String FS_IMAGE_REGEX = "fsimage_(\\d+)$";
 
     private static class Constants {
@@ -87,19 +87,19 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
     }
 
     @Override
-    public Service<NameNodeEnv.ENameNEnvState> setConfigFile(@NonNull String path) {
+    public Service<NameNodeEnv.ENameNodeEnvState> setConfigFile(@NonNull String path) {
         configFile = path;
         return this;
     }
 
     @Override
-    public Service<NameNodeEnv.ENameNEnvState> setConfigSource(@NonNull String type) {
+    public Service<NameNodeEnv.ENameNodeEnvState> setConfigSource(@NonNull String type) {
         configSource = type;
         return this;
     }
 
     @Override
-    public Service<NameNodeEnv.ENameNEnvState> init() throws NameNodeError {
+    public Service<NameNodeEnv.ENameNodeEnvState> init() throws NameNodeError {
         try {
             Preconditions.checkState(!Strings.isNullOrEmpty(configFile));
             if (!org.apache.parquet.Strings.isNullOrEmpty(configSource)) {
@@ -138,7 +138,7 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
     }
 
     @Override
-    public Service<NameNodeEnv.ENameNEnvState> start() throws Exception {
+    public Service<NameNodeEnv.ENameNodeEnvState> start() throws Exception {
         try {
             run();
             return this;
@@ -151,13 +151,13 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNEnvState> {
     }
 
     @Override
-    public Service<NameNodeEnv.ENameNEnvState> stop() throws Exception {
+    public Service<NameNodeEnv.ENameNodeEnvState> stop() throws Exception {
         NameNodeEnv.dispose(name());
         return this;
     }
 
     @Override
-    public NameNodeEnv.NameNEnvState status() {
+    public NameNodeEnv.NameNodeEnvState status() {
         try {
             return NameNodeEnv.status(name());
         } catch (Exception ex) {

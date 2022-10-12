@@ -19,7 +19,7 @@ public class EntityDeltaConsumerService {
     private EntityChangeDeltaConsumer processor;
 
     @RequestMapping(value = "/entity/consumer/start", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<NameNodeEnv.NameNEnvState>> start(@RequestBody ConfigSource config) {
+    public ResponseEntity<BasicResponse<NameNodeEnv.NameNodeEnvState>> start(@RequestBody ConfigSource config) {
         try {
             processor = new EntityChangeDeltaConsumer();
             processor.setConfigFile(config.getPath())
@@ -39,7 +39,7 @@ public class EntityDeltaConsumerService {
     }
 
     @RequestMapping(value = "/entity/consumer/status", method = RequestMethod.GET)
-    public ResponseEntity<BasicResponse<NameNodeEnv.NameNEnvState>> state() {
+    public ResponseEntity<BasicResponse<NameNodeEnv.NameNodeEnvState>> state() {
         try {
             ServiceHelper.checkService(processor.name(), processor);
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
@@ -53,7 +53,7 @@ public class EntityDeltaConsumerService {
     }
 
     @RequestMapping(value = "/entity/consumer/stop", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<NameNodeEnv.NameNEnvState>> stop() {
+    public ResponseEntity<BasicResponse<NameNodeEnv.NameNodeEnvState>> stop() {
         try {
             ServiceHelper.checkService(processor.name(), processor);
             processor.stop();

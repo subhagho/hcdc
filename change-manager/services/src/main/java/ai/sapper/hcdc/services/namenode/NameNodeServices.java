@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class NameNodeServices {
 
     @RequestMapping(value = "/namenode/replicator/run", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<NameNodeEnv.NameNEnvState>> replicator(@RequestBody ReplicatorConfigSource config) {
+    public ResponseEntity<BasicResponse<NameNodeEnv.NameNodeEnvState>> replicator(@RequestBody ReplicatorConfigSource config) {
         NameNodeReplicator replicator = new NameNodeReplicator();
         try {
 
@@ -46,7 +46,7 @@ public class NameNodeServices {
     }
 
     @RequestMapping(value = "/namenode/scanner/run", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<NameNodeEnv.NameNEnvState>> scanner(@RequestBody ConfigSource config) {
+    public ResponseEntity<BasicResponse<NameNodeEnv.NameNodeEnvState>> scanner(@RequestBody ConfigSource config) {
         SchemaScanner scanner = new SchemaScanner();
         try {
             scanner.setConfigFile(config.getPath())

@@ -19,7 +19,7 @@ public class EditsLogService {
     private static EditsLogProcessor processor;
 
     @RequestMapping(value = "/edits/log/start", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<NameNodeEnv.NameNEnvState>> start(@RequestBody ConfigSource config) {
+    public ResponseEntity<BasicResponse<NameNodeEnv.NameNodeEnvState>> start(@RequestBody ConfigSource config) {
         try {
             processor = new EditsLogProcessor();
             processor.setConfigFile(config.getPath())
@@ -39,7 +39,7 @@ public class EditsLogService {
     }
 
     @RequestMapping(value = "/edits/log/status", method = RequestMethod.GET)
-    public ResponseEntity<BasicResponse<NameNodeEnv.NameNEnvState>> state() {
+    public ResponseEntity<BasicResponse<NameNodeEnv.NameNodeEnvState>> state() {
         try {
             ServiceHelper.checkService(processor.name(), processor);
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
@@ -53,7 +53,7 @@ public class EditsLogService {
     }
 
     @RequestMapping(value = "/edits/log/stop", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<NameNodeEnv.NameNEnvState>> stop() {
+    public ResponseEntity<BasicResponse<NameNodeEnv.NameNodeEnvState>> stop() {
         try {
             ServiceHelper.checkService(processor.name(), processor);
             processor.stop();

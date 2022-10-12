@@ -35,8 +35,8 @@ class NameNodeEnvTest {
             assertNotNull(NameNodeEnv.get(name).hdfsConnection());
             assertNotNull(NameNodeEnv.get(name).stateManager().connection());
 
-            NameNodeEnv.ENameNEnvState state = NameNodeEnv.dispose(name);
-            assertEquals(NameNodeEnv.ENameNEnvState.Disposed, state);
+            NameNodeEnv.ENameNodeEnvState state = NameNodeEnv.dispose(name);
+            assertEquals(NameNodeEnv.ENameNodeEnvState.Disposed, state);
         } catch (Throwable t) {
             DefaultLogger.stacktrace(t);
             fail(t);

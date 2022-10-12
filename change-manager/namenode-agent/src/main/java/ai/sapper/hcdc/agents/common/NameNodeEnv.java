@@ -25,21 +25,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.net.InetAddress;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Getter
 @Accessors(fluent = true)
-public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
+public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNodeEnvState> {
     public final Logger LOG;
 
     public static final String NN_IGNORE_TNX = "%s.IGNORE";
 
-    private final NameNEnvState state = new NameNEnvState();
+    private final NameNodeEnvState state = new NameNodeEnvState();
 
-    private NameNEnvConfig nEnvConfig;
+    private NameNodeEnvConfig nEnvConfig;
     private HierarchicalConfiguration<ImmutableNode> configNode;
     private HdfsConnection hdfsConnection;
     private ZkStateManager stateManager;
@@ -65,9 +63,9 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
                             .env(this)));
             super.init(xmlConfig, state);
 
-            configNode = rootConfig().configurationAt(NameNEnvConfig.Constants.__CONFIG_PATH);
+            configNode = rootConfig().configurationAt(NameNodeEnvConfig.Constants.__CONFIG_PATH);
 
-            this.nEnvConfig = new NameNEnvConfig(rootConfig());
+            this.nEnvConfig = new NameNodeEnvConfig(rootConfig());
             this.nEnvConfig.read();
 
             if (nEnvConfig().readHadoopConfig) {
@@ -117,7 +115,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
                         dLockBuilder().zkPath());
             }
 
-            state.state(ENameNEnvState.Initialized);
+            state.state(ENameNodeEnvState.Initialized);
 
             return this;
         } catch (Throwable t) {
@@ -127,12 +125,12 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
     }
 
 
-    public ENameNEnvState error(@NonNull Throwable t) {
+    public ENameNodeEnvState error(@NonNull Throwable t) {
         state.error(t);
         return state.state();
     }
 
-    public synchronized ENameNEnvState stop() {
+    public synchronized ENameNodeEnvState stop() {
         try {
             if (agentState.state() == CDCAgentState.EAgentState.Active
                     || agentState.state() == CDCAgentState.EAgentState.StandBy) {
@@ -145,7 +143,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
                     LOG.error(ex.getLocalizedMessage());
                     LOG.debug(DefaultLogger.stacktrace(ex));
                 }
-                state.state(ENameNEnvState.Disposed);
+                state.state(ENameNodeEnvState.Disposed);
             }
             close();
 
@@ -164,7 +162,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
     }
 
     public DistributedLock globalLock() throws NameNodeError {
-        return createLock(NameNEnvConfig.Constants.LOCK_GLOBAL);
+        return createLock(NameNodeEnvConfig.Constants.LOCK_GLOBAL);
     }
 
     private static final Map<String, NameNodeEnv> __instances = new HashMap<>();
@@ -182,7 +180,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
         }
     }
 
-    public static ENameNEnvState dispose(@NonNull String name) throws NameNodeError {
+    public static ENameNodeEnvState dispose(@NonNull String name) throws NameNodeError {
         synchronized (__instances) {
             NameNodeEnv env = __instances.remove(name);
             if (env == null) {
@@ -201,7 +199,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
         return env;
     }
 
-    public static NameNodeEnv.NameNEnvState status(@NonNull String name) throws NameNodeError {
+    public static NameNodeEnvState status(@NonNull String name) throws NameNodeError {
         NameNodeEnv env = __instances.get(name);
         if (env == null) {
             throw new NameNodeError(String.format("NameNode Env instance not found. [name=%s]", name));
@@ -231,7 +229,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
         }
     }
 
-    public enum ENameNEnvState {
+    public enum ENameNodeEnvState {
         Unknown, Initialized, Error, Disposed
     }
 
@@ -262,22 +260,22 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
     @Getter
     @Setter
     @Accessors(fluent = true)
-    public static class NameNEnvState extends AbstractState<ENameNEnvState> {
+    public static class NameNodeEnvState extends AbstractState<ENameNodeEnvState> {
 
-        public NameNEnvState() {
-            super(ENameNEnvState.Error);
-            state(ENameNEnvState.Unknown);
+        public NameNodeEnvState() {
+            super(ENameNodeEnvState.Error);
+            state(ENameNodeEnvState.Unknown);
         }
 
         public boolean isAvailable() {
-            return (state() == ENameNEnvState.Initialized);
+            return (state() == ENameNodeEnvState.Initialized);
         }
     }
 
     @Getter
     @Setter
     @Accessors(fluent = true)
-    public static class NameNEnvConfig extends ConfigReader {
+    public static class NameNodeEnvConfig extends ConfigReader {
         private static class Constants {
             private static final String __CONFIG_PATH = "agent";
 
@@ -307,7 +305,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNEnvState> {
         private boolean readHadoopConfig = true;
         private short hadoopVersion = 2;
 
-        public NameNEnvConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
+        public NameNodeEnvConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, Constants.__CONFIG_PATH);
         }
 

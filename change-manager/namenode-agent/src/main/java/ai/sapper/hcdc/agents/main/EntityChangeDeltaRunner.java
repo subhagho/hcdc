@@ -16,7 +16,7 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.parquet.Strings;
 
 @Getter
-public class EntityChangeDeltaRunner implements Service<NameNodeEnv.ENameNEnvState> {
+public class EntityChangeDeltaRunner implements Service<NameNodeEnv.ENameNodeEnvState> {
     @Parameter(names = {"--config", "-c"}, required = true, description = "Path to the configuration file.")
     private String configFile;
     @Parameter(names = {"--type", "-t"}, description = "Configuration file type. (File, Resource, Remote)")
@@ -28,18 +28,18 @@ public class EntityChangeDeltaRunner implements Service<NameNodeEnv.ENameNEnvSta
     private NameNodeEnv env;
 
     @Override
-    public Service<NameNodeEnv.ENameNEnvState> setConfigFile(@NonNull String path) {
+    public Service<NameNodeEnv.ENameNodeEnvState> setConfigFile(@NonNull String path) {
         configFile = path;
         return this;
     }
 
     @Override
-    public Service<NameNodeEnv.ENameNEnvState> setConfigSource(@NonNull String type) {
+    public Service<NameNodeEnv.ENameNodeEnvState> setConfigSource(@NonNull String type) {
         configSource = type;
         return this;
     }
 
-    public Service<NameNodeEnv.ENameNEnvState> init() throws Exception {
+    public Service<NameNodeEnv.ENameNodeEnvState> init() throws Exception {
         try {
             Preconditions.checkState(!Strings.isNullOrEmpty(configFile));
             if (!Strings.isNullOrEmpty(configSource)) {
@@ -61,7 +61,7 @@ public class EntityChangeDeltaRunner implements Service<NameNodeEnv.ENameNEnvSta
     }
 
     @Override
-    public Service<NameNodeEnv.ENameNEnvState> start() throws Exception {
+    public Service<NameNodeEnv.ENameNodeEnvState> start() throws Exception {
         try {
             runner = new Thread(processor);
             runner.start();
@@ -75,14 +75,14 @@ public class EntityChangeDeltaRunner implements Service<NameNodeEnv.ENameNEnvSta
     }
 
     @Override
-    public Service<NameNodeEnv.ENameNEnvState> stop() throws Exception {
+    public Service<NameNodeEnv.ENameNodeEnvState> stop() throws Exception {
         NameNodeEnv.dispose(name());
         runner.join();
         return this;
     }
 
     @Override
-    public NameNodeEnv.NameNEnvState status() {
+    public NameNodeEnv.NameNodeEnvState status() {
         try {
             return NameNodeEnv.status(name());
         } catch (Exception ex) {
