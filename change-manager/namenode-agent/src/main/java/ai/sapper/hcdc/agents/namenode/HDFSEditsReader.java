@@ -71,16 +71,8 @@ public abstract class HDFSEditsReader implements Runnable {
             try {
                 NameNodeEnv.get(name).agentState().state(CDCAgentState.EAgentState.Active);
                 while (NameNodeEnv.get(name).state().isAvailable()) {
-                    try (DistributedLock lock = NameNodeEnv.get(name).globalLock()
-                            .withLockTimeout(processorConfig.defaultLockTimeout())) {
-                        lock.lock();
-                        try {
-                            long txid = doRun();
-                            LOGGER.info(getClass(), txid, String.format("Last Processed TXID = %d", txid));
-                        } finally {
-                            lock.unlock();
-                        }
-                    }
+                    long txid = doRun();
+                    LOGGER.info(getClass(), txid, String.format("Last Processed TXID = %d", txid));
                     Thread.sleep(processorConfig.pollingInterval());
                 }
                 NameNodeEnv.get(name).agentState().state(CDCAgentState.EAgentState.Stopped);

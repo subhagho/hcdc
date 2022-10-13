@@ -188,6 +188,9 @@ public abstract class BaseEnv<T> {
             heartbeatThread().join();
             heartbeatThread = null;
         }
+        if (stateManager != null) {
+            stateManager.close();
+        }
         if (connectionManager != null) {
             connectionManager.close();
         }

@@ -17,11 +17,13 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.curator.framework.CuratorFramework;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 @Getter
 @Accessors(fluent = true)
-public abstract class BaseStateManager<T> {
+public abstract class BaseStateManager<T> implements Closeable {
     public static class Constants {
         public static final int LOCK_RETRY_COUNT = 8;
         public static final String ZK_PATH_HEARTBEAT = "/heartbeat";
@@ -253,6 +255,13 @@ public abstract class BaseStateManager<T> {
             throw new ManagerStateError(String.format("NameNode State not found. [path=%s]", zkPath));
         } catch (Exception ex) {
             throw new ManagerStateError(ex);
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (replicationLock != null) {
+            replicationLock.close();
         }
     }
 
