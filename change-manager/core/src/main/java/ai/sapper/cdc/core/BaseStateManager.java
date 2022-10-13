@@ -43,6 +43,7 @@ public abstract class BaseStateManager<T> {
     private String environment;
     @Getter(AccessLevel.NONE)
     private DistributedLock replicationLock;
+    private Class<? extends ProcessingState<T>> type;
 
     public void stateLock() throws Exception {
         int retryCount = 0;
@@ -147,40 +148,51 @@ public abstract class BaseStateManager<T> {
     }
 
     public void checkAgentState(@NonNull Class<? extends ProcessingState<T>> type) throws Exception {
-        CuratorFramework client = connection().client();
+        stateLock();
+        try {
+            CuratorFramework client = connection().client();
 
-        if (client.checkExists().forPath(zkAgentStatePath) == null) {
-            String path = client.create().creatingParentContainersIfNeeded().forPath(zkAgentStatePath);
-            if (Strings.isNullOrEmpty(path)) {
-                throw new ManagerStateError(String.format("Error creating ZK base path. [path=%s]", basePath()));
+            if (client.checkExists().forPath(zkAgentStatePath) == null) {
+                String path = client.create().creatingParentContainersIfNeeded().forPath(zkAgentStatePath);
+                if (Strings.isNullOrEmpty(path)) {
+                    throw new ManagerStateError(String.format("Error creating ZK base path. [path=%s]", basePath()));
+                }
+                processingState = type.getDeclaredConstructor().newInstance();
+                processingState.setNamespace(moduleInstance.getModule());
+                processingState.setUpdatedTime(0);
+
+                String json = JSONUtils.asString(processingState, LongTxState.class);
+                client.setData().forPath(zkAgentStatePath, json.getBytes(StandardCharsets.UTF_8));
+            } else {
+                processingState = readState(type);
             }
-            processingState = type.getDeclaredConstructor().newInstance();
-            processingState.setNamespace(moduleInstance.getModule());
-            processingState.setUpdatedTime(0);
+            processingState.setInstance(moduleInstance);
+            update(processingState);
 
-            String json = JSONUtils.asString(processingState, LongTxState.class);
-            client.setData().forPath(zkAgentStatePath, json.getBytes(StandardCharsets.UTF_8));
-        } else {
-            processingState = readState(type);
+            this.type = type;
+        } finally {
+            stateUnlock();
         }
-        processingState.setInstance(moduleInstance);
-        update(processingState);
     }
 
     public ProcessingState<T> initState(T txId) throws ManagerStateError {
-        Preconditions.checkNotNull(connection);
-        Preconditions.checkState(connection.isConnected());
+        checkState();
+        Preconditions.checkNotNull(type);
         if (processingState.compareTx(txId) >= 0) return processingState;
 
-        synchronized (this) {
+        try {
+            stateLock();
             try {
+                processingState = readState(type);
                 processingState.setProcessedTxId(txId);
                 processingState.setUpdatedTime(System.currentTimeMillis());
 
                 return update(processingState);
-            } catch (Exception ex) {
-                throw new ManagerStateError(ex);
+            } finally {
+                stateUnlock();
             }
+        } catch (Exception ex) {
+            throw new ManagerStateError(ex);
         }
     }
 
@@ -195,58 +207,59 @@ public abstract class BaseStateManager<T> {
     }
 
     public ProcessingState<T> update(T processedTxId) throws ManagerStateError {
-        Preconditions.checkNotNull(connection);
-        Preconditions.checkState(connection.isConnected());
+        checkState();
+        Preconditions.checkNotNull(type);
         if (processingState.compareTx(processedTxId) >= 0) return processingState;
-        ;
 
-        synchronized (this) {
+        try {
+            stateLock();
             try {
+                processingState = readState(type);
                 processingState.setProcessedTxId(processedTxId);
                 return update(processingState);
-            } catch (Exception ex) {
-                throw new ManagerStateError(ex);
+            } finally {
+                stateUnlock();
             }
+        } catch (Exception ex) {
+            throw new ManagerStateError(ex);
         }
     }
 
     public ProcessingState<T> updateMessageId(String messageId) throws ManagerStateError {
-        Preconditions.checkNotNull(connection);
-        Preconditions.checkState(connection.isConnected());
-
-        synchronized (this) {
+        checkState();
+        Preconditions.checkNotNull(type);
+        try {
+            stateLock();
             try {
+                processingState = readState(type);
                 processingState.setCurrentMessageId(messageId);
                 return update(processingState);
-            } catch (Exception ex) {
-                throw new ManagerStateError(ex);
+            } finally {
+                stateUnlock();
             }
+        } catch (Exception ex) {
+            throw new ManagerStateError(ex);
         }
     }
 
     private ProcessingState<T> readState(Class<? extends ProcessingState<T>> type) throws ManagerStateError {
-        Preconditions.checkNotNull(connection);
-        Preconditions.checkState(connection.isConnected());
-        synchronized (this) {
-            try {
-                CuratorFramework client = connection().client();
-                byte[] data = client.getData().forPath(zkAgentStatePath);
-                if (data != null && data.length > 0) {
-                    String json = new String(data, StandardCharsets.UTF_8);
-                    return JSONUtils.read(json, type);
-                }
-                throw new ManagerStateError(String.format("NameNode State not found. [path=%s]", zkPath));
-            } catch (Exception ex) {
-                throw new ManagerStateError(ex);
+        try {
+            CuratorFramework client = connection().client();
+            byte[] data = client.getData().forPath(zkAgentStatePath);
+            if (data != null && data.length > 0) {
+                String json = new String(data, StandardCharsets.UTF_8);
+                return JSONUtils.read(json, type);
             }
+            throw new ManagerStateError(String.format("NameNode State not found. [path=%s]", zkPath));
+        } catch (Exception ex) {
+            throw new ManagerStateError(ex);
         }
     }
 
     public abstract Heartbeat heartbeat(@NonNull String instance) throws ManagerStateError;
 
     public Heartbeat heartbeat(@NonNull String name, @NonNull CDCAgentState.AgentState state) throws ManagerStateError {
-        Preconditions.checkNotNull(connection);
-        Preconditions.checkState(connection.isConnected());
+        checkState();
         synchronized (this) {
             try {
                 CuratorFramework client = connection().client();
