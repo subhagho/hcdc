@@ -45,6 +45,9 @@ public class SchemaVersion {
     }
 
     public int compare(SchemaVersion target) {
+        if (target == null) {
+            return Integer.MIN_VALUE;
+        }
         int ret = target.majorVersion - majorVersion;
         if (ret == 0) {
             ret = target.minorVersion - minorVersion;
