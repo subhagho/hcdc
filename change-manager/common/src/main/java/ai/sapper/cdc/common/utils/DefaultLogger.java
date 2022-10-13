@@ -91,6 +91,6 @@ public final class DefaultLogger {
         if (logger == null) {
             logger = LOGGER;
         }
-        logger.warn(msg);
+        logger.debug(msg);
     }
 }
