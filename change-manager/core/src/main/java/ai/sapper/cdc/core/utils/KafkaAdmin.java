@@ -31,7 +31,7 @@ public class KafkaAdmin {
     private String configSource;
     @Parameter(names = {"--cmd", "-r"}, required = true, description = "Command to execute (c = create,d = delete, r = recreate)")
     private String cmd;
-    @Parameter(names = {"--match", "-m"}, required = true, description = "Delete topics matching specified RegEx.")
+    @Parameter(names = {"--match", "-m"}, description = "Delete topics matching specified RegEx.")
     private String regex;
     private EConfigFileType fileSource = EConfigFileType.File;
     private HierarchicalConfiguration<ImmutableNode> config;
@@ -76,7 +76,7 @@ public class KafkaAdmin {
     private void searchDelete() throws Exception {
         List<KafkaAdminHelper.KafkaTopic> topics = helper.search(regex);
         if (topics != null && !topics.isEmpty()) {
-            runDelete(topics);
+            delete(topics);
         }
     }
 
@@ -84,11 +84,15 @@ public class KafkaAdmin {
         if (!Strings.isNullOrEmpty(regex)) {
             searchDelete();
         } else {
-            if (topics != null && !topics.isEmpty()) {
-                for (KafkaAdminHelper.KafkaTopic topic : topics) {
-                    if (helper.exists(topic.name())) {
-                        helper.deleteTopic(topic.name());
-                    }
+            delete(topics);
+        }
+    }
+
+    private void delete(List<KafkaAdminHelper.KafkaTopic> topics) throws Exception {
+        if (topics != null && !topics.isEmpty()) {
+            for (KafkaAdminHelper.KafkaTopic topic : topics) {
+                if (helper.exists(topic.name())) {
+                    helper.deleteTopic(topic.name());
                 }
             }
         }

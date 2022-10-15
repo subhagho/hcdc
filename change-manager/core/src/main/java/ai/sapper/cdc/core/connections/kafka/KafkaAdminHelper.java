@@ -16,13 +16,16 @@ import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Getter
 @Accessors(fluent = true)
-public class KafkaAdminHelper {
+public class KafkaAdminHelper implements Closeable {
+
     @Getter
     @Setter
     @Accessors(fluent = true)
@@ -37,6 +40,19 @@ public class KafkaAdminHelper {
         private short minIsr = 1;
         private int partitions = 1;
         private Map<String, String> config = null;
+
+        public KafkaTopic() {
+        }
+
+        public KafkaTopic(@NonNull KafkaTopic source) {
+            this.name = source.name;
+            this.replicas = source.replicas;
+            this.partitions = source.partitions;
+            this.minIsr = source.minIsr;
+            if (source.config != null) {
+                this.config = new HashMap<>(source.config);
+            }
+        }
     }
 
     private AdminClient kafkaAdmin;
@@ -55,6 +71,14 @@ public class KafkaAdminHelper {
             DefaultLogger.LOGGER.error(e.getLocalizedMessage());
             DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(e));
             throw new MessagingError(e);
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (kafkaAdmin != null) {
+            kafkaAdmin.close();
+            kafkaAdmin = null;
         }
     }
 
