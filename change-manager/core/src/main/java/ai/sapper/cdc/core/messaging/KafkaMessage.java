@@ -1,12 +1,20 @@
 package ai.sapper.cdc.core.messaging;
 
+import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.Header;
 
 import java.nio.charset.StandardCharsets;
 
+@Getter
+@Setter
+@Accessors(fluent = true)
 public class KafkaMessage<K, V> extends MessageObject<K, V> {
+    private int partition;
+    private long offset;
 
     public KafkaMessage() {
     }
@@ -19,6 +27,8 @@ public class KafkaMessage<K, V> extends MessageObject<K, V> {
         queue(record.topic());
         key(record.key());
         value(value);
+        partition = record.partition();
+        offset = record.offset();
 
         Header ih = record.headers().lastHeader(HEADER_MESSAGE_ID);
         if (ih != null && ih.value() != null) {
