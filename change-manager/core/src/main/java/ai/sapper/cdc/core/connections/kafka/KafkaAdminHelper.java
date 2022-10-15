@@ -7,6 +7,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
@@ -15,14 +16,29 @@ import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Getter
 @Accessors(fluent = true)
 public class KafkaAdminHelper {
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    public static class KafkaTopic {
+        public static final String CONFIG_NAME = "name";
+        public static final String CONFIG_REPLICAS = "replicas";
+        public static final String CONFIG_MIN_ISR = "minIsr";
+        public static final String CONFIG_PARTITIONS = "partitions";
+
+        private String name;
+        private short replicas = 1;
+        private short minIsr = 1;
+        private int partitions = 1;
+        private Map<String, String> config = null;
+    }
+
     private AdminClient kafkaAdmin;
     private KafkaAdminConfig adminConfig;
 
@@ -42,33 +58,30 @@ public class KafkaAdminHelper {
         }
     }
 
-    public void createTopic(@NonNull String name,
-                            int partitions,
-                            short replicas,
-                            short minIsr,
-                            Map<String, String> topicConfig) throws MessagingError {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
+    public void createTopic(@NonNull KafkaTopic topic) throws MessagingError {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(topic.name));
         Preconditions.checkNotNull(kafkaAdmin);
-        if (partitions <= 0) partitions = 1;
-        if (replicas <= 0) replicas = 1;
+        if (topic.partitions <= 0) topic.partitions = 1;
+        if (topic.replicas <= 0) topic.replicas = 1;
 
         try {
-            NewTopic topic = new NewTopic(name, partitions, replicas);
+            NewTopic newTopic = new NewTopic(topic.name, topic.partitions, topic.replicas);
 
-            if (topicConfig != null) {
-                topic.configs(topicConfig);
+            if (topic.config != null) {
+                newTopic.configs(topic.config);
             }
             CreateTopicsResult result = kafkaAdmin.createTopics(
-                    Collections.singleton(topic)
+                    Collections.singleton(newTopic)
             );
-            KafkaFuture<Void> future = result.values().get(name);
+            KafkaFuture<Void> future = result.values().get(topic.name);
             future.get();
 
-            DefaultLogger.LOGGER.info(String.format("Created new Kafka Topic. [name=%s]", name));
+            DefaultLogger.LOGGER.info(String.format("Created new Kafka Topic. [name=%s]", topic.name));
         } catch (Exception e) {
-            throw new MessagingError(String.format("Error creating topic. [name=%s]", name), e);
+            throw new MessagingError(String.format("Error creating topic. [name=%s]", topic.name), e);
         }
     }
+
 
     public void deleteTopic(@NonNull String name) throws MessagingError {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
@@ -84,7 +97,57 @@ public class KafkaAdminHelper {
         }
     }
 
-    public boolean exists(@NonNull String name) throws MessagingError {
+    public List<KafkaTopic> list() throws MessagingError {
+        Preconditions.checkNotNull(kafkaAdmin);
+        try {
+            ListTopicsResult result = kafkaAdmin.listTopics();
+            KafkaFuture<Collection<TopicListing>> future = result.listings();
+            Collection<TopicListing> listings = future.get();
+            if (listings != null && !listings.isEmpty()) {
+                List<KafkaTopic> topics = new ArrayList<>(listings.size());
+                for (TopicListing tl : listings) {
+                    if (!tl.isInternal()) {
+                        TopicDescription desc = get(tl.name());
+                        if (desc != null) {
+                            KafkaTopic kt = new KafkaTopic();
+                            kt.name = desc.name();
+                            if (desc.partitions() != null) {
+                                kt.partitions = desc.partitions().size();
+                            }
+                            topics.add(kt);
+                        }
+                    }
+                }
+                if (!topics.isEmpty()) return topics;
+            }
+        } catch (Exception e) {
+            throw new MessagingError("Error listing topics.", e);
+        }
+        return null;
+    }
+
+    public List<KafkaTopic> search(@NonNull String regex) throws MessagingError {
+        Preconditions.checkNotNull(kafkaAdmin);
+        try {
+            List<KafkaTopic> all = list();
+            if (all != null && !all.isEmpty()) {
+                Pattern pattern = Pattern.compile(regex);
+                List<KafkaTopic> result = new ArrayList<>();
+                for (KafkaTopic kt : all) {
+                    Matcher m = pattern.matcher(kt.name);
+                    if (m.matches()) {
+                        result.add(kt);
+                    }
+                }
+                if (!result.isEmpty()) return result;
+            }
+        } catch (Exception e) {
+            throw new MessagingError("Error listing topics.", e);
+        }
+        return null;
+    }
+
+    public TopicDescription get(@NonNull String name) throws MessagingError {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
         Preconditions.checkNotNull(kafkaAdmin);
         try {
@@ -93,8 +156,7 @@ public class KafkaAdminHelper {
 
             TopicDescription desc = future.get();
             if (desc != null) {
-                DefaultLogger.LOGGER.info(String.format("Found Kafka Topic. [name=%s]", name));
-                return true;
+                return desc;
             }
         } catch (UnknownTopicOrPartitionException une) {
             // Do nothing...
@@ -103,7 +165,11 @@ public class KafkaAdminHelper {
                 throw new MessagingError(String.format("Error checking for topic. [name=%s]", name), e);
             }
         }
-        return false;
+        return null;
+    }
+
+    public boolean exists(@NonNull String name) throws MessagingError {
+        return (get(name) != null);
     }
 
     private boolean checkNotFoundError(Throwable t) {

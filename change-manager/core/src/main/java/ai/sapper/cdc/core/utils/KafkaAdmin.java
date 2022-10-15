@@ -19,17 +19,7 @@ import java.util.List;
 @Getter
 @Setter
 public class KafkaAdmin {
-    private static class KafkaTopic {
-        public static final String CONFIG_NAME = "name";
-        public static final String CONFIG_REPLICAS = "replicas";
-        public static final String CONFIG_MIN_ISR = "minIsr";
-        public static final String CONFIG_PARTITIONS = "partitions";
 
-        private String name;
-        private int replicas = 1;
-        private int minIsr = 1;
-        private int partitions = 1;
-    }
 
     public static final String NODE_TOPICS = "topics";
     public static final String NODE_TOPIC = String.format("%s.topic", NODE_TOPICS);
@@ -41,7 +31,8 @@ public class KafkaAdmin {
     private String configSource;
     @Parameter(names = {"--cmd", "-r"}, required = true, description = "Command to execute (c = create,d = delete, r = recreate)")
     private String cmd;
-
+    @Parameter(names = {"--match", "-m"}, required = true, description = "Delete topics matching specified RegEx.")
+    private String regex;
     private EConfigFileType fileSource = EConfigFileType.File;
     private HierarchicalConfiguration<ImmutableNode> config;
     private final KafkaAdminHelper helper = new KafkaAdminHelper();
@@ -57,7 +48,7 @@ public class KafkaAdmin {
         }
         helper.init(config);
 
-        List<KafkaTopic> topics = readTopics();
+        List<KafkaAdminHelper.KafkaTopic> topics = readTopics();
 
         if (cmd.compareToIgnoreCase("c") == 0) {
             runCreate(topics);
@@ -71,51 +62,58 @@ public class KafkaAdmin {
         }
     }
 
-    private void runCreate(List<KafkaTopic> topics) throws Exception {
+    private void runCreate(List<KafkaAdminHelper.KafkaTopic> topics) throws Exception {
         if (topics != null && !topics.isEmpty()) {
-            for (KafkaTopic topic : topics) {
-                if (helper.exists(topic.name)) {
-                    throw new Exception(String.format("Kafka Topic already exists. [name=%s]", topic.name));
+            for (KafkaAdminHelper.KafkaTopic topic : topics) {
+                if (helper.exists(topic.name())) {
+                    throw new Exception(String.format("Kafka Topic already exists. [name=%s]", topic.name()));
                 }
-                helper.createTopic(topic.name,
-                        topic.partitions,
-                        (short) topic.replicas,
-                        (short) topic.minIsr,
-                        null);
+                helper.createTopic(topic);
             }
         }
     }
 
-    private void runDelete(List<KafkaTopic> topics) throws Exception {
+    private void searchDelete() throws Exception {
+        List<KafkaAdminHelper.KafkaTopic> topics = helper.search(regex);
         if (topics != null && !topics.isEmpty()) {
-            for (KafkaTopic topic : topics) {
-                if (helper.exists(topic.name)) {
-                    helper.deleteTopic(topic.name);
+            runDelete(topics);
+        }
+    }
+
+    private void runDelete(List<KafkaAdminHelper.KafkaTopic> topics) throws Exception {
+        if (!Strings.isNullOrEmpty(regex)) {
+            searchDelete();
+        } else {
+            if (topics != null && !topics.isEmpty()) {
+                for (KafkaAdminHelper.KafkaTopic topic : topics) {
+                    if (helper.exists(topic.name())) {
+                        helper.deleteTopic(topic.name());
+                    }
                 }
             }
         }
     }
 
-    private List<KafkaTopic> readTopics() throws Exception {
+    private List<KafkaAdminHelper.KafkaTopic> readTopics() throws Exception {
         if (ConfigReader.checkIfNodeExists(config, NODE_TOPICS)) {
             List<HierarchicalConfiguration<ImmutableNode>> nodes = config.configurationsAt(NODE_TOPIC);
-            List<KafkaTopic> topics = new ArrayList<>(nodes.size());
+            List<KafkaAdminHelper.KafkaTopic> topics = new ArrayList<>(nodes.size());
             for (HierarchicalConfiguration<ImmutableNode> node : nodes) {
-                String name = node.getString(KafkaTopic.CONFIG_NAME);
-                ConfigReader.checkStringValue(name, getClass(), KafkaTopic.CONFIG_NAME);
-                KafkaTopic topic = new KafkaTopic();
-                topic.name = name;
-                if (node.containsKey(KafkaTopic.CONFIG_PARTITIONS)) {
-                    String s = node.getString(KafkaTopic.CONFIG_PARTITIONS);
-                    topic.partitions = Integer.parseInt(s);
+                String name = node.getString(KafkaAdminHelper.KafkaTopic.CONFIG_NAME);
+                ConfigReader.checkStringValue(name, getClass(), KafkaAdminHelper.KafkaTopic.CONFIG_NAME);
+                KafkaAdminHelper.KafkaTopic topic = new KafkaAdminHelper.KafkaTopic();
+                topic.name(name);
+                if (node.containsKey(KafkaAdminHelper.KafkaTopic.CONFIG_PARTITIONS)) {
+                    String s = node.getString(KafkaAdminHelper.KafkaTopic.CONFIG_PARTITIONS);
+                    topic.partitions(Integer.parseInt(s));
                 }
-                if (node.containsKey(KafkaTopic.CONFIG_REPLICAS)) {
-                    String s = node.getString(KafkaTopic.CONFIG_REPLICAS);
-                    topic.replicas = Integer.parseInt(s);
+                if (node.containsKey(KafkaAdminHelper.KafkaTopic.CONFIG_REPLICAS)) {
+                    String s = node.getString(KafkaAdminHelper.KafkaTopic.CONFIG_REPLICAS);
+                    topic.replicas(Short.parseShort(s));
                 }
-                if (node.containsKey(KafkaTopic.CONFIG_MIN_ISR)) {
-                    String s = node.getString(KafkaTopic.CONFIG_MIN_ISR);
-                    topic.minIsr = Integer.parseInt(s);
+                if (node.containsKey(KafkaAdminHelper.KafkaTopic.CONFIG_MIN_ISR)) {
+                    String s = node.getString(KafkaAdminHelper.KafkaTopic.CONFIG_MIN_ISR);
+                    topic.minIsr(Short.parseShort(s));
                 }
                 topics.add(topic);
             }
