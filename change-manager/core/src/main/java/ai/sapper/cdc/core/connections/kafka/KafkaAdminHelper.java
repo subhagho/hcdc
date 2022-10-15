@@ -13,8 +13,10 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.common.KafkaFuture;
+import org.apache.kafka.common.errors.UnknownTopicOrPartitionException;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -40,14 +42,19 @@ public class KafkaAdminHelper {
         }
     }
 
-    public void createTopic(@NonNull String name, int partitions, short replication, Map<String, String> topicConfig) throws MessagingError {
+    public void createTopic(@NonNull String name,
+                            int partitions,
+                            short replicas,
+                            short minIsr,
+                            Map<String, String> topicConfig) throws MessagingError {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
         Preconditions.checkNotNull(kafkaAdmin);
         if (partitions <= 0) partitions = 1;
-        if (replication <= 0) replication = 1;
+        if (replicas <= 0) replicas = 1;
 
         try {
-            NewTopic topic = new NewTopic(name, partitions, replication);
+            NewTopic topic = new NewTopic(name, partitions, replicas);
+
             if (topicConfig != null) {
                 topic.configs(topicConfig);
             }
@@ -71,14 +78,45 @@ public class KafkaAdminHelper {
             KafkaFuture<Void> future = result.topicNameValues().get(name);
             future.get();
 
-            DefaultLogger.LOGGER.info(String.format("Created new Kafka Topic. [name=%s]", name));
+            DefaultLogger.LOGGER.info(String.format("Deleted Kafka Topic. [name=%s]", name));
         } catch (Exception e) {
             throw new MessagingError(String.format("Error deleting topic. [name=%s]", name), e);
         }
     }
 
+    public boolean exists(@NonNull String name) throws MessagingError {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
+        Preconditions.checkNotNull(kafkaAdmin);
+        try {
+            DescribeTopicsResult result = kafkaAdmin.describeTopics(List.of(name));
+            KafkaFuture<TopicDescription> future = result.topicNameValues().get(name);
+
+            TopicDescription desc = future.get();
+            if (desc != null) {
+                DefaultLogger.LOGGER.info(String.format("Found Kafka Topic. [name=%s]", name));
+                return true;
+            }
+        } catch (UnknownTopicOrPartitionException une) {
+            // Do nothing...
+        } catch (Exception e) {
+            if (!checkNotFoundError(e)) {
+                throw new MessagingError(String.format("Error checking for topic. [name=%s]", name), e);
+            }
+        }
+        return false;
+    }
+
+    private boolean checkNotFoundError(Throwable t) {
+        Throwable c = t;
+        while (c != null) {
+            if (c instanceof UnknownTopicOrPartitionException) return true;
+            c = c.getCause();
+        }
+        return false;
+    }
+
     public static class KafkaAdminConfig extends ConfigReader {
-        private static final String __CONFIG_PATH = "kafka.admin";
+        private static final String __CONFIG_PATH = "admin";
         private static final String CONFIG_BOOTSTRAP = "servers";
 
         private String bootstrapServers;

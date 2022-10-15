@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<configuration>
+    <kafka>
+        <admin>
+            <servers>192.168.2.8:9092</servers>
+        </admin>
+        <topics>
+            <topic>
+                <name>ha-cluster.edits</name>
+                <replicas>2</replicas>
+            </topic>
+            <topic>
+                <name>ha-cluster.cdc</name>
+                <replicas>2</replicas>
+            </topic>
+            <topic>
+                <name>ha-cluster.errors</name>
+                <replicas>2</replicas>
+            </topic>
+            <topic>
+                <name>ha-cluster.delta</name>
+                <replicas>2</replicas>
+            </topic>
+            <topic>
+                <name>ha-cluster.errors.delta</name>
+                <replicas>2</replicas>
+            </topic>
+            <topic>
+                <name>ha-cluster.delta.files</name>
+                <replicas>2</replicas>
+            </topic>
+            <topic>
+                <name>ha-cluster.errors.files</name>
+                <replicas>2</replicas>
+            </topic>
+            <topic>
+                <name>ha-cluster.errors.loader</name>
+                <replicas>2</replicas>
+            </topic>
+        </topics>
+    </kafka>
+</configuration>
