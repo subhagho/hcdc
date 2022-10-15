@@ -32,6 +32,16 @@ public abstract class ConnectionSettings {
         source = ESettingsSource.File;
     }
 
+    public ConnectionSettings(@NonNull ConnectionSettings settings) {
+        type = settings.type;
+        source = settings.source;
+        name = settings.name;
+        if (settings.parameters != null) {
+            parameters = new HashMap<>(settings.parameters);
+        }
+        connectionClass = settings.connectionClass;
+    }
+
     public abstract void validate() throws Exception;
 
     public static ConnectionSettings read(@NonNull Map<String, String> settings) throws Exception {

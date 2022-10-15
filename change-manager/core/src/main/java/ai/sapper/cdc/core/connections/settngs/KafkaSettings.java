@@ -5,12 +5,15 @@ import ai.sapper.cdc.core.connections.ConnectionConfig;
 import ai.sapper.cdc.core.connections.kafka.KafkaConnection;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 @Getter
@@ -30,6 +33,21 @@ public class KafkaSettings extends ConnectionSettings {
 
     public KafkaSettings() {
         setType(EConnectionType.kafka);
+    }
+
+    public KafkaSettings(@NonNull KafkaSettings settings) {
+        super(settings);
+        setType(EConnectionType.kafka);
+        configPath = settings.configPath;
+        if (settings.properties != null) {
+            properties = new Properties(settings.properties.size());
+            properties.putAll(settings.properties);
+        }
+        mode = settings.mode;
+        topic = settings.topic;
+        if (settings.partitions != null) {
+            partitions = new ArrayList<>(settings.partitions);
+        }
     }
 
     @Override
