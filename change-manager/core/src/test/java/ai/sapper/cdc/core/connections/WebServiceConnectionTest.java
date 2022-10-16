@@ -22,7 +22,7 @@ class WebServiceConnectionTest {
 
     private static XMLConfiguration xmlConfiguration = null;
 
-    private static ConnectionManager manager = new ConnectionManager();
+    private static ConnectionManager manager;
 
     @BeforeAll
     public static void setup() throws Exception {
@@ -30,7 +30,7 @@ class WebServiceConnectionTest {
         Preconditions.checkState(xmlConfiguration != null);
         DemoEnv env = new DemoEnv();
         env.init(xmlConfiguration);
-        manager.init(xmlConfiguration, env, env.name());
+        manager = env.connectionManager();
     }
 
     @Test

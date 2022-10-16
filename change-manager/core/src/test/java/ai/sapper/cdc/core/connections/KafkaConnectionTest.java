@@ -41,7 +41,7 @@ class KafkaConnectionTest {
         Preconditions.checkState(xmlConfiguration != null);
         DemoEnv env = new DemoEnv();
         env.init(xmlConfiguration);
-        manager.init(xmlConfiguration, env, env.name());
+        manager = env.connectionManager();
     }
 
     @Test

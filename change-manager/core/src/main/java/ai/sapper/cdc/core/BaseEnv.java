@@ -7,6 +7,7 @@ import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.keystore.KeyStore;
 import ai.sapper.cdc.core.model.ModuleInstance;
 import ai.sapper.cdc.core.utils.DistributedLockBuilder;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
@@ -35,6 +36,7 @@ public abstract class BaseEnv<T> {
     private final DistributedLockBuilder dLockBuilder = new DistributedLockBuilder();
     private String environment;
     private HierarchicalConfiguration<ImmutableNode> rootConfig;
+    private HierarchicalConfiguration<ImmutableNode> baseConfig;
     private List<ExitCallback<T>> exitCallbacks;
     private T state;
     private ModuleInstance moduleInstance;
@@ -74,8 +76,7 @@ public abstract class BaseEnv<T> {
             config = new BaseEnvConfig(xmlConfig);
             config.read();
             rootConfig = config.config();
-
-            setup(config.module, config.connectionConfigPath);
+            baseConfig = xmlConfig;
 
             hostIPs = NetUtils.getInetAddresses();
 
@@ -87,13 +88,15 @@ public abstract class BaseEnv<T> {
             moduleInstance.setName(config.instance());
             moduleInstance.setInstanceId(moduleInstance.id());
 
+            setup(config.module, config.connectionConfigPath);
+
             if (config.stateManagerClass != null) {
                 stateManager = config.stateManagerClass
                         .getDeclaredConstructor().newInstance();
                 stateManager.withEnvironment(environment(), name)
                         .withModuleInstance(moduleInstance);
                 stateManager
-                        .init(config.config(),
+                        .init(rootConfig,
                                 this,
                                 config.source);
             }
@@ -155,9 +158,10 @@ public abstract class BaseEnv<T> {
                     .withKeyStore(keyStore);
             connectionManager.init(rootConfig, this, connectionsConfigPath);
 
-            dLockBuilder.withEnv(environment)
-                    .init(rootConfig, module, connectionManager);
-
+            if (ConfigReader.checkIfNodeExists(rootConfig, DistributedLockBuilder.Constants.CONFIG_LOCKS)) {
+                dLockBuilder.withEnv(environment)
+                        .init(rootConfig, module, connectionManager);
+            }
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
         }
@@ -174,10 +178,12 @@ public abstract class BaseEnv<T> {
     public DistributedLock createLock(@NonNull String path,
                                       @NonNull String module,
                                       @NonNull String name) throws Exception {
+        Preconditions.checkNotNull(dLockBuilder);
         return dLockBuilder.createLock(path, module, name);
     }
 
     public void saveLocks() throws Exception {
+        Preconditions.checkNotNull(dLockBuilder);
         dLockBuilder.save();
     }
 

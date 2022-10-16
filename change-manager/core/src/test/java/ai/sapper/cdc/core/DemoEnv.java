@@ -19,7 +19,7 @@ public class DemoEnv extends BaseEnv<DemoEnv.DemoState> {
     public static class DemoState {
 
     }
-    public static final String __CONFIG_PATH = "agent";
+    public static final String __CONFIG_PATH = "demo";
     private static final String CONFIG_CONNECTIONS = "connections.path";
     private static final String TEST_PASSWD = "test1234";
 
@@ -27,14 +27,10 @@ public class DemoEnv extends BaseEnv<DemoEnv.DemoState> {
     private final String module = "TEST";
 
     public BaseEnv<DemoState> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
+        withStoreKey(TEST_PASSWD);
         super.init(xmlConfig, new DemoState());
 
-        withStoreKey(TEST_PASSWD);
         configNode = rootConfig().configurationAt(__CONFIG_PATH);
-
-        String cp = configNode.getString(CONFIG_CONNECTIONS);
-        Preconditions.checkState(!Strings.isNullOrEmpty(cp));
-        super.setup(module, cp);
 
         return this;
     }

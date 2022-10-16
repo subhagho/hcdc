@@ -18,7 +18,7 @@ import java.sql.Timestamp;
 import static org.junit.jupiter.api.Assertions.*;
 
 class JdbcConnectionTest {
-    private static final String __CONFIG_FILE = "src/test/resources/test-env.xml";
+    private static final String __CONFIG_FILE = "src/test/resources/connection-test.xml";
     private static XMLConfiguration xmlConfiguration = null;
     private static DemoEnv env = new DemoEnv();
 

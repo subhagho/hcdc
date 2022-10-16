@@ -20,7 +20,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ZookeeperConnectionTest {
-    private static final String __CONFIG_FILE = "src/test/resources/test-env.xml";
+    private static final String __CONFIG_FILE = "src/test/resources/connection-test.xml";
     private static final String __CONNECTION_NAME = "test-zk";
     private static final String __UUID = UUID.randomUUID().toString();
     private static final String __BASE_PATH = "/test/hcdc/core/zookeeper";

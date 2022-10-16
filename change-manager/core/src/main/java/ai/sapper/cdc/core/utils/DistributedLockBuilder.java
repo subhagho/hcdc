@@ -24,12 +24,12 @@ import java.util.Map;
 @Accessors(fluent = true)
 public class DistributedLockBuilder {
     public static class Constants {
-        private static final String CONFIG_LOCKS = "locks";
-        private static final String CONFIG_ZK_CONN = String.format("%s.connection", CONFIG_LOCKS);
-        private static final String CONFIG_ZK_NODE_PATH = String.format("%s.path", CONFIG_LOCKS);
-        private static final String CONFIG_LOCK = String.format("%s.lock", CONFIG_LOCKS);
-        private static final String CONFIG_LOCK_NAME = "name";
-        private static final String CONFIG_LOCK_NODE = "lock-node";
+        public static final String CONFIG_LOCKS = "locks";
+        public static final String CONFIG_ZK_CONN = String.format("%s.connection", CONFIG_LOCKS);
+        public static final String CONFIG_ZK_NODE_PATH = String.format("%s.path", CONFIG_LOCKS);
+        public static final String CONFIG_LOCK = String.format("%s.lock", CONFIG_LOCKS);
+        public static final String CONFIG_LOCK_NAME = "name";
+        public static final String CONFIG_LOCK_NODE = "lock-node";
     }
 
     private ZookeeperConnection connection;
