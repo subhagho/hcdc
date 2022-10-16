@@ -1,5 +1,6 @@
 package ai.sapper.cdc.core.connections.kafka;
 
+import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.connections.Connection;
 import ai.sapper.cdc.core.connections.ConnectionError;
 import ai.sapper.cdc.core.connections.ConnectionManager;
@@ -34,9 +35,9 @@ public class KafkaConsumerConnection<K, V> extends KafkaConnection {
      */
     @Override
     public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                           @NonNull ConnectionManager connectionManager) throws ConnectionError {
+                           @NonNull BaseEnv<?> env) throws ConnectionError {
         synchronized (state) {
-            super.init(xmlConfig, connectionManager);
+            super.init(xmlConfig, env);
             try {
                 if (settings().getMode() != EKafkaClientMode.Consumer) {
                     throw new ConfigurationException("Connection not initialized in Consumer mode.");
@@ -56,9 +57,9 @@ public class KafkaConsumerConnection<K, V> extends KafkaConnection {
     public Connection init(@NonNull String name,
                            @NonNull ZookeeperConnection connection,
                            @NonNull String path,
-                           @NonNull ConnectionManager connectionManager) throws ConnectionError {
+                           @NonNull BaseEnv<?> env) throws ConnectionError {
         synchronized (state) {
-            super.init(name, connection, path, connectionManager);
+            super.init(name, connection, path, env);
             try {
                 if (settings().getMode() != EKafkaClientMode.Consumer) {
                     throw new ConfigurationException("Connection not initialized in Consumer mode.");
@@ -75,9 +76,9 @@ public class KafkaConsumerConnection<K, V> extends KafkaConnection {
 
     @Override
     public Connection setup(@NonNull ConnectionSettings settings,
-                            @NonNull ConnectionManager connectionManager) throws ConnectionError {
+                            @NonNull BaseEnv<?> env) throws ConnectionError {
         synchronized (state) {
-            super.setup(settings, connectionManager);
+            super.setup(settings, env);
             try {
                 if (settings().getMode() != EKafkaClientMode.Consumer) {
                     throw new ConfigurationException("Connection not initialized in Consumer mode.");

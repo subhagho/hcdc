@@ -1,6 +1,7 @@
 package ai.sapper.cdc.core.connections;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.core.DemoEnv;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.apache.commons.configuration2.XMLConfiguration;
@@ -27,7 +28,9 @@ class WebServiceConnectionTest {
     public static void setup() throws Exception {
         xmlConfiguration = TestUtils.readFile(__CONFIG_FILE);
         Preconditions.checkState(xmlConfiguration != null);
-        manager.init(xmlConfiguration, null);
+        DemoEnv env = new DemoEnv();
+        env.init(xmlConfiguration);
+        manager.init(xmlConfiguration, env, env.name());
     }
 
     @Test

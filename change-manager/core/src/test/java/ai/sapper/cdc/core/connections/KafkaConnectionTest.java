@@ -1,6 +1,7 @@
 package ai.sapper.cdc.core.connections;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.core.DemoEnv;
 import ai.sapper.cdc.core.connections.kafka.BasicKafkaConsumer;
 import ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer;
 import com.google.common.base.Preconditions;
@@ -38,7 +39,9 @@ class KafkaConnectionTest {
     public static void setup() throws Exception {
         xmlConfiguration = TestUtils.readFile(__CONFIG_FILE);
         Preconditions.checkState(xmlConfiguration != null);
-        manager.init(xmlConfiguration, null);
+        DemoEnv env = new DemoEnv();
+        env.init(xmlConfiguration);
+        manager.init(xmlConfiguration, env, env.name());
     }
 
     @Test

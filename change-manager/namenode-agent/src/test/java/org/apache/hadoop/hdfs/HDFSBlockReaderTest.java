@@ -4,6 +4,7 @@ import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.hadoop.HdfsHAConnection;
 import ai.sapper.cdc.core.model.HDFSBlockData;
+import ai.sapper.hcdc.DemoEnv;
 import ai.sapper.hcdc.agents.namenode.TestUtils;
 import com.google.common.base.Preconditions;
 import org.apache.commons.configuration2.XMLConfiguration;
@@ -34,7 +35,9 @@ class HDFSBlockReaderTest {
     public static void setup() throws Exception {
         xmlConfiguration = TestUtils.readFile(__CONFIG_FILE);
         Preconditions.checkState(xmlConfiguration != null);
-        manager.init(xmlConfiguration, null);
+        DemoEnv env = new DemoEnv();
+        env.init(xmlConfiguration);
+        manager.init(xmlConfiguration, env, env.name());
     }
 
     @Test

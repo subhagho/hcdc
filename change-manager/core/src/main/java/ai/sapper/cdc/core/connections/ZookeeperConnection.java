@@ -2,6 +2,7 @@ package ai.sapper.cdc.core.connections;
 
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import ai.sapper.cdc.core.connections.settngs.EConnectionType;
 import ai.sapper.cdc.core.connections.settngs.ZookeeperSettings;
@@ -45,7 +46,7 @@ public class ZookeeperConnection implements Connection {
      */
     @Override
     public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                           @NonNull ConnectionManager connectionManager) throws ConnectionError {
+                           @NonNull BaseEnv<?> env) throws ConnectionError {
         synchronized (state) {
             try {
                 if (state.isConnected()) {
@@ -94,7 +95,7 @@ public class ZookeeperConnection implements Connection {
     public Connection init(@NonNull String name,
                            @NonNull ZookeeperConnection connection,
                            @NonNull String path,
-                           @NonNull ConnectionManager connectionManager) throws ConnectionError {
+                           @NonNull BaseEnv<?> env) throws ConnectionError {
         synchronized (state) {
             try {
                 if (state.isConnected()) {
@@ -126,7 +127,7 @@ public class ZookeeperConnection implements Connection {
 
     @Override
     public Connection setup(@NonNull ConnectionSettings settings,
-                            @NonNull ConnectionManager connectionManager) throws ConnectionError {
+                            @NonNull BaseEnv<?> env) throws ConnectionError {
         Preconditions.checkArgument(settings instanceof ZookeeperSettings);
         synchronized (state) {
             try {

@@ -2,6 +2,7 @@ package ai.sapper.cdc.core.connections.db;
 
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.connections.Connection;
 import ai.sapper.cdc.core.connections.ConnectionError;
 import ai.sapper.cdc.core.connections.ConnectionManager;
@@ -50,7 +51,7 @@ public abstract class DbConnection implements Connection {
     public Connection init(@NonNull String name,
                            @NonNull ZookeeperConnection connection,
                            @NonNull String path,
-                           @NonNull ConnectionManager connectionManager) throws ConnectionError {
+                           @NonNull BaseEnv<?> env) throws ConnectionError {
         synchronized (state) {
             try {
                 if (state.isConnected()) {
@@ -68,7 +69,7 @@ public abstract class DbConnection implements Connection {
                 settings = JSONUtils.read(data, JdbcConnectionSettings.class);
                 Preconditions.checkNotNull(settings);
                 Preconditions.checkState(name.equals(settings.getName()));
-                this.connectionManager = connectionManager;
+                this.connectionManager = env.connectionManager();
                 state.state(EConnectionState.Initialized);
                 return this;
             } catch (Exception ex) {
@@ -80,7 +81,7 @@ public abstract class DbConnection implements Connection {
 
     @Override
     public Connection setup(@NonNull ConnectionSettings settings,
-                            @NonNull ConnectionManager connectionManager) throws ConnectionError {
+                            @NonNull BaseEnv<?> env) throws ConnectionError {
         synchronized (state) {
             try {
                 if (state.isConnected()) {
@@ -88,7 +89,7 @@ public abstract class DbConnection implements Connection {
                 }
                 state.clear(EConnectionState.Unknown);
                 this.settings = (JdbcConnectionSettings) settings;
-                this.connectionManager = connectionManager;
+                this.connectionManager = env.connectionManager();
                 state.state(EConnectionState.Initialized);
                 return this;
             } catch (Exception ex) {

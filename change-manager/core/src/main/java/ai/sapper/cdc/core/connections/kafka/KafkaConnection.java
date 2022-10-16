@@ -3,6 +3,7 @@ package ai.sapper.cdc.core.connections.kafka;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.connections.*;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import ai.sapper.cdc.core.connections.settngs.EConnectionType;
@@ -49,7 +50,7 @@ public abstract class KafkaConnection implements MessageConnection {
      */
     @Override
     public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                           @NonNull ConnectionManager connectionManager) throws ConnectionError {
+                           @NonNull BaseEnv<?> env) throws ConnectionError {
         try {
             if (state.isConnected()) {
                 close();
@@ -58,6 +59,7 @@ public abstract class KafkaConnection implements MessageConnection {
             kafkaConfig = new KafkaConfig(xmlConfig);
             settings = kafkaConfig.read();
 
+            settings.clientId(env.moduleInstance().getInstanceId());
         } catch (Throwable t) {
             state.error(t);
             throw new ConnectionError("Error opening HDFS connection.", t);
@@ -69,7 +71,7 @@ public abstract class KafkaConnection implements MessageConnection {
     public Connection init(@NonNull String name,
                            @NonNull ZookeeperConnection connection,
                            @NonNull String path,
-                           @NonNull ConnectionManager connectionManager) throws ConnectionError {
+                           @NonNull BaseEnv<?> env) throws ConnectionError {
         try {
             if (state.isConnected()) {
                 close();
@@ -87,6 +89,8 @@ public abstract class KafkaConnection implements MessageConnection {
             settings = JSONUtils.read(data, KafkaSettings.class);
             Preconditions.checkNotNull(settings);
             Preconditions.checkState(name.equals(settings.getName()));
+
+            settings.clientId(env.moduleInstance().getInstanceId());
         } catch (Exception ex) {
             throw new ConnectionError(ex);
         }
@@ -95,7 +99,7 @@ public abstract class KafkaConnection implements MessageConnection {
 
     @Override
     public Connection setup(@NonNull ConnectionSettings settings,
-                            @NonNull ConnectionManager connectionManager) throws ConnectionError {
+                            @NonNull BaseEnv<?> env) throws ConnectionError {
         Preconditions.checkArgument(settings instanceof KafkaSettings);
         try {
             if (state.isConnected()) {
@@ -103,6 +107,8 @@ public abstract class KafkaConnection implements MessageConnection {
             }
             state.clear(EConnectionState.Unknown);
             this.settings = (KafkaSettings) settings;
+
+            ((KafkaSettings) settings).clientId(env.moduleInstance().getInstanceId());
         } catch (Exception ex) {
             throw new ConnectionError(ex);
         }

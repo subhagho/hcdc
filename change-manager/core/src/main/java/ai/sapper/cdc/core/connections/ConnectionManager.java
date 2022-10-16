@@ -5,6 +5,7 @@ import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.common.utils.ReflectionUtils;
+import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import ai.sapper.cdc.core.connections.settngs.EConnectionType;
 import ai.sapper.cdc.core.connections.settngs.ESettingsSource;
@@ -51,19 +52,18 @@ public class ConnectionManager implements Closeable {
     private String environment;
     private boolean saveByDefault = false;
     private boolean overrideFromFile = true;
-
-    public ConnectionManager withEnv(@NonNull String environment) {
-        this.environment = environment;
-        return this;
-    }
+    private BaseEnv<?> env;
 
     public ConnectionManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                                  @NonNull BaseEnv<?> env,
                                   String pathPrefix) throws ConnectionError {
         if (Strings.isNullOrEmpty(pathPrefix)) {
             configPath = Constants.__CONFIG_PATH;
         } else {
             configPath = String.format("%s.%s", pathPrefix, Constants.__CONFIG_PATH);
         }
+        this.env = env;
+        this.environment = env.environment();
         try {
 
             config = xmlConfig.configurationAt(configPath);
@@ -172,7 +172,7 @@ public class ConnectionManager implements Closeable {
         Class<? extends Connection> cClass = (Class<? extends Connection>) Class.forName(cls);
         Connection connection = cClass.getDeclaredConstructor().newInstance();
 
-        connection.init(name, zkc, path, this);
+        connection.init(name, zkc, path, env);
 
         addConnection(connection.name(), connection);
     }
@@ -197,7 +197,7 @@ public class ConnectionManager implements Closeable {
         }
         Class<? extends Connection> cls = (Class<? extends Connection>) Class.forName(type);
         Connection connection = cls.newInstance();
-        connection.init(node, this);
+        connection.init(node, env);
         Preconditions.checkState(!Strings.isNullOrEmpty(connection.name()));
         Preconditions.checkState(connection.connectionState() == Connection.EConnectionState.Initialized);
 
@@ -309,7 +309,7 @@ public class ConnectionManager implements Closeable {
                 try (Connection connection = type
                         .getDeclaredConstructor()
                         .newInstance()
-                        .setup(settings, this)) {
+                        .setup(settings, env)) {
                     connection.connect();
                     addConnection(connection.name(), connection);
                     save(connection);

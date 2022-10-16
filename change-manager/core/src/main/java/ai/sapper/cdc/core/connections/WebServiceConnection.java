@@ -2,6 +2,7 @@ package ai.sapper.cdc.core.connections;
 
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import ai.sapper.cdc.core.connections.settngs.EConnectionType;
 import ai.sapper.cdc.core.connections.settngs.WebServiceConnectionSettings;
@@ -59,7 +60,7 @@ public class WebServiceConnection implements Connection {
      */
     @Override
     public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                           @NonNull ConnectionManager connectionManager) throws ConnectionError {
+                           @NonNull BaseEnv<?> env) throws ConnectionError {
         synchronized (state) {
             try {
                 config = new WebServiceConnectionConfig(xmlConfig);
@@ -81,7 +82,7 @@ public class WebServiceConnection implements Connection {
     public Connection init(@NonNull String name,
                            @NonNull ZookeeperConnection connection,
                            @NonNull String path,
-                           @NonNull ConnectionManager connectionManager) throws ConnectionError {
+                           @NonNull BaseEnv<?> env) throws ConnectionError {
         synchronized (state) {
             try {
                 if (state.isConnected()) {
@@ -115,7 +116,7 @@ public class WebServiceConnection implements Connection {
 
     @Override
     public Connection setup(@NonNull ConnectionSettings settings,
-                            @NonNull ConnectionManager connectionManager) throws ConnectionError {
+                            @NonNull BaseEnv<?> env) throws ConnectionError {
         Preconditions.checkArgument(settings instanceof WebServiceConnectionSettings);
         synchronized (state) {
             try {

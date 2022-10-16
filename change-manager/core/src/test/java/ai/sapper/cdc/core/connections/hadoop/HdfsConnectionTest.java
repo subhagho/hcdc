@@ -1,6 +1,7 @@
 package ai.sapper.cdc.core.connections.hadoop;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.core.DemoEnv;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.TestUtils;
 import ai.sapper.cdc.core.utils.FileSystemUtils;
@@ -36,7 +37,9 @@ class HdfsConnectionTest {
     public static void setup() throws Exception {
         xmlConfiguration = TestUtils.readFile(__CONFIG_FILE);
         Preconditions.checkState(xmlConfiguration != null);
-        manager.init(xmlConfiguration, null);
+        DemoEnv env = new DemoEnv();
+        env.init(xmlConfiguration);
+        manager.init(xmlConfiguration, env, env.name());
     }
 
     @Test

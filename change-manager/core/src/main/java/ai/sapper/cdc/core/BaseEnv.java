@@ -152,9 +152,8 @@ public abstract class BaseEnv<T> {
             this.storeKey = null;
 
             connectionManager = new ConnectionManager()
-                    .withKeyStore(keyStore)
-                    .withEnv(environment);
-            connectionManager.init(rootConfig, connectionsConfigPath);
+                    .withKeyStore(keyStore);
+            connectionManager.init(rootConfig, this, connectionsConfigPath);
 
             dLockBuilder.withEnv(environment)
                     .init(rootConfig, module, connectionManager);

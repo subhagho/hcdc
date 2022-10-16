@@ -5,6 +5,7 @@ import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.connections.ConnectionManager;
+import ai.sapper.cdc.core.model.LongTxState;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.base.Preconditions;
@@ -34,8 +35,10 @@ public class ConnectionLoader {
         Preconditions.checkNotNull(fileSource);
         config = ConfigReader.read(configFile, fileSource);
 
+        UtilsEnv env = new UtilsEnv(getClass().getSimpleName());
+        env.init(config, new LongTxState());
         try (ConnectionManager manager = new ConnectionManager()) {
-            manager.init(config, configPath);
+            manager.init(config, env, env.name());
             manager.save();
         }
     }

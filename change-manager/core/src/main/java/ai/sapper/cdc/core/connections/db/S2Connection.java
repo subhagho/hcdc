@@ -1,5 +1,6 @@
 package ai.sapper.cdc.core.connections.db;
 
+import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.connections.Connection;
 import ai.sapper.cdc.core.connections.ConnectionError;
 import ai.sapper.cdc.core.connections.ConnectionManager;
@@ -31,14 +32,14 @@ public class S2Connection extends DbConnection {
 
     @Override
     public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                           @NonNull ConnectionManager connectionManager) throws ConnectionError {
+                           @NonNull BaseEnv<?> env) throws ConnectionError {
         synchronized (state) {
             try {
                 if (state.isConnected()) {
                     close();
                 }
                 state.clear(EConnectionState.Unknown);
-                this.connectionManager = connectionManager;
+                this.connectionManager = env.connectionManager();
                 config = new S2ConnectionConfig(xmlConfig);
                 settings = config.read();
 

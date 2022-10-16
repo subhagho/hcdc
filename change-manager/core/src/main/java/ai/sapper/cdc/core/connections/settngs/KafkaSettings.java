@@ -21,6 +21,8 @@ import java.util.Properties;
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
         property = "@class")
 public class KafkaSettings extends ConnectionSettings {
+    public static final String PROP_CLIENT_ID = "client.id";
+
     @Setting(name = "configPath")
     private String configPath;
     private Properties properties;
@@ -48,6 +50,11 @@ public class KafkaSettings extends ConnectionSettings {
         if (settings.partitions != null) {
             partitions = new ArrayList<>(settings.partitions);
         }
+    }
+
+    public KafkaSettings clientId(@NonNull String clientId) {
+        properties.put(PROP_CLIENT_ID, clientId);
+        return this;
     }
 
     @Override

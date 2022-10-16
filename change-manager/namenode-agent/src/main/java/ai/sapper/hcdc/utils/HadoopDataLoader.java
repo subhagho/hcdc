@@ -5,6 +5,8 @@ import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
+import ai.sapper.cdc.core.model.LongTxState;
+import ai.sapper.cdc.core.utils.UtilsEnv;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.base.Preconditions;
@@ -13,13 +15,13 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
+import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
-import javax.naming.ConfigurationException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -51,13 +53,15 @@ public class HadoopDataLoader {
     public void run() throws Exception {
         try {
             config = ConfigReader.read(configfile, EConfigFileType.File);
-            loaderConfig = new LoaderConfig(config);
+            UtilsEnv env = new UtilsEnv(getClass().getSimpleName());
+            env.init(config, new LongTxState());
+
+            loaderConfig = new LoaderConfig(env.rootConfig());
             loaderConfig.read();
 
             connectionManager = new ConnectionManager();
             connectionManager
-                    .withEnv(loaderConfig.env)
-                    .init(config, loaderConfig.connectionPath);
+                    .init(config, env, loaderConfig.connectionPath);
 
             connection = connectionManager.getConnection(loaderConfig.connectionToUse, HdfsConnection.class);
             connection.connect();
@@ -219,8 +223,6 @@ public class HadoopDataLoader {
         private static final String CONFIG_CONNECTION_HDFS = "connections.use";
         private static final String CONFIG_BATCH_SIZE = "batchSize";
         private static final String CONFIG_BASE_DIR = "baseDir";
-        private static final String CONFIG_ENV = "env";
-
         private String connectionPath;
         private long batchSize = 1024 * 1024 * 16;
         private String baseDir;
@@ -232,25 +234,19 @@ public class HadoopDataLoader {
         }
 
         public void read() throws ConfigurationException {
-            env = get().getString(CONFIG_ENV);
-            if (Strings.isNullOrEmpty(env)) {
-                throw new ConfigurationException(String.format("HDFS Data Loader Configuration Error: missing [%s]", CONFIG_ENV));
-            }
-            connectionPath = get().getString(CONFIG_CONNECTIONS);
-            if (Strings.isNullOrEmpty(connectionPath)) {
-                throw new ConfigurationException(String.format("HDFS Data Loader Configuration Error: missing [%s]", CONFIG_CONNECTIONS));
-            }
-            baseDir = get().getString(CONFIG_BASE_DIR);
-            if (Strings.isNullOrEmpty(baseDir)) {
-                throw new ConfigurationException(String.format("HDFS Data Loader Configuration Error: missing [%s]", CONFIG_BASE_DIR));
-            }
-            connectionToUse = get().getString(CONFIG_CONNECTION_HDFS);
-            if (Strings.isNullOrEmpty(connectionToUse)) {
-                throw new ConfigurationException(String.format("HDFS Data Loader Configuration Error: missing [%s]", CONFIG_CONNECTION_HDFS));
-            }
-            String s = get().getString(CONFIG_BATCH_SIZE);
-            if (!Strings.isNullOrEmpty(s)) {
-                batchSize = Long.parseLong(s);
+            try {
+                connectionPath = get().getString(CONFIG_CONNECTIONS);
+                ConfigReader.checkStringValue(connectionPath, getClass(), CONFIG_CONNECTIONS);
+                baseDir = get().getString(CONFIG_BASE_DIR);
+                ConfigReader.checkStringValue(baseDir, getClass(), CONFIG_BASE_DIR);
+                connectionToUse = get().getString(CONFIG_CONNECTION_HDFS);
+                ConfigReader.checkStringValue(connectionToUse, getClass(), CONFIG_CONNECTION_HDFS);
+                String s = get().getString(CONFIG_BATCH_SIZE);
+                if (!Strings.isNullOrEmpty(s)) {
+                    batchSize = Long.parseLong(s);
+                }
+            } catch (Exception ex) {
+                throw new ConfigurationException(ex);
             }
         }
     }

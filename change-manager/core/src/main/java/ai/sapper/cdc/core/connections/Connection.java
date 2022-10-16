@@ -1,6 +1,7 @@
 package ai.sapper.cdc.core.connections;
 
 import ai.sapper.cdc.common.AbstractState;
+import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import ai.sapper.cdc.core.connections.settngs.EConnectionType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -30,15 +31,15 @@ public interface Connection extends Closeable {
     String name();
 
     Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> config,
-                    @NonNull ConnectionManager connectionManager) throws ConnectionError;
+                    @NonNull BaseEnv<?> env) throws ConnectionError;
 
     Connection init(@NonNull String name,
                     @NonNull ZookeeperConnection connection,
                     @NonNull String path,
-                    @NonNull ConnectionManager connectionManager) throws ConnectionError;
+                    @NonNull BaseEnv<?> env) throws ConnectionError;
 
     Connection setup(@NonNull ConnectionSettings settings,
-                     @NonNull ConnectionManager connectionManager) throws ConnectionError;
+                     @NonNull BaseEnv<?> env) throws ConnectionError;
 
     Connection connect() throws ConnectionError;
 

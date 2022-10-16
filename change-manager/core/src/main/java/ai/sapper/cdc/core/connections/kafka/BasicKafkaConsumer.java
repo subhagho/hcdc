@@ -1,5 +1,6 @@
 package ai.sapper.cdc.core.connections.kafka;
 
+import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.connections.Connection;
 import ai.sapper.cdc.core.connections.ConnectionError;
 import ai.sapper.cdc.core.connections.ConnectionManager;
@@ -20,8 +21,8 @@ public class BasicKafkaConsumer extends KafkaConsumerConnection<String, byte[]> 
      */
     @Override
     public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                           @NonNull ConnectionManager connectionManager) throws ConnectionError {
-        super.init(xmlConfig, connectionManager);
+                           @NonNull BaseEnv<?> env) throws ConnectionError {
+        super.init(xmlConfig, env);
         settings().getProperties()
                 .put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         settings().getProperties()
@@ -34,8 +35,8 @@ public class BasicKafkaConsumer extends KafkaConsumerConnection<String, byte[]> 
     public Connection init(@NonNull String name,
                            @NonNull ZookeeperConnection connection,
                            @NonNull String path,
-                           @NonNull ConnectionManager connectionManager) throws ConnectionError {
-        super.init(name, connection, path, connectionManager);
+                           @NonNull BaseEnv<?> env) throws ConnectionError {
+        super.init(name, connection, path, env);
         settings().getProperties()
                 .put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         settings().getProperties()
@@ -46,8 +47,8 @@ public class BasicKafkaConsumer extends KafkaConsumerConnection<String, byte[]> 
 
     @Override
     public Connection setup(@NonNull ConnectionSettings settings,
-                            @NonNull ConnectionManager connectionManager) throws ConnectionError {
-        super.setup(settings, connectionManager);
+                            @NonNull BaseEnv<?> env) throws ConnectionError {
+        super.setup(settings, env);
         settings().getProperties()
                 .put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         settings().getProperties()
