@@ -58,7 +58,25 @@ public abstract class BaseEnv<T> {
     }
 
     public BaseEnv<T> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                           @NonNull BaseEnvConfig config,
                            @NonNull T state) throws ConfigurationException {
+        try {
+            this.config = config;
+        } catch (Exception ex) {
+            throw new ConfigurationException(ex);
+        }
+        return setup(xmlConfig, state);
+    }
+
+    public BaseEnv<T> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                           @NonNull T state) throws ConfigurationException {
+        config = new BaseEnvConfig(xmlConfig);
+        config.read();
+        return setup(xmlConfig, state);
+    }
+
+    private BaseEnv<T> setup(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                             @NonNull T state) throws ConfigurationException {
         try {
             String temp = System.getProperty("java.io.tmpdir");
             temp = String.format("%s/sapper/cdc/%s", temp, getClass().getSimpleName());
@@ -73,8 +91,6 @@ public abstract class BaseEnv<T> {
                         String.format("Base Env: missing parameter. [name=%s]", Constants.CONFIG_ENV_NAME));
             }
 
-            config = new BaseEnvConfig(xmlConfig);
-            config.read();
             rootConfig = config.config();
             baseConfig = xmlConfig;
 
@@ -247,7 +263,7 @@ public abstract class BaseEnv<T> {
             super(config, BaseEnv.Constants.__CONFIG_PATH_ENV);
         }
 
-        public void read() throws Exception {
+        public void read() throws ConfigurationException {
             module = get().getString(Constants.CONFIG_MODULE);
             ConfigReader.checkStringValue(module, getClass(), Constants.CONFIG_MODULE);
             instance = get().getString(Constants.CONFIG_INSTANCE);
@@ -259,12 +275,16 @@ public abstract class BaseEnv<T> {
             if (get().containsKey(Constants.CONFIG_HEARTBEAT)) {
                 enableHeartbeat = get().getBoolean(Constants.CONFIG_HEARTBEAT);
             }
-            if (ConfigReader.checkIfNodeExists(get(), Constants.__CONFIG_PATH_MANAGERS)) {
-                managersConfig = get().configurationAt(Constants.__CONFIG_PATH_MANAGERS);
-                String s = managersConfig.getString(Constants.CONFIG_STATE_MANAGER_TYPE);
-                if (!Strings.isNullOrEmpty(s)) {
-                    stateManagerClass = (Class<? extends BaseStateManager<?>>) Class.forName(s);
+            try {
+                if (ConfigReader.checkIfNodeExists(get(), Constants.__CONFIG_PATH_MANAGERS)) {
+                    managersConfig = get().configurationAt(Constants.__CONFIG_PATH_MANAGERS);
+                    String s = managersConfig.getString(Constants.CONFIG_STATE_MANAGER_TYPE);
+                    if (!Strings.isNullOrEmpty(s)) {
+                        stateManagerClass = (Class<? extends BaseStateManager<?>>) Class.forName(s);
+                    }
                 }
+            } catch (Exception ex) {
+                throw new ConfigurationException(ex);
             }
         }
     }
