@@ -20,6 +20,6 @@ public class ProcessorState extends AbstractState<ProcessorState.EProcessorState
     }
 
     public enum EProcessorState {
-        Unknown, Initialized, Running, Stopped, Error;
+        Unknown, Initialized, Running, Stopped, Error, Paused;
     }
 }
