@@ -13,10 +13,8 @@ import java.util.Objects;
 @ToString
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
 public class SchemaEntity {
-    public static final String DEFAULT = "default";
-
     private String domain;
-    private String group = DEFAULT;
+    private int group = -1;
     private String entity;
     private boolean enabled = false;
 

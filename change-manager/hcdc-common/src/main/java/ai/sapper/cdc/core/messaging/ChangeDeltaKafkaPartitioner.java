@@ -39,13 +39,13 @@ public class ChangeDeltaKafkaPartitioner implements KafkaPartitioner<DFSChangeDe
     public int partition(@NonNull DFSChangeDelta key) {
         SchemaEntity schemaEntity = SchemaEntityHelper.parse(key.getEntity());
         String entity = schemaEntity.getEntity();
-        if (!Strings.isNullOrEmpty(schemaEntity.getGroup()) &&
-                schemaEntity.getGroup().compareToIgnoreCase(SchemaEntity.DEFAULT) != 0) {
-            entity = schemaEntity.getGroup();
+        int hash = schemaEntity.getGroup();
+        if (schemaEntity.getGroup() < 0) {
+            String pk = String.format("%s::%s",
+                    schemaEntity.getDomain(), entity);
+            hash = pk.hashCode();
         }
-        String pk = String.format("%s::%s",
-                schemaEntity.getDomain(), entity);
-        int hash = pk.hashCode();
+
         if (hash < 0) {
             hash *= -1;
         }

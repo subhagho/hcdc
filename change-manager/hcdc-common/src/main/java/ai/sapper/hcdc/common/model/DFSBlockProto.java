@@ -123,7 +123,7 @@ public final class DFSBlockProto {
       "\n\n\006DELETE\020\006\022\n\n\006APPEND\020\007\022\014\n\010TRUNCATE\020\010\022\n\n" +
       "\006IGNORE\020\t\022\t\n\005ERROR\020\n\"@\n\017DFSSchemaEntity\022" +
       "\016\n\006domain\030\001 \002(\t\022\016\n\006entity\030\002 \002(\t\022\r\n\005group" +
-      "\030\003 \001(\t\"\202\001\n\007DFSFile\022<\n\006entity\030\001 \002(\0132,.ai_" +
+      "\030\003 \001(\005\"\202\001\n\007DFSFile\022<\n\006entity\030\001 \002(\0132,.ai_" +
       "sapper_hcdc_common_model.DFSSchemaEntity" +
       "\022\017\n\007inodeId\030\002 \002(\003\022\020\n\010fileType\030\003 \001(\t\022\026\n\016s" +
       "chemaLocation\030\004 \001(\t\"\241\001\n\010DFSBlock\022\017\n\007bloc" +

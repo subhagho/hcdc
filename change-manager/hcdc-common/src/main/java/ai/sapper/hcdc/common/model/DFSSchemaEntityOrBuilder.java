@@ -42,19 +42,13 @@ public interface DFSSchemaEntityOrBuilder extends
       getEntityBytes();
 
   /**
-   * <code>optional string group = 3;</code>
+   * <code>optional int32 group = 3;</code>
    * @return Whether the group field is set.
    */
   boolean hasGroup();
   /**
-   * <code>optional string group = 3;</code>
+   * <code>optional int32 group = 3;</code>
    * @return The group.
    */
-  java.lang.String getGroup();
-  /**
-   * <code>optional string group = 3;</code>
-   * @return The bytes for group.
-   */
-  com.google.protobuf.ByteString
-      getGroupBytes();
+  int getGroup();
 }

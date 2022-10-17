@@ -1,6 +1,7 @@
 package ai.sapper.cdc.common.model;
 
 import ai.sapper.cdc.common.schema.SchemaEntity;
+import ai.sapper.cdc.common.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -64,9 +65,15 @@ public class AvroChangeRecord {
         if (Strings.isNullOrEmpty(e)) {
             throw new IOException(String.format("Data Error: missing field. [field=%s]", AVRO_FIELD_SOURCE_ENTITY));
         }
-        String g = record.get(AVRO_FIELD_TARGET_GROUP).toString();
-        targetEntity.setGroup(g);
-
+        Object g = record.get(AVRO_FIELD_TARGET_GROUP);
+        if (g != null) {
+            if (ReflectionUtils.isNumericType(g.getClass())) {
+                targetEntity.setGroup((int) g);
+            } else {
+                throw new IOException(
+                        String.format("Invalid Group datatype. [type=%s]", g.getClass().getCanonicalName()));
+            }
+        }
         sourceEntity = new SchemaEntity(d, e);
         data = (GenericRecord) record.get(AVRO_FIELD_DATA);
         if (data == null) {
@@ -86,8 +93,7 @@ public class AvroChangeRecord {
         builder.set(AvroChangeRecord.AVRO_FIELD_OP, op.opCode());
         builder.set(AvroChangeRecord.AVRO_FIELD_TARGET_DOMAIN, targetEntity.getDomain());
         builder.set(AvroChangeRecord.AVRO_FIELD_TARGET_ENTITY, targetEntity.getEntity());
-        if (!Strings.isNullOrEmpty(targetEntity.getGroup()))
-            builder.set(AvroChangeRecord.AVRO_FIELD_TARGET_GROUP, targetEntity.getGroup());
+        builder.set(AvroChangeRecord.AVRO_FIELD_TARGET_GROUP, targetEntity.getGroup());
         builder.set(AvroChangeRecord.AVRO_FIELD_SOURCE_DOMAIN, sourceEntity.getDomain());
         builder.set(AvroChangeRecord.AVRO_FIELD_SOURCE_ENTITY, sourceEntity.getEntity());
         builder.set(AvroChangeRecord.AVRO_FIELD_TIMESTAMP, timestamp);

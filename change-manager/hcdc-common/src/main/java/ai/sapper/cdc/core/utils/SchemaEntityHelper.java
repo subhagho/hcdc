@@ -9,10 +9,8 @@ public class SchemaEntityHelper {
     public static DFSSchemaEntity proto(@NonNull SchemaEntity schemaEntity) {
         DFSSchemaEntity.Builder builder = DFSSchemaEntity.newBuilder()
                 .setDomain(schemaEntity.getDomain())
-                .setEntity(schemaEntity.getEntity());
-        if (!Strings.isNullOrEmpty(schemaEntity.getGroup())) {
-            builder.setGroup(schemaEntity.getGroup());
-        }
+                .setEntity(schemaEntity.getEntity())
+                .setGroup(schemaEntity.getGroup());
         return builder.build();
     }
 

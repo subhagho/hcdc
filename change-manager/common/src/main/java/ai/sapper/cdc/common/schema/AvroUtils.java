@@ -22,7 +22,7 @@ public class AvroUtils {
                     "\t\t{ \"name\" : \"%s\", \"type\" : \"int\" }, \n" +
                     "\t\t{ \"name\" : \"%s\", \"type\" : \"string\" }, \n" +
                     "\t\t{ \"name\" : \"%s\", \"type\" : \"string\" }, \n" +
-                    "\t\t{ \"name\" : \"%s\", \"type\" : [\"null\", \"string\"], \"default\": null }, \n" +
+                    "\t\t{ \"name\" : \"%s\", \"type\" : [\"null\", \"int\"], \"default\": null }, \n" +
                     "\t\t{ \"name\" : \"%s\", \"type\" : \"string\" }, \n" +
                     "\t\t{ \"name\" : \"%s\", \"type\" : \"string\" }, \n" +
                     "\t\t{ \"name\" : \"%s\", \"type\" : \"long\" }, \n" +
