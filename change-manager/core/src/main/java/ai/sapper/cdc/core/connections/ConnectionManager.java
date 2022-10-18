@@ -156,6 +156,7 @@ public class ConnectionManager implements Closeable {
         return count;
     }
 
+    @SuppressWarnings("unchecked")
     private void initConnection(ZookeeperConnection zkc, String path, String name) throws Exception {
         CuratorFramework client = zkc.client();
         String cp = new PathUtils.ZkPathBuilder(path)
@@ -190,13 +191,14 @@ public class ConnectionManager implements Closeable {
         return connections.size();
     }
 
+    @SuppressWarnings("unchecked")
     private Connection initConnection(HierarchicalConfiguration<ImmutableNode> node) throws Exception {
         String type = node.getString(Constants.CONFIG_TYPE);
         if (Strings.isNullOrEmpty(type)) {
             throw new ConnectionError(String.format("Connection type not found. [node=%s]", node.toString()));
         }
         Class<? extends Connection> cls = (Class<? extends Connection>) Class.forName(type);
-        Connection connection = cls.newInstance();
+        Connection connection = cls.getDeclaredConstructor().newInstance();
         connection.init(node, env);
         Preconditions.checkState(!Strings.isNullOrEmpty(connection.name()));
         Preconditions.checkState(connection.connectionState() == Connection.EConnectionState.Initialized);
@@ -210,6 +212,7 @@ public class ConnectionManager implements Closeable {
         return connections.get(name);
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends Connection> T getConnection(@NonNull String name,
                                                   @NonNull Class<? extends Connection> type) {
         Connection connection = getConnection(name);
