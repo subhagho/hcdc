@@ -1,5 +1,6 @@
 package ai.sapper.cdc.common.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.NonNull;
@@ -62,6 +63,7 @@ public class Options {
         return options.remove(name);
     }
 
+    @JsonIgnore
     public boolean isEmpty() {
         return options.isEmpty();
     }
