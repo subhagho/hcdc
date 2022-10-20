@@ -22,7 +22,7 @@
         </agent>
         <locks>
             <connection>zk-state-connection</connection>
-            <path>/ai/sapper/cdc/registry</path>
+            <path>/ai/sapper/test/registry</path>
             <lock>
                 <name>global</name>
                 <lock-node>NN-GLOBAL-LOCK</lock-node>

@@ -127,8 +127,19 @@ public class DistributedLockBuilder {
                     def.getPath(),
                     path)
                     .withConnection(connection);
+        } else {
+            LockDef def = new LockDef();
+            def.setName(name);
+            def.setModule(module);
+            def.setPath(path);
+            save(def);
+
+            lockDefs.put(key, def);
+            return new DistributedLock(def.getModule(),
+                    def.getPath(),
+                    path)
+                    .withConnection(connection);
         }
-        return null;
     }
 
     public void save(@NonNull LockDef def) throws Exception {
