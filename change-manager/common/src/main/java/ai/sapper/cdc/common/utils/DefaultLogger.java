@@ -45,49 +45,49 @@ public final class DefaultLogger {
         }
     }
 
-    public static void error(Logger logger, @NonNull String msg) {
+    public static void error(Logger logger, String msg) {
         if (logger == null) {
             logger = LOGGER;
         }
         logger.error(msg);
     }
 
-    public static void error(Logger logger, @NonNull String msg, @NonNull Throwable error) {
+    public static void error(Logger logger, String msg, @NonNull Throwable error) {
         if (logger == null) {
             logger = LOGGER;
         }
         logger.error(msg, error);
     }
 
-    public static void warn(Logger logger, @NonNull String msg) {
+    public static void warn(Logger logger, String msg) {
         if (logger == null) {
             logger = LOGGER;
         }
         logger.warn(msg);
     }
 
-    public static void warn(Logger logger, @NonNull String msg, @NonNull Throwable error) {
+    public static void warn(Logger logger, String msg, @NonNull Throwable error) {
         if (logger == null) {
             logger = LOGGER;
         }
         logger.warn(msg, error);
     }
 
-    public static void info(Logger logger, @NonNull String msg) {
+    public static void info(Logger logger, String msg) {
         if (logger == null) {
             logger = LOGGER;
         }
         logger.warn(msg);
     }
 
-    public static void debug(Logger logger, @NonNull String msg, @NonNull Throwable error) {
+    public static void debug(Logger logger, String msg, @NonNull Throwable error) {
         if (logger == null) {
             logger = LOGGER;
         }
         logger.debug(msg, error);
     }
 
-    public static void debug(Logger logger, @NonNull String msg) {
+    public static void debug(Logger logger, String msg) {
         if (logger == null) {
             logger = LOGGER;
         }
