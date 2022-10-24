@@ -205,14 +205,16 @@ public class DistributedLock extends ReentrantLock implements Closeable {
     @Override
     public boolean tryLock(long timeout, TimeUnit unit) throws InterruptedException {
         Preconditions.checkState(mutex != null);
-        if (isLockByThread()) return true;
         if (super.tryLock(timeout, unit)) {
-            try {
-                return mutex.acquire(timeout, unit);
-            } catch (Throwable t) {
-                super.unlock();
-                throw new LockError(t);
+            if (!mutex.isAcquiredInThisProcess()) {
+                try {
+                    return mutex.acquire(timeout, unit);
+                } catch (Throwable t) {
+                    super.unlock();
+                    throw new LockError(t);
+                }
             }
+            return true;
         }
         return false;
     }

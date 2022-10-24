@@ -1,6 +1,7 @@
 package ai.sapper.cdc.core.model;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 
@@ -13,6 +14,17 @@ public abstract class ProcessingState<T> {
     private String currentMessageId;
     private T processedTxId;
     private long updatedTime;
+
+    public ProcessingState() {
+    }
+
+    public ProcessingState(@NonNull ProcessingState<T> state) {
+        this.instance = state.instance;
+        this.namespace = state.namespace;
+        this.currentMessageId = state.currentMessageId;
+        this.processedTxId = state.processedTxId;
+        this.updatedTime = System.currentTimeMillis();
+    }
 
     public abstract int compareTx(T target);
 }
