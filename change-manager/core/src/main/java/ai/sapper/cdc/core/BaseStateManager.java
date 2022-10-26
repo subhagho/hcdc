@@ -198,7 +198,7 @@ public abstract class BaseStateManager<T> implements Closeable {
         }
     }
 
-    private ProcessingState<T> update(ProcessingState<T> state) throws Exception {
+    public ProcessingState<T> update(ProcessingState<T> state) throws Exception {
         state.setUpdatedTime(System.currentTimeMillis());
 
         CuratorFramework client = connection().client();

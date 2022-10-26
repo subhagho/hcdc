@@ -23,7 +23,7 @@ public abstract class ProcessingState<T> {
         this.namespace = state.namespace;
         this.currentMessageId = state.currentMessageId;
         this.processedTxId = state.processedTxId;
-        this.updatedTime = System.currentTimeMillis();
+        this.updatedTime = state.updatedTime;
     }
 
     public abstract int compareTx(T target);
