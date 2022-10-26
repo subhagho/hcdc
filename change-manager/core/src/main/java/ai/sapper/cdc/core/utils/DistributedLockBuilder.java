@@ -131,7 +131,7 @@ public class DistributedLockBuilder {
             LockDef def = new LockDef();
             def.setName(name);
             def.setModule(module);
-            def.setPath(path);
+            def.setPath(name);
             save(def);
 
             lockDefs.put(key, def);
