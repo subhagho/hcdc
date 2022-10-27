@@ -18,7 +18,7 @@ public class DbConnectionConfig extends ConnectionConfig {
     public static class Constants {
         public static final String CONFIG_JDBC_URL = "jdbcUrl";
         public static final String CONFIG_USER = "user";
-        public static final String CONFIG_PASS_KEY = "passwordKay";
+        public static final String CONFIG_PASS_KEY = "passwordKey";
         public static final String CONFIG_POOL_SIZE = "poolSize";
         public static final String CONFIG_DB_NAME = "db";
     }
