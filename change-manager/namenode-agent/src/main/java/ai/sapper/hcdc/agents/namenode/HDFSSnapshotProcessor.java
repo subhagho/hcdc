@@ -35,6 +35,9 @@ import org.slf4j.Logger;
 
 import java.net.URI;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 @Getter
 @Accessors(fluent = true)
@@ -78,7 +81,7 @@ public class HDFSSnapshotProcessor {
             if (stateManager instanceof ProcessorStateManager) {
                 ((ProcessorStateManager) stateManager)
                         .domainManager()
-                        .withFilterAddCallback(new SnapshotCallBack(this));
+                        .withFilterAddCallback(new SnapshotCallBack(this, processorConfig().executorPoolSize));
             }
             LOG = NameNodeEnv.get(name).LOG;
             return this;
@@ -410,10 +413,12 @@ public class HDFSSnapshotProcessor {
         private static final String __CONFIG_PATH_SENDER = "sender";
         private static final String __CONFIG_PATH_TNX_SENDER = "tnxSender";
         private static final String CONFIG_LOCK_TIMEOUT = "lockTimeout";
+        private static final String CONFIG_EXECUTOR_POOL_SIZE = "executorPoolSize";
 
         private MessagingConfig senderConfig;
         private MessagingConfig tnxSenderConfig;
         private long defaultLockTimeout = 5 * 60 * 1000;
+        private int executorPoolSize = 4;
 
         public HDFSSnapshotProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);
@@ -448,6 +453,10 @@ public class HDFSSnapshotProcessor {
                         defaultLockTimeout = Long.parseLong(s);
                     }
                 }
+                if (get().containsKey(CONFIG_EXECUTOR_POOL_SIZE)) {
+                    String s = get().getString(CONFIG_EXECUTOR_POOL_SIZE);
+                    executorPoolSize = Integer.parseInt(s);
+                }
             } catch (Exception ex) {
                 throw new ConfigurationException(ex);
             }
@@ -456,9 +465,16 @@ public class HDFSSnapshotProcessor {
 
     public static class SnapshotCallBack implements FilterAddCallback {
         private final HDFSSnapshotProcessor processor;
+        private ThreadPoolExecutor executor;
 
-        public SnapshotCallBack(@NonNull HDFSSnapshotProcessor processor) {
+        public SnapshotCallBack(@NonNull HDFSSnapshotProcessor processor, int corePoolSize) {
+            Preconditions.checkArgument(corePoolSize > 0);
             this.processor = processor;
+            executor = new ThreadPoolExecutor(corePoolSize,
+                    corePoolSize,
+                    30000,
+                    TimeUnit.MILLISECONDS,
+                    new LinkedBlockingQueue<>());
         }
 
 
@@ -471,7 +487,38 @@ public class HDFSSnapshotProcessor {
         public void process(@NonNull DomainFilterMatcher matcher,
                             DomainFilterMatcher.PathFilter filter,
                             @NonNull String path) {
+            SnapshotRunner runner = new SnapshotRunner(processor, matcher, filter);
+            executor.submit(runner);
+        }
+
+        /**
+         * @param matcher
+         */
+        @Override
+        public void onStart(@NonNull DomainFilterMatcher matcher) {
+
+        }
+    }
+
+    public static class SnapshotRunner implements Runnable {
+        private final HDFSSnapshotProcessor processor;
+        private final DomainFilterMatcher matcher;
+        private final DomainFilterMatcher.PathFilter filter;
+
+        public SnapshotRunner(@NonNull HDFSSnapshotProcessor processor,
+                              @NonNull DomainFilterMatcher matcher,
+                              @NonNull DomainFilterMatcher.PathFilter filter) {
+            this.processor = processor;
+            this.matcher = matcher;
+            this.filter = filter;
+        }
+
+        @Override
+        public void run() {
             try {
+                DefaultLogger.info(processor.LOG,
+                        String.format("Processing filer: [filter=%s]",
+                                JSONUtils.asString(filter.filter(), Filter.class)));
                 int count = processor.processFilterWithLock(filter, matcher.domain(), -1);
                 DefaultLogger.info(processor.LOG,
                         String.format("Processed filer: [filter=%s][files=%d]",
@@ -481,14 +528,6 @@ public class HDFSSnapshotProcessor {
                         String.format("Error processing filter: %s", filter.filter().toString()), ex);
                 DefaultLogger.debug(processor.LOG, DefaultLogger.stacktrace(ex));
             }
-        }
-
-        /**
-         * @param matcher
-         */
-        @Override
-        public void onStart(@NonNull DomainFilterMatcher matcher) {
-
         }
     }
 }
