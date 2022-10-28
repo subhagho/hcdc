@@ -915,4 +915,28 @@ public class ReflectionUtils {
         throw new ReflectionException(String.format("No matching constructor found. [type=%s][args=%s]",
                 type.getCanonicalName(), (args == null ? "NONE" : Arrays.toString(args))));
     }
+
+    public static boolean isBoolean(@NonNull Class<?> type) {
+        return (type.equals(Boolean.TYPE) || type.equals(Boolean.class) || type.equals(boolean.class));
+    }
+
+    public static boolean isShort(@NonNull Class<?> type) {
+        return (type.equals(Short.TYPE) || type.equals(Short.class) || type.equals(short.class));
+    }
+
+    public static boolean isInt(@NonNull Class<?> type) {
+        return (type.equals(Integer.TYPE) || type.equals(Integer.class) || type.equals(int.class));
+    }
+
+    public static boolean isLong(@NonNull Class<?> type) {
+        return (type.equals(Long.TYPE) || type.equals(Long.class) || type.equals(long.class));
+    }
+
+    public static boolean isFloat(@NonNull Class<?> type) {
+        return (type.equals(Float.TYPE) || type.equals(Float.class) || type.equals(float.class));
+    }
+
+    public static boolean isDouble(@NonNull Class<?> type) {
+        return (type.equals(Double.TYPE) || type.equals(Double.class) || type.equals(double.class));
+    }
 }
