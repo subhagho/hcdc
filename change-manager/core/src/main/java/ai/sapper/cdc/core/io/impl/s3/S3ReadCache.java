@@ -42,7 +42,8 @@ public class S3ReadCache implements EvictionCallback<String, S3ReadCache.CacheFi
                     long ut = fs.updateTime(path);
                     if (c.modified >= ut) {
                         DefaultLogger.LOGGER.debug(String.format("Found in cache. [path=%s][file=%s]", c.key, c.path));
-                        return path.withTemp(c.path);
+                        if (c.path.exists())
+                            return path.withTemp(c.path);
                     }
                 }
             }
@@ -89,7 +90,7 @@ public class S3ReadCache implements EvictionCallback<String, S3ReadCache.CacheFi
     }
 
     @Override
-    public void evicted(String key, CacheFile value)  {
+    public void evicted(String key, CacheFile value) {
         if (value.path.exists()) {
             boolean ret = value.path.delete();
             if (ret) {
