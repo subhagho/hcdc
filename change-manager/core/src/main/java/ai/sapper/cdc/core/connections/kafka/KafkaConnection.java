@@ -58,8 +58,8 @@ public abstract class KafkaConnection implements MessageConnection {
             state.clear(EConnectionState.Unknown);
             kafkaConfig = new KafkaConfig(xmlConfig);
             settings = kafkaConfig.read();
-
-            settings.clientId(env.moduleInstance().getInstanceId());
+            if (Strings.isNullOrEmpty(settings.clientId()))
+                settings.clientId(env.moduleInstance().getInstanceId());
         } catch (Throwable t) {
             state.error(t);
             throw new ConnectionError("Error opening HDFS connection.", t);
@@ -89,8 +89,8 @@ public abstract class KafkaConnection implements MessageConnection {
             settings = JSONUtils.read(data, KafkaSettings.class);
             Preconditions.checkNotNull(settings);
             Preconditions.checkState(name.equals(settings.getName()));
-
-            settings.clientId(env.moduleInstance().getInstanceId());
+            if (Strings.isNullOrEmpty(settings.clientId()))
+                settings.clientId(env.moduleInstance().getInstanceId());
         } catch (Exception ex) {
             throw new ConnectionError(ex);
         }
@@ -107,8 +107,8 @@ public abstract class KafkaConnection implements MessageConnection {
             }
             state.clear(EConnectionState.Unknown);
             this.settings = (KafkaSettings) settings;
-
-            ((KafkaSettings) settings).clientId(env.moduleInstance().getInstanceId());
+            if (Strings.isNullOrEmpty(((KafkaSettings) settings).clientId()))
+                ((KafkaSettings) settings).clientId(env.moduleInstance().getInstanceId());
         } catch (Exception ex) {
             throw new ConnectionError(ex);
         }

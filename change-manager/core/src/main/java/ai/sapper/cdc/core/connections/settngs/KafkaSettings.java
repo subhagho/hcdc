@@ -57,6 +57,13 @@ public class KafkaSettings extends ConnectionSettings {
         return this;
     }
 
+    public String clientId() {
+        if (properties != null) {
+            return properties.getProperty(PROP_CLIENT_ID);
+        }
+        return null;
+    }
+
     @Override
     public void validate() throws Exception {
         ConfigReader.checkStringValue(getName(), getClass(), ConnectionConfig.CONFIG_NAME);
