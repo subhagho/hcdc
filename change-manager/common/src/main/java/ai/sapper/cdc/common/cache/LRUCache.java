@@ -28,7 +28,7 @@ public class LRUCache<K, V> implements Cache<K, V> {
     }
 
     @Override
-    public boolean put(K key, V value) {
+    public boolean put(@NonNull K key, V value) {
         this.lock.writeLock().lock();
         try {
             CacheElement<K, V> item = new CacheElement<K, V>(key, value);
@@ -102,8 +102,30 @@ public class LRUCache<K, V> implements Cache<K, V> {
         }
     }
 
+    @Override
+    public boolean remove(K key) {
+        this.lock.writeLock().lock();
+        try {
+            if (this.nodeMap.containsKey(key)) {
+                LinkedListNode<CacheElement<K, V>> node = nodeMap.remove(key);
+                node = this.elements.remove(node.getElement());
+                if (node != null) {
+                    if (!evictionCallbacks.isEmpty()) {
+                        for (EvictionCallback<K, V> callback : evictionCallbacks) {
+                            callback.evicted(node.getElement().getKey(), node.getElement().getValue());
+                        }
+                    }
+                }
+                return true;
+            }
+        } finally {
+            this.lock.writeLock().unlock();
+        }
+        return false;
+    }
 
-    private boolean evictElement()  {
+
+    private boolean evictElement() {
         this.lock.writeLock().lock();
         try {
             LinkedListNode<CacheElement<K, V>> node = elements.removeTail();

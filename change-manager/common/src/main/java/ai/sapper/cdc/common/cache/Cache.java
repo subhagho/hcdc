@@ -1,9 +1,11 @@
 package ai.sapper.cdc.common.cache;
 
+import lombok.NonNull;
+
 import java.util.Optional;
 
 public interface Cache<K, V> {
-    boolean put(K key, V value) throws Exception;
+    boolean put(@NonNull K key, V value) throws Exception;
 
     Optional<V> get(K key);
 
@@ -15,4 +17,5 @@ public interface Cache<K, V> {
 
     void clear();
 
+    boolean remove(K key);
 }
