@@ -77,7 +77,7 @@ public final class DefaultLogger {
         if (logger == null) {
             logger = LOGGER;
         }
-        logger.warn(msg);
+        logger.info(msg);
     }
 
     public static void debug(Logger logger, String msg, @NonNull Throwable error) {
