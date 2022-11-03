@@ -91,7 +91,9 @@ public class SchemaHelper {
                 } else if (NumberField.matches(sv)) {
                     return new NumberField(name);
                 } else {
-                    return new StringField(name);
+                    StringField sf = new StringField(name);
+                    sf.length(((String) value).length());
+                    return sf;
                 }
             } else if (ReflectionUtils.isNumericType(value.getClass())) {
                 NumberField f = new NumberField(name);
@@ -169,6 +171,10 @@ public class SchemaHelper {
             super((Strings.isNullOrEmpty(name) ? "null" : name), EDataType.NULL);
         }
 
+        public NullField(@NonNull NullField field) {
+            super((Strings.isNullOrEmpty(field.name()) ? "null" : field.name()), EDataType.NULL);
+        }
+
         /**
          * @param value
          * @return
@@ -217,9 +223,16 @@ public class SchemaHelper {
     public static class StringField extends Field {
         private static final String REGEX = "\"(\\.+)\"";
         private static final Pattern PATTERN = Pattern.compile(REGEX);
+        private int length = 0;
 
         public StringField(@NonNull String name) {
             super((Strings.isNullOrEmpty(name) ? "string" : name), EDataType.String);
+        }
+
+        public StringField(@NonNull StringField field) {
+            super((Strings.isNullOrEmpty(field.name()) ? "string" : field.name()), EDataType.String);
+            nullable(field.nullable());
+            length = field.length;
         }
 
         public static boolean matches(String value) {
@@ -270,6 +283,12 @@ public class SchemaHelper {
 
         public NumberField(@NonNull String name) {
             super((Strings.isNullOrEmpty(name) ? "number" : name), EDataType.Number);
+        }
+
+        public NumberField(@NonNull NumberField field) {
+            super((Strings.isNullOrEmpty(field.name()) ? "number" : field.name()), EDataType.Number);
+            nullable(field.nullable());
+            numberType = field.numberType;
         }
 
         public static boolean matches(String value) {
@@ -357,6 +376,12 @@ public class SchemaHelper {
             super((Strings.isNullOrEmpty(name) ? "boolean" : name), EDataType.Boolean);
         }
 
+        public BooleanField(@NonNull BooleanField field) {
+            super((Strings.isNullOrEmpty(field.name()) ? "boolean" : field.name()), EDataType.Boolean);
+            nullable(field.nullable());
+            isDecimal = field.isDecimal;
+        }
+
         public static boolean matches(String value) {
             Boolean bool = Boolean.parseBoolean(value);
             if (!bool) {
@@ -410,10 +435,19 @@ public class SchemaHelper {
         private static final String REGEX = "^\\{\\s*(.*\\r*\\n*\\s*)}$";
         private static final Pattern PATTERN = Pattern.compile(REGEX);
         private List<Field> fields;
-        private String namespace = "ai.sapper.hcdc";
+        private String namespace = "ai.sapper.cdc";
 
         public ObjectField(@NonNull String name) {
             super((Strings.isNullOrEmpty(name) ? "object" : name), EDataType.Object);
+        }
+
+        public ObjectField(@NonNull ObjectField field) {
+            super((Strings.isNullOrEmpty(field.name()) ? "object" : field.name()), EDataType.Object);
+            nullable(field.nullable());
+            namespace = field.namespace;
+            if (field.fields != null) {
+                fields = new ArrayList<>(field.fields);
+            }
         }
 
         public static boolean matches(String value) {
@@ -535,6 +569,12 @@ public class SchemaHelper {
             super((Strings.isNullOrEmpty(name) ? "array" : name), EDataType.Array);
         }
 
+        public ArrayField(@NonNull ArrayField field) {
+            super((Strings.isNullOrEmpty(field.name()) ? "array" : field.name()), EDataType.Array);
+            nullable(field.nullable());
+            innerType = field.innerType;
+        }
+
         public static boolean matches(String value) {
             Matcher m = PATTERN.matcher(value);
             return m.matches();
@@ -612,7 +652,13 @@ public class SchemaHelper {
         private Field innerType;
 
         public MapField(@NonNull String name) {
-            super(name, EDataType.Map);
+            super((Strings.isNullOrEmpty(name) ? "map" : name), EDataType.Map);
+        }
+
+        public MapField(@NonNull MapField field) {
+            super((Strings.isNullOrEmpty(field.name()) ? "map" : field.name()), EDataType.Map);
+            nullable(field.nullable());
+            innerType = field.innerType;
         }
 
         /**
