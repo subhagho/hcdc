@@ -43,7 +43,7 @@ public class SchemaHelper {
         private final EDataType type;
         private boolean nullable = false;
 
-        private Field(@NonNull String name, @NonNull EDataType type) {
+        public Field(@NonNull String name, @NonNull EDataType type) {
             this.name = name;
             this.type = type;
         }
@@ -70,13 +70,13 @@ public class SchemaHelper {
                 NumberField f = new NumberField(name);
                 f.fromJavaType(type);
                 return f;
-            } else if (type.equals(Boolean.class)
-                    || type.equals(boolean.class)) {
+            } else if (ReflectionUtils.isBoolean(type)) {
                 return new BooleanField(name);
             }
             return null;
         }
 
+        @SuppressWarnings("unchecked")
         public static Field parseField(String name, Object value) {
             if (value == null) {
                 return new NullField(name);
@@ -97,8 +97,7 @@ public class SchemaHelper {
                 NumberField f = new NumberField(name);
                 f.fromJavaType(value.getClass());
                 return f;
-            } else if (value.getClass().equals(Boolean.class)
-                    || value.getClass().equals(boolean.class)) {
+            } else if (ReflectionUtils.isBoolean(value.getClass())) {
                 return new BooleanField(name);
             } else if (value instanceof List) {
                 List<?> values = (List<?>) value;
@@ -126,27 +125,27 @@ public class SchemaHelper {
                     } else if (ReflectionUtils.isNumericType(vt) && !ReflectionUtils.isNumericType(vtype)) {
                         return null;
                     } else if (!vt.equals(vtype)) {
-                        if (vtype.equals(Double.class)) continue;
-                        else if (vtype.equals(Float.class)) {
-                            if (vt.equals(Double.class)) {
+                        if (ReflectionUtils.isDouble(vtype)) continue;
+                        else if (ReflectionUtils.isFloat(vtype)) {
+                            if (ReflectionUtils.isDouble(vt)) {
                                 vtype = vt;
                             }
-                        } else if (vtype.equals(Long.class)) {
-                            if (vt.equals(Float.class)
-                                    || vt.equals(Double.class)) {
+                        } else if (ReflectionUtils.isLong(vtype)) {
+                            if (ReflectionUtils.isFloat(vt)
+                                    || ReflectionUtils.isDouble(vt)) {
                                 vtype = vt;
                             }
-                        } else if (vtype.equals(Integer.class)) {
-                            if (vt.equals(Long.class)
-                                    || vt.equals(Float.class)
-                                    || vt.equals(Double.class)) {
+                        } else if (ReflectionUtils.isInt(vtype)) {
+                            if (ReflectionUtils.isLong(vt)
+                                    || ReflectionUtils.isFloat(vt)
+                                    || ReflectionUtils.isDouble(vt)) {
                                 vtype = vt;
                             }
-                        } else if (vtype.equals(Short.class)) {
-                            if (vt.equals(Long.class)
-                                    || vt.equals(Float.class)
-                                    || vt.equals(Double.class)
-                                    || vt.equals(Integer.class)) {
+                        } else if (ReflectionUtils.isShort(vtype)) {
+                            if (ReflectionUtils.isInt(vt)
+                                    || ReflectionUtils.isLong(vt)
+                                    || ReflectionUtils.isFloat(vt)
+                                    || ReflectionUtils.isDouble(vt)) {
                                 vtype = vt;
                             }
                         }
@@ -166,7 +165,7 @@ public class SchemaHelper {
     @Accessors(fluent = true)
     public static class NullField extends Field {
 
-        private NullField(@NonNull String name) {
+        public NullField(@NonNull String name) {
             super((Strings.isNullOrEmpty(name) ? "null" : name), EDataType.NULL);
         }
 
@@ -280,15 +279,15 @@ public class SchemaHelper {
 
         public NumberField fromJavaType(Class<?> type) {
             Preconditions.checkArgument(ReflectionUtils.isNumericType(type));
-            if (type.equals(Short.class) || type.equals(short.class)) {
+            if (ReflectionUtils.isShort(type)) {
                 numberType = ENumberType.Short;
-            } else if (type.equals(Integer.class) || type.equals(int.class)) {
+            } else if (ReflectionUtils.isInt(type)) {
                 numberType = ENumberType.Integer;
-            } else if (type.equals(Long.class) || type.equals(long.class)) {
+            } else if (ReflectionUtils.isLong(type)) {
                 numberType = ENumberType.Long;
-            } else if (type.equals(Float.class) || type.equals(float.class)) {
+            } else if (ReflectionUtils.isFloat(type)) {
                 numberType = ENumberType.Float;
-            } else if (type.equals(Double.class) || type.equals(double.class)) {
+            } else if (ReflectionUtils.isDouble(type)) {
                 numberType = ENumberType.Double;
             } else {
                 numberType = ENumberType.Long;
@@ -612,7 +611,7 @@ public class SchemaHelper {
     public static class MapField extends Field {
         private Field innerType;
 
-        private MapField(@NonNull String name) {
+        public MapField(@NonNull String name) {
             super(name, EDataType.Map);
         }
 
@@ -678,8 +677,7 @@ public class SchemaHelper {
     public static class JsonToAvroSchema {
         public static Schema convert(@NonNull Map<String, Object> map,
                                      String namespace,
-                                     @NonNull String name,
-                                     @NonNull ObjectMapper mapper) throws Exception {
+                                     @NonNull String name) throws Exception {
             Preconditions.checkArgument(!map.isEmpty());
             Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
 
