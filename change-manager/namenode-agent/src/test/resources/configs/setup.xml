@@ -17,6 +17,18 @@
                 <connection>zk-state-connection</connection>
             </state>
         </managers -->
+        <managers>
+            <state>
+                <stateManagerClass>ai.sapper.hcdc.agents.common.ProcessorStateManager</stateManagerClass>
+                <basePath>/ai/sapper/cdc/edits</basePath>
+                <connection>zk-state-connection</connection>
+            </state>
+            <domain>
+                <basePath>/ai/sapper/cdc/registry</basePath>
+                <connection>zk-state-connection</connection>
+                <module>hdfs</module>
+            </domain>
+        </managers>
         <agent>
             <needHadoop>false</needHadoop>
         </agent>

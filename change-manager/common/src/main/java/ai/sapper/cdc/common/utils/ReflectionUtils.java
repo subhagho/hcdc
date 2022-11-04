@@ -939,4 +939,8 @@ public class ReflectionUtils {
     public static boolean isDouble(@NonNull Class<?> type) {
         return (type.equals(Double.TYPE) || type.equals(Double.class) || type.equals(double.class));
     }
+
+    public static boolean isByte(@NonNull Class<?> type) {
+        return (type.equals(byte.class) || type.equals(Byte.class) || type.equals(Byte.TYPE));
+    }
 }
