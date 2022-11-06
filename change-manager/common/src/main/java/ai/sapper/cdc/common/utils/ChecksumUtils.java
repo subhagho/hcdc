@@ -147,7 +147,7 @@ public class ChecksumUtils {
         Preconditions.checkArgument(data.length > 0);
         Preconditions.checkArgument(data.length >= length);
         try {
-            MessageDigest digest = MessageDigest.getInstance("MD5");
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
             digest.update(data, 0, length);
             byte[] bytes = digest.digest();
 
@@ -179,7 +179,7 @@ public class ChecksumUtils {
 
     public static String generateHash(@NonNull String data) throws Exception {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(data));
-        MessageDigest digest = MessageDigest.getInstance("MD5");
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
         digest.update(data.getBytes(StandardCharsets.UTF_8));
         byte[] hash = digest.digest();
         return bytesToHex(hash);

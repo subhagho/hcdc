@@ -46,7 +46,7 @@ class SchemaHelperTest {
             ObjectMapper mapper = new ObjectMapper();
             Map<String, Object> map = mapper.readValue(json, Map.class);
             assertNotNull(map);
-            SchemaHelper.Field field = SchemaHelper.ObjectField.parse("", map);
+            SchemaHelper.Field field = SchemaHelper.ObjectField.parse("", map, true);
             assertNotNull(field);
             DefaultLogger.LOGGER.info(String.format("\nSCHEMA: [%s]\n", field.avroSchema()));
         } catch (Exception ex) {
@@ -110,7 +110,7 @@ class SchemaHelperTest {
             DefaultLogger.LOGGER.debug(json);
 
             Map<String, Object> jsonMap = JSONUtils.read(json, Map.class);
-            SchemaHelper.Field field = SchemaHelper.ObjectField.parse("", jsonMap);
+            SchemaHelper.Field field = SchemaHelper.ObjectField.parse("", jsonMap, true);
             assertNotNull(field);
 
             String schema = field.avroSchema();

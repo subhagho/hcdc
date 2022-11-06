@@ -130,7 +130,7 @@ public class JsonConverter extends FormatConverter {
                 if (Strings.isNullOrEmpty(line)) continue;
                 Object jObj = tryParseLine(line, mapper);
                 if (jObj != null) {
-                    Schema _schema = getSchema(jObj);
+                    Schema _schema = getSchema(jObj, false);
                     if (schema == null) {
                         schema = _schema;
                     } else {
@@ -204,10 +204,10 @@ public class JsonConverter extends FormatConverter {
     }
 
     @SuppressWarnings("unchecked")
-    private Schema getSchema(Object jObj) throws Exception {
+    private Schema getSchema(Object jObj, boolean deep) throws Exception {
         if (jObj instanceof Map) {
             Map<String, Object> jMap = (Map<String, Object>) jObj;
-            return SchemaHelper.JsonToAvroSchema.convert(jMap, "default", "");
+            return SchemaHelper.JsonToAvroSchema.convert(jMap, "default", "", deep);
         }
         return null;
     }

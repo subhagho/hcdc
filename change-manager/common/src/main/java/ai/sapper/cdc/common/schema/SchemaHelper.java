@@ -12,6 +12,7 @@ import lombok.experimental.Accessors;
 import org.apache.avro.Schema;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -35,6 +36,17 @@ public class SchemaHelper {
         Integer, Long, Float, Double, Short
     }
 
+    public static String checkFieldName(@NonNull String name) {
+        StringBuilder builder = new StringBuilder();
+        for (char c : name.toCharArray()) {
+            if (!Character.isAlphabetic(c) && c != '_') {
+                c = '_';
+            }
+            builder.append(c);
+        }
+        return builder.toString();
+    }
+
     @Getter
     @Setter
     @Accessors(fluent = true)
@@ -43,8 +55,9 @@ public class SchemaHelper {
         private final EDataType type;
         private boolean nullable = false;
 
-        public Field(@NonNull String name, @NonNull EDataType type) {
-            this.name = name;
+        public Field(@NonNull String name,
+                     @NonNull EDataType type) {
+            this.name = checkFieldName(name);
             this.type = type;
         }
 
@@ -68,8 +81,7 @@ public class SchemaHelper {
                 return new StringField(name);
             } else if (ReflectionUtils.isNumericType(type)) {
                 NumberField f = new NumberField(name);
-                f.fromJavaType(type);
-                return f;
+                return f.fromJavaType(type);
             } else if (ReflectionUtils.isBoolean(type)) {
                 return new BooleanField(name);
             }
@@ -77,7 +89,9 @@ public class SchemaHelper {
         }
 
         @SuppressWarnings("unchecked")
-        public static Field parseField(String name, Object value) {
+        public static Field parseField(@NonNull String name,
+                                       Object value,
+                                       boolean nested) throws Exception {
             if (value == null) {
                 return new NullField(name);
             }
@@ -97,19 +111,21 @@ public class SchemaHelper {
                 }
             } else if (ReflectionUtils.isNumericType(value.getClass())) {
                 NumberField f = new NumberField(name);
-                f.fromJavaType(value.getClass());
-                return f;
+                return f.fromJavaType(value.getClass());
             } else if (ReflectionUtils.isBoolean(value.getClass())) {
                 return new BooleanField(name);
             } else if (value instanceof List) {
                 List<?> values = (List<?>) value;
-                return ArrayField.parse(name, values);
+                return ArrayField.parse(name, values, nested);
             } else if (value instanceof Map) {
-                MapField mf = Field.isMapObject(name, (Map<String, ?>) value);
-                if (mf != null) return mf;
-                return ObjectField.parse(name, (Map<String, Object>) value);
+                Map<String, ?> map = (Map<String, ?>) value;
+                if (!map.isEmpty()) {
+                    MapField mf = Field.isMapObject(name, (Map<String, ?>) value);
+                    if (mf != null) return mf;
+                    return ObjectField.parse(name, (Map<String, Object>) value, nested);
+                }
             }
-            return null;
+            return new NullField(name);
         }
 
         private static MapField isMapObject(String name, Map<String, ?> values) {
@@ -434,7 +450,7 @@ public class SchemaHelper {
     public static class ObjectField extends Field {
         private static final String REGEX = "^\\{\\s*(.*\\r*\\n*\\s*)}$";
         private static final Pattern PATTERN = Pattern.compile(REGEX);
-        private List<Field> fields;
+        private Map<String, Field> fields;
         private String namespace = "ai.sapper.cdc";
 
         public ObjectField(@NonNull String name) {
@@ -446,7 +462,7 @@ public class SchemaHelper {
             nullable(field.nullable());
             namespace = field.namespace;
             if (field.fields != null) {
-                fields = new ArrayList<>(field.fields);
+                fields = new HashMap<>(field.fields);
             }
         }
 
@@ -485,21 +501,20 @@ public class SchemaHelper {
 
         public void addField(@NonNull Field field) {
             if (fields == null) {
-                fields = new ArrayList<>();
+                fields = new HashMap<>();
             }
-            fields.add(field);
+            fields.put(field.name, field);
         }
 
         @Override
         public boolean matches(@NonNull Field target) {
             if (target instanceof ObjectField) {
-                if (name().compareTo(target.name) == 0) {
-                    if (fields != null && !fields.isEmpty()) {
-                        for (Field field : fields) {
-                            if (!target.matches(field)) return false;
-                        }
-                        return true;
+                if (fields != null && !fields.isEmpty()) {
+                    for (String name : fields.keySet()) {
+                        Field field = fields.get(name);
+                        if (!((ObjectField) target).hasField(field)) return false;
                     }
+                    return true;
                 }
             }
             return false;
@@ -516,7 +531,8 @@ public class SchemaHelper {
                             namespace, name()));
             if (fields != null && !fields.isEmpty()) {
                 boolean first = true;
-                for (Field field : fields) {
+                for (String name : fields.keySet()) {
+                    Field field = fields.get(name);
                     if (first) first = false;
                     else {
                         builder.append(",\n");
@@ -535,23 +551,25 @@ public class SchemaHelper {
         }
 
         private boolean hasField(Field field) {
-            if (fields != null && !fields.isEmpty()) {
-                for (Field f : fields) {
-                    if (f.matches(field)) {
-                        return true;
-                    }
-                }
+            if (fields != null && fields.containsKey(field.name)) {
+                Field f = fields.get(field.name);
+                return field.equals(f);
             }
             return false;
         }
 
-        public static ObjectField parse(String name, @NonNull Map<String, Object> values) {
+        public static ObjectField parse(@NonNull String name,
+                                        @NonNull Map<String, Object> values,
+                                        boolean nested) throws Exception {
             ObjectField of = new ObjectField(name);
             for (String key : values.keySet()) {
-                Field f = parseField(key, values.get(key));
+                Field f = parseField(key, values.get(key), nested);
                 if (f != null) {
                     of.addField(f);
                 }
+            }
+            if (of.fields == null || of.fields.isEmpty()) {
+                throw new Exception(String.format("Invalid Object type. [name=%s][values=%s]", name, values));
             }
             return of;
         }
@@ -610,10 +628,8 @@ public class SchemaHelper {
         @Override
         public boolean matches(@NonNull Field target) {
             if (target instanceof ArrayField) {
-                if (name().compareTo(target.name()) == 0) {
-                    if (innerType != null && ((ArrayField) target).innerType != null) {
-                        return innerType.matches(((ArrayField) target).innerType);
-                    }
+                if (innerType != null && ((ArrayField) target).innerType != null) {
+                    return innerType.matches(((ArrayField) target).innerType);
                 }
             }
             return false;
@@ -627,17 +643,34 @@ public class SchemaHelper {
             return String.format("{ \"type\": \"%s\", \"items\": \"%s\" }", avroType(), innerType.avroType());
         }
 
-        public static ArrayField parse(String name, @NonNull List<?> values) {
+        public static ArrayField parse(@NonNull String name,
+                                       @NonNull List<?> values,
+                                       boolean nested) throws Exception {
             ArrayField array = new ArrayField(name);
             if (values.isEmpty()) {
                 array.innerType = new NullField("");
             } else {
                 Field type = null;
                 for (Object value : values) {
-                    type = Field.parseField("", value);
-                    if (type != null && !(type instanceof NullField)) {
-                        break;
+                    Field f = Field.parseField("inner", value, nested);
+                    if (f instanceof NullField) {
+                        continue;
                     }
+                    if (type == null) {
+                        type = f;
+                    } else {
+                        if (!type.equals(f)) {
+                            if (ReflectionUtils.isPrimitiveTypeOrString(value.getClass())) {
+                                type = new StringField("inner");
+                            } else {
+                                type = new JsonField("inner");
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (type == null) {
+                    type = new NullField("inner");
                 }
                 array.innerType = type;
             }
@@ -693,26 +726,42 @@ public class SchemaHelper {
         @Override
         public boolean matches(@NonNull Field target) {
             if (target instanceof MapField) {
-                if (name().compareTo(target.name()) == 0) {
-                    if (innerType != null && ((MapField) target).innerType != null) {
-                        return innerType.matches(((MapField) target).innerType);
-                    }
+                if (innerType != null && ((MapField) target).innerType != null) {
+                    return innerType.matches(((MapField) target).innerType);
                 }
             }
             return false;
         }
 
-        public static MapField parse(String name, @NonNull Map<?, ?> values) {
+        public static MapField parse(@NonNull String name,
+                                     @NonNull Map<?, ?> values,
+                                     boolean nested) throws Exception {
             MapField map = new MapField(name);
             if (values.isEmpty()) {
                 map.innerType = new NullField("");
             } else {
                 Field type = null;
-                for (Object value : values.values()) {
-                    type = Field.parseField("", value);
-                    if (type != null && !(type instanceof NullField)) {
-                        break;
+                for (Object key : values.keySet()) {
+                    Object value = values.get(key);
+                    Field f = Field.parseField("value", value, nested);
+                    if (f == null || f instanceof NullField) {
+                        continue;
                     }
+                    if (type == null) {
+                        type = f;
+                    } else {
+                        if (!type.equals(f)) {
+                            if (ReflectionUtils.isPrimitiveTypeOrString(value.getClass())) {
+                                type = new StringField("value");
+                            } else {
+                                type = new JsonField("value");
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (type == null) {
+                    type = new NullField("value");
                 }
                 map.innerType = type;
             }
@@ -720,14 +769,26 @@ public class SchemaHelper {
         }
     }
 
+    public static class JsonField extends StringField {
+
+        public JsonField(@NonNull String name) {
+            super(name);
+        }
+
+        public JsonField(@NonNull StringField field) {
+            super(field);
+        }
+    }
+
     public static class JsonToAvroSchema {
         public static Schema convert(@NonNull Map<String, Object> map,
                                      String namespace,
-                                     @NonNull String name) throws Exception {
+                                     @NonNull String name,
+                                     boolean nested) throws Exception {
             Preconditions.checkArgument(!map.isEmpty());
             Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
 
-            SchemaHelper.ObjectField field = SchemaHelper.ObjectField.parse(name, map);
+            SchemaHelper.ObjectField field = SchemaHelper.ObjectField.parse(name, map, nested);
             if (!Strings.isNullOrEmpty(namespace))
                 field.namespace(namespace);
             String avroSchema = field.avroSchema();
@@ -736,14 +797,15 @@ public class SchemaHelper {
 
         public static Schema convert(@NonNull String json,
                                      String namespace,
-                                     @NonNull String name) throws Exception {
+                                     @NonNull String name,
+                                     boolean nested) throws Exception {
             Preconditions.checkArgument(!Strings.isNullOrEmpty(json));
             Preconditions.checkArgument(!Strings.isNullOrEmpty(name));
 
             ObjectMapper mapper = new ObjectMapper();
             Map<String, Object> map = mapper.readValue(json, Map.class);
 
-            SchemaHelper.ObjectField field = SchemaHelper.ObjectField.parse(name, map);
+            SchemaHelper.ObjectField field = SchemaHelper.ObjectField.parse(name, map, nested);
             if (!Strings.isNullOrEmpty(namespace))
                 field.namespace(namespace);
             String avroSchema = field.avroSchema();
@@ -758,7 +820,7 @@ public class SchemaHelper {
             Map<String, Object> map = mapper.readValue(json, Map.class);
             DefaultLogger.LOGGER.debug(String.format("\nJSON: [\n%s\n]", json));
             SchemaHelper.ObjectField field =
-                    SchemaHelper.ObjectField.parse(data.getClass().getSimpleName(), map);
+                    SchemaHelper.ObjectField.parse(data.getClass().getSimpleName(), map, true);
             field.namespace(data.getClass().getCanonicalName());
             String avroSchema = field.avroSchema();
             return new Schema.Parser().parse(avroSchema);
