@@ -55,7 +55,8 @@ public class ChangeDeltaSerDe {
         DFSChangeDelta delta = null;
         DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
         if (mode == MessageObject.MessageMode.Snapshot &&
-                !(data instanceof DFSSchemaChange)) {
+                !(data instanceof DFSSchemaChange) &&
+                !(data instanceof DFSIgnoreTx)) {
             if (sequence < 0) {
                 throw new Exception(
                         String.format("Invalid Snapshot Sequence: Entity=[%s]", schemaEntity.toString()));
