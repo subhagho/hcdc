@@ -29,7 +29,7 @@ public class JavaKeyStoreUtil {
     private String password;
     private EConfigFileType fileSource = EConfigFileType.File;
 
-    private void run() throws Exception {
+    public void run() throws Exception {
         if (!Strings.isNullOrEmpty(configSource)) {
             fileSource = EConfigFileType.parse(configSource);
         }

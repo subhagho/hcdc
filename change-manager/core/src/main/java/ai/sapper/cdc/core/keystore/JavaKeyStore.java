@@ -18,7 +18,7 @@ public class JavaKeyStore extends KeyStore {
     public static final String CONFIG_KEYSTORE_FILE = "path";
     public static final String CONFIG_CIPHER_ALGO = "cipher.algo";
     public static final String CONFIG_KEYSTORE_TYPE = "type";
-    private static final String KEYSTORE_TYPE = "JCEKS";
+    private static final String KEYSTORE_TYPE = "PKCS12";
 
 
     private java.security.KeyStore store;
@@ -53,8 +53,11 @@ public class JavaKeyStore extends KeyStore {
                 createEmptyStore(kf.getAbsolutePath(), password);
             } else {
                 store = java.security.KeyStore.getInstance(keyStoreType);
-                store.load(new FileInputStream(kf), password.toCharArray());
+                try (FileInputStream fis = new FileInputStream(kf)) {
+                    store.load(fis, password.toCharArray());
+                }
             }
+            keyStoreFile = kf.getAbsolutePath();
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
         }
@@ -65,9 +68,9 @@ public class JavaKeyStore extends KeyStore {
         store.load(null, password.toCharArray());
 
         // Save the keyStore
-        FileOutputStream fos = new FileOutputStream(path);
-        store.store(fos, password.toCharArray());
-        fos.close();
+        try (FileOutputStream fos = new FileOutputStream(path)) {
+            store.store(fos, password.toCharArray());
+        }
     }
 
     @Override
@@ -80,7 +83,6 @@ public class JavaKeyStore extends KeyStore {
         java.security.KeyStore.ProtectionParameter parameter
                 = new java.security.KeyStore.PasswordProtection(password.toCharArray());
         store.setEntry(name, secret, parameter);
-
     }
 
     @Override
@@ -119,8 +121,9 @@ public class JavaKeyStore extends KeyStore {
     @Override
     public String flush(@NonNull String password) throws Exception {
         Preconditions.checkNotNull(store);
-        File file = new File(keyStoreFile);
-        store.store(new FileOutputStream(file), password.toCharArray());
-        return file.getAbsolutePath();
+        try (FileOutputStream fos = new FileOutputStream(keyStoreFile, false)) {
+            store.store(fos, password.toCharArray());
+        }
+        return keyStoreFile;
     }
 }

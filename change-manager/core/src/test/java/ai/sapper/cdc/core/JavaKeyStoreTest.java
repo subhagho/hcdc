@@ -4,6 +4,7 @@ import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.connections.TestUtils;
 import ai.sapper.cdc.core.keystore.JavaKeyStore;
 import ai.sapper.cdc.core.keystore.KeyStore;
+import ai.sapper.cdc.core.utils.JavaKeyStoreUtil;
 import com.google.common.base.Preconditions;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.XMLConfiguration;
@@ -30,18 +31,31 @@ class JavaKeyStoreTest {
     @Test
     void read() {
         try {
-            String keyName = UUID.randomUUID().toString();
+            String keyName = "TEST-KEYSTORE-KEY";
             String keyValue = "This is a test key";
+            String password = "password";
 
-            HierarchicalConfiguration<ImmutableNode> configNode = xmlConfiguration.configurationAt(__CONFIG_PATH);
-            KeyStore store = new JavaKeyStore().withPassword("password");
+            JavaKeyStoreUtil util = new JavaKeyStoreUtil();
+            util.setConfigFile(__CONFIG_FILE);
+            util.setPassword(password);
+            util.setKey(keyName);
+            util.setValue(keyValue);
+            util.run();
+
+            util.setKey(UUID.randomUUID().toString());
+            util.setValue("Dummy");
+            util.run();
+
+            HierarchicalConfiguration<ImmutableNode> configNode = xmlConfiguration.configurationAt("");
+            KeyStore store = new JavaKeyStore().withPassword(password);
             store.init(configNode);
 
-            store.save(keyName, keyValue);
+            //store.save(keyName, keyValue);
+            //store.flush();
             String v = store.read(keyName);
             assertEquals(keyValue, v);
 
-            store.delete();
+            //store.delete();
         } catch (Exception ex) {
             DefaultLogger.stacktrace(ex);
             DefaultLogger.LOGGER.error(ex.getLocalizedMessage());
