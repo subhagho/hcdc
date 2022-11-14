@@ -8,6 +8,7 @@ import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.core.WebServiceClient;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.io.Archiver;
+import ai.sapper.cdc.core.io.EncryptionHandler;
 import ai.sapper.cdc.core.io.PathInfo;
 import ai.sapper.cdc.core.io.impl.CDCFileSystem;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
@@ -32,6 +33,7 @@ import org.apache.hadoop.hdfs.HDFSBlockReader;
 
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
@@ -43,6 +45,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
     private HdfsConnection connection;
     private WebServiceClient client;
     private Archiver archiver;
+    private EncryptionHandler<ByteBuffer, ByteBuffer> encryptionHandler;
 
     public EntityChangeTransactionReader(@NonNull String name) {
         super(name);
@@ -70,6 +73,11 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
 
     public EntityChangeTransactionReader withArchiver(Archiver archiver) {
         this.archiver = archiver;
+        return this;
+    }
+
+    public EntityChangeTransactionReader withEncryptionHandler(@NonNull EncryptionHandler<ByteBuffer, ByteBuffer> encryptionHandler) {
+        this.encryptionHandler = encryptionHandler;
         return this;
     }
 
@@ -310,6 +318,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             CDCDataConverter converter = new CDCDataConverter()
                     .withFileSystem(fs)
                     .withSchemaManager(NameNodeEnv.get(name()).schemaManager());
+            if (encryptionHandler != null) {
+                converter.withEncryptionHandler(encryptionHandler);
+            }
             CDCDataConverter.ConversionResponse response = converter.convert(fileState,
                     rState,
                     AvroChangeType.EChangeType.RecordDelete,
@@ -659,7 +670,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         if (!fileState.hasError() && rState.canUpdate()) {
             try (HDFSBlockReader reader = new HDFSBlockReader(connection.dfsClient(),
                     rState.getFileInfo().getHdfsPath())) {
-                reader.init();
+                reader.init(encryptionHandler);
                 FSFile file = HCDCFsUtils.get(fileState, schemaEntity, fs);
 
                 SchemaManager schemaManager = NameNodeEnv.get(name()).schemaManager();
@@ -667,6 +678,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 CDCDataConverter converter = new CDCDataConverter()
                         .withFileSystem(fs)
                         .withSchemaManager(schemaManager);
+                if (encryptionHandler != null) {
+                    converter.withEncryptionHandler(encryptionHandler);
+                }
                 List<DFSBlock> blocks = data.getBlocksList();
                 if (!blocks.isEmpty()) {
                     for (DFSBlock block : blocks) {

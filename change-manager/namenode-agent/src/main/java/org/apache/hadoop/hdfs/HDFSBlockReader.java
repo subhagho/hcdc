@@ -1,7 +1,10 @@
 package org.apache.hadoop.hdfs;
 
 import ai.sapper.cdc.common.cache.LRUCache;
+import ai.sapper.cdc.common.model.Context;
+import ai.sapper.cdc.core.io.EncryptionHandler;
 import ai.sapper.cdc.core.model.HDFSBlockData;
+import ai.sapper.hcdc.io.EncryptionContext;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -22,13 +25,15 @@ public class HDFSBlockReader extends DFSInputStream {
     private HdfsFileStatus fileInfo;
     private LocatedBlocks locatedBlocks = null;
     private final LRUCache<Long, HDFSBlockData> cache = new LRUCache<>(DEFAULT_CACHE_SIZE);
+    private EncryptionHandler<ByteBuffer, ByteBuffer> encryptionHandler;
 
     public HDFSBlockReader(@NonNull DFSClient client, @NonNull String path) throws IOException {
         super(client, path, true, null);
     }
 
-    public HDFSBlockReader init() throws DFSError {
+    public HDFSBlockReader init(EncryptionHandler<ByteBuffer, ByteBuffer> encryptionHandler) throws DFSError {
         checkOpen();
+        this.encryptionHandler = encryptionHandler;
         try {
             fileInfo = dfsClient.getFileInfo(src);
             if (fileInfo == null) {
@@ -87,6 +92,21 @@ public class HDFSBlockReader extends DFSInputStream {
             try {
                 fetchBlockByteRange(lb, offset, (offset + length - 1), buffer, corruptedBlockMap);
                 buffer.rewind();
+                if (encryptionHandler != null) {
+                    EncryptionContext ctx = new EncryptionContext();
+                    ctx.put(EncryptionContext.CONTEXT_FILE_PATH, data.path());
+                    ctx.put(EncryptionContext.CONTEXT_BLOCK_ID, data.blockId());
+                    ctx.put(EncryptionContext.CONTEXT_BLOCK_NAME, data.name());
+
+                    ByteBuffer db = encryptionHandler.decrypt(buffer, ctx);
+                    if (db == null) {
+                        throw new IOException(
+                                String.format("[block=%d] Failed to decrypt data. [path=%s]",
+                                        data.blockId(), data.path()));
+                    }
+                    db.rewind();
+                    buffer = db;
+                }
                 data.data(buffer);
             } catch (IOException e) {
                 throw new DFSError(e);

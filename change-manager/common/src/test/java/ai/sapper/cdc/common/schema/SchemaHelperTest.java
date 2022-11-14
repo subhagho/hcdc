@@ -46,9 +46,10 @@ class SchemaHelperTest {
             ObjectMapper mapper = new ObjectMapper();
             Map<String, Object> map = mapper.readValue(json, Map.class);
             assertNotNull(map);
-            SchemaHelper.Field field = SchemaHelper.ObjectField.parse("", map, true);
+            SchemaHelper.ObjectCache cache = new SchemaHelper.ObjectCache();
+            SchemaHelper.Field field = SchemaHelper.ObjectField.parse("", map, true, cache);
             assertNotNull(field);
-            DefaultLogger.LOGGER.info(String.format("\nSCHEMA: [%s]\n", field.avroSchema()));
+            DefaultLogger.LOGGER.info(String.format("\nSCHEMA: [%s]\n", field.avroSchema(cache)));
         } catch (Exception ex) {
             DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(ex));
             fail(ex);
@@ -108,12 +109,12 @@ class SchemaHelperTest {
             }
             String json = JSONUtils.asString(mt, MapTest.class);
             DefaultLogger.LOGGER.debug(json);
-
+            SchemaHelper.ObjectCache cache = new SchemaHelper.ObjectCache();
             Map<String, Object> jsonMap = JSONUtils.read(json, Map.class);
-            SchemaHelper.Field field = SchemaHelper.ObjectField.parse("", jsonMap, true);
+            SchemaHelper.Field field = SchemaHelper.ObjectField.parse("", jsonMap, true, cache);
             assertNotNull(field);
 
-            String schema = field.avroSchema();
+            String schema = field.avroSchema(cache);
             DefaultLogger.LOGGER.info(String.format("\nSCHEMA: [%s]\n", schema));
         } catch (Exception ex) {
             DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(ex));

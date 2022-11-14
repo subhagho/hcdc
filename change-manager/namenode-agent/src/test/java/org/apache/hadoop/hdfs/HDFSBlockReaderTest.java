@@ -68,7 +68,7 @@ class HDFSBlockReaderTest {
                 }
             }
             HDFSBlockReader reader = new HDFSBlockReader(connection.dfsClient(), f);
-            reader.init();
+            reader.init(null);
 
             Thread.sleep(5000);
 

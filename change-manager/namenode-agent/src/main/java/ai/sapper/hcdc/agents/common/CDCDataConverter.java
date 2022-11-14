@@ -6,6 +6,7 @@ import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
+import ai.sapper.cdc.core.io.EncryptionHandler;
 import ai.sapper.cdc.core.io.PathInfo;
 import ai.sapper.cdc.core.io.impl.CDCFileSystem;
 import ai.sapper.cdc.core.model.EFileType;
@@ -27,6 +28,7 @@ import org.apache.hadoop.hdfs.HDFSBlockReader;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 @Getter
 @Accessors(fluent = true)
@@ -35,6 +37,7 @@ public class CDCDataConverter {
 
     private CDCFileSystem fs;
     private HdfsConnection hdfsConnection;
+    private EncryptionHandler<ByteBuffer, ByteBuffer> encryptionHandler;
 
     public CDCDataConverter withFileSystem(@NonNull CDCFileSystem fs) {
         this.fs = fs;
@@ -50,6 +53,11 @@ public class CDCDataConverter {
         for (FormatConverter converter : CONVERTERS) {
             converter.withSchemaManager(schemaManager);
         }
+        return this;
+    }
+
+    public CDCDataConverter withEncryptionHandler(@NonNull EncryptionHandler<ByteBuffer, ByteBuffer> encryptionHandler) {
+        this.encryptionHandler = encryptionHandler;
         return this;
     }
 
@@ -96,7 +104,7 @@ public class CDCDataConverter {
         Preconditions.checkNotNull(hdfsConnection);
         try {
             try (HDFSBlockReader reader = new HDFSBlockReader(hdfsConnection.dfsClient(), fileState.getFileInfo().getHdfsPath())) {
-                reader.init();
+                reader.init(encryptionHandler);
                 DFSBlockState blockState = fileState.findFirstBlock();
                 if (blockState == null) {
                     throw new Exception(

@@ -31,9 +31,9 @@ class JavaKeyStoreTest {
     @Test
     void read() {
         try {
-            String keyName = "TEST-KEYSTORE-KEY";
-            String keyValue = "This is a test key";
-            String password = "password";
+            String keyName = "s2-test-password";
+            String keyValue = "demo1234";
+            String password = "test1234";
 
             JavaKeyStoreUtil util = new JavaKeyStoreUtil();
             util.setConfigFile(__CONFIG_FILE);
