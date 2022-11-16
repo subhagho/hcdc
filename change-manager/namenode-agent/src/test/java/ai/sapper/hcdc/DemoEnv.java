@@ -1,6 +1,7 @@
 package ai.sapper.hcdc;
 
 import ai.sapper.cdc.core.BaseEnv;
+import ai.sapper.cdc.core.schema.SchemaManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -15,6 +16,11 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 public class DemoEnv extends BaseEnv<DemoEnv.DemoState> {
     public DemoEnv() {
         super("demo");
+    }
+
+    @Override
+    public <S extends SchemaManager> S schemaManager(@NonNull Class<? extends SchemaManager> type) throws Exception {
+        return null;
     }
 
     public static class DemoState {

@@ -744,7 +744,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                                 .withFile(data.getFile());
                     }
                     rDelta = new DFSReplicationDelta();
-                    rDelta.setOp(AvroChangeType.EChangeType.RecordDelete);
+                    rDelta.setOp(AvroChangeType.EChangeType.RecordInsert);
                     rDelta.setTransactionId(txId);
                     rDelta.setInodeId(rState.getFileInfo().getInodeId());
                     rDelta.setFsPath(response.path().pathConfig());

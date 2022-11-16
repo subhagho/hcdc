@@ -3,6 +3,7 @@ package ai.sapper.hcdc.agents.common;
 import ai.sapper.cdc.common.AbstractState;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.common.utils.ReflectionUtils;
 import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.ExitCallback;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
@@ -143,46 +144,63 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNodeEnvState> {
         return state().state();
     }
 
-    private static final Map<String, NameNodeEnv> __instances = new HashMap<>();
 
     public static NameNodeEnv setup(@NonNull String name,
                                     @NonNull Class<?> caller,
                                     @NonNull HierarchicalConfiguration<ImmutableNode> config) throws NameNodeError {
-        synchronized (__instances) {
-            NameNodeEnv env = __instances.get(name);
+        BaseEnv.initLock();
+        try {
+            NameNodeEnv env = BaseEnv.get(name, NameNodeEnv.class);
             if (env == null) {
                 env = new NameNodeEnv(name, caller);
-                __instances.put(name, env);
+                BaseEnv.add(name, env);
             }
             return env.init(config, caller);
+        } catch (Exception ex) {
+            DefaultLogger.stacktrace(ex);
+            DefaultLogger.LOGGER.error(ex.getLocalizedMessage());
+            throw new NameNodeError(ex);
+        } finally {
+            BaseEnv.initUnLock();
         }
     }
 
     public static ENameNodeEnvState dispose(@NonNull String name) throws NameNodeError {
-        synchronized (__instances) {
-            NameNodeEnv env = __instances.remove(name);
+        BaseEnv.initLock();
+        try {
+            NameNodeEnv env = (NameNodeEnv) BaseEnv.remove(name);
             if (env == null) {
                 throw new NameNodeError(String.format("NameNode Env instance not found. [name=%s]", name));
             }
             return env.stop();
+        } finally {
+            BaseEnv.initUnLock();
         }
     }
 
     public static NameNodeEnv get(@NonNull String name) throws NameNodeError {
-        NameNodeEnv env = __instances.get(name);
-        if (env == null) {
-            throw new NameNodeError(String.format("NameNode Env instance not found. [name=%s]", name));
+        try {
+            NameNodeEnv env = BaseEnv.get(name, NameNodeEnv.class);
+            if (env == null) {
+                throw new NameNodeError(String.format("NameNode Env instance not found. [name=%s]", name));
+            }
+            Preconditions.checkState(env.state().isAvailable());
+            return env;
+        } catch (Exception ex) {
+            throw new NameNodeError(ex);
         }
-        Preconditions.checkState(env.state().isAvailable());
-        return env;
     }
 
     public static NameNodeEnvState status(@NonNull String name) throws NameNodeError {
-        NameNodeEnv env = __instances.get(name);
-        if (env == null) {
-            throw new NameNodeError(String.format("NameNode Env instance not found. [name=%s]", name));
+        try {
+            NameNodeEnv env = BaseEnv.get(name, NameNodeEnv.class);
+            if (env == null) {
+                throw new NameNodeError(String.format("NameNode Env instance not found. [name=%s]", name));
+            }
+            return env.state();
+        } catch (Exception ex) {
+            throw new NameNodeError(ex);
         }
-        return env.state();
     }
 
     public static <T> void audit(@NonNull String name, @NonNull Class<?> caller, @NonNull T data) {
@@ -205,6 +223,17 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNodeEnvState> {
             DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(ex));
             DefaultLogger.LOGGER.error(ex.getLocalizedMessage());
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <S extends SchemaManager> S schemaManager(@NonNull Class<? extends SchemaManager> type) throws Exception {
+        if (schemaManager != null && !ReflectionUtils.isSuperType(type, schemaManager.getClass())) {
+            throw new Exception(
+                    String.format("Invalid SchemaManager type. [expected=%s][actual=%s]",
+                            type.getCanonicalName(), schemaManager.getClass().getCanonicalName()));
+        }
+        return (S) schemaManager;
     }
 
     public enum ENameNodeEnvState {

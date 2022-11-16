@@ -3,9 +3,11 @@ package ai.sapper.cdc.core;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.audit.AuditLogger;
 import ai.sapper.cdc.common.utils.NetUtils;
+import ai.sapper.cdc.common.utils.ReflectionUtils;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.keystore.KeyStore;
 import ai.sapper.cdc.core.model.ModuleInstance;
+import ai.sapper.cdc.core.schema.SchemaManager;
 import ai.sapper.cdc.core.utils.DistributedLockBuilder;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -19,7 +21,10 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 import java.io.File;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Getter
 @Accessors(fluent = true)
@@ -233,6 +238,39 @@ public abstract class BaseEnv<T> {
 
     public String source() {
         return moduleInstance.getSource();
+    }
+
+    public abstract <S extends SchemaManager> S schemaManager(@NonNull Class<? extends SchemaManager> type) throws Exception;
+
+    private static final Map<String, BaseEnv<?>> __instances = new LinkedHashMap<>();
+    private static final ReentrantLock __instanceLock = new ReentrantLock();
+
+    @SuppressWarnings("unchecked")
+    public static <T extends BaseEnv<?>> T get(@NonNull String name, @NonNull Class<? extends T> type) throws Exception {
+        BaseEnv<?> env = __instances.get(name);
+        if (env != null) {
+            if (!ReflectionUtils.isSuperType(type, env.getClass()))
+                throw new Exception(
+                        String.format("Invalid Env type. [name=%s][expected=%s][actual=%s]",
+                                name, type.getCanonicalName(), env.getClass().getCanonicalName()));
+        }
+        return (T) env;
+    }
+
+    public static void add(@NonNull String name, @NonNull BaseEnv<?> env) {
+        __instances.put(name, env);
+    }
+
+    public static BaseEnv<?> remove(@NonNull String name) {
+        return __instances.remove(name);
+    }
+
+    public static void initLock() {
+        __instanceLock.lock();
+    }
+
+    public static void initUnLock() {
+        __instanceLock.unlock();
     }
 
     @Getter
