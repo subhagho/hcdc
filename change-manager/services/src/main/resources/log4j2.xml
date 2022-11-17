@@ -113,8 +113,14 @@
         <Logger name="org.eclipse.jetty.util.log" level="warn" additivity="false">
             <AppenderRef ref="ContainerLog"/>
         </Logger>
-        <Logger name="org.apache.parquet.hadoop" level="warn" additivity="false">
-            <AppenderRef ref="ContainerLog"/>
+        <Logger name="org.apache.parquet" additivity="false" level="warn">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="org.apache.kafka" additivity="false" level="warn">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="org.apache.zookeeper" additivity="false" level="warn">
+            <AppenderRef ref="Console"/>
         </Logger>
         <Root level="debug">
             <AppenderRef ref="Console"/>

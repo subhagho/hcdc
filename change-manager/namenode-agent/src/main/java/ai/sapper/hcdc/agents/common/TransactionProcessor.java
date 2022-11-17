@@ -262,14 +262,19 @@ public abstract class TransactionProcessor {
                         .withFile(file);
             }
         }
-        if (fileState == null)
-            fileState = stateManager()
+        if (fileState != null) {
+            stateManager()
                     .fileStateHelper()
-                    .create(file,
-                            updateTime,
-                            blockSize,
-                            EFileState.New,
-                            txId);
+                    .delete(fileState.getFileInfo().getHdfsPath());
+        }
+
+        fileState = stateManager()
+                .fileStateHelper()
+                .create(file,
+                        updateTime,
+                        blockSize,
+                        EFileState.New,
+                        txId);
         if (ProtoBufUtils.update(fileState, file)) {
             fileState = stateManager()
                     .fileStateHelper()

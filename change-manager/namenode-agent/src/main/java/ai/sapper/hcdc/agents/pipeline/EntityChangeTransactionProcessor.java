@@ -113,14 +113,17 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
         }
 
         sender.send(message);
-        if (message.mode() == MessageObject.MessageMode.Forked) {
-            fileState = stateManager()
-                    .fileStateHelper()
-                    .delete(fileState.getFileInfo().getHdfsPath());
-        } else {
-            fileState = stateManager()
-                    .fileStateHelper()
-                    .markDeleted(fileState.getFileInfo().getHdfsPath(), true);
+
+        if (fileState != null) {
+            if (message.mode() == MessageObject.MessageMode.Forked) {
+                fileState = stateManager()
+                        .fileStateHelper()
+                        .delete(fileState.getFileInfo().getHdfsPath());
+            } else {
+                fileState = stateManager()
+                        .fileStateHelper()
+                        .markDeleted(fileState.getFileInfo().getHdfsPath(), true);
+            }
         }
     }
 

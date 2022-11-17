@@ -43,7 +43,13 @@
         <Logger name="org.eclipse.jetty" additivity="false" level="warn">
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="org.apache.parquet.io" additivity="false" level="warn">
+        <Logger name="org.apache.parquet" additivity="false" level="warn">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="org.apache.kafka" additivity="false" level="warn">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="org.apache.zookeeper" additivity="false" level="warn">
             <AppenderRef ref="Console"/>
         </Logger>
         <Logger name="ai.sapper" additivity="false" level="debug">
