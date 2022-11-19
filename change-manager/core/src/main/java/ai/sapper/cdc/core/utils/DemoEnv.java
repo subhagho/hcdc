@@ -1,6 +1,6 @@
 package ai.sapper.cdc.core.utils;
 
-import ai.sapper.cdc.core.AbstractEnvState;
+import ai.sapper.cdc.common.AbstractEnvState;
 import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.schema.SchemaManager;
 import lombok.Getter;

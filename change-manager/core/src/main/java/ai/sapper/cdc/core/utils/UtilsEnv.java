@@ -1,9 +1,7 @@
 package ai.sapper.cdc.core.utils;
 
-import ai.sapper.cdc.common.AbstractState;
-import ai.sapper.cdc.core.AbstractEnvState;
+import ai.sapper.cdc.common.AbstractEnvState;
 import ai.sapper.cdc.core.BaseEnv;
-import ai.sapper.cdc.core.model.LongTxState;
 import ai.sapper.cdc.core.schema.SchemaManager;
 import lombok.NonNull;
 import org.apache.commons.lang3.NotImplementedException;

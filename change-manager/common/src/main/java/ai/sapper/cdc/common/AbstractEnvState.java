@@ -1,4 +1,4 @@
-package ai.sapper.cdc.core;
+package ai.sapper.cdc.common;
 
 import ai.sapper.cdc.common.AbstractState;
 import lombok.NonNull;

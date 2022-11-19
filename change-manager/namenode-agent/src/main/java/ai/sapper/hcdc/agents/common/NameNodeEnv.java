@@ -1,10 +1,9 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.cdc.common.AbstractState;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.ReflectionUtils;
-import ai.sapper.cdc.core.AbstractEnvState;
+import ai.sapper.cdc.common.AbstractEnvState;
 import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.ExitCallback;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
@@ -28,8 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 
 @Getter
 @Accessors(fluent = true)
