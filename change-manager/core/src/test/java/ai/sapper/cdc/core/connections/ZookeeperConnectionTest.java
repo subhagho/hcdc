@@ -3,7 +3,7 @@ package ai.sapper.cdc.core.connections;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.cdc.core.DemoEnv;
+import ai.sapper.cdc.core.utils.DemoEnv;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import ai.sapper.cdc.core.connections.settngs.ZookeeperSettings;
 import com.google.common.base.Preconditions;

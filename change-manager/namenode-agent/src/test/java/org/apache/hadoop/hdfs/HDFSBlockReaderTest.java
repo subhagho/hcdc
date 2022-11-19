@@ -4,7 +4,7 @@ import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.hadoop.HdfsHAConnection;
 import ai.sapper.cdc.core.model.HDFSBlockData;
-import ai.sapper.hcdc.DemoEnv;
+import ai.sapper.cdc.core.utils.DemoEnv;
 import ai.sapper.hcdc.agents.namenode.TestUtils;
 import com.google.common.base.Preconditions;
 import org.apache.commons.configuration2.XMLConfiguration;

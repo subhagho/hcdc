@@ -4,6 +4,7 @@ import ai.sapper.cdc.common.AbstractState;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.ReflectionUtils;
+import ai.sapper.cdc.core.AbstractEnvState;
 import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.ExitCallback;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
@@ -32,7 +33,7 @@ import java.util.Map;
 
 @Getter
 @Accessors(fluent = true)
-public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNodeEnvState> {
+public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
     public final Logger LOG;
 
     public static final String NN_IGNORE_TNX = "%s.IGNORE";
@@ -197,7 +198,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNodeEnvState> {
             if (env == null) {
                 throw new NameNodeError(String.format("NameNode Env instance not found. [name=%s]", name));
             }
-            return env.state();
+            return (NameNodeEnvState) env.state();
         } catch (Exception ex) {
             throw new NameNodeError(ex);
         }
@@ -251,7 +252,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNodeEnvState> {
         public void run() {
             try {
                 if (env.exitCallbacks() != null) {
-                    for (ExitCallback<NameNodeEnvState> callback : env.exitCallbacks()) {
+                    for (ExitCallback<ENameNodeEnvState> callback : env.exitCallbacks()) {
                         callback.call(env.state());
                     }
                 }
@@ -267,7 +268,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.NameNodeEnvState> {
     @Getter
     @Setter
     @Accessors(fluent = true)
-    public static class NameNodeEnvState extends AbstractState<ENameNodeEnvState> {
+    public static class NameNodeEnvState extends AbstractEnvState<ENameNodeEnvState> {
 
         public NameNodeEnvState() {
             super(ENameNodeEnvState.Error);

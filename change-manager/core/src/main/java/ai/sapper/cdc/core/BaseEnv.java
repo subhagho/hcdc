@@ -28,7 +28,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Getter
 @Accessors(fluent = true)
-public abstract class BaseEnv<T> {
+public abstract class BaseEnv<T extends Enum<?>> {
     public static class Constants {
         public static final String __CONFIG_PATH_ENV = "env";
         public static final String CONFIG_ENV_NAME = String.format("%s.name", __CONFIG_PATH_ENV);
@@ -43,7 +43,7 @@ public abstract class BaseEnv<T> {
     private HierarchicalConfiguration<ImmutableNode> rootConfig;
     private HierarchicalConfiguration<ImmutableNode> baseConfig;
     private List<ExitCallback<T>> exitCallbacks;
-    private T state;
+    private AbstractEnvState<T> state;
     private ModuleInstance moduleInstance;
     private BaseStateManager<?> stateManager;
     private AuditLogger auditLogger;
@@ -64,7 +64,7 @@ public abstract class BaseEnv<T> {
 
     public BaseEnv<T> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                            @NonNull BaseEnvConfig config,
-                           @NonNull T state) throws ConfigurationException {
+                           @NonNull AbstractEnvState<T> state) throws ConfigurationException {
         try {
             this.config = config;
         } catch (Exception ex) {
@@ -74,14 +74,14 @@ public abstract class BaseEnv<T> {
     }
 
     public BaseEnv<T> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                           @NonNull T state) throws ConfigurationException {
+                           @NonNull AbstractEnvState<T> state) throws ConfigurationException {
         config = new BaseEnvConfig(xmlConfig);
         config.read();
         return setup(xmlConfig, state);
     }
 
     private BaseEnv<T> setup(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                             @NonNull T state) throws ConfigurationException {
+                             @NonNull AbstractEnvState<T> state) throws ConfigurationException {
         try {
             String temp = System.getProperty("java.io.tmpdir");
             temp = String.format("%s/sapper/cdc/%s", temp, getClass().getSimpleName());

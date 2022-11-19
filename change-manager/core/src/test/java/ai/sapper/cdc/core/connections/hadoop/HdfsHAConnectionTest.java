@@ -1,7 +1,7 @@
 package ai.sapper.cdc.core.connections.hadoop;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.cdc.core.DemoEnv;
+import ai.sapper.cdc.core.utils.DemoEnv;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.TestUtils;
 import com.google.common.base.Preconditions;

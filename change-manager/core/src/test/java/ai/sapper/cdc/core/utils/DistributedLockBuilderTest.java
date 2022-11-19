@@ -3,7 +3,6 @@ package ai.sapper.cdc.core.utils;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.cdc.core.DemoEnv;
 import ai.sapper.cdc.core.DistributedLock;
 import com.google.common.base.Preconditions;
 import org.apache.commons.configuration2.XMLConfiguration;

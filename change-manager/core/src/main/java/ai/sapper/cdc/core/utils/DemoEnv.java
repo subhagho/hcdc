@@ -1,8 +1,8 @@
-package ai.sapper.cdc.core;
+package ai.sapper.cdc.core.utils;
 
+import ai.sapper.cdc.core.AbstractEnvState;
+import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.schema.SchemaManager;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -13,7 +13,7 @@ import org.apache.commons.lang3.NotImplementedException;
 
 @Getter
 @Accessors(fluent = true)
-public class DemoEnv extends BaseEnv<DemoEnv.DemoState> {
+public class DemoEnv extends BaseEnv<DemoEnv.EDemoState> {
     public DemoEnv() {
         super("demo");
     }
@@ -23,8 +23,20 @@ public class DemoEnv extends BaseEnv<DemoEnv.DemoState> {
         throw new NotImplementedException("Should not be called...");
     }
 
-    public static class DemoState {
+    public enum EDemoState {
+        Error
+    }
 
+    public static class DemoState extends AbstractEnvState<EDemoState> {
+
+        public DemoState() {
+            super(EDemoState.Error);
+        }
+
+        @Override
+        public boolean isAvailable() {
+            return false;
+        }
     }
 
     public static final String __CONFIG_PATH = "demo";
@@ -34,7 +46,7 @@ public class DemoEnv extends BaseEnv<DemoEnv.DemoState> {
     private HierarchicalConfiguration<ImmutableNode> configNode;
     private final String module = "TEST";
 
-    public BaseEnv<DemoState> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
+    public BaseEnv<EDemoState> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
         withStoreKey(TEST_PASSWD);
         super.init(xmlConfig, new DemoState());
 

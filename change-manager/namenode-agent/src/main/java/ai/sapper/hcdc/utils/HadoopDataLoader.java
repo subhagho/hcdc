@@ -54,7 +54,7 @@ public class HadoopDataLoader {
         try {
             config = ConfigReader.read(configfile, EConfigFileType.File);
             UtilsEnv env = new UtilsEnv(getClass().getSimpleName());
-            env.init(config, new LongTxState());
+            env.init(config, new UtilsEnv.UtilsState());
 
             loaderConfig = new LoaderConfig(env.rootConfig());
             loaderConfig.read();
