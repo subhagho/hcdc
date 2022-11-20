@@ -205,6 +205,9 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
                                         le.getLocalizedMessage(), retryCount));
                                 Thread.sleep(receiveBatchTimeout);
                                 retryCount++;
+                            } catch (InvalidMessageError me) {
+                                LOG.error(me.getLocalizedMessage());
+                                errorSender.send(message);
                             }
                         }
                     }
@@ -404,7 +407,6 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
                 }
                 errorConfig = new MessagingConfig();
                 errorConfig.read(config);
-
             } catch (Exception ex) {
                 throw new ConfigurationException(ex);
             }

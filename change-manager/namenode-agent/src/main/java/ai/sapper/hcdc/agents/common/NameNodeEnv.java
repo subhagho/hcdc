@@ -113,6 +113,9 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
         }
     }
 
+    public String hdfsTmpDir() {
+        return nEnvConfig().hdfsTmpDir();
+    }
 
     public ENameNodeEnvState error(@NonNull Throwable t) {
         state().error(t);
@@ -291,6 +294,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
             private static final String CONFIG_HADOOP_NAMESPACE = "hadoop.namespace";
             private static final String CONFIG_HADOOP_VERSION = "hadoop.version";
             private static final String CONFIG_HADOOP_ADMIN_URL = "hadoop.adminUrl";
+            private static final String CONFIG_HADOOP_TMP_DIR = "hadoop.tmpDir";
 
             private static final String CONFIG_HADOOP_CONFIG = "hadoop.config";
 
@@ -308,6 +312,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
         private boolean hadoopUseSSL = true;
         private boolean readHadoopConfig = true;
         private short hadoopVersion = 2;
+        private String hdfsTmpDir = "/tmp/";
 
         public NameNodeEnvConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, Constants.__CONFIG_PATH);
@@ -329,6 +334,9 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
                 if (get().containsKey(Constants.CONFIG_HADOOP_ADMIN_URL)) {
                     hadoopAdminUrl = get().getString(Constants.CONFIG_HADOOP_ADMIN_URL);
                 }
+                if (get().containsKey(Constants.CONFIG_HADOOP_TMP_DIR)) {
+                    hdfsTmpDir = get().getString(Constants.CONFIG_HADOOP_TMP_DIR);
+                }
                 if (readHadoopConfig)
                     readHadoopConfigs();
             } catch (Throwable t) {
@@ -338,27 +346,16 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
 
         private void readHadoopConfigs() throws Exception {
             hadoopNamespace = get().getString(Constants.CONFIG_HADOOP_NAMESPACE);
-            if (Strings.isNullOrEmpty(hadoopNamespace)) {
-                throw new ConfigurationException(
-                        String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_HADOOP_NAMESPACE));
-            }
+            checkStringValue(hadoopNamespace, getClass(), Constants.CONFIG_HADOOP_NAMESPACE);
             hadoopInstanceName = get().getString(Constants.CONFIG_HADOOP_INSTANCE);
-            if (Strings.isNullOrEmpty(hadoopInstanceName)) {
-                throw new ConfigurationException(
-                        String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_HADOOP_INSTANCE));
-            }
-
+            checkStringValue(hadoopInstanceName, getClass(), Constants.CONFIG_HADOOP_INSTANCE);
             hdfsAdminConnection = get().getString(Constants.CONFIG_CONNECTION_HDFS);
-            if (Strings.isNullOrEmpty(hdfsAdminConnection)) {
-                throw new ConfigurationException(
-                        String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_CONNECTION_HDFS));
-            }
+            checkStringValue(hdfsAdminConnection, getClass(), Constants.CONFIG_CONNECTION_HDFS);
             hadoopHome = get().getString(Constants.CONFIG_HADOOP_HOME);
             if (Strings.isNullOrEmpty(hadoopHome)) {
                 hadoopHome = System.getProperty("HADOOP_HOME");
                 if (Strings.isNullOrEmpty(hadoopHome))
-                    throw new ConfigurationException(
-                            String.format("NameNode Agent Configuration Error: missing [%s]", Constants.CONFIG_HADOOP_HOME));
+                    checkStringValue(hadoopHome, getClass(), Constants.CONFIG_HADOOP_HOME);
             }
             hadoopConfFile = get().getString(Constants.CONFIG_HADOOP_CONFIG);
             hadoopConfig = ConfigReader.readFileNode(get(), Constants.CONFIG_HADOOP_CONFIG);

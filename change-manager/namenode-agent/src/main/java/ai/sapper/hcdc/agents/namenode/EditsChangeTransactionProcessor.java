@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.agents.namenode;
 
 import ai.sapper.cdc.common.schema.SchemaEntity;
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
@@ -311,6 +312,10 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                     .fileStateHelper()
                     .checkIsDirectoryPath(path)) {
                 if (retry) return;
+                if (path.startsWith("/tmp/")) { // TODO: Read temp directory from config
+                    DefaultLogger.warn(LOG, String.format("Temp file not registered. [path=%s]", path));
+                    return;
+                }
                 throw new InvalidTransactionError(txId,
                         DFSError.ErrorCode.SYNC_STOPPED,
                         path,

@@ -44,6 +44,8 @@ public class SchemaHelper {
         return builder.toString();
     }
 
+    @Getter
+    @Accessors(fluent = true)
     public static class ObjectCache {
         private final Set<ObjectField> objects = new LinkedHashSet<>();
         private Map<String, Schema> schemas = new LinkedHashMap<>();
@@ -57,7 +59,7 @@ public class SchemaHelper {
                 }
             }
 
-            String name = String.format("_%s%d", field.name(), index);
+            String name = String.format("%s_%d__", field.name().toUpperCase(), index);
             field.reference(name);
             index++;
 
@@ -151,7 +153,11 @@ public class SchemaHelper {
                 if (!map.isEmpty()) {
                     MapField mf = Field.isMapObject(name, (Map<String, ?>) value);
                     if (mf != null) return mf;
-                    return ObjectField.parse(name, (Map<String, Object>) value, nested, cache);
+                    if (nested)
+                        return ObjectField.parse(name, (Map<String, Object>) value, true, cache);
+                    else {
+                        return new JsonField(name);
+                    }
                 }
             }
             return new NullField(name);
@@ -491,6 +497,7 @@ public class SchemaHelper {
             super((Strings.isNullOrEmpty(field.name()) ? "object" : field.name()), EDataType.Object);
             nullable(field.nullable());
             namespace = field.namespace;
+            reference = field.reference;
             if (field.fields != null) {
                 fields = new HashMap<>(field.fields);
             }
@@ -544,8 +551,12 @@ public class SchemaHelper {
                         Field field = fields.get(name);
                         if (!((ObjectField) target).hasField(field)) return false;
                     }
-                    return true;
                 }
+                for (String name : ((ObjectField) target).fields.keySet()) {
+                    Field field = ((ObjectField) target).fields.get(name);
+                    if (!hasField(field)) return false;
+                }
+                return true;
             }
             return false;
         }
