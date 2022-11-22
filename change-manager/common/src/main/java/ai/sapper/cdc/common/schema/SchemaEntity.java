@@ -17,6 +17,7 @@ public class SchemaEntity {
     private int group = -1;
     private String entity;
     private boolean enabled = false;
+    private String zkPath;
 
     public SchemaEntity() {
     }
