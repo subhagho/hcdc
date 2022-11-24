@@ -88,7 +88,7 @@ private static final long serialVersionUID = 0L;
           }
           case 58: {
             ai.sapper.hcdc.common.model.DFSSchemaEntity.Builder subBuilder = null;
-            if (((bitField0_ & 0x00020000) != 0)) {
+            if (((bitField0_ & 0x00040000) != 0)) {
               subBuilder = target_.toBuilder();
             }
             target_ = input.readMessage(ai.sapper.hcdc.common.model.DFSSchemaEntity.PARSER, extensionRegistry);
@@ -96,7 +96,7 @@ private static final long serialVersionUID = 0L;
               subBuilder.mergeFrom(target_);
               target_ = subBuilder.buildPartial();
             }
-            bitField0_ |= 0x00020000;
+            bitField0_ |= 0x00040000;
             break;
           }
           case 66: {
@@ -267,6 +267,20 @@ private static final long serialVersionUID = 0L;
             changeCase_ = 19;
             break;
           }
+          case 162: {
+            ai.sapper.hcdc.common.model.DFSAdminMessage.Builder subBuilder = null;
+            if (changeCase_ == 20) {
+              subBuilder = ((ai.sapper.hcdc.common.model.DFSAdminMessage) change_).toBuilder();
+            }
+            change_ =
+                input.readMessage(ai.sapper.hcdc.common.model.DFSAdminMessage.PARSER, extensionRegistry);
+            if (subBuilder != null) {
+              subBuilder.mergeFrom((ai.sapper.hcdc.common.model.DFSAdminMessage) change_);
+              change_ = subBuilder.buildPartial();
+            }
+            changeCase_ = 20;
+            break;
+          }
           default: {
             if (!parseUnknownField(
                 input, unknownFields, extensionRegistry, tag)) {
@@ -319,6 +333,7 @@ private static final long serialVersionUID = 0L;
     BLOCKTRUNCATE(17),
     IGNORE(18),
     ERROR(19),
+    ADMIN(20),
     CHANGE_NOT_SET(0);
     private final int value;
     private ChangeCase(int value) {
@@ -348,6 +363,7 @@ private static final long serialVersionUID = 0L;
         case 17: return BLOCKTRUNCATE;
         case 18: return IGNORE;
         case 19: return ERROR;
+        case 20: return ADMIN;
         case 0: return CHANGE_NOT_SET;
         default: return null;
       }
@@ -895,6 +911,37 @@ private static final long serialVersionUID = 0L;
     return ai.sapper.hcdc.common.model.DFSError.getDefaultInstance();
   }
 
+  public static final int ADMIN_FIELD_NUMBER = 20;
+  /**
+   * <code>.ai_sapper_hcdc_common_model.DFSAdminMessage admin = 20;</code>
+   * @return Whether the admin field is set.
+   */
+  @java.lang.Override
+  public boolean hasAdmin() {
+    return changeCase_ == 20;
+  }
+  /**
+   * <code>.ai_sapper_hcdc_common_model.DFSAdminMessage admin = 20;</code>
+   * @return The admin.
+   */
+  @java.lang.Override
+  public ai.sapper.hcdc.common.model.DFSAdminMessage getAdmin() {
+    if (changeCase_ == 20) {
+       return (ai.sapper.hcdc.common.model.DFSAdminMessage) change_;
+    }
+    return ai.sapper.hcdc.common.model.DFSAdminMessage.getDefaultInstance();
+  }
+  /**
+   * <code>.ai_sapper_hcdc_common_model.DFSAdminMessage admin = 20;</code>
+   */
+  @java.lang.Override
+  public ai.sapper.hcdc.common.model.DFSAdminMessageOrBuilder getAdminOrBuilder() {
+    if (changeCase_ == 20) {
+       return (ai.sapper.hcdc.common.model.DFSAdminMessage) change_;
+    }
+    return ai.sapper.hcdc.common.model.DFSAdminMessage.getDefaultInstance();
+  }
+
   public static final int TARGET_FIELD_NUMBER = 7;
   private ai.sapper.hcdc.common.model.DFSSchemaEntity target_;
   /**
@@ -903,7 +950,7 @@ private static final long serialVersionUID = 0L;
    */
   @java.lang.Override
   public boolean hasTarget() {
-    return ((bitField0_ & 0x00020000) != 0);
+    return ((bitField0_ & 0x00040000) != 0);
   }
   /**
    * <code>optional .ai_sapper_hcdc_common_model.DFSSchemaEntity target = 7;</code>
@@ -1024,6 +1071,12 @@ private static final long serialVersionUID = 0L;
         return false;
       }
     }
+    if (hasAdmin()) {
+      if (!getAdmin().isInitialized()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+    }
     if (hasTarget()) {
       if (!getTarget().isInitialized()) {
         memoizedIsInitialized = 0;
@@ -1052,7 +1105,7 @@ private static final long serialVersionUID = 0L;
     if (((bitField0_ & 0x00000010) != 0)) {
       output.writeUInt64(6, timestamp_);
     }
-    if (((bitField0_ & 0x00020000) != 0)) {
+    if (((bitField0_ & 0x00040000) != 0)) {
       output.writeMessage(7, getTarget());
     }
     if (changeCase_ == 8) {
@@ -1091,6 +1144,9 @@ private static final long serialVersionUID = 0L;
     if (changeCase_ == 19) {
       output.writeMessage(19, (ai.sapper.hcdc.common.model.DFSError) change_);
     }
+    if (changeCase_ == 20) {
+      output.writeMessage(20, (ai.sapper.hcdc.common.model.DFSAdminMessage) change_);
+    }
     unknownFields.writeTo(output);
   }
 
@@ -1118,7 +1174,7 @@ private static final long serialVersionUID = 0L;
       size += com.google.protobuf.CodedOutputStream
         .computeUInt64Size(6, timestamp_);
     }
-    if (((bitField0_ & 0x00020000) != 0)) {
+    if (((bitField0_ & 0x00040000) != 0)) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(7, getTarget());
     }
@@ -1169,6 +1225,10 @@ private static final long serialVersionUID = 0L;
     if (changeCase_ == 19) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(19, (ai.sapper.hcdc.common.model.DFSError) change_);
+    }
+    if (changeCase_ == 20) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(20, (ai.sapper.hcdc.common.model.DFSAdminMessage) change_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -1265,6 +1325,10 @@ private static final long serialVersionUID = 0L;
         if (!getError()
             .equals(other.getError())) return false;
         break;
+      case 20:
+        if (!getAdmin()
+            .equals(other.getAdmin())) return false;
+        break;
       case 0:
       default:
     }
@@ -1353,6 +1417,10 @@ private static final long serialVersionUID = 0L;
       case 19:
         hash = (37 * hash) + ERROR_FIELD_NUMBER;
         hash = (53 * hash) + getError().hashCode();
+        break;
+      case 20:
+        hash = (37 * hash) + ADMIN_FIELD_NUMBER;
+        hash = (53 * hash) + getAdmin().hashCode();
         break;
       case 0:
       default:
@@ -1511,7 +1579,7 @@ private static final long serialVersionUID = 0L;
       } else {
         targetBuilder_.clear();
       }
-      bitField0_ = (bitField0_ & ~0x00020000);
+      bitField0_ = (bitField0_ & ~0x00040000);
       changeCase_ = 0;
       change_ = null;
       return this;
@@ -1650,13 +1718,20 @@ private static final long serialVersionUID = 0L;
           result.change_ = errorBuilder_.build();
         }
       }
-      if (((from_bitField0_ & 0x00020000) != 0)) {
+      if (changeCase_ == 20) {
+        if (adminBuilder_ == null) {
+          result.change_ = change_;
+        } else {
+          result.change_ = adminBuilder_.build();
+        }
+      }
+      if (((from_bitField0_ & 0x00040000) != 0)) {
         if (targetBuilder_ == null) {
           result.target_ = target_;
         } else {
           result.target_ = targetBuilder_.build();
         }
-        to_bitField0_ |= 0x00020000;
+        to_bitField0_ |= 0x00040000;
       }
       result.bitField0_ = to_bitField0_;
       result.changeCase_ = changeCase_;
@@ -1779,6 +1854,10 @@ private static final long serialVersionUID = 0L;
           mergeError(other.getError());
           break;
         }
+        case ADMIN: {
+          mergeAdmin(other.getAdmin());
+          break;
+        }
         case CHANGE_NOT_SET: {
           break;
         }
@@ -1865,6 +1944,11 @@ private static final long serialVersionUID = 0L;
       }
       if (hasError()) {
         if (!getError().isInitialized()) {
+          return false;
+        }
+      }
+      if (hasAdmin()) {
+        if (!getAdmin().isInitialized()) {
           return false;
         }
       }
@@ -3981,6 +4065,148 @@ private static final long serialVersionUID = 0L;
       return errorBuilder_;
     }
 
+    private com.google.protobuf.SingleFieldBuilderV3<
+        ai.sapper.hcdc.common.model.DFSAdminMessage, ai.sapper.hcdc.common.model.DFSAdminMessage.Builder, ai.sapper.hcdc.common.model.DFSAdminMessageOrBuilder> adminBuilder_;
+    /**
+     * <code>.ai_sapper_hcdc_common_model.DFSAdminMessage admin = 20;</code>
+     * @return Whether the admin field is set.
+     */
+    @java.lang.Override
+    public boolean hasAdmin() {
+      return changeCase_ == 20;
+    }
+    /**
+     * <code>.ai_sapper_hcdc_common_model.DFSAdminMessage admin = 20;</code>
+     * @return The admin.
+     */
+    @java.lang.Override
+    public ai.sapper.hcdc.common.model.DFSAdminMessage getAdmin() {
+      if (adminBuilder_ == null) {
+        if (changeCase_ == 20) {
+          return (ai.sapper.hcdc.common.model.DFSAdminMessage) change_;
+        }
+        return ai.sapper.hcdc.common.model.DFSAdminMessage.getDefaultInstance();
+      } else {
+        if (changeCase_ == 20) {
+          return adminBuilder_.getMessage();
+        }
+        return ai.sapper.hcdc.common.model.DFSAdminMessage.getDefaultInstance();
+      }
+    }
+    /**
+     * <code>.ai_sapper_hcdc_common_model.DFSAdminMessage admin = 20;</code>
+     */
+    public Builder setAdmin(ai.sapper.hcdc.common.model.DFSAdminMessage value) {
+      if (adminBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        change_ = value;
+        onChanged();
+      } else {
+        adminBuilder_.setMessage(value);
+      }
+      changeCase_ = 20;
+      return this;
+    }
+    /**
+     * <code>.ai_sapper_hcdc_common_model.DFSAdminMessage admin = 20;</code>
+     */
+    public Builder setAdmin(
+        ai.sapper.hcdc.common.model.DFSAdminMessage.Builder builderForValue) {
+      if (adminBuilder_ == null) {
+        change_ = builderForValue.build();
+        onChanged();
+      } else {
+        adminBuilder_.setMessage(builderForValue.build());
+      }
+      changeCase_ = 20;
+      return this;
+    }
+    /**
+     * <code>.ai_sapper_hcdc_common_model.DFSAdminMessage admin = 20;</code>
+     */
+    public Builder mergeAdmin(ai.sapper.hcdc.common.model.DFSAdminMessage value) {
+      if (adminBuilder_ == null) {
+        if (changeCase_ == 20 &&
+            change_ != ai.sapper.hcdc.common.model.DFSAdminMessage.getDefaultInstance()) {
+          change_ = ai.sapper.hcdc.common.model.DFSAdminMessage.newBuilder((ai.sapper.hcdc.common.model.DFSAdminMessage) change_)
+              .mergeFrom(value).buildPartial();
+        } else {
+          change_ = value;
+        }
+        onChanged();
+      } else {
+        if (changeCase_ == 20) {
+          adminBuilder_.mergeFrom(value);
+        } else {
+          adminBuilder_.setMessage(value);
+        }
+      }
+      changeCase_ = 20;
+      return this;
+    }
+    /**
+     * <code>.ai_sapper_hcdc_common_model.DFSAdminMessage admin = 20;</code>
+     */
+    public Builder clearAdmin() {
+      if (adminBuilder_ == null) {
+        if (changeCase_ == 20) {
+          changeCase_ = 0;
+          change_ = null;
+          onChanged();
+        }
+      } else {
+        if (changeCase_ == 20) {
+          changeCase_ = 0;
+          change_ = null;
+        }
+        adminBuilder_.clear();
+      }
+      return this;
+    }
+    /**
+     * <code>.ai_sapper_hcdc_common_model.DFSAdminMessage admin = 20;</code>
+     */
+    public ai.sapper.hcdc.common.model.DFSAdminMessage.Builder getAdminBuilder() {
+      return getAdminFieldBuilder().getBuilder();
+    }
+    /**
+     * <code>.ai_sapper_hcdc_common_model.DFSAdminMessage admin = 20;</code>
+     */
+    @java.lang.Override
+    public ai.sapper.hcdc.common.model.DFSAdminMessageOrBuilder getAdminOrBuilder() {
+      if ((changeCase_ == 20) && (adminBuilder_ != null)) {
+        return adminBuilder_.getMessageOrBuilder();
+      } else {
+        if (changeCase_ == 20) {
+          return (ai.sapper.hcdc.common.model.DFSAdminMessage) change_;
+        }
+        return ai.sapper.hcdc.common.model.DFSAdminMessage.getDefaultInstance();
+      }
+    }
+    /**
+     * <code>.ai_sapper_hcdc_common_model.DFSAdminMessage admin = 20;</code>
+     */
+    private com.google.protobuf.SingleFieldBuilderV3<
+        ai.sapper.hcdc.common.model.DFSAdminMessage, ai.sapper.hcdc.common.model.DFSAdminMessage.Builder, ai.sapper.hcdc.common.model.DFSAdminMessageOrBuilder> 
+        getAdminFieldBuilder() {
+      if (adminBuilder_ == null) {
+        if (!(changeCase_ == 20)) {
+          change_ = ai.sapper.hcdc.common.model.DFSAdminMessage.getDefaultInstance();
+        }
+        adminBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+            ai.sapper.hcdc.common.model.DFSAdminMessage, ai.sapper.hcdc.common.model.DFSAdminMessage.Builder, ai.sapper.hcdc.common.model.DFSAdminMessageOrBuilder>(
+                (ai.sapper.hcdc.common.model.DFSAdminMessage) change_,
+                getParentForChildren(),
+                isClean());
+        change_ = null;
+      }
+      changeCase_ = 20;
+      onChanged();;
+      return adminBuilder_;
+    }
+
     private ai.sapper.hcdc.common.model.DFSSchemaEntity target_;
     private com.google.protobuf.SingleFieldBuilderV3<
         ai.sapper.hcdc.common.model.DFSSchemaEntity, ai.sapper.hcdc.common.model.DFSSchemaEntity.Builder, ai.sapper.hcdc.common.model.DFSSchemaEntityOrBuilder> targetBuilder_;
@@ -3989,7 +4215,7 @@ private static final long serialVersionUID = 0L;
      * @return Whether the target field is set.
      */
     public boolean hasTarget() {
-      return ((bitField0_ & 0x00020000) != 0);
+      return ((bitField0_ & 0x00040000) != 0);
     }
     /**
      * <code>optional .ai_sapper_hcdc_common_model.DFSSchemaEntity target = 7;</code>
@@ -4015,7 +4241,7 @@ private static final long serialVersionUID = 0L;
       } else {
         targetBuilder_.setMessage(value);
       }
-      bitField0_ |= 0x00020000;
+      bitField0_ |= 0x00040000;
       return this;
     }
     /**
@@ -4029,7 +4255,7 @@ private static final long serialVersionUID = 0L;
       } else {
         targetBuilder_.setMessage(builderForValue.build());
       }
-      bitField0_ |= 0x00020000;
+      bitField0_ |= 0x00040000;
       return this;
     }
     /**
@@ -4037,7 +4263,7 @@ private static final long serialVersionUID = 0L;
      */
     public Builder mergeTarget(ai.sapper.hcdc.common.model.DFSSchemaEntity value) {
       if (targetBuilder_ == null) {
-        if (((bitField0_ & 0x00020000) != 0) &&
+        if (((bitField0_ & 0x00040000) != 0) &&
             target_ != null &&
             target_ != ai.sapper.hcdc.common.model.DFSSchemaEntity.getDefaultInstance()) {
           target_ =
@@ -4049,7 +4275,7 @@ private static final long serialVersionUID = 0L;
       } else {
         targetBuilder_.mergeFrom(value);
       }
-      bitField0_ |= 0x00020000;
+      bitField0_ |= 0x00040000;
       return this;
     }
     /**
@@ -4062,14 +4288,14 @@ private static final long serialVersionUID = 0L;
       } else {
         targetBuilder_.clear();
       }
-      bitField0_ = (bitField0_ & ~0x00020000);
+      bitField0_ = (bitField0_ & ~0x00040000);
       return this;
     }
     /**
      * <code>optional .ai_sapper_hcdc_common_model.DFSSchemaEntity target = 7;</code>
      */
     public ai.sapper.hcdc.common.model.DFSSchemaEntity.Builder getTargetBuilder() {
-      bitField0_ |= 0x00020000;
+      bitField0_ |= 0x00040000;
       onChanged();
       return getTargetFieldBuilder().getBuilder();
     }

@@ -259,6 +259,21 @@ public interface DFSChangeDeltaOrBuilder extends
   ai.sapper.hcdc.common.model.DFSErrorOrBuilder getErrorOrBuilder();
 
   /**
+   * <code>.ai_sapper_hcdc_common_model.DFSAdminMessage admin = 20;</code>
+   * @return Whether the admin field is set.
+   */
+  boolean hasAdmin();
+  /**
+   * <code>.ai_sapper_hcdc_common_model.DFSAdminMessage admin = 20;</code>
+   * @return The admin.
+   */
+  ai.sapper.hcdc.common.model.DFSAdminMessage getAdmin();
+  /**
+   * <code>.ai_sapper_hcdc_common_model.DFSAdminMessage admin = 20;</code>
+   */
+  ai.sapper.hcdc.common.model.DFSAdminMessageOrBuilder getAdminOrBuilder();
+
+  /**
    * <code>optional .ai_sapper_hcdc_common_model.DFSSchemaEntity target = 7;</code>
    * @return Whether the target field is set.
    */

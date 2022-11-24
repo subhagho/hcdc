@@ -154,6 +154,15 @@ message DFSSchemaChange {
   required string updatedSchemaPath = 6;
 }
 
+message DFSAdminMessage {
+  enum AdminMessageType {
+    PAUSE = 0;
+    RESUME = 1;
+    DELETE = 2;
+  }
+  required AdminMessageType type = 1;
+  required DFSSchemaEntity entity = 2;
+}
 
 message DFSChangeDelta {
   required string txId = 2;
@@ -174,6 +183,7 @@ message DFSChangeDelta {
     DFSBlockTruncate blockTruncate = 17;
     DFSIgnoreTx ignore = 18;
     DFSError error = 19;
+    DFSAdminMessage admin = 20;
   }
   optional DFSSchemaEntity target = 7;
 }
