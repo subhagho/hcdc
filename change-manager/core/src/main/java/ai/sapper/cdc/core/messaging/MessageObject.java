@@ -17,9 +17,9 @@ public class MessageObject<K, V> {
         New, ReSend, Snapshot, Backlog, Error, Retry, Forked, Recursive, Schema
     }
 
-    public static final String HEADER_CORRELATION_ID = "hcdc_correlation_id";
-    public static final String HEADER_MESSAGE_ID = "hcdc_message_id";
-    public static final String HEADER_MESSAGE_MODE = "hcdc_message_mode";
+    public static final String HEADER_CORRELATION_ID = "CDC_CORRELATION_ID";
+    public static final String HEADER_MESSAGE_ID = "CDC_MESSAGE_ID";
+    public static final String HEADER_MESSAGE_MODE = "CDC_MESSAGE_MODE";
 
     private String queue;
     private String id;
