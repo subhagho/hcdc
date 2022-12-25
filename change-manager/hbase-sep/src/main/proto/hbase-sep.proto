@@ -1,0 +1,21 @@
+syntax = "proto2";
+
+package ai_sapper_hbase_sep_model;
+
+option java_multiple_files = true;
+option java_package = "ai.sapper.hbase.sep.model";
+option java_outer_classname = "HBaseSEPModel";
+
+message SEPTableName {
+  required bytes namespace = 1;
+  required bytes qualifier = 2;
+}
+
+message SEPMessage {
+  required bytes row = 1;
+  required uint64 timestamp = 2;
+  required bytes value = 3;
+  required SEPTableName table = 4;
+  optional bytes columnFamily = 5;
+  optional bytes qualifier = 6;
+}
