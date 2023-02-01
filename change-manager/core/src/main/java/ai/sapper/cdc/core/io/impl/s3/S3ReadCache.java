@@ -1,5 +1,6 @@
 package ai.sapper.cdc.core.io.impl.s3;
 
+import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.cache.EvictionCallback;
 import ai.sapper.cdc.common.cache.LRUCache;
 import ai.sapper.cdc.common.utils.DefaultLogger;
@@ -7,6 +8,9 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.commons.configuration2.HierarchicalConfiguration;
+import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.configuration2.tree.ImmutableNode;
 
 import java.io.File;
 import java.util.HashMap;
@@ -14,6 +18,9 @@ import java.util.Map;
 import java.util.Optional;
 
 public class S3ReadCache implements EvictionCallback<String, S3ReadCache.CacheFile> {
+    public static final String __CONFIG_PATH = "cache";
+    public static final String CONFIG_CACHE_SIZE = "size";
+    public static final String CONFIG_CACHE_TIMEOUT = "timeout";
 
     @Getter
     @Setter
@@ -25,11 +32,28 @@ public class S3ReadCache implements EvictionCallback<String, S3ReadCache.CacheFi
     }
 
     private static final int CACHE_SIZE = 128;
-    private final Map<String, LRUCache<String, CacheFile>> cache = new HashMap<>(CACHE_SIZE);
+    private static final long CACHE_TIMEOUT = 5 * 60 * 1000;
+
+    private final Map<String, LRUCache<String, CacheFile>> cache = new HashMap<>();
     private final S3FileSystem fs;
+    private int cacheSize = CACHE_SIZE;
+    private long cacheTimeout = CACHE_TIMEOUT;
 
     public S3ReadCache(@NonNull S3FileSystem fs) {
         this.fs = fs;
+    }
+
+    public S3ReadCache init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
+        if (ConfigReader.checkIfNodeExists(xmlConfig, __CONFIG_PATH)) {
+            HierarchicalConfiguration<ImmutableNode> node = xmlConfig.configurationAt(__CONFIG_PATH);
+            if (node.containsKey(CONFIG_CACHE_SIZE)) {
+                cacheSize = node.getInt(CONFIG_CACHE_SIZE);
+            }
+            if (node.containsKey(CONFIG_CACHE_TIMEOUT)) {
+                cacheTimeout = node.getLong(CONFIG_CACHE_TIMEOUT);
+            }
+        }
+        return this;
     }
 
     public S3PathInfo get(@NonNull S3PathInfo path) throws Exception {
@@ -39,42 +63,38 @@ public class S3ReadCache implements EvictionCallback<String, S3ReadCache.CacheFi
             if (cf.isPresent()) {
                 CacheFile c = cf.get();
                 if (c.path != null && c.path.exists()) {
+                    long to = System.currentTimeMillis() - c.modified;
+                    if (to < cacheTimeout) {
+                        return path.withTemp(c.path);
+                    }
                     long ut = fs.updateTime(path);
                     if (c.modified >= ut) {
                         DefaultLogger.LOGGER.debug(String.format("Found in cache. [path=%s][file=%s]", c.key, c.path));
-                        if (c.path.exists())
-                            return path.withTemp(c.path);
+                        return path.withTemp(c.path);
                     }
                 }
             }
         }
-        Optional<CacheFile> cf = get(path, cache);
-        if (cf.isPresent()) {
-            fs.download(path);
-            cf.get().modified = System.currentTimeMillis();
-        }
-        return path;
+        fs.download(path);
+
+        return path.withTemp(put(path, System.currentTimeMillis()));
     }
 
-    public void put(@NonNull S3PathInfo path, long updated) throws Exception {
-        LRUCache<String, CacheFile> cache = get(path.bucket());
-        Optional<CacheFile> cf = get(path, cache);
-        if (cf.isPresent()) {
-            cf.get().path = path.temp();
-            cf.get().modified = updated;
-        }
-    }
-
-    private Optional<CacheFile> get(S3PathInfo path, LRUCache<String, CacheFile> cache) throws Exception {
+    public File put(@NonNull S3PathInfo path, long updated) throws Exception {
         synchronized (cache) {
-            if (!cache.containsKey(path.path())) {
-                CacheFile cf = new CacheFile();
-                cf.key = path.path();
-                cf.path = path.temp();
-                cf.modified = 0;
-                cache.put(cf.key, cf);
+            LRUCache<String, CacheFile> cache = get(path.bucket());
+            Optional<CacheFile> cf = cache.get(path.path());
+            if (cf.isPresent()) {
+                cf.get().path = path.temp();
+                cf.get().modified = updated;
+            } else {
+                CacheFile c = new CacheFile();
+                c.key = path.path();
+                c.path = path.temp();
+                c.modified = System.currentTimeMillis();
+                cache.put(c.key, c);
             }
-            return cache.get(path.path());
+            return path.temp();
         }
     }
 
@@ -82,7 +102,7 @@ public class S3ReadCache implements EvictionCallback<String, S3ReadCache.CacheFi
         synchronized (cache) {
             if (!cache.containsKey(bucket)) {
                 cache.put(bucket,
-                        new LRUCache<String, CacheFile>(CACHE_SIZE)
+                        new LRUCache<String, CacheFile>(cacheSize)
                                 .withEvictionCallback(this));
             }
             return cache.get(bucket);

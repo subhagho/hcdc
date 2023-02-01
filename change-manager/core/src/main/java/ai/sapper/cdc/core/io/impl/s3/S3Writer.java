@@ -86,9 +86,12 @@ public class S3Writer extends LocalWriter {
     public void close() throws IOException {
         if (isOpen()) {
             super.close();
-
-            S3PathInfo s3path = S3FileSystem.checkPath(path());
-            fs.upload(s3path.temp(), s3path.parentPathInfo());
+            try {
+                S3PathInfo s3path = S3FileSystem.checkPath(path());
+                fs.upload(s3path.temp(), s3path.parentPathInfo());
+            } catch (Exception ex) {
+                throw new IOException(ex);
+            }
         } else {
             throw new IOException(String.format("Writer not open: [path=%s]", path().toString()));
         }

@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
 @Getter
 @Accessors(fluent = true)
 public class S3FileSystem extends LocalFileSystem {
-    public static final String TEMP_PATH = String.format("%s/HCDC/S3",
+    public static final String TEMP_PATH = String.format("%s/hcdc/S3",
             System.getProperty("java.io.tmpdir"));
     @Getter(AccessLevel.PACKAGE)
     private S3Client client;
@@ -103,14 +103,18 @@ public class S3FileSystem extends LocalFileSystem {
      */
     @Override
     public PathInfo get(@NonNull String path, String domain) throws IOException {
-        String bucket = defaultBucket;
-        if (bucketMap.containsKey(domain)) {
-            bucket = bucketMap.get(domain);
+        try {
+            String bucket = defaultBucket;
+            if (bucketMap.containsKey(domain)) {
+                bucket = bucketMap.get(domain);
+            }
+            if (root() != null) {
+                path = PathUtils.formatPath(String.format("%s/%s/%s", root().path(), domain, path));
+            }
+            return new S3PathInfo(this.client, domain, bucket, path);
+        } catch (Exception ex) {
+            throw new IOException(ex);
         }
-        if (root() != null) {
-            path = PathUtils.formatPath(String.format("%s/%s/%s", root().path(), domain, path));
-        }
-        return new S3PathInfo(this.client, domain, bucket, path);
     }
 
     /**
@@ -119,7 +123,11 @@ public class S3FileSystem extends LocalFileSystem {
      */
     @Override
     public PathInfo get(@NonNull Map<String, String> config) {
-        return new S3PathInfo(this.client, config);
+        try {
+            return new S3PathInfo(this.client, config);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     public static S3PathInfo checkPath(PathInfo pathInfo) throws IOException {
@@ -330,14 +338,18 @@ public class S3FileSystem extends LocalFileSystem {
     public PathInfo get(@NonNull String path,
                         String domain,
                         boolean prefix) throws IOException {
-        if (prefix) {
-            return get(path, domain);
+        try {
+            if (prefix) {
+                return get(path, domain);
+            }
+            String bucket = defaultBucket;
+            if (bucketMap.containsKey(domain)) {
+                bucket = bucketMap.get(domain);
+            }
+            return new S3PathInfo(client, domain, bucket, path);
+        } catch (Exception ex) {
+            throw new IOException(ex);
         }
-        String bucket = defaultBucket;
-        if (bucketMap.containsKey(domain)) {
-            bucket = bucketMap.get(domain);
-        }
-        return new S3PathInfo(client, domain, bucket, path);
     }
 
     protected S3PathInfo read(@NonNull S3PathInfo path) throws IOException {

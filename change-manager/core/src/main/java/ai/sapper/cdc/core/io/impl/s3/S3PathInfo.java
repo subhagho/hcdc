@@ -1,5 +1,6 @@
 package ai.sapper.cdc.core.io.impl.s3;
 
+import ai.sapper.cdc.common.utils.ChecksumUtils;
 import ai.sapper.cdc.core.io.PathInfo;
 import ai.sapper.cdc.core.io.impl.local.LocalPathInfo;
 import com.google.common.base.Preconditions;
@@ -29,37 +30,54 @@ public class S3PathInfo extends LocalPathInfo {
     private final S3Client client;
     private final String bucket;
     private File temp;
+    private final boolean directory;
 
     protected S3PathInfo(@NonNull S3Client client,
                          @NonNull String domain,
                          @NonNull String bucket,
-                         @NonNull String path) {
+                         @NonNull String path) throws Exception {
         super(path, domain);
         this.client = client;
         this.bucket = bucket;
-        String fname = FilenameUtils.getName(path());
-        if (!Strings.isNullOrEmpty(fname)) {
-            String tempf = String.format("%s/%s",
-                    S3FileSystem.TEMP_PATH,
-                    fname);
-            temp = new File(tempf);
-        }
-        file(temp);
+        init();
+        directory = false;
     }
 
-    protected S3PathInfo(@NonNull S3Client client, @NonNull Map<String, String> config) {
+    protected S3PathInfo(@NonNull S3Client client,
+                         @NonNull String domain,
+                         @NonNull String bucket,
+                         @NonNull String path,
+                         boolean directory) throws Exception {
+        super(path, domain);
+        this.client = client;
+        this.bucket = bucket;
+        if (!directory)
+            init();
+        this.directory = directory;
+    }
+
+    protected S3PathInfo(@NonNull S3Client client,
+                         @NonNull Map<String, String> config) throws Exception {
         super(config);
         this.client = client;
         bucket = config.get(CONFIG_KEY_BUCKET);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(bucket));
-        String fname = FilenameUtils.getName(path());
-        if (!Strings.isNullOrEmpty(fname)) {
-            String tempf = String.format("%s/%s",
+        init();
+        directory = false;
+    }
+
+    private void init() throws Exception {
+        String name = FilenameUtils.getName(path());
+        if (!Strings.isNullOrEmpty(name)) {
+            String hash = ChecksumUtils.generateHash(path());
+            String tempf = String.format("%s/%s/%s/%s",
                     S3FileSystem.TEMP_PATH,
-                    fname);
+                    bucket,
+                    hash,
+                    name);
             temp = new File(tempf);
+            file(temp);
         }
-        file(temp);
     }
 
     protected S3PathInfo withTemp(@NonNull File temp) {
@@ -73,13 +91,12 @@ public class S3PathInfo extends LocalPathInfo {
      * @return
      */
     @Override
-    public PathInfo parentPathInfo() {
+    public PathInfo parentPathInfo() throws Exception {
         String path = path();
         if (path.endsWith("/")) {
             path = path.substring(0, path.length() - 2);
         }
-        String p = FilenameUtils.getFullPath(path);
-        return new S3PathInfo(client, domain(), bucket, p);
+        return new S3PathInfo(client, domain(), bucket, FilenameUtils.getFullPath(path), true);
     }
 
     /**
@@ -88,6 +105,7 @@ public class S3PathInfo extends LocalPathInfo {
      */
     @Override
     public boolean isDirectory() throws IOException {
+        if (directory) return true;
         return path().endsWith("/");
     }
 
@@ -176,6 +194,6 @@ public class S3PathInfo extends LocalPathInfo {
      */
     @Override
     public String toString() {
-        return "{bucket=" + bucket + ", path=" + path() + "[domain=" + domain() + "]}";
+        return "{bucket=" + bucket + ", path=" + path() + " [domain=" + domain() + "]}";
     }
 }

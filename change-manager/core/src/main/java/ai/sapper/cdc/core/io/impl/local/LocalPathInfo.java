@@ -38,7 +38,7 @@ public class LocalPathInfo extends PathInfo {
      * @return
      */
     @Override
-    public PathInfo parentPathInfo() {
+    public PathInfo parentPathInfo() throws Exception {
         return new LocalPathInfo(file.getParentFile().getAbsolutePath(),
                 domain());
     }

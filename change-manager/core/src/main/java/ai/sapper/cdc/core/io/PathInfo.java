@@ -42,7 +42,7 @@ public abstract class PathInfo {
         return FilenameUtils.getFullPath(path);
     }
 
-    public abstract PathInfo parentPathInfo();
+    public abstract PathInfo parentPathInfo() throws Exception;
 
     public String name() {
         return FilenameUtils.getName(path);

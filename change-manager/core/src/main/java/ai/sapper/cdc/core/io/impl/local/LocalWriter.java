@@ -51,7 +51,6 @@ public class LocalWriter extends Writer {
             throw new IOException(String.format("Writer not open: [path=%s]", path().toString()));
         }
         outputStream.write(data, (int) offset, (int) length);
-
         return length;
     }
 
