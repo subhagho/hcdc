@@ -1,0 +1,17 @@
+syntax = "proto2";
+
+package ai_sapper_common_model;
+
+option java_multiple_files = true;
+option java_package = "ai.sapper.common.model";
+option java_outer_classname = "CommonProto";
+
+message BInteger {
+  required bytes value = 1;
+}
+
+message BDecimal {
+  required int32 scale = 1;
+  required int32 precision = 2;
+  required BInteger value = 3;
+}

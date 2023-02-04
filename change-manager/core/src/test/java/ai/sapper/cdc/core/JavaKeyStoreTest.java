@@ -32,7 +32,7 @@ class JavaKeyStoreTest {
     void read() {
         try {
             String keyName = "s2-test-password";
-            String keyValue = "demo1234";
+            String keyValue = "dbz";
             String password = "test1234";
 
             JavaKeyStoreUtil util = new JavaKeyStoreUtil();
