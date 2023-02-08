@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 
 public class SchemaHelper {
     public enum EDataType {
-        NULL, String, Number, Object, Array, Boolean, Enum, Map;
+        NULL, String, Number, Object, Array, Boolean, Enum, Map, Timestamp, DateTime, Binary;
 
         public static EDataType parse(String value) {
             for (EDataType dt : EDataType.values()) {
@@ -52,6 +52,13 @@ public class SchemaHelper {
 
     public enum ENumberType {
         Integer, Long, Float, Double, Short, BigInteger, BigDecimal;
+
+        public static ENumberType parse(@NonNull String value) {
+            for (ENumberType nt : ENumberType.values()) {
+                if (nt.name().compareToIgnoreCase(value) == 0) return nt;
+            }
+            return null;
+        }
 
         public static ENumberType get(@NonNull Class<?> type) throws Exception {
             if (ReflectionUtils.isNumericType(type)) {
@@ -202,7 +209,7 @@ public class SchemaHelper {
                     }
                 }
             }
-            return new NullField(name);
+            return null;
         }
 
         private static MapField isMapObject(String name, Map<String, ?> values) {
@@ -886,14 +893,32 @@ public class SchemaHelper {
         }
     }
 
-    public static class JsonField extends StringField {
+    public static class JsonField extends Field {
 
         public JsonField(@NonNull String name) {
-            super(name);
+            super(name, EDataType.Object);
         }
 
-        public JsonField(@NonNull StringField field) {
-            super(field);
+        public JsonField(@NonNull JsonField field) {
+            super(field.name(), EDataType.Object);
+        }
+
+        @Override
+        public boolean check(String value) {
+            return false;
+        }
+
+        @Override
+        public String avroType() {
+            return "string";
+        }
+
+        @Override
+        public boolean matches(@NonNull Field target) {
+            if (target instanceof JsonField) {
+                return name().compareTo(target.name) == 0;
+            }
+            return false;
         }
     }
 
