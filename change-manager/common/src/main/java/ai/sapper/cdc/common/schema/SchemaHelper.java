@@ -39,7 +39,8 @@ public class SchemaHelper {
                 return Enum;
             } else if (ReflectionUtils.implementsInterface(Map.class, type)) {
                 return Map;
-            } else if (type.isArray()) {
+            } else if (type.isArray()
+                    || ReflectionUtils.implementsInterface(List.class, type)) {
                 return Array;
             } else if (type.equals(String.class)) {
                 return String;
