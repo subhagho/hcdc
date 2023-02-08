@@ -11,6 +11,8 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.avro.Schema;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,10 +29,49 @@ public class SchemaHelper {
             }
             return null;
         }
+
+        public static EDataType get(@NonNull Class<?> type) {
+            if (ReflectionUtils.isNumericType(type)) {
+                return Number;
+            } else if (ReflectionUtils.isBoolean(type)) {
+                return Boolean;
+            } else if (type.isEnum()) {
+                return Enum;
+            } else if (ReflectionUtils.implementsInterface(Map.class, type)) {
+                return Map;
+            } else if (type.isArray()) {
+                return Array;
+            } else if (type.equals(String.class)) {
+                return String;
+            } else {
+                return Object;
+            }
+        }
     }
 
     public enum ENumberType {
-        Integer, Long, Float, Double, Short
+        Integer, Long, Float, Double, Short, BigInteger, BigDecimal;
+
+        public static ENumberType get(@NonNull Class<?> type) throws Exception {
+            if (ReflectionUtils.isNumericType(type)) {
+                if (ReflectionUtils.isShort(type)) {
+                    return Short;
+                } else if (ReflectionUtils.isInt(type)) {
+                    return Integer;
+                } else if (ReflectionUtils.isLong(type)) {
+                    return Long;
+                } else if (ReflectionUtils.isFloat(type)) {
+                    return Float;
+                } else if (ReflectionUtils.isDouble(type)) {
+                    return Double;
+                } else if (type.equals(java.math.BigInteger.class)) {
+                    return BigInteger;
+                } else if (type.equals(java.math.BigDecimal.class)) {
+                    return BigDecimal;
+                }
+            }
+            throw new Exception(String.format("Not a numeric type. [type=%s]", type.getCanonicalName()));
+        }
     }
 
     public static String checkFieldName(@NonNull String name) {
