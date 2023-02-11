@@ -195,18 +195,26 @@ public class SchemaHelper {
             } else if (ReflectionUtils.isBoolean(value.getClass())) {
                 return new BooleanField(name);
             } else if (value instanceof List) {
-                List<?> values = (List<?>) value;
-                return ArrayField.parse(name, values, nested, cache);
+                if (nested) {
+                    List<?> values = (List<?>) value;
+                    return ArrayField.parse(name, values, nested, cache);
+                } else {
+                    return new JsonField(name);
+                }
             } else if (value instanceof Map) {
-                Map<String, ?> map = (Map<String, ?>) value;
-                if (!map.isEmpty()) {
-                    MapField mf = Field.isMapObject(name, (Map<String, ?>) value);
-                    if (mf != null) return mf;
-                    if (nested)
-                        return ObjectField.parse(name, (Map<String, Object>) value, true, cache);
-                    else {
-                        return new JsonField(name);
+                if (nested) {
+                    Map<String, ?> map = (Map<String, ?>) value;
+                    if (!map.isEmpty()) {
+                        MapField mf = Field.isMapObject(name, (Map<String, ?>) value);
+                        if (mf != null) return mf;
+                        if (nested)
+                            return ObjectField.parse(name, (Map<String, Object>) value, true, cache);
+                        else {
+                            return new JsonField(name);
+                        }
                     }
+                } else {
+                    return new JsonField(name);
                 }
             }
             return null;
