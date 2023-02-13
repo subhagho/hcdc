@@ -5,6 +5,7 @@ import ai.sapper.cdc.core.io.Reader;
 import ai.sapper.cdc.core.io.impl.local.LocalReader;
 import lombok.NonNull;
 
+import java.io.File;
 import java.io.IOException;
 
 public class S3Reader extends LocalReader {
@@ -38,6 +39,17 @@ public class S3Reader extends LocalReader {
     @Override
     public int read(byte[] buffer, int offset, int length) throws IOException {
         return super.read(buffer, offset, length);
+    }
+
+    @Override
+    public File copy() throws IOException {
+        S3PathInfo s3path = S3FileSystem.checkPath(path());
+        if (s3path.temp() != null && s3path.temp().exists()) {
+            return s3path.temp();
+        } else {
+            fs.read(s3path);
+            return s3path.temp();
+        }
     }
 
     /**
