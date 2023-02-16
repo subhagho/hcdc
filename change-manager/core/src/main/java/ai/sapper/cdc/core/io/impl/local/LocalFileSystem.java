@@ -53,6 +53,9 @@ public class LocalFileSystem extends CDCFileSystem {
             File tdir = new File(TEMP_PATH);
             if (!tdir.exists()) {
                 tdir.mkdirs();
+            } else {
+                FileUtils.deleteDirectory(tdir);
+                tdir.mkdirs();
             }
             return this;
         } catch (Exception ex) {

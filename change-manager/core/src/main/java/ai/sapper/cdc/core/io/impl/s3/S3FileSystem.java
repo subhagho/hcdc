@@ -16,6 +16,7 @@ import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
@@ -87,6 +88,9 @@ public class S3FileSystem extends LocalFileSystem {
 
             File tdir = new File(TEMP_PATH);
             if (!tdir.exists()) {
+                tdir.mkdirs();
+            } else {
+                FileUtils.deleteDirectory(tdir);
                 tdir.mkdirs();
             }
             return this;
