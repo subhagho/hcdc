@@ -1,5 +1,6 @@
 package ai.sapper.cdc.core.keystore;
 
+import ai.sapper.cdc.common.utils.ChecksumUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.NonNull;
@@ -26,6 +27,7 @@ public class JavaKeyStore extends KeyStore {
     private HierarchicalConfiguration<ImmutableNode> config;
     private String cipherAlgo = CIPHER_TYPE;
     private String keyStoreType = KEYSTORE_TYPE;
+    private String passwdHash;
 
     @Override
     public void init(@NonNull HierarchicalConfiguration<ImmutableNode> configNode,
@@ -58,6 +60,7 @@ public class JavaKeyStore extends KeyStore {
                 }
             }
             keyStoreFile = kf.getAbsolutePath();
+            passwdHash = ChecksumUtils.generateHash(password);
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
         }
@@ -78,6 +81,8 @@ public class JavaKeyStore extends KeyStore {
                      @NonNull String value,
                      @NonNull String password) throws Exception {
         Preconditions.checkNotNull(store);
+        String hash = ChecksumUtils.generateHash(password);
+        Preconditions.checkArgument(hash.equals(passwdHash));
         java.security.KeyStore.SecretKeyEntry secret
                 = new java.security.KeyStore.SecretKeyEntry(generate(value, cipherAlgo));
         java.security.KeyStore.ProtectionParameter parameter
@@ -88,6 +93,8 @@ public class JavaKeyStore extends KeyStore {
     @Override
     public String read(@NonNull String name,
                        @NonNull String password) throws Exception {
+        String hash = ChecksumUtils.generateHash(password);
+        Preconditions.checkArgument(hash.equals(passwdHash));
         Preconditions.checkNotNull(store);
         java.security.KeyStore.ProtectionParameter param
                 = new java.security.KeyStore.PasswordProtection(password.toCharArray());
