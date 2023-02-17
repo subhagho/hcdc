@@ -717,8 +717,7 @@ public class ReflectionUtils {
     }
 
     public static boolean isNumericType(@NonNull Class<?> type) {
-        return type.equals(Boolean.class) || type.equals(boolean.class) ||
-                type.equals(Short.class) || type.equals(short.class)
+        return type.equals(Short.class) || type.equals(short.class)
                 || type.equals(Integer.class) || type.equals(int.class) ||
                 type.equals(Long.class) || type.equals(long.class)
                 || type.equals(Float.class) || type.equals(float.class) ||

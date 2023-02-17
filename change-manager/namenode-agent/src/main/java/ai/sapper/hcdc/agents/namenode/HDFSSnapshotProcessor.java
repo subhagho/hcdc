@@ -465,7 +465,7 @@ public class HDFSSnapshotProcessor {
 
     public static class SnapshotCallBack implements FilterAddCallback {
         private final HDFSSnapshotProcessor processor;
-        private ThreadPoolExecutor executor;
+        private final ThreadPoolExecutor executor;
 
         public SnapshotCallBack(@NonNull HDFSSnapshotProcessor processor, int corePoolSize) {
             Preconditions.checkArgument(corePoolSize > 0);
