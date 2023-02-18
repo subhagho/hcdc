@@ -12,6 +12,8 @@ import ai.sapper.cdc.core.schema.SchemaManager;
 import ai.sapper.cdc.core.utils.DistributedLockBuilder;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.prometheus.client.hotspot.DefaultExports;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -35,6 +37,8 @@ public abstract class BaseEnv<T extends Enum<?>> {
         public static final String CONFIG_ENV_NAME = String.format("%s.name", __CONFIG_PATH_ENV);
         private static final String LOCK_GLOBAL = "global";
     }
+
+    private static MeterRegistry meterRegistry;
 
     private ConnectionManager connectionManager;
     private String storeKey;
@@ -134,6 +138,8 @@ public abstract class BaseEnv<T extends Enum<?>> {
                 auditLogger = cls.getDeclaredConstructor().newInstance();
                 auditLogger.init(rootConfig);
             }
+
+            DefaultExports.initialize();
 
             this.state = state;
 
@@ -272,6 +278,14 @@ public abstract class BaseEnv<T extends Enum<?>> {
 
     public static void initUnLock() {
         __instanceLock.unlock();
+    }
+
+    public static MeterRegistry registry() {
+        return meterRegistry;
+    }
+
+    public static void registry(@NonNull MeterRegistry registry) {
+        meterRegistry = registry;
     }
 
     @Getter

@@ -24,6 +24,14 @@ dependencies {
     // https://mvnrepository.com/artifact/com.mchange/c3p0
     implementation 'com.mchange:c3p0:0.9.5.5'
 
+    implementation 'io.prometheus:simpleclient:0.16.0'
+    implementation 'io.prometheus:simpleclient_log4j2:0.16.0'
+    implementation 'io.prometheus:simpleclient_hotspot:0.16.0'
+    implementation 'io.prometheus:simpleclient_httpserver:0.16.0'
+    implementation 'io.prometheus:simpleclient_pushgateway:0.16.0'
+
+    implementation 'io.micrometer:micrometer-registry-prometheus:1.10.4'
+
     // https://mvnrepository.com/artifact/mysql/mysql-connector-java
     testImplementation 'mysql:mysql-connector-java:8.0.30'
 }
