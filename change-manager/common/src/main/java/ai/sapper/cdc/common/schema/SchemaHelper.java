@@ -416,6 +416,10 @@ public class SchemaHelper {
                 numberType = ENumberType.Float;
             } else if (ReflectionUtils.isDouble(type)) {
                 numberType = ENumberType.Double;
+            } else if (type.equals(BigInteger.class)) {
+                numberType = ENumberType.BigInteger;
+            } else if (type.equals(BigDecimal.class)) {
+                numberType = ENumberType.BigDecimal;
             } else {
                 numberType = ENumberType.Long;
             }
@@ -437,6 +441,7 @@ public class SchemaHelper {
                 if (m.groupCount() > 1) {
                     if (m.group(2) != null) {
                         numberType = ENumberType.Double;
+                        return true;
                     } else {
                         return false;
                     }
