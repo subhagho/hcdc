@@ -1,7 +1,6 @@
 package org.apache.hadoop.hdfs;
 
 import ai.sapper.cdc.common.cache.LRUCache;
-import ai.sapper.cdc.common.model.Context;
 import ai.sapper.cdc.core.io.EncryptionHandler;
 import ai.sapper.cdc.core.model.HDFSBlockData;
 import ai.sapper.hcdc.io.EncryptionContext;

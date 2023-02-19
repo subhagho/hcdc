@@ -9,11 +9,9 @@ import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import ai.sapper.cdc.core.connections.settngs.ConnectionSettings;
 import ai.sapper.cdc.core.connections.settngs.EConnectionType;
-import ai.sapper.cdc.core.connections.settngs.JdbcConnectionSettings;
 import ai.sapper.cdc.core.connections.settngs.MongoDbConnectionSettings;
 import ai.sapper.cdc.core.keystore.KeyStore;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import lombok.AccessLevel;
@@ -25,7 +23,6 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.curator.framework.CuratorFramework;
 
 import java.io.IOException;
-import java.util.Properties;
 
 @Getter
 @Accessors(fluent = true)
@@ -37,9 +34,10 @@ public class MongoDbConnection implements Connection {
     private MongoClient client;
 
     protected final String zkNode;
+    private MongoDbConnectionConfig config;
 
-    public MongoDbConnection(@NonNull String zkNode) {
-        this.zkNode = zkNode;
+    public MongoDbConnection() {
+        this.zkNode = MongoDbConnectionConfig.Constants.__CONFIG_PATH;
     }
 
     @Override
@@ -53,9 +51,24 @@ public class MongoDbConnection implements Connection {
     }
 
     @Override
-    public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> config,
+    public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                            @NonNull BaseEnv<?> env) throws ConnectionError {
-        return null;
+        synchronized (state) {
+            try {
+                if (state.isConnected()) {
+                    close();
+                }
+                state.clear(EConnectionState.Unknown);
+                this.connectionManager = env.connectionManager();
+                config = new MongoDbConnectionConfig(xmlConfig);
+                settings = config.read();
+
+                state.state(EConnectionState.Initialized);
+                return this;
+            } catch (Exception ex) {
+                throw new ConnectionError(ex);
+            }
+        }
     }
 
     @Override

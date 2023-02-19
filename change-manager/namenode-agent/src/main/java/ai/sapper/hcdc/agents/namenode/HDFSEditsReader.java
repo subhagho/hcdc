@@ -2,7 +2,6 @@ package ai.sapper.hcdc.agents.namenode;
 
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.messaging.HCDCMessagingBuilders;
 import ai.sapper.cdc.core.messaging.MessageSender;

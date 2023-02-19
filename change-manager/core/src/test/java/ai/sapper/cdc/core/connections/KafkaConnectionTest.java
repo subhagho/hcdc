@@ -1,9 +1,9 @@
 package ai.sapper.cdc.core.connections;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.cdc.core.utils.DemoEnv;
 import ai.sapper.cdc.core.connections.kafka.BasicKafkaConsumer;
 import ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer;
+import ai.sapper.cdc.core.utils.DemoEnv;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import org.apache.commons.configuration2.XMLConfiguration;

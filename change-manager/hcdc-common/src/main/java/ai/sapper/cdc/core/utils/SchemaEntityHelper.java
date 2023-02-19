@@ -2,7 +2,6 @@ package ai.sapper.cdc.core.utils;
 
 import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.hcdc.common.model.DFSSchemaEntity;
-import com.google.common.base.Strings;
 import lombok.NonNull;
 
 public class SchemaEntityHelper {
