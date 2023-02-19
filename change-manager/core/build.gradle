@@ -24,6 +24,11 @@ dependencies {
     // https://mvnrepository.com/artifact/com.mchange/c3p0
     implementation 'com.mchange:c3p0:0.9.5.5'
     implementation 'org.mongodb:mongodb-driver-sync:4.9.0'
+    implementation 'mysql:mysql-connector-java:8.0.30'
+    implementation 'com.oracle.database.jdbc:ojdbc8:21.8.0.0'
+    implementation 'com.ibm.db2:jcc:11.5.8.0'
+    // https://mvnrepository.com/artifact/com.microsoft.sqlserver/mssql-jdbc
+    implementation 'com.microsoft.sqlserver:mssql-jdbc:12.2.0.jre11'
 
     implementation 'io.prometheus:simpleclient:0.16.0'
     implementation 'io.prometheus:simpleclient_log4j2:0.16.0'
@@ -32,7 +37,4 @@ dependencies {
     implementation 'io.prometheus:simpleclient_pushgateway:0.16.0'
 
     implementation 'io.micrometer:micrometer-registry-prometheus:1.10.4'
-
-    // https://mvnrepository.com/artifact/mysql/mysql-connector-java
-    testImplementation 'mysql:mysql-connector-java:8.0.30'
 }
