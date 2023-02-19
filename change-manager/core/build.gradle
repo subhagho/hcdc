@@ -23,6 +23,7 @@ dependencies {
     implementation 'com.singlestore:singlestore-jdbc-client:1.1.4'
     // https://mvnrepository.com/artifact/com.mchange/c3p0
     implementation 'com.mchange:c3p0:0.9.5.5'
+    implementation 'org.mongodb:mongodb-driver-sync:4.9.0'
 
     implementation 'io.prometheus:simpleclient:0.16.0'
     implementation 'io.prometheus:simpleclient_log4j2:0.16.0'
