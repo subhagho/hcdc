@@ -2,17 +2,16 @@
 <configuration>
     <env>
         <name>DEV</name>
-        <agent>
-            <module>TEST-ENV</module>
-            <instance>Test</instance>
-            <source>demo</source>
-            <connections>
-                <path>config</path>
-            </connections>
-        </agent>
+        <module>TEST-ENV</module>
+        <instance>Test</instance>
+        <source>demo</source>
+        <paths>
+            <connections>config</connections>
+        </paths>
+        <enableHeartbeat>false</enableHeartbeat>
         <keystore>
             <class>ai.sapper.cdc.core.keystore.JavaKeyStore</class>
-            <path>src/test/resources/test-keystore.jks</path>
+            <path>src/test/resources/oracle-keystore.ks</path>
         </keystore>
         <locks>
             <connection>test-zk</connection>
@@ -26,6 +25,9 @@
                 <lock-node>NN-REPLICATION-LOCK</lock-node>
             </lock>
         </locks>
+        <demo>
+
+        </demo>
         <config>
             <connections>
                 <shared>
@@ -112,23 +114,14 @@
                     </kafka>
                 </connection>
                 <connection>
-                    <type>ai.sapper.cdc.core.connections.db.S2Connection</type>
-                    <s2>
-                        <name>test-s2</name>
-                        <jdbcUrl>jdbc:singlestore://localhost:3306</jdbcUrl>
-                        <user>root</user>
-                        <passwordKay>s2-test-password</passwordKay>
-                    </s2>
-                </connection>
-                <connection>
-                    <type>ai.sapper.cdc.core.connections.db.JdbcConnection</type>
-                    <jdbc>
-                        <name>test-jdbc</name>
-                        <jdbcUrl>jdbc:mysql://192.168.2.19:3306</jdbcUrl>
-                        <user>root</user>
-                        <passwordKay>s2-test-password</passwordKay>
-                        <driver>com.mysql.jdbc.Driver</driver>
-                    </jdbc>
+                    <type>ai.sapper.cdc.core.connections.db.OracleConnection</type>
+                    <oracle>
+                        <name>test-oracle</name>
+                        <jdbcUrl>jdbc:oracle:thin:@//localhost:1521</jdbcUrl>
+                        <user>c##demo</user>
+                        <passwordKey>oracle-demo-password</passwordKey>
+                        <db>CDC</db>
+                    </oracle>
                 </connection>
             </connections>
         </config>

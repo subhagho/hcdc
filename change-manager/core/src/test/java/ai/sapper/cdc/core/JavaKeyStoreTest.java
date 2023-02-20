@@ -31,8 +31,8 @@ class JavaKeyStoreTest {
     @Test
     void read() {
         try {
-            String keyName = "s2-test-password";
-            String keyValue = "dbz";
+            String keyName = "oracle-demo-password";
+            String keyValue = "test1234";
             String password = "test1234";
 
             JavaKeyStoreUtil util = new JavaKeyStoreUtil();
