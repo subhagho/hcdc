@@ -501,8 +501,8 @@ public class SchemaHelper {
                 if (!Strings.isNullOrEmpty(value)) {
                     value = value.trim();
                     value = value.replaceAll("\"", "");
-                    if ("yes".compareToIgnoreCase(value) == 0
-                            || "no".compareToIgnoreCase(value) == 0) {
+                    if ("true".compareToIgnoreCase(value) == 0
+                            || "false".compareToIgnoreCase(value) == 0) {
                         bool = true;
                     }
                 }
