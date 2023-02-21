@@ -38,6 +38,8 @@ public class MongoDbConnectionConfig extends ConnectionConfig {
         if (!Strings.isNullOrEmpty(s)) {
             settings.setPort(Integer.parseInt(s));
         }
+        settings.setDb(get().getString(MongoDbConnectionSettings.Constants.CONFIG_DB));
+        checkStringValue(settings.getDb(), getClass(), MongoDbConnectionSettings.Constants.CONFIG_DB);
         s = get().getString(DbConnectionConfig.Constants.CONFIG_POOL_SIZE);
         if (!Strings.isNullOrEmpty(s)) {
             settings.setPoolSize(Integer.parseInt(s));

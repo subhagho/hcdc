@@ -142,17 +142,17 @@ public class MongoDbConnection implements Connection {
     protected String createConnectionUrl(KeyStore keyStore) throws Exception {
         String url = "mongodb://";
         StringBuilder builder = new StringBuilder(url);
-        builder.append(DbConnection.Constants.DB_KEY_USER)
-                .append(settings.getUser());
+        builder.append(settings.getUser());
         String pk = settings.getPassword();
         builder.append(":")
-                .append(DbConnection.Constants.DB_KEY_PASSWD)
                 .append(keyStore.read(pk));
         builder.append("@")
                 .append(settings.getHost())
                 .append(":")
                 .append(settings.getPort());
-        builder.append("/&")
+        builder.append("/")
+                .append(settings.getDb());
+        builder.append("/?")
                 .append(DbConnection.Constants.DB_KEY_POOL_SIZE)
                 .append(settings.getPoolSize());
         if (settings.getParameters() != null && !settings.getParameters().isEmpty()) {
