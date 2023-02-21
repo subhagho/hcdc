@@ -6,6 +6,7 @@ import com.google.common.base.Strings;
 import lombok.NonNull;
 
 import java.nio.charset.Charset;
+import java.util.Map;
 
 public class JSONUtils {
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -33,5 +34,17 @@ public class JSONUtils {
 
     public static <T> T read(String data, Class<? extends T> type) throws JsonProcessingException {
         return mapper.readValue(data, type);
+    }
+
+    public static boolean isJson(@NonNull String value) {
+        if (!Strings.isNullOrEmpty(value)) {
+            try {
+                Map<?, ?> map = mapper.readValue(value, Map.class);
+                return true;
+            } catch (Exception ex) {
+                return false;
+            }
+        }
+        return false;
     }
 }
