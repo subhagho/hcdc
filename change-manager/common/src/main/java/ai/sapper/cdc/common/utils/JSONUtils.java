@@ -39,7 +39,7 @@ public class JSONUtils {
     public static boolean isJson(@NonNull String value) {
         if (!Strings.isNullOrEmpty(value)) {
             try {
-                Map<?, ?> map = mapper.readValue(value, Map.class);
+                mapper.readTree(value);
                 return true;
             } catch (Exception ex) {
                 return false;
