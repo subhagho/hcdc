@@ -1,6 +1,7 @@
 package ai.sapper.cdc.common.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import lombok.NonNull;
@@ -39,7 +40,7 @@ public class JSONUtils {
     public static boolean isJson(@NonNull String value) {
         if (!Strings.isNullOrEmpty(value)) {
             try {
-                mapper.readTree(value);
+                mapper.readValue(value, Map.class);
                 return true;
             } catch (Exception ex) {
                 return false;
