@@ -686,6 +686,7 @@ public class ReflectionUtils {
      */
     public static boolean isPrimitiveTypeOrClass(@NonNull Class<?> type) {
         if (isNumericType(type)) return true;
+        if (type.equals(Boolean.class) || type.equals(boolean.class)) return true;
         return type.equals(Class.class);
     }
 
