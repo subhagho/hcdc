@@ -85,7 +85,7 @@ public class SchemaHelper {
     public static String checkFieldName(@NonNull String name) {
         StringBuilder builder = new StringBuilder();
         for (char c : name.toCharArray()) {
-            if (!Character.isAlphabetic(c) && c != '_') {
+            if (!Character.isAlphabetic(c) && c != '_' && !Character.isDigit(c)) {
                 c = '_';
             }
             builder.append(c);
