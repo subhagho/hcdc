@@ -22,6 +22,9 @@ import java.util.Properties;
 @Getter
 @Accessors(fluent = true)
 public class Db2Connection extends DbConnection {
+    public static final String TYPE_DB2_Z = "DB2/z";
+    public static final String TYPE_DB2_LUW = "DB2/LUW";
+
     private Db2ConnectionConfig config;
     private Properties connectionProps;
 
@@ -48,6 +51,10 @@ public class Db2Connection extends DbConnection {
                 throw new ConnectionError(ex);
             }
         }
+    }
+
+    public String db2Type() {
+        return config.db2Type;
     }
 
     protected String createJdbcUrl() throws Exception {
@@ -133,9 +140,11 @@ public class Db2Connection extends DbConnection {
     @Getter
     @Accessors(fluent = true)
     public static class Db2ConnectionConfig extends DbConnectionConfig {
-        public static final String __CONFIG_PATH = "s2";
+        public static final String __CONFIG_PATH = "db2";
+        public static final String CONFIG_DB2_TYPE = "db2type";
 
         private JdbcConnectionSettings settings;
+        private String db2Type = TYPE_DB2_LUW;
 
         public Db2ConnectionConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
             super(config, __CONFIG_PATH);
@@ -144,6 +153,10 @@ public class Db2Connection extends DbConnection {
         public JdbcConnectionSettings read() throws ConfigurationException {
             settings = super.read();
             settings.setConnectionClass(Db2Connection.class);
+            String s = get().getString(CONFIG_DB2_TYPE);
+            if (!Strings.isNullOrEmpty(s)) {
+                db2Type = s;
+            }
             return settings;
         }
     }
