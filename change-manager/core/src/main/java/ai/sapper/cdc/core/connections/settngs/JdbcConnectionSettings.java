@@ -5,7 +5,9 @@ import ai.sapper.cdc.core.connections.ConnectionConfig;
 import ai.sapper.cdc.core.connections.db.DbConnectionConfig;
 import ai.sapper.cdc.core.connections.db.JdbcConnection;
 import ai.sapper.cdc.core.model.Encrypted;
+import com.google.common.base.Preconditions;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 
 @Getter
@@ -30,6 +32,17 @@ public class JdbcConnectionSettings extends ConnectionSettings {
     public JdbcConnectionSettings() {
         setConnectionClass(JdbcConnection.class);
         setType(EConnectionType.db);
+    }
+
+    public JdbcConnectionSettings(@NonNull ConnectionSettings settings) {
+        super(settings);
+        Preconditions.checkArgument(settings instanceof JdbcConnectionSettings);
+        jdbcDriver = ((JdbcConnectionSettings) settings).jdbcDriver;
+        jdbcDialect = ((JdbcConnectionSettings) settings).jdbcDialect;
+        db = ((JdbcConnectionSettings) settings).db;
+        user = ((JdbcConnectionSettings) settings).user;
+        password = ((JdbcConnectionSettings) settings).password;
+        poolSize = ((JdbcConnectionSettings) settings).poolSize;
     }
 
     @Override
