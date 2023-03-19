@@ -10,20 +10,9 @@ import lombok.ToString;
 @ToString
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
         property = "@class")
-public class LongTxState extends ProcessingState<Long> {
+public class LongTxState extends BaseTxState {
 
     public LongTxState() {
-        setProcessedTxId(-1L);
-    }
-
-    @Override
-    public int compareTx(Long target) {
-        if (getProcessedTxId() == null) {
-            if (target == null) return 0;
-            else
-                return Integer.MIN_VALUE;
-        }
-        if (target == null) return Integer.MAX_VALUE;
-        return (int) (getProcessedTxId() - target);
+        setProcessedTxId(new BaseTxId());
     }
 }

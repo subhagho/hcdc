@@ -20,6 +20,7 @@ import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 @Getter
 @Accessors(fluent = true)
@@ -159,7 +160,7 @@ public class ZookeeperConnection implements Connection {
                 try {
                     client = builder.build();
                     client.start();
-                    client.blockUntilConnected();
+                    client.blockUntilConnected(15000, TimeUnit.MILLISECONDS);
 
                     state.state(EConnectionState.Connected);
                 } catch (Throwable t) {

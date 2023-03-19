@@ -4,6 +4,7 @@ import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.MessageObject;
+import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.hcdc.agents.common.DFSEditsFileFinder;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
@@ -62,12 +63,13 @@ public class EditsLogReader extends HDFSEditsReader {
     public long doRun() throws Exception {
         ModuleTxState state = stateManager.getModuleState();
         EditsLogFileReader reader = new EditsLogFileReader();
-        long txId = state.getReceivedTxId();
-        if (txId < 0) {
-            LOGGER.warn(getClass(), txId,
+        long tid = state.getReceivedTxId();
+        if (tid < 0) {
+            LOGGER.warn(getClass(), tid,
                     String.format("Name Node replication not initialized. [source=%s]",
                             NameNodeEnv.get(name).source()));
         }
+        BaseTxId txId = new BaseTxId(tid);
         List<DFSEditsFileFinder.EditsLogFile> files = DFSEditsFileFinder
                 .findEditsFiles(getPathNnCurrentDir(editsDir.getAbsolutePath()),
                         state.getReceivedTxId() + 1, -1);
@@ -86,11 +88,11 @@ public class EditsLogReader extends HDFSEditsReader {
                                     NameNodeEnv.get(name));
                             DFSEditLogBatch batch = reader.batch();
                             if (batch.transactions() != null && !batch.transactions().isEmpty()) {
-                                long tid = processBatch(batch, txId, stateManager.source());
-                                if (tid > 0) {
-                                    txId = tid;
+                                BaseTxId tx = processBatch(batch, txId.getId(), stateManager.source());
+                                if (tx != null) {
+                                    txId = tx;
                                     stateManager.update(txId);
-                                    stateManager.updateReceivedTx(txId);
+                                    stateManager.updateReceivedTx(txId.getId());
                                 }
                             }
                         } finally {
@@ -109,10 +111,10 @@ public class EditsLogReader extends HDFSEditsReader {
         LOGGER.info(getClass(), ltx,
                 String.format("Current Edits File: %s, Last Seen TXID=%d", cf, ltx));
 
-        return txId;
+        return txId.getId();
     }
 
-    private long processBatch(DFSEditLogBatch batch, long lastTxId, String source) throws Exception {
+    private BaseTxId processBatch(DFSEditLogBatch batch, long lastTxId, String source) throws Exception {
         if (batch != null && batch.transactions() != null && !batch.transactions().isEmpty()) {
             long txid = -1;
             for (DFSTransactionType<?> tnx : batch.transactions()) {
@@ -126,9 +128,9 @@ public class EditsLogReader extends HDFSEditsReader {
                 sender.send(message);
                 txid = tnx.id();
             }
-            return txid;
+            return new BaseTxId(txid);
         }
-        return -1;
+        return null;
     }
 
     private String getPathNnCurrentDir(String path) {

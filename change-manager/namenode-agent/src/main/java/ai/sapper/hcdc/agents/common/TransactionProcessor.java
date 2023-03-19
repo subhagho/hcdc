@@ -5,6 +5,7 @@ import ai.sapper.cdc.core.filters.DomainManager;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.MessageSender;
+import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.core.model.LongTxState;
 import ai.sapper.hcdc.agents.model.DFSBlockState;
 import ai.sapper.hcdc.agents.model.DFSFileState;
@@ -105,11 +106,13 @@ public abstract class TransactionProcessor {
                                      @NonNull Object data,
                                      @NonNull InvalidTransactionError te) throws Exception;
 
-    public void updateTransaction(long txId,
+    public void updateTransaction(@NonNull BaseTxId txId,
                                   @NonNull MessageObject<String, DFSChangeDelta> message) throws Exception {
-        if (message.mode() == MessageObject.MessageMode.New && txId > 0) {
+        if (message.mode() == MessageObject.MessageMode.New && txId.getId() > 0) {
             stateManager().update(txId);
-            LOGGER.debug(getClass(), txId, String.format("Processed transaction delta. [TXID=%d]", txId));
+            LOGGER.debug(getClass(),
+                    txId.getId(),
+                    String.format("Processed transaction delta. [TXID=%s]", txId.asString()));
         }
     }
 
@@ -194,29 +197,30 @@ public abstract class TransactionProcessor {
         }
     }
 
-    public long checkMessageSequence(MessageObject<String, DFSChangeDelta> message,
+    public BaseTxId checkMessageSequence(MessageObject<String, DFSChangeDelta> message,
                                      boolean ignoreMissing,
                                      boolean retry) throws Exception {
-        long txId = Long.parseLong(message.value().getTxId());
+        long tid = Long.parseLong(message.value().getTxId());
+        BaseTxId txId = new BaseTxId(tid);
         if (message.mode() == MessageObject.MessageMode.New) {
             LongTxState txState = (LongTxState) stateManager().processingState();
-            if (txState.getProcessedTxId() < 0) {
+            if (txState.getProcessedTxId().getId() < 0) {
                 return txId;
             }
-            if (txId != txState.getProcessedTxId() + 1) {
+            if (txId.getId() != txState.getProcessedTxId().getId() + 1) {
                 if (!ignoreMissing) {
                     throw new InvalidMessageError(message.id(),
                             String.format("Detected missing transaction. [expected=%d][current=%d]",
-                                    txState.getProcessedTxId() + 1, txId));
+                                    txState.getProcessedTxId().getId() + 1, txId));
                 }
             }
-            if (txId <= txState.getProcessedTxId()) {
+            if (txId.compare(txState.getProcessedTxId(), false) <= 0) {
                 if (retry) {
                     return txId;
                 }
                 throw new InvalidMessageError(message.id(),
                         String.format("Duplicate message: Transaction already processed. [TXID=%d][CURRENT=%d]",
-                                txId, txState.getProcessedTxId()));
+                                txId.getId(), txState.getProcessedTxId().getId()));
 
             }
         }

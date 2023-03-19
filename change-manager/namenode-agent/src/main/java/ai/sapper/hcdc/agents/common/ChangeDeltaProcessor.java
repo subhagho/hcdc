@@ -6,6 +6,7 @@ import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.cdc.core.ManagerStateError;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.messaging.*;
+import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.core.model.CDCAgentState;
 import ai.sapper.cdc.core.model.LongTxState;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
@@ -226,7 +227,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
 
     private void handleMessage(MessageObject<String, DFSChangeDelta> message) throws Throwable {
 
-        long txId = -1;
+        BaseTxId txId = null;
         if (!isValidMessage(message)) {
             throw new InvalidMessageError(message.id(),
                     String.format("Invalid Message mode. [id=%s][mode=%s]", message.id(), message.mode().name()));
@@ -243,13 +244,13 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
         try {
             DFSTransaction tnx = processor.extractTransaction(data);
             if (tnx != null) {
-                LOGGER.debug(getClass(), txId,
+                LOGGER.debug(getClass(), txId.getId(),
                         String.format("PROCESSING: [TXID=%d][OP=%s]",
                                 tnx.getTransactionId(), tnx.getOp().name()));
-                if (tnx.getTransactionId() != txId) {
+                if (tnx.getTransactionId() != txId.getId()) {
                     throw new InvalidMessageError(message.id(),
                             String.format("Transaction ID mismatch: [expected=%d][actual=%d]",
-                                    txId, tnx.getTransactionId()));
+                                    txId.getId(), tnx.getTransactionId()));
                 }
             }
             process(message, data, tnx, retry);
@@ -266,21 +267,22 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     public abstract boolean isValidMessage(@NonNull MessageObject<String, DFSChangeDelta> message);
 
     public void commitReceived(@NonNull MessageObject<String, DFSChangeDelta> message,
-                               long txId) throws Exception {
-        if (txId > 0) {
+                               @NonNull BaseTxId txId) throws Exception {
+        if (txId.getId() > 0) {
             if (message.mode() == MessageObject.MessageMode.New ||
                     message.mode() == MessageObject.MessageMode.Snapshot) {
-                if (stateManager().processingState().getProcessedTxId() < txId) {
+                boolean snapshot = (message.mode() == MessageObject.MessageMode.Snapshot);
+                if (stateManager().processingState().getProcessedTxId().compare(txId, snapshot) < 0) {
                     stateManager().update(txId);
                 }
-                if (stateManager.moduleTxState().getReceivedTxId() < txId) {
-                    stateManager().updateReceivedTx(txId);
-                    LOGGER.info(getClass(), txId,
-                            String.format("Received transaction delta. [TXID=%d]", txId));
+                if (stateManager.moduleTxState().getReceivedTxId() < txId.getId()) {
+                    stateManager().updateReceivedTx(txId.getId());
+                    LOGGER.info(getClass(), txId.getId(),
+                            String.format("Received transaction delta. [TXID=%s]", txId.asString()));
                 }
                 if (message.mode() == MessageObject.MessageMode.Snapshot) {
-                    if (stateManager().getModuleState().getSnapshotTxId() < txId) {
-                        stateManager().updateSnapshotTx(txId);
+                    if (stateManager().getModuleState().getSnapshotTxId() < txId.getId()) {
+                        stateManager().updateSnapshotTx(txId.getId());
                     }
                 }
             }
@@ -289,17 +291,18 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     }
 
     public void commit(@NonNull MessageObject<String, DFSChangeDelta> message,
-                       long txId) throws Exception {
-        if (txId > 0) {
+                       @NonNull BaseTxId txId) throws Exception {
+        if (txId.getId() > 0) {
             if (message.mode() == MessageObject.MessageMode.New ||
                     message.mode() == MessageObject.MessageMode.Snapshot) {
-                if (stateManager().processingState().getProcessedTxId() < txId) {
+                boolean snapshot = (message.mode() == MessageObject.MessageMode.Snapshot);
+                if (stateManager().processingState().getProcessedTxId().compare(txId, snapshot) < 0) {
                     stateManager().update(txId);
                 }
-                if (stateManager.moduleTxState().getCommittedTxId() < txId) {
-                    stateManager().updateCommittedTx(txId);
-                    LOGGER.info(getClass(), txId,
-                            String.format("Committed transaction delta. [TXID=%d]", txId));
+                if (stateManager.moduleTxState().getCommittedTxId() < txId.getId()) {
+                    stateManager().updateCommittedTx(txId.getId());
+                    LOGGER.info(getClass(), txId.getId(),
+                            String.format("Committed transaction delta. [TXID=%s]", txId.asString()));
                 }
             }
         }
@@ -309,7 +312,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     public void error(@NonNull MessageObject<String, DFSChangeDelta> message,
                       @NonNull Object data,
                       @NonNull Throwable error,
-                      long txId) throws Throwable {
+                      BaseTxId txId) throws Throwable {
         if (error instanceof InvalidTransactionError) {
             LOGGER.error(getClass(), ((InvalidTransactionError) error).getTxId(), error);
             processor.handleError(message, data, (InvalidTransactionError) error);

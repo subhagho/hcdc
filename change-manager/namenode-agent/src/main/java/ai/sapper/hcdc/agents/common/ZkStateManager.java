@@ -7,6 +7,7 @@ import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.BaseStateManager;
 import ai.sapper.cdc.core.ManagerStateError;
 import ai.sapper.cdc.core.StateManagerError;
+import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.core.model.Heartbeat;
 import ai.sapper.hcdc.agents.model.ModuleTxState;
 import ai.sapper.hcdc.agents.model.SnapshotState;
@@ -23,7 +24,7 @@ import java.nio.charset.StandardCharsets;
 
 @Getter
 @Accessors(fluent = true)
-public class ZkStateManager extends BaseStateManager<Long> {
+public class ZkStateManager extends BaseStateManager<BaseTxId> {
 
     public static class Constants {
         public static final String ZK_PATH_FILES = "/files";

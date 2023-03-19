@@ -7,6 +7,7 @@ import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.cdc.core.Service;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
+import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.core.model.LongTxState;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.NameNodeError;
@@ -72,7 +73,7 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNodeEnvState
     @Parameter(names = {"--tmp"}, description = "Temp directory to use to create local files. [DEFAULT=System.getProperty(\"java.io.tmpdir\")]")
     private String tempDir = System.getProperty("java.io.tmpdir");
 
-    private long txnId;
+    private BaseTxId txnId;
     private final Map<Long, DFSInode> inodes = new HashMap<>();
     private final Map<Long, DFSDirectory> directoryMap = new HashMap<>();
 
@@ -186,8 +187,8 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNodeEnvState
                     copy();
 
                     LongTxState nnTxState = (LongTxState) stateManager.initState(txnId);
-                    ModuleTxState mTx = stateManager.updateReceivedTx(txnId);
-                    mTx = stateManager.updateSnapshotTx(txnId);
+                    ModuleTxState mTx = stateManager.updateReceivedTx(txnId.getId());
+                    mTx = stateManager.updateSnapshotTx(txnId.getId());
                     DefaultLogger.info(env.LOG,
                             String.format("NameNode replication done. [state=%s][module state=%s]", nnTxState, mTx));
 
@@ -213,7 +214,7 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNodeEnvState
                     .create(NameNodeEnv.get(name()).source(),
                             inode,
                             EFileState.Finalized,
-                            txnId);
+                            txnId.getId());
             if (inode.blocks != null && !inode.blocks.isEmpty()) {
                 long prevBlockId = -1;
                 for (DFSInodeBlock block : inode.blocks) {
@@ -226,7 +227,7 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNodeEnvState
                                     block.numBytes,
                                     block.genStamp,
                                     EBlockState.Finalized,
-                                    txnId);
+                                    txnId.getId());
                     prevBlockId = block.id;
                 }
             }
@@ -240,7 +241,8 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNodeEnvState
         if (Strings.isNullOrEmpty(s)) {
             throw new NameNodeError(String.format("NameNode Last Transaction ID not found. [file=%s]", file));
         }
-        txnId = Long.parseLong(s);
+        long tid = Long.parseLong(s);
+        txnId = new BaseTxId(tid);
 
         List<HierarchicalConfiguration<ImmutableNode>> nodes = rootNode.configurationsAt(Constants.NODE_INODES);
         if (nodes != null && !nodes.isEmpty()) {

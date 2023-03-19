@@ -20,7 +20,7 @@
                     <connection>test-zk</connection>
                     <path>/test/env/connections</path>
                 </shared>
-                <connection>
+                <!--connection>
                     <type>ai.sapper.cdc.core.connections.hadoop.HdfsConnection</type>
                     <hdfs>
                         <name>test-hdfs</name>
@@ -51,13 +51,12 @@
                         </security>
                         <enableAdmin>true</enableAdmin>
                     </hdfs_ha>
-                </connection>
+                </connection -->
                 <connection>
                     <type>ai.sapper.cdc.core.connections.ZookeeperConnection</type>
                     <zookeeper>
                         <name>test-zk</name>
-                        <!--connectionString>192.168.0.5:2181,192.168.0.4:2181</connectionString -->
-                        <connectionString>192.168.2.16:2181,192.168.2.17:2181,192.168.2.18:2181</connectionString>
+                        <connectionString>localhost:2181</connectionString>
                         <retry>
                             <interval>1500</interval>
                             <retries>5</retries>
@@ -76,7 +75,7 @@
                         </paths>
                     </rest>
                 </connection>
-                <connection>
+                <!--connection>
                     <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer</type>
                     <kafka>
                         <name>test-kafka-producer</name>
@@ -117,7 +116,7 @@
                         <passwordKay>s2-test-password</passwordKay>
                         <driver>com.mysql.jdbc.Driver</driver>
                     </jdbc>
-                </connection>
+                </connection-->
             </connections>
         </config>
     </env>
