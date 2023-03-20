@@ -1,3 +1,10 @@
+configurations.all {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        if (details.requested.name == 'curator-recipes') {
+            details.useTarget 'org.apache.curator:curator-recipes:5.4.0'
+        }
+    }
+}
 
 dependencies {
     implementation project(':common')
