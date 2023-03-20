@@ -67,7 +67,9 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
             this.nEnvConfig.read();
 
             if (nEnvConfig().readHadoopConfig) {
-                hdfsConnection = connectionManager().getConnection(nEnvConfig.hdfsAdminConnection, HdfsConnection.class);
+                hdfsConnection = connectionManager()
+                        .getConnection(nEnvConfig.hdfsAdminConnection,
+                                HdfsConnection.class);
                 if (hdfsConnection == null) {
                     throw new ConfigurationException("HDFS Admin connection not found.");
                 }
@@ -108,7 +110,8 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
 
             return this;
         } catch (Throwable t) {
-            state().error(t);
+            if (state() != null)
+                state().error(t);
             throw new NameNodeError(t);
         }
     }
