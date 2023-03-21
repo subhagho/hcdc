@@ -1,6 +1,5 @@
 package ai.sapper.cdc.core.model;
 
-import ai.sapper.cdc.entity.TransactionId;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.NonNull;

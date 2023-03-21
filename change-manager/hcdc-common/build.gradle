@@ -33,6 +33,19 @@ protobuf {
     }
 }
 
+configurations.all {
+    exclude module: "logback-classic"
+    exclude module: "log4j-to-slf4j"
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        if (details.requested.name == 'commons-logging') {
+            details.useTarget "org.apache.logging.log4j:log4j-slf4j18-impl:2.17.2"
+        }
+        if (details.requested.name == 'curator-recipes') {
+            details.useTarget 'org.apache.curator:curator-recipes:5.4.0'
+        }
+    }
+}
+
 dependencies {
     implementation project(':common')
     implementation project(':core')
