@@ -114,6 +114,15 @@ subprojects {
             if (details.requested.name == 'avro') {
                 details.useTarget "org.apache.avro:avro:1.11.0"
             }
+            if (details.requested.name == 'curator-recipes') {
+                details.useTarget 'org.apache.curator:curator-recipes:5.4.0'
+            }
+            if (details.requested.name == 'curator-framework') {
+                details.useTarget 'org.apache.curator:curator-framework:5.4.0'
+            }
+            if (details.requested.name == 'curator-client') {
+                details.useTarget 'org.apache.curator:curator-client:5.4.0'
+            }
         }
     }
 
@@ -143,6 +152,9 @@ subprojects {
         implementation 'com.google.protobuf:protobuf-java:3.21.5'
         // https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java-util
         implementation 'com.google.protobuf:protobuf-java-util:3.21.5'
+        implementation 'org.apache.curator:curator-recipes:5.4.0'
+        implementation 'org.apache.curator:curator-framework:5.4.0'
+        implementation 'org.apache.curator:curator-client:5.4.0'
 
         testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
         testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
