@@ -1,19 +1,20 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.cdc.common.model.AvroChangeRecord;
 import ai.sapper.cdc.common.model.AvroChangeType;
-import ai.sapper.cdc.common.schema.AvroSchema;
 import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.core.model.EFileType;
-import ai.sapper.cdc.core.schema.SchemaManager;
+import ai.sapper.cdc.entity.DataType;
+import ai.sapper.cdc.entity.ValueParser;
+import ai.sapper.cdc.entity.avro.AvroEntitySchema;
+import ai.sapper.cdc.entity.model.DbPrimitiveValue;
+import ai.sapper.cdc.entity.model.DbSource;
+import ai.sapper.cdc.entity.schema.EntitySchema;
+import ai.sapper.cdc.entity.schema.SchemaManager;
 import ai.sapper.hcdc.agents.model.DFSFileState;
-import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.hdfs.HDFSBlockReader;
 import org.apache.parquet.Strings;
 
@@ -22,12 +23,15 @@ import java.io.IOException;
 
 @Getter
 @Accessors(fluent = true)
-public abstract class FormatConverter {
+public abstract class FormatConverter extends ValueParser {
     private SchemaManager schemaManager;
-    private EFileType fileType;
+    private final EFileType fileType;
+    private final DbSource source;
 
-    public FormatConverter(@NonNull EFileType fileType) {
+    public FormatConverter(@NonNull EFileType fileType,
+                           @NonNull DbSource source) {
         this.fileType = fileType;
+        this.source = source;
     }
 
     public FormatConverter withSchemaManager(@NonNull SchemaManager schemaManager) {
@@ -35,9 +39,9 @@ public abstract class FormatConverter {
         return this;
     }
 
-    public AvroSchema hasSchema(DFSFileState fileState, SchemaEntity schemaEntity) throws Exception {
+    public AvroEntitySchema hasSchema(DFSFileState fileState, SchemaEntity schemaEntity) throws Exception {
         if (schemaEntity != null) {
-            AvroSchema schema = schemaManager().get(schemaEntity);
+            AvroEntitySchema schema = schemaManager().get(schemaEntity);
             if (schema == null) {
                 if (!Strings.isNullOrEmpty(fileState.getFileInfo().getSchemaLocation())) {
                     schema = schemaManager().get(schemaEntity, fileState.getFileInfo().getSchemaLocation());
@@ -48,41 +52,27 @@ public abstract class FormatConverter {
         return null;
     }
 
-    public GenericRecord wrap(@NonNull Schema schema,
-                              @NonNull SchemaEntity schemaEntity,
-                              @NonNull String namespace,
-                              @NonNull String hdfsPath,
-                              @NonNull GenericRecord record,
-                              @NonNull AvroChangeType.EChangeType op,
-                              long txId) throws IOException {
-        Preconditions.checkNotNull(record);
-        AvroChangeRecord avro = new AvroChangeRecord()
-                .txId(txId)
-                .timestamp(System.currentTimeMillis())
-                .op(op)
-                .targetEntity(schemaEntity)
-                .sourceEntity(new SchemaEntity(namespace, hdfsPath))
-                .data(record);
-
-        return avro.toAvro(schema);
-    }
-
     public abstract boolean canParse(@NonNull String path, EFileType fileType) throws IOException;
 
     public abstract Response convert(@NonNull File source,
                                      @NonNull File output,
                                      @NonNull DFSFileState fileState,
                                      @NonNull SchemaEntity schemaEntity,
+                                     @NonNull AvroChangeType.EChangeType op,
                                      long txId,
-                                     @NonNull AvroChangeType.EChangeType op) throws IOException;
+                                     boolean snapshot) throws IOException;
 
     public abstract boolean supportsPartial();
 
     public abstract boolean detect(@NonNull String path, byte[] data, int length) throws IOException;
 
-    public abstract AvroSchema extractSchema(@NonNull HDFSBlockReader reader,
-                                             @NonNull DFSFileState fileState,
-                                             @NonNull SchemaEntity schemaEntity) throws IOException;
+    public abstract EntitySchema extractSchema(@NonNull HDFSBlockReader reader,
+                                               @NonNull DFSFileState fileState,
+                                               @NonNull SchemaEntity schemaEntity) throws IOException;
+
+    public abstract void updateValue(@NonNull DbPrimitiveValue.Builder vb,
+                                     @NonNull DataType<?> type,
+                                     Object value) throws Exception;
 
     @Getter
     @Setter

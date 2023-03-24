@@ -7,7 +7,7 @@ import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.io.EncryptionHandler;
-import ai.sapper.cdc.core.schema.SchemaManager;
+import ai.sapper.cdc.entity.schema.SchemaManager;
 import ai.sapper.hcdc.agents.common.CDCDataConverter;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
@@ -151,7 +151,7 @@ public class NameNodeSchemaScanner {
                 NameNodeEnv env = NameNodeEnv.get(name);
                 Preconditions.checkNotNull(env);
                 try {
-                    CDCDataConverter converter = new CDCDataConverter()
+                    CDCDataConverter converter = new CDCDataConverter(env.dbSource())
                             .withHdfsConnection(hdfsConnection)
                             .withSchemaManager(schemaManager);
                     if (encryptionHandler != null) {

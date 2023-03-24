@@ -9,10 +9,12 @@ import ai.sapper.cdc.core.ExitCallback;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.model.CDCAgentState;
 import ai.sapper.cdc.core.model.LongTxState;
-import ai.sapper.cdc.core.schema.SchemaManager;
+import ai.sapper.cdc.entity.model.DbSource;
+import ai.sapper.cdc.entity.schema.SchemaManager;
 import ai.sapper.hcdc.agents.model.NameNodeStatus;
 import ai.sapper.hcdc.agents.namenode.HadoopEnvConfig;
 import ai.sapper.hcdc.agents.namenode.NameNodeAdminClient;
+import ai.sapper.hcdc.utils.ProtoUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.protobuf.MessageOrBuilder;
@@ -42,6 +44,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
     private SchemaManager schemaManager;
     private HadoopEnvConfig hadoopConfig;
     private NameNodeAdminClient adminClient;
+    private DbSource dbSource;
 
     private final CDCAgentState.AgentState agentState = new CDCAgentState.AgentState();
 
@@ -105,6 +108,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
                         dLockBuilder().zkPath());
             }
 
+            dbSource = ProtoUtils.build(instance(), moduleInstance().getIp(), "HADOOP", 50070);
             state().state(ENameNodeEnvState.Initialized);
             postInit();
 
@@ -230,7 +234,6 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
     }
 
     @SuppressWarnings("unchecked")
-    @Override
     public <S extends SchemaManager> S schemaManager(@NonNull Class<? extends SchemaManager> type) throws Exception {
         if (schemaManager != null && !ReflectionUtils.isSuperType(type, schemaManager.getClass())) {
             throw new Exception(

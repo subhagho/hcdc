@@ -11,12 +11,18 @@ import lombok.Setter;
         property = "@class")
 public class BaseTxId extends TransactionId {
     private long id = -1;
+    private long recordId = 0;
 
     public BaseTxId() {
     }
 
     public BaseTxId(long txId) {
         id = txId;
+    }
+
+    public BaseTxId(long txId, long recordId) {
+        id = txId;
+        this.recordId = recordId;
     }
 
     /**
@@ -26,7 +32,15 @@ public class BaseTxId extends TransactionId {
     @Override
     public int compare(@NonNull TransactionId next, boolean snapshot) {
         if (next instanceof BaseTxId) {
-            return (int) (id - ((BaseTxId) next).id);
+            long ret = id - ((BaseTxId) next).id;
+            if (ret == 0) {
+                if (snapshot) {
+                    ret = getSequence() - next.getSequence();
+                } else {
+                    ret = recordId - ((BaseTxId) next).recordId;
+                }
+            }
+            return (int) ret;
         }
         return -1;
     }
@@ -37,7 +51,14 @@ public class BaseTxId extends TransactionId {
      */
     @Override
     public void parse(@NonNull String id) throws Exception {
-        this.id = Long.parseLong(id);
+        String[] parts = id.split("-");
+        if (parts.length == 3) {
+            this.id = Long.parseLong(parts[0]);
+            this.recordId = Long.parseLong(parts[1]);
+            setSequence(Long.parseLong(parts[2]));
+        } else {
+            throw new Exception(String.format("Invalid Transaction id. [id=%s]", id));
+        }
     }
 
     /**
@@ -45,6 +66,6 @@ public class BaseTxId extends TransactionId {
      */
     @Override
     public String asString() {
-        return String.valueOf(id);
+        return String.format("%d-%d-%d", id, recordId, getSequence());
     }
 }

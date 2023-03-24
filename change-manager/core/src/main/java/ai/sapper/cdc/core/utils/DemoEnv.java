@@ -2,25 +2,18 @@ package ai.sapper.cdc.core.utils;
 
 import ai.sapper.cdc.common.AbstractEnvState;
 import ai.sapper.cdc.core.BaseEnv;
-import ai.sapper.cdc.core.schema.SchemaManager;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
-import org.apache.commons.lang3.NotImplementedException;
 
 @Getter
 @Accessors(fluent = true)
 public class DemoEnv extends BaseEnv<DemoEnv.EDemoState> {
     public DemoEnv() {
         super("demo");
-    }
-
-    @Override
-    public <S extends SchemaManager> S schemaManager(@NonNull Class<? extends SchemaManager> type) throws Exception {
-        throw new NotImplementedException("Should not be called...");
     }
 
     public enum EDemoState {

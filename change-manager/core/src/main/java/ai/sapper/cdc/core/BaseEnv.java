@@ -8,7 +8,6 @@ import ai.sapper.cdc.common.utils.ReflectionUtils;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.keystore.KeyStore;
 import ai.sapper.cdc.core.model.ModuleInstance;
-import ai.sapper.cdc.core.schema.SchemaManager;
 import ai.sapper.cdc.core.utils.DistributedLockBuilder;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -247,7 +246,6 @@ public abstract class BaseEnv<T extends Enum<?>> {
         return moduleInstance.getSource();
     }
 
-    public abstract <S extends SchemaManager> S schemaManager(@NonNull Class<? extends SchemaManager> type) throws Exception;
 
     private static final Map<String, BaseEnv<?>> __instances = new LinkedHashMap<>();
     private static final ReentrantLock __instanceLock = new ReentrantLock();

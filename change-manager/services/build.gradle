@@ -21,6 +21,7 @@ dependencies {
     implementation project(':hcdc-common')
     implementation project(':core')
     implementation project(':namenode-agent')
+    implementation 'ai.sapper.cdc.framework:entity:1.2-SNAPSHOT'
 
     // https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-client
     implementation 'org.glassfish.jersey.core:jersey-client:2.35'

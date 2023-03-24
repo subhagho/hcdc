@@ -2,7 +2,6 @@ package ai.sapper.hcdc.agents.pipeline;
 
 import ai.sapper.cdc.common.model.AvroChangeType;
 import ai.sapper.cdc.common.model.services.SnapshotDoneRequest;
-import ai.sapper.cdc.common.schema.AvroSchema;
 import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.core.WebServiceClient;
@@ -17,9 +16,10 @@ import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.MessageSender;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.model.HDFSBlockData;
-import ai.sapper.cdc.core.schema.SchemaManager;
 import ai.sapper.cdc.core.utils.HFSHelper;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
+import ai.sapper.cdc.entity.avro.AvroEntitySchema;
+import ai.sapper.cdc.entity.schema.SchemaManager;
 import ai.sapper.hcdc.agents.common.*;
 import ai.sapper.hcdc.agents.model.*;
 import ai.sapper.hcdc.common.model.*;
@@ -315,7 +315,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         }
         if (!fileState.hasError() && rState.isEnabled()) {
             FSFile file = HCDCFsUtils.get(fileState, schemaEntity, fs);
-            CDCDataConverter converter = new CDCDataConverter()
+            CDCDataConverter converter = new CDCDataConverter(NameNodeEnv.get(name()).dbSource())
                     .withFileSystem(fs)
                     .withSchemaManager(NameNodeEnv.get(name()).schemaManager());
             if (encryptionHandler != null) {
@@ -344,7 +344,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
 
             SchemaManager schemaManager = NameNodeEnv.get(name()).schemaManager();
             DFSFile dfile = data.getFile();
-            AvroSchema schema = schemaManager.get(rState.getEntity());
+            AvroEntitySchema schema = schemaManager.get(rState.getEntity());
             if (schema != null) {
                 if (!Strings.isNullOrEmpty(schema.getZkPath())) {
                     rState.getFileInfo().setSchemaLocation(schema.getZkPath());
@@ -674,8 +674,8 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 FSFile file = HCDCFsUtils.get(fileState, schemaEntity, fs);
 
                 SchemaManager schemaManager = NameNodeEnv.get(name()).schemaManager();
-                AvroSchema prevSchema = schemaManager.get(rState.getEntity());
-                CDCDataConverter converter = new CDCDataConverter()
+                AvroEntitySchema prevSchema = schemaManager.get(rState.getEntity());
+                CDCDataConverter converter = new CDCDataConverter(NameNodeEnv.get(name()).dbSource())
                         .withFileSystem(fs)
                         .withSchemaManager(schemaManager);
                 if (encryptionHandler != null) {
@@ -756,7 +756,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                         rState.setRecordCount(rState.getRecordCount() + response.recordCount());
                     }
                     DFSFile dfile = data.getFile();
-                    AvroSchema schema = schemaManager.get(rState.getEntity());
+                    AvroEntitySchema schema = schemaManager.get(rState.getEntity());
                     if (schema != null) {
                         if (!Strings.isNullOrEmpty(schema.getZkPath())) {
                             rState.getFileInfo().setSchemaLocation(schema.getZkPath());
@@ -863,7 +863,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             changed = true;
         }
         SchemaManager schemaManager = NameNodeEnv.get(name()).schemaManager();
-        AvroSchema ned = schemaManager.get(replicaState.getEntity(), updated);
+        AvroEntitySchema ned = schemaManager.get(replicaState.getEntity(), updated);
         if (ned == null) {
             throw new Exception(
                     String.format("Entity Schema not found. [entity=%s][version=%s]",
@@ -874,7 +874,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         if (changed) {
             String currentPath = null;
             if (current != null) {
-                AvroSchema ed = schemaManager.get(replicaState.getEntity(), current);
+                AvroEntitySchema ed = schemaManager.get(replicaState.getEntity(), current);
                 if (ed == null) {
                     throw new Exception(
                             String.format("Entity Schema not found. [entity=%s][version=%s]",

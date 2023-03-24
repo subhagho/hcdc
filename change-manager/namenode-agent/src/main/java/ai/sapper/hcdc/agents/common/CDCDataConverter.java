@@ -1,7 +1,6 @@
 package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.cdc.common.model.AvroChangeType;
-import ai.sapper.cdc.common.schema.AvroSchema;
 import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.common.utils.PathUtils;
@@ -11,7 +10,9 @@ import ai.sapper.cdc.core.io.PathInfo;
 import ai.sapper.cdc.core.io.impl.CDCFileSystem;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.model.HDFSBlockData;
-import ai.sapper.cdc.core.schema.SchemaManager;
+import ai.sapper.cdc.entity.avro.AvroEntitySchema;
+import ai.sapper.cdc.entity.model.DbSource;
+import ai.sapper.cdc.entity.schema.SchemaManager;
 import ai.sapper.hcdc.agents.common.converter.AvroConverter;
 import ai.sapper.hcdc.agents.common.converter.ParquetConverter;
 import ai.sapper.hcdc.agents.model.DFSBlockState;
@@ -33,11 +34,17 @@ import java.nio.ByteBuffer;
 @Getter
 @Accessors(fluent = true)
 public class CDCDataConverter {
-    private final FormatConverter[] CONVERTERS = {new ParquetConverter(), new AvroConverter()};
+    private FormatConverter[] CONVERTERS;
 
     private CDCFileSystem fs;
     private HdfsConnection hdfsConnection;
     private EncryptionHandler<ByteBuffer, ByteBuffer> encryptionHandler;
+
+    public CDCDataConverter(@NonNull DbSource source) {
+        CONVERTERS = new FormatConverter[2];
+        CONVERTERS[0] = new AvroConverter(source);
+        CONVERTERS[1] = new ParquetConverter(source);
+    }
 
     public CDCDataConverter withFileSystem(@NonNull CDCFileSystem fs) {
         this.fs = fs;
@@ -121,7 +128,7 @@ public class CDCDataConverter {
                                 data.data().array(),
                                 (int) data.dataSize())) {
                             EFileType fileType = converter.fileType();
-                            AvroSchema schema = converter.extractSchema(reader,
+                            AvroEntitySchema schema = (AvroEntitySchema) converter.extractSchema(reader,
                                     fileState, schemaEntity);
                             if (schema != null) {
                                 ExtractSchemaResponse response = new ExtractSchemaResponse();
@@ -180,8 +187,15 @@ public class CDCDataConverter {
         }
         String fname = FilenameUtils.getName(replicaState.getFileInfo().getHdfsPath());
         fname = FilenameUtils.removeExtension(fname);
-        String path = PathUtils.formatPath(String.format("%s/%s-%d.avro", fs.tempPath(), fname, currentTxId));
-        return converter.convert(source, new File(path), fileState, replicaState.getEntity(), currentTxId, op);
+        String path = PathUtils.formatPath(String.format("%s/%s-%d.proto", fs.tempPath(), fname, currentTxId));
+        return converter.convert(source,
+                new File(path),
+                fileState,
+                replicaState.getEntity(),
+                op,
+                currentTxId,
+                !replicaState.isSnapshotReady());
+
     }
 
     private File createSourceFile(DFSFileState fileState,

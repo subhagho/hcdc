@@ -1,26 +1,24 @@
 package ai.sapper.hcdc.agents.common.converter;
 
 import ai.sapper.cdc.common.model.AvroChangeType;
-import ai.sapper.cdc.common.schema.AvroSchema;
-import ai.sapper.cdc.common.schema.AvroUtils;
 import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.model.HDFSBlockData;
-import ai.sapper.hcdc.agents.common.FormatConverter;
+import ai.sapper.cdc.entity.DataType;
+import ai.sapper.cdc.entity.avro.AvroEntitySchema;
+import ai.sapper.cdc.entity.model.ChangeEvent;
+import ai.sapper.cdc.entity.model.DbSource;
 import ai.sapper.hcdc.agents.model.DFSBlockState;
 import ai.sapper.hcdc.agents.model.DFSFileState;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import org.apache.avro.Schema;
-import org.apache.avro.file.CodecFactory;
 import org.apache.avro.file.DataFileReader;
-import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericDatumReader;
-import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumReader;
-import org.apache.avro.io.DatumWriter;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.hdfs.HDFSBlockReader;
 import org.apache.parquet.Strings;
@@ -30,12 +28,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class AvroConverter extends FormatConverter {
+public class AvroConverter extends AvroBasedConverter {
     private static final String MAGIC_CODE = "Obj1";
     public static final String EXT = "avro";
 
-    public AvroConverter() {
-        super(EFileType.AVRO);
+    public AvroConverter(@NonNull DbSource source) {
+        super(EFileType.AVRO, source);
     }
 
     /**
@@ -61,31 +59,27 @@ public class AvroConverter extends FormatConverter {
                             @NonNull File output,
                             @NonNull DFSFileState fileState,
                             @NonNull SchemaEntity schemaEntity,
+                            @NonNull AvroChangeType.EChangeType op,
                             long txId,
-                            @NonNull AvroChangeType.EChangeType op) throws IOException {
+                            boolean snapshot) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
             long count = 0;
-            AvroSchema schema = parseSchema(source, schemaEntity);
-            Schema wrapper = AvroUtils.createSchema(schema.getSchema());
-            final DatumWriter<GenericRecord> writer = new GenericDatumWriter<>(wrapper);
-            try (DataFileWriter<GenericRecord> fos = new DataFileWriter<>(writer)) {
-                fos.setCodec(CodecFactory.snappyCodec());
-                fos.create(wrapper, output);
+            AvroEntitySchema schema = parseSchema(source, schemaEntity);
+
+            try (FileOutputStream fos = new FileOutputStream(output)) {
                 GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema.getSchema());
                 try (DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(source, reader)) {
                     while (dataFileReader.hasNext()) {
                         GenericRecord record = dataFileReader.next();
                         if (record == null) break;
-                        GenericRecord wrapped = wrap(wrapper,
-                                schemaEntity,
-                                fileState.getFileInfo().getNamespace(),
-                                fileState.getFileInfo().getHdfsPath(),
-                                record, op, txId);
-                        fos.append(wrapped);
+                        BaseTxId tid = new BaseTxId(txId, count);
+                        ChangeEvent event = convert(schema, record, op, tid, snapshot);
+                        event.writeDelimitedTo(fos);
                         count++;
                     }
                 }
+                fos.flush();
             }
             return new Response(output, count);
         } catch (Exception ex) {
@@ -117,13 +111,13 @@ public class AvroConverter extends FormatConverter {
         return false;
     }
 
-    private AvroSchema parseSchema(File file,
-                                   SchemaEntity schemaEntity) throws Exception {
+    private AvroEntitySchema parseSchema(File file,
+                                         SchemaEntity schemaEntity) throws Exception {
         DatumReader<GenericRecord> datumReader = new GenericDatumReader<>();
         try (DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(file, datumReader)) {
             Schema schema = dataFileReader.getSchema();
-            AvroSchema avs = new AvroSchema();
-            avs.withSchema(schema);
+            AvroEntitySchema avs = new AvroEntitySchema();
+            avs.withSchema(schema, true);
             return schemaManager().checkAndSave(avs, schemaEntity);
         }
     }
@@ -134,12 +128,12 @@ public class AvroConverter extends FormatConverter {
      * @throws IOException
      */
     @Override
-    public AvroSchema extractSchema(@NonNull HDFSBlockReader reader,
-                                   @NonNull DFSFileState fileState,
-                                   @NonNull SchemaEntity schemaEntity) throws IOException {
+    public AvroEntitySchema extractSchema(@NonNull HDFSBlockReader reader,
+                                          @NonNull DFSFileState fileState,
+                                          @NonNull SchemaEntity schemaEntity) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
-            AvroSchema schema = hasSchema(fileState, schemaEntity);
+            AvroEntitySchema schema = hasSchema(fileState, schemaEntity);
             if (schema != null) {
                 return schema;
             }
@@ -165,5 +159,14 @@ public class AvroConverter extends FormatConverter {
         } catch (Exception ex) {
             throw new IOException(ex);
         }
+    }
+
+
+    @Override
+    public DataType<?> parseDataType(@NonNull String typeName,
+                                     int jdbcType,
+                                     long size,
+                                     int... params) throws Exception {
+        return null;
     }
 }
