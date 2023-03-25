@@ -106,6 +106,7 @@ public abstract class AvroBasedConverter extends FormatConverter {
         } else {
             updateValue(vb, type, value);
         }
+        builder.setData(DbValue.newBuilder().setPrimitive(vb.build()));
         return builder.build();
     }
 
@@ -123,7 +124,7 @@ public abstract class AvroBasedConverter extends FormatConverter {
             return;
         } else if (type.equals(AvroEntitySchema.TIME_MICROS)) {
             long ts = BasicDataTypeReaders.LONG_READER.read(value);
-            ts = ts / 1000;
+            ts = microToMilliSeconds(ts);
             LongColumnData d = LongColumnData.newBuilder()
                     .setData(ts)
                     .build();
@@ -131,7 +132,7 @@ public abstract class AvroBasedConverter extends FormatConverter {
             return;
         } else if (type.equals(DbEntitySchema.DATE)) {
             long ts = BasicDataTypeReaders.LONG_READER.read(value);
-            ts = ts * 24 * 60 * 60 * 1000;
+            ts = dateToDateTime(ts);
             LongColumnData d = LongColumnData.newBuilder()
                     .setData(ts)
                     .build();
@@ -146,7 +147,7 @@ public abstract class AvroBasedConverter extends FormatConverter {
             return;
         } else if (type.equals(AvroEntitySchema.TIMESTAMP_MICROS)) {
             long ts = BasicDataTypeReaders.LONG_READER.read(value);
-            ts = ts / 1000;
+            ts = microToMilliSeconds(ts);
             LongColumnData d = LongColumnData.newBuilder()
                     .setData(ts)
                     .build();

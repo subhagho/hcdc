@@ -10,6 +10,7 @@ import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.model.HDFSBlockData;
+import ai.sapper.cdc.entity.CDCSchemaEntity;
 import ai.sapper.cdc.entity.DataType;
 import ai.sapper.cdc.entity.avro.AvroEntitySchema;
 import ai.sapper.cdc.entity.model.ChangeEvent;
@@ -146,7 +147,10 @@ public class JsonConverter extends AvroBasedConverter {
         }
         if (schema != null) {
             AvroEntitySchema avs = new AvroEntitySchema();
+            CDCSchemaEntity se = new CDCSchemaEntity(schemaEntity);
+            avs.setSchemaEntity(se);
             avs.withSchema(schema, true);
+
             return schemaManager().checkAndSave(avs, schemaEntity);
         }
         return null;

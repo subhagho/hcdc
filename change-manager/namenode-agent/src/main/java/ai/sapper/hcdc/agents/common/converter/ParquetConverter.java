@@ -6,6 +6,7 @@ import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.model.HDFSBlockData;
+import ai.sapper.cdc.entity.CDCSchemaEntity;
 import ai.sapper.cdc.entity.DataType;
 import ai.sapper.cdc.entity.avro.AvroEntitySchema;
 import ai.sapper.cdc.entity.model.ChangeEvent;
@@ -104,7 +105,8 @@ public class ParquetConverter extends AvroBasedConverter {
             MessageType pschema = reader.getFooter().getFileMetaData().getSchema();
             Schema schema = new AvroSchemaConverter(conf).convert(pschema);
             AvroEntitySchema avs = new AvroEntitySchema();
-            avs.withSchema(schema, true);
+            CDCSchemaEntity se = new CDCSchemaEntity(schemaEntity);
+            avs.setSchemaEntity(se);avs.withSchema(schema, true);
             return schemaManager().checkAndSave(avs, schemaEntity);
         }
     }

@@ -6,6 +6,7 @@ import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.model.HDFSBlockData;
+import ai.sapper.cdc.entity.CDCSchemaEntity;
 import ai.sapper.cdc.entity.DataType;
 import ai.sapper.cdc.entity.avro.AvroEntitySchema;
 import ai.sapper.cdc.entity.model.ChangeEvent;
@@ -117,6 +118,8 @@ public class AvroConverter extends AvroBasedConverter {
         try (DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(file, datumReader)) {
             Schema schema = dataFileReader.getSchema();
             AvroEntitySchema avs = new AvroEntitySchema();
+            CDCSchemaEntity se = new CDCSchemaEntity(schemaEntity);
+            avs.setSchemaEntity(se);
             avs.withSchema(schema, true);
             return schemaManager().checkAndSave(avs, schemaEntity);
         }
