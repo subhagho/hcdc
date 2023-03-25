@@ -34,11 +34,13 @@ public class ProtoUtils {
                 .build();
     }
 
-    public static DbEntity build(@NonNull SchemaEntity entity) {
+    public static DbEntity build(@NonNull SchemaEntity entity,
+                                 @NonNull String path) {
         return DbEntity.newBuilder()
                 .setDatabase(entity.getDomain())
                 .setTable(entity.getEntity())
                 .setGroup(entity.getGroup())
+                .setSourcePath(path)
                 .build();
     }
 

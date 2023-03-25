@@ -75,7 +75,12 @@ public class AvroConverter extends AvroBasedConverter {
                         GenericRecord record = dataFileReader.next();
                         if (record == null) break;
                         BaseTxId tid = new BaseTxId(txId, count);
-                        ChangeEvent event = convert(schema, record, op, tid, snapshot);
+                        ChangeEvent event = convert(schema,
+                                record,
+                                fileState.getFileInfo().getHdfsPath(),
+                                op,
+                                tid,
+                                snapshot);
                         event.writeDelimitedTo(fos);
                         count++;
                     }

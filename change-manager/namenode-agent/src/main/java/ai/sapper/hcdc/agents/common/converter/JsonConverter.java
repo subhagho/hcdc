@@ -78,7 +78,12 @@ public class JsonConverter extends AvroBasedConverter {
                         if (Strings.isNullOrEmpty(line)) continue;
                         GenericRecord record = AvroUtils.jsonToAvroRecord(line, schema.getSchema());
                         BaseTxId tid = new BaseTxId(txId, count);
-                        ChangeEvent event = convert(schema, record, op, tid, snapshot);
+                        ChangeEvent event = convert(schema,
+                                record,
+                                fileState.getFileInfo().getHdfsPath(),
+                                op,
+                                tid,
+                                snapshot);
                         event.writeDelimitedTo(fos);
                         count++;
                     }

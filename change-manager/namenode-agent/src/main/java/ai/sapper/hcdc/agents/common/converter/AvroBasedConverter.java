@@ -32,15 +32,17 @@ public abstract class AvroBasedConverter extends FormatConverter {
     }
 
 
-    public ChangeEvent convert(AvroEntitySchema schema,
-                               GenericRecord record,
-                               AvroChangeType.EChangeType op,
-                               BaseTxId txId,
+    public ChangeEvent convert(@NonNull AvroEntitySchema schema,
+                               @NonNull GenericRecord record,
+                               @NonNull String sourcePath,
+                               @NonNull AvroChangeType.EChangeType op,
+                               @NonNull BaseTxId txId,
                                boolean snapshot) throws Exception {
         Transaction tnx = ProtoUtils.build(txId);
         DbChangeRecord change = buildChangeRecord(schema.getSchemaEntity(),
                 schema,
                 record,
+                sourcePath,
                 op);
         ChangeEvent.Builder builder = ChangeEvent.newBuilder()
                 .setType(ChangeEvent.EventType.DATA)
@@ -56,9 +58,10 @@ public abstract class AvroBasedConverter extends FormatConverter {
     public DbChangeRecord buildChangeRecord(@NonNull SchemaEntity schemaEntity,
                                             @NonNull AvroEntitySchema schema,
                                             @NonNull GenericRecord record,
+                                            @NonNull String sourcePath,
                                             @NonNull AvroChangeType.EChangeType op) throws Exception {
         DbChangeRecord.Builder builder = DbChangeRecord.newBuilder();
-        DbEntity entity = ProtoUtils.build(schemaEntity);
+        DbEntity entity = ProtoUtils.build(schemaEntity, sourcePath);
         builder.setEntity(entity);
         DbChangeRecord.ChangeType ct = ProtoUtils.changeType(op);
         if (ct == null) {
