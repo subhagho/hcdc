@@ -20,9 +20,11 @@ message DFSTransaction {
     IGNORE = 9;
     ERROR = 10;
   }
-  required int64 transactionId = 1;
-  required Operation op = 2;
-  required uint64 timestamp = 3;
+  required int64 id = 1;
+  required int64 sequence = 2;
+  required int64 recordId = 4;
+  required Operation op = 5;
+  required uint64 timestamp = 6;
 }
 
 message DFSSchemaEntity {
@@ -165,8 +167,7 @@ message DFSAdminMessage {
 }
 
 message DFSChangeDelta {
-  required string txId = 2;
-  required int64 sequence = 3;
+  required DFSTransaction tx = 1;
   required DFSSchemaEntity entity = 4;
   required string type = 5;
   required uint64 timestamp = 6;

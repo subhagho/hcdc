@@ -16,7 +16,7 @@ import ai.sapper.cdc.entity.jdbc.DbEntitySchema;
 import ai.sapper.cdc.entity.model.*;
 import ai.sapper.cdc.entity.schema.SchemaField;
 import ai.sapper.hcdc.agents.common.FormatConverter;
-import ai.sapper.hcdc.utils.ProtoUtils;
+import ai.sapper.cdc.core.utils.ProtoUtils;
 import com.google.protobuf.ByteString;
 import lombok.NonNull;
 import org.apache.avro.Schema;

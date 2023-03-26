@@ -8,32 +8,19 @@ public interface DFSChangeDeltaOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>required string txId = 2;</code>
-   * @return Whether the txId field is set.
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction tx = 1;</code>
+   * @return Whether the tx field is set.
    */
-  boolean hasTxId();
+  boolean hasTx();
   /**
-   * <code>required string txId = 2;</code>
-   * @return The txId.
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction tx = 1;</code>
+   * @return The tx.
    */
-  java.lang.String getTxId();
+  ai.sapper.hcdc.common.model.DFSTransaction getTx();
   /**
-   * <code>required string txId = 2;</code>
-   * @return The bytes for txId.
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction tx = 1;</code>
    */
-  com.google.protobuf.ByteString
-      getTxIdBytes();
-
-  /**
-   * <code>required int64 sequence = 3;</code>
-   * @return Whether the sequence field is set.
-   */
-  boolean hasSequence();
-  /**
-   * <code>required int64 sequence = 3;</code>
-   * @return The sequence.
-   */
-  long getSequence();
+  ai.sapper.hcdc.common.model.DFSTransactionOrBuilder getTxOrBuilder();
 
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSSchemaEntity entity = 4;</code>

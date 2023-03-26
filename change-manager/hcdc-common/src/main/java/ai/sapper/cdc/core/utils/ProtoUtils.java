@@ -1,13 +1,43 @@
-package ai.sapper.hcdc.utils;
+package ai.sapper.cdc.core.utils;
 
 import ai.sapper.cdc.common.model.AvroChangeType;
 import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.core.model.BaseTxId;
+import ai.sapper.cdc.core.model.EngineType;
 import ai.sapper.cdc.entity.model.*;
+import ai.sapper.hcdc.common.model.DFSTransaction;
 import lombok.NonNull;
 
 public class ProtoUtils {
+    public static DFSTransaction buildTx(@NonNull BaseTxId txId,
+                                         @NonNull DFSTransaction.Operation op) {
+        return DFSTransaction.newBuilder()
+                .setId(txId.getId())
+                .setSequence(txId.getSequence())
+                .setRecordId(txId.getRecordId())
+                .setOp(op)
+                .setTimestamp(System.currentTimeMillis())
+                .build();
+    }
+
+    public static BaseTxId fromTx(@NonNull DFSTransaction tx) {
+        BaseTxId id = new BaseTxId();
+        id.setType(EngineType.HDFS);
+        id.setId(tx.getId());
+        id.setSequence(tx.getSequence());
+        id.setRecordId(tx.getRecordId());
+        return id;
+    }
+
+    public static String toString(@NonNull DFSTransaction tx) {
+        return String.format("%s-%d-%d-%d",
+                tx.getOp().name(),
+                tx.getId(),
+                tx.getSequence(),
+                tx.getRecordId());
+    }
+
     public static Transaction build(@NonNull BaseTxId txId) {
         Sequence sequence = Sequence.newBuilder()
                 .setMajor(txId.getSequence())

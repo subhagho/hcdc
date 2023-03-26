@@ -2,6 +2,7 @@ package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.cdc.common.model.AvroChangeType;
 import ai.sapper.cdc.common.schema.SchemaEntity;
+import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.entity.DataType;
 import ai.sapper.cdc.entity.ValueParser;
@@ -59,7 +60,7 @@ public abstract class FormatConverter extends ValueParser {
                                      @NonNull DFSFileState fileState,
                                      @NonNull SchemaEntity schemaEntity,
                                      @NonNull AvroChangeType.EChangeType op,
-                                     long txId,
+                                     @NonNull BaseTxId txId,
                                      boolean snapshot) throws IOException;
 
     public abstract boolean supportsPartial();

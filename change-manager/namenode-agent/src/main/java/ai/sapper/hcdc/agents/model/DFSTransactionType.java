@@ -78,11 +78,17 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
     }
 
     public DFSTransaction getTransactionProto() {
-        return DFSTransaction.newBuilder().setTransactionId(id).setOp(op).setTimestamp(timestamp).build();
+        return DFSTransaction.newBuilder()
+                .setId(id)
+                .setSequence(0)
+                .setRecordId(0)
+                .setOp(op)
+                .setTimestamp(timestamp)
+                .build();
     }
 
     public void parseFrom(@NonNull DFSTransaction transaction) {
-        id = transaction.getTransactionId();
+        id = transaction.getId();
         op = transaction.getOp();
         timestamp = transaction.getTimestamp();
     }
@@ -311,7 +317,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             builder.setType(proto.getClass().getCanonicalName())
                     .setEntity(proto.getFile().getEntity())
                     .setTimestamp(System.currentTimeMillis())
-                    .setTxId(String.valueOf(proto.getTransaction().getTransactionId()))
+                    .setTx(proto.getTransaction())
                     .setBlockAdd(proto);
             message.setData(builder.build());
 
@@ -419,7 +425,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             builder.setType(proto.getClass().getCanonicalName())
                     .setEntity(proto.getFile().getEntity())
                     .setTimestamp(System.currentTimeMillis())
-                    .setTxId(String.valueOf(proto.getTransaction().getTransactionId()))
+                    .setTx(proto.getTransaction())
                     .setFileAdd(proto);
 
             message.setData(builder.build());
@@ -501,7 +507,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             builder.setType(proto.getClass().getCanonicalName())
                     .setEntity(proto.getFile().getEntity())
                     .setTimestamp(System.currentTimeMillis())
-                    .setTxId(String.valueOf(proto.getTransaction().getTransactionId()))
+                    .setTx(proto.getTransaction())
                     .setFileAppend(proto);
             message.setData(builder.build());
 
@@ -615,7 +621,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             builder.setType(proto.getClass().getCanonicalName())
                     .setEntity(proto.getFile().getEntity())
                     .setTimestamp(System.currentTimeMillis())
-                    .setTxId(String.valueOf(proto.getTransaction().getTransactionId()))
+                    .setTx(proto.getTransaction())
                     .setFileClose(proto);
             message.setData(builder.build());
 
@@ -697,7 +703,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             builder.setType(proto.getClass().getCanonicalName())
                     .setEntity(proto.getFile().getEntity())
                     .setTimestamp(System.currentTimeMillis())
-                    .setTxId(String.valueOf(proto.getTransaction().getTransactionId()))
+                    .setTx(proto.getTransaction())
                     .setFileDelete(proto);
             message.setData(builder.build());
 
@@ -786,7 +792,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             builder.setType(proto.getClass().getCanonicalName())
                     .setEntity(proto.getFile().getEntity())
                     .setTimestamp(System.currentTimeMillis())
-                    .setTxId(String.valueOf(proto.getTransaction().getTransactionId()))
+                    .setTx(proto.getTransaction())
                     .setBlockTruncate(proto);
             message.setData(builder.build());
 
@@ -876,7 +882,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             builder.setType(proto.getClass().getCanonicalName())
                     .setEntity(proto.getFile().getEntity())
                     .setTimestamp(System.currentTimeMillis())
-                    .setTxId(String.valueOf(proto.getTransaction().getTransactionId()))
+                    .setTx(proto.getTransaction())
                     .setBlockUpdate(proto);
             message.setData(builder.build());
 
@@ -968,7 +974,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             builder.setType(proto.getClass().getCanonicalName())
                     .setEntity(proto.getDestFile().getEntity())
                     .setTimestamp(System.currentTimeMillis())
-                    .setTxId(String.valueOf(proto.getTransaction().getTransactionId()))
+                    .setTx(proto.getTransaction())
                     .setFileRename(proto);
             message.setData(builder.build());
 
@@ -1047,7 +1053,7 @@ public abstract class DFSTransactionType<T> implements Comparable<DFSTransaction
             builder.setType(proto.getClass().getCanonicalName())
                     .setEntity(proto.getFile().getEntity())
                     .setTimestamp(System.currentTimeMillis())
-                    .setTxId(String.valueOf(proto.getTransaction().getTransactionId()))
+                    .setTx(proto.getTransaction())
                     .setIgnore(proto);
             message.setData(builder.build());
 

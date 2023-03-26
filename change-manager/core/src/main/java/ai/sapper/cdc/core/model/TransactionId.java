@@ -12,7 +12,7 @@ import lombok.Setter;
 )
 public abstract class TransactionId {
     private EngineType type;
-    private long sequence;
+    private long sequence = 0;
 
     public TransactionId() {
     }

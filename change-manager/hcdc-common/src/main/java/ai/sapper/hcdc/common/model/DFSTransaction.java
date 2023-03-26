@@ -52,23 +52,33 @@ private static final long serialVersionUID = 0L;
             break;
           case 8: {
             bitField0_ |= 0x00000001;
-            transactionId_ = input.readInt64();
+            id_ = input.readInt64();
             break;
           }
           case 16: {
+            bitField0_ |= 0x00000002;
+            sequence_ = input.readInt64();
+            break;
+          }
+          case 32: {
+            bitField0_ |= 0x00000004;
+            recordId_ = input.readInt64();
+            break;
+          }
+          case 40: {
             int rawValue = input.readEnum();
               @SuppressWarnings("deprecation")
             ai.sapper.hcdc.common.model.DFSTransaction.Operation value = ai.sapper.hcdc.common.model.DFSTransaction.Operation.valueOf(rawValue);
             if (value == null) {
-              unknownFields.mergeVarintField(2, rawValue);
+              unknownFields.mergeVarintField(5, rawValue);
             } else {
-              bitField0_ |= 0x00000002;
+              bitField0_ |= 0x00000008;
               op_ = rawValue;
             }
             break;
           }
-          case 24: {
-            bitField0_ |= 0x00000004;
+          case 48: {
+            bitField0_ |= 0x00000010;
             timestamp_ = input.readUInt64();
             break;
           }
@@ -284,36 +294,74 @@ private static final long serialVersionUID = 0L;
   }
 
   private int bitField0_;
-  public static final int TRANSACTIONID_FIELD_NUMBER = 1;
-  private long transactionId_;
+  public static final int ID_FIELD_NUMBER = 1;
+  private long id_;
   /**
-   * <code>required int64 transactionId = 1;</code>
-   * @return Whether the transactionId field is set.
+   * <code>required int64 id = 1;</code>
+   * @return Whether the id field is set.
    */
   @java.lang.Override
-  public boolean hasTransactionId() {
+  public boolean hasId() {
     return ((bitField0_ & 0x00000001) != 0);
   }
   /**
-   * <code>required int64 transactionId = 1;</code>
-   * @return The transactionId.
+   * <code>required int64 id = 1;</code>
+   * @return The id.
    */
   @java.lang.Override
-  public long getTransactionId() {
-    return transactionId_;
+  public long getId() {
+    return id_;
   }
 
-  public static final int OP_FIELD_NUMBER = 2;
-  private int op_;
+  public static final int SEQUENCE_FIELD_NUMBER = 2;
+  private long sequence_;
   /**
-   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction.Operation op = 2;</code>
-   * @return Whether the op field is set.
+   * <code>required int64 sequence = 2;</code>
+   * @return Whether the sequence field is set.
    */
-  @java.lang.Override public boolean hasOp() {
+  @java.lang.Override
+  public boolean hasSequence() {
     return ((bitField0_ & 0x00000002) != 0);
   }
   /**
-   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction.Operation op = 2;</code>
+   * <code>required int64 sequence = 2;</code>
+   * @return The sequence.
+   */
+  @java.lang.Override
+  public long getSequence() {
+    return sequence_;
+  }
+
+  public static final int RECORDID_FIELD_NUMBER = 4;
+  private long recordId_;
+  /**
+   * <code>required int64 recordId = 4;</code>
+   * @return Whether the recordId field is set.
+   */
+  @java.lang.Override
+  public boolean hasRecordId() {
+    return ((bitField0_ & 0x00000004) != 0);
+  }
+  /**
+   * <code>required int64 recordId = 4;</code>
+   * @return The recordId.
+   */
+  @java.lang.Override
+  public long getRecordId() {
+    return recordId_;
+  }
+
+  public static final int OP_FIELD_NUMBER = 5;
+  private int op_;
+  /**
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction.Operation op = 5;</code>
+   * @return Whether the op field is set.
+   */
+  @java.lang.Override public boolean hasOp() {
+    return ((bitField0_ & 0x00000008) != 0);
+  }
+  /**
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction.Operation op = 5;</code>
    * @return The op.
    */
   @java.lang.Override public ai.sapper.hcdc.common.model.DFSTransaction.Operation getOp() {
@@ -322,18 +370,18 @@ private static final long serialVersionUID = 0L;
     return result == null ? ai.sapper.hcdc.common.model.DFSTransaction.Operation.ADD_FILE : result;
   }
 
-  public static final int TIMESTAMP_FIELD_NUMBER = 3;
+  public static final int TIMESTAMP_FIELD_NUMBER = 6;
   private long timestamp_;
   /**
-   * <code>required uint64 timestamp = 3;</code>
+   * <code>required uint64 timestamp = 6;</code>
    * @return Whether the timestamp field is set.
    */
   @java.lang.Override
   public boolean hasTimestamp() {
-    return ((bitField0_ & 0x00000004) != 0);
+    return ((bitField0_ & 0x00000010) != 0);
   }
   /**
-   * <code>required uint64 timestamp = 3;</code>
+   * <code>required uint64 timestamp = 6;</code>
    * @return The timestamp.
    */
   @java.lang.Override
@@ -348,7 +396,15 @@ private static final long serialVersionUID = 0L;
     if (isInitialized == 1) return true;
     if (isInitialized == 0) return false;
 
-    if (!hasTransactionId()) {
+    if (!hasId()) {
+      memoizedIsInitialized = 0;
+      return false;
+    }
+    if (!hasSequence()) {
+      memoizedIsInitialized = 0;
+      return false;
+    }
+    if (!hasRecordId()) {
       memoizedIsInitialized = 0;
       return false;
     }
@@ -368,13 +424,19 @@ private static final long serialVersionUID = 0L;
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (((bitField0_ & 0x00000001) != 0)) {
-      output.writeInt64(1, transactionId_);
+      output.writeInt64(1, id_);
     }
     if (((bitField0_ & 0x00000002) != 0)) {
-      output.writeEnum(2, op_);
+      output.writeInt64(2, sequence_);
     }
     if (((bitField0_ & 0x00000004) != 0)) {
-      output.writeUInt64(3, timestamp_);
+      output.writeInt64(4, recordId_);
+    }
+    if (((bitField0_ & 0x00000008) != 0)) {
+      output.writeEnum(5, op_);
+    }
+    if (((bitField0_ & 0x00000010) != 0)) {
+      output.writeUInt64(6, timestamp_);
     }
     unknownFields.writeTo(output);
   }
@@ -387,15 +449,23 @@ private static final long serialVersionUID = 0L;
     size = 0;
     if (((bitField0_ & 0x00000001) != 0)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeInt64Size(1, transactionId_);
+        .computeInt64Size(1, id_);
     }
     if (((bitField0_ & 0x00000002) != 0)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeEnumSize(2, op_);
+        .computeInt64Size(2, sequence_);
     }
     if (((bitField0_ & 0x00000004) != 0)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeUInt64Size(3, timestamp_);
+        .computeInt64Size(4, recordId_);
+    }
+    if (((bitField0_ & 0x00000008) != 0)) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeEnumSize(5, op_);
+    }
+    if (((bitField0_ & 0x00000010) != 0)) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeUInt64Size(6, timestamp_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -412,10 +482,20 @@ private static final long serialVersionUID = 0L;
     }
     ai.sapper.hcdc.common.model.DFSTransaction other = (ai.sapper.hcdc.common.model.DFSTransaction) obj;
 
-    if (hasTransactionId() != other.hasTransactionId()) return false;
-    if (hasTransactionId()) {
-      if (getTransactionId()
-          != other.getTransactionId()) return false;
+    if (hasId() != other.hasId()) return false;
+    if (hasId()) {
+      if (getId()
+          != other.getId()) return false;
+    }
+    if (hasSequence() != other.hasSequence()) return false;
+    if (hasSequence()) {
+      if (getSequence()
+          != other.getSequence()) return false;
+    }
+    if (hasRecordId() != other.hasRecordId()) return false;
+    if (hasRecordId()) {
+      if (getRecordId()
+          != other.getRecordId()) return false;
     }
     if (hasOp() != other.hasOp()) return false;
     if (hasOp()) {
@@ -437,10 +517,20 @@ private static final long serialVersionUID = 0L;
     }
     int hash = 41;
     hash = (19 * hash) + getDescriptor().hashCode();
-    if (hasTransactionId()) {
-      hash = (37 * hash) + TRANSACTIONID_FIELD_NUMBER;
+    if (hasId()) {
+      hash = (37 * hash) + ID_FIELD_NUMBER;
       hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
-          getTransactionId());
+          getId());
+    }
+    if (hasSequence()) {
+      hash = (37 * hash) + SEQUENCE_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getSequence());
+    }
+    if (hasRecordId()) {
+      hash = (37 * hash) + RECORDID_FIELD_NUMBER;
+      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+          getRecordId());
     }
     if (hasOp()) {
       hash = (37 * hash) + OP_FIELD_NUMBER;
@@ -584,12 +674,16 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public Builder clear() {
       super.clear();
-      transactionId_ = 0L;
+      id_ = 0L;
       bitField0_ = (bitField0_ & ~0x00000001);
-      op_ = 0;
+      sequence_ = 0L;
       bitField0_ = (bitField0_ & ~0x00000002);
-      timestamp_ = 0L;
+      recordId_ = 0L;
       bitField0_ = (bitField0_ & ~0x00000004);
+      op_ = 0;
+      bitField0_ = (bitField0_ & ~0x00000008);
+      timestamp_ = 0L;
+      bitField0_ = (bitField0_ & ~0x00000010);
       return this;
     }
 
@@ -619,16 +713,24 @@ private static final long serialVersionUID = 0L;
       int from_bitField0_ = bitField0_;
       int to_bitField0_ = 0;
       if (((from_bitField0_ & 0x00000001) != 0)) {
-        result.transactionId_ = transactionId_;
+        result.id_ = id_;
         to_bitField0_ |= 0x00000001;
       }
       if (((from_bitField0_ & 0x00000002) != 0)) {
+        result.sequence_ = sequence_;
         to_bitField0_ |= 0x00000002;
       }
-      result.op_ = op_;
       if (((from_bitField0_ & 0x00000004) != 0)) {
-        result.timestamp_ = timestamp_;
+        result.recordId_ = recordId_;
         to_bitField0_ |= 0x00000004;
+      }
+      if (((from_bitField0_ & 0x00000008) != 0)) {
+        to_bitField0_ |= 0x00000008;
+      }
+      result.op_ = op_;
+      if (((from_bitField0_ & 0x00000010) != 0)) {
+        result.timestamp_ = timestamp_;
+        to_bitField0_ |= 0x00000010;
       }
       result.bitField0_ = to_bitField0_;
       onBuilt();
@@ -679,8 +781,14 @@ private static final long serialVersionUID = 0L;
 
     public Builder mergeFrom(ai.sapper.hcdc.common.model.DFSTransaction other) {
       if (other == ai.sapper.hcdc.common.model.DFSTransaction.getDefaultInstance()) return this;
-      if (other.hasTransactionId()) {
-        setTransactionId(other.getTransactionId());
+      if (other.hasId()) {
+        setId(other.getId());
+      }
+      if (other.hasSequence()) {
+        setSequence(other.getSequence());
+      }
+      if (other.hasRecordId()) {
+        setRecordId(other.getRecordId());
       }
       if (other.hasOp()) {
         setOp(other.getOp());
@@ -695,7 +803,13 @@ private static final long serialVersionUID = 0L;
 
     @java.lang.Override
     public final boolean isInitialized() {
-      if (!hasTransactionId()) {
+      if (!hasId()) {
+        return false;
+      }
+      if (!hasSequence()) {
+        return false;
+      }
+      if (!hasRecordId()) {
         return false;
       }
       if (!hasOp()) {
@@ -727,55 +841,133 @@ private static final long serialVersionUID = 0L;
     }
     private int bitField0_;
 
-    private long transactionId_ ;
+    private long id_ ;
     /**
-     * <code>required int64 transactionId = 1;</code>
-     * @return Whether the transactionId field is set.
+     * <code>required int64 id = 1;</code>
+     * @return Whether the id field is set.
      */
     @java.lang.Override
-    public boolean hasTransactionId() {
+    public boolean hasId() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
-     * <code>required int64 transactionId = 1;</code>
-     * @return The transactionId.
+     * <code>required int64 id = 1;</code>
+     * @return The id.
      */
     @java.lang.Override
-    public long getTransactionId() {
-      return transactionId_;
+    public long getId() {
+      return id_;
     }
     /**
-     * <code>required int64 transactionId = 1;</code>
-     * @param value The transactionId to set.
+     * <code>required int64 id = 1;</code>
+     * @param value The id to set.
      * @return This builder for chaining.
      */
-    public Builder setTransactionId(long value) {
+    public Builder setId(long value) {
       bitField0_ |= 0x00000001;
-      transactionId_ = value;
+      id_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>required int64 transactionId = 1;</code>
+     * <code>required int64 id = 1;</code>
      * @return This builder for chaining.
      */
-    public Builder clearTransactionId() {
+    public Builder clearId() {
       bitField0_ = (bitField0_ & ~0x00000001);
-      transactionId_ = 0L;
+      id_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    private long sequence_ ;
+    /**
+     * <code>required int64 sequence = 2;</code>
+     * @return Whether the sequence field is set.
+     */
+    @java.lang.Override
+    public boolean hasSequence() {
+      return ((bitField0_ & 0x00000002) != 0);
+    }
+    /**
+     * <code>required int64 sequence = 2;</code>
+     * @return The sequence.
+     */
+    @java.lang.Override
+    public long getSequence() {
+      return sequence_;
+    }
+    /**
+     * <code>required int64 sequence = 2;</code>
+     * @param value The sequence to set.
+     * @return This builder for chaining.
+     */
+    public Builder setSequence(long value) {
+      bitField0_ |= 0x00000002;
+      sequence_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>required int64 sequence = 2;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearSequence() {
+      bitField0_ = (bitField0_ & ~0x00000002);
+      sequence_ = 0L;
+      onChanged();
+      return this;
+    }
+
+    private long recordId_ ;
+    /**
+     * <code>required int64 recordId = 4;</code>
+     * @return Whether the recordId field is set.
+     */
+    @java.lang.Override
+    public boolean hasRecordId() {
+      return ((bitField0_ & 0x00000004) != 0);
+    }
+    /**
+     * <code>required int64 recordId = 4;</code>
+     * @return The recordId.
+     */
+    @java.lang.Override
+    public long getRecordId() {
+      return recordId_;
+    }
+    /**
+     * <code>required int64 recordId = 4;</code>
+     * @param value The recordId to set.
+     * @return This builder for chaining.
+     */
+    public Builder setRecordId(long value) {
+      bitField0_ |= 0x00000004;
+      recordId_ = value;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>required int64 recordId = 4;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearRecordId() {
+      bitField0_ = (bitField0_ & ~0x00000004);
+      recordId_ = 0L;
       onChanged();
       return this;
     }
 
     private int op_ = 0;
     /**
-     * <code>required .ai_sapper_hcdc_common_model.DFSTransaction.Operation op = 2;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSTransaction.Operation op = 5;</code>
      * @return Whether the op field is set.
      */
     @java.lang.Override public boolean hasOp() {
-      return ((bitField0_ & 0x00000002) != 0);
+      return ((bitField0_ & 0x00000008) != 0);
     }
     /**
-     * <code>required .ai_sapper_hcdc_common_model.DFSTransaction.Operation op = 2;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSTransaction.Operation op = 5;</code>
      * @return The op.
      */
     @java.lang.Override
@@ -785,7 +977,7 @@ private static final long serialVersionUID = 0L;
       return result == null ? ai.sapper.hcdc.common.model.DFSTransaction.Operation.ADD_FILE : result;
     }
     /**
-     * <code>required .ai_sapper_hcdc_common_model.DFSTransaction.Operation op = 2;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSTransaction.Operation op = 5;</code>
      * @param value The op to set.
      * @return This builder for chaining.
      */
@@ -793,17 +985,17 @@ private static final long serialVersionUID = 0L;
       if (value == null) {
         throw new NullPointerException();
       }
-      bitField0_ |= 0x00000002;
+      bitField0_ |= 0x00000008;
       op_ = value.getNumber();
       onChanged();
       return this;
     }
     /**
-     * <code>required .ai_sapper_hcdc_common_model.DFSTransaction.Operation op = 2;</code>
+     * <code>required .ai_sapper_hcdc_common_model.DFSTransaction.Operation op = 5;</code>
      * @return This builder for chaining.
      */
     public Builder clearOp() {
-      bitField0_ = (bitField0_ & ~0x00000002);
+      bitField0_ = (bitField0_ & ~0x00000008);
       op_ = 0;
       onChanged();
       return this;
@@ -811,15 +1003,15 @@ private static final long serialVersionUID = 0L;
 
     private long timestamp_ ;
     /**
-     * <code>required uint64 timestamp = 3;</code>
+     * <code>required uint64 timestamp = 6;</code>
      * @return Whether the timestamp field is set.
      */
     @java.lang.Override
     public boolean hasTimestamp() {
-      return ((bitField0_ & 0x00000004) != 0);
+      return ((bitField0_ & 0x00000010) != 0);
     }
     /**
-     * <code>required uint64 timestamp = 3;</code>
+     * <code>required uint64 timestamp = 6;</code>
      * @return The timestamp.
      */
     @java.lang.Override
@@ -827,22 +1019,22 @@ private static final long serialVersionUID = 0L;
       return timestamp_;
     }
     /**
-     * <code>required uint64 timestamp = 3;</code>
+     * <code>required uint64 timestamp = 6;</code>
      * @param value The timestamp to set.
      * @return This builder for chaining.
      */
     public Builder setTimestamp(long value) {
-      bitField0_ |= 0x00000004;
+      bitField0_ |= 0x00000010;
       timestamp_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>required uint64 timestamp = 3;</code>
+     * <code>required uint64 timestamp = 6;</code>
      * @return This builder for chaining.
      */
     public Builder clearTimestamp() {
-      bitField0_ = (bitField0_ & ~0x00000004);
+      bitField0_ = (bitField0_ & ~0x00000010);
       timestamp_ = 0L;
       onChanged();
       return this;

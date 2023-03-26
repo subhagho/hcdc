@@ -20,9 +20,15 @@ public class BaseTxId extends TransactionId {
         id = txId;
     }
 
-    public BaseTxId(long txId, long recordId) {
-        id = txId;
+    public BaseTxId(long id, long recordId) {
+        this.id = id;
         this.recordId = recordId;
+    }
+
+    public BaseTxId(@NonNull BaseTxId txId) {
+        super(txId);
+        this.id = txId.id;
+        this.recordId = txId.recordId;
     }
 
     /**

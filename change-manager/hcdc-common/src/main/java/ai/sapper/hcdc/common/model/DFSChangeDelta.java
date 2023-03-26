@@ -16,7 +16,6 @@ private static final long serialVersionUID = 0L;
     super(builder);
   }
   private DFSChangeDelta() {
-    txId_ = "";
     type_ = "";
   }
 
@@ -51,20 +50,22 @@ private static final long serialVersionUID = 0L;
           case 0:
             done = true;
             break;
-          case 18: {
-            com.google.protobuf.ByteString bs = input.readBytes();
+          case 10: {
+            ai.sapper.hcdc.common.model.DFSTransaction.Builder subBuilder = null;
+            if (((bitField0_ & 0x00000001) != 0)) {
+              subBuilder = tx_.toBuilder();
+            }
+            tx_ = input.readMessage(ai.sapper.hcdc.common.model.DFSTransaction.PARSER, extensionRegistry);
+            if (subBuilder != null) {
+              subBuilder.mergeFrom(tx_);
+              tx_ = subBuilder.buildPartial();
+            }
             bitField0_ |= 0x00000001;
-            txId_ = bs;
-            break;
-          }
-          case 24: {
-            bitField0_ |= 0x00000002;
-            sequence_ = input.readInt64();
             break;
           }
           case 34: {
             ai.sapper.hcdc.common.model.DFSSchemaEntity.Builder subBuilder = null;
-            if (((bitField0_ & 0x00000004) != 0)) {
+            if (((bitField0_ & 0x00000002) != 0)) {
               subBuilder = entity_.toBuilder();
             }
             entity_ = input.readMessage(ai.sapper.hcdc.common.model.DFSSchemaEntity.PARSER, extensionRegistry);
@@ -72,23 +73,23 @@ private static final long serialVersionUID = 0L;
               subBuilder.mergeFrom(entity_);
               entity_ = subBuilder.buildPartial();
             }
-            bitField0_ |= 0x00000004;
+            bitField0_ |= 0x00000002;
             break;
           }
           case 42: {
             com.google.protobuf.ByteString bs = input.readBytes();
-            bitField0_ |= 0x00000008;
+            bitField0_ |= 0x00000004;
             type_ = bs;
             break;
           }
           case 48: {
-            bitField0_ |= 0x00000010;
+            bitField0_ |= 0x00000008;
             timestamp_ = input.readUInt64();
             break;
           }
           case 58: {
             ai.sapper.hcdc.common.model.DFSSchemaEntity.Builder subBuilder = null;
-            if (((bitField0_ & 0x00040000) != 0)) {
+            if (((bitField0_ & 0x00020000) != 0)) {
               subBuilder = target_.toBuilder();
             }
             target_ = input.readMessage(ai.sapper.hcdc.common.model.DFSSchemaEntity.PARSER, extensionRegistry);
@@ -96,7 +97,7 @@ private static final long serialVersionUID = 0L;
               subBuilder.mergeFrom(target_);
               target_ = subBuilder.buildPartial();
             }
-            bitField0_ |= 0x00040000;
+            bitField0_ |= 0x00020000;
             break;
           }
           case 66: {
@@ -379,71 +380,30 @@ private static final long serialVersionUID = 0L;
         changeCase_);
   }
 
-  public static final int TXID_FIELD_NUMBER = 2;
-  private volatile java.lang.Object txId_;
+  public static final int TX_FIELD_NUMBER = 1;
+  private ai.sapper.hcdc.common.model.DFSTransaction tx_;
   /**
-   * <code>required string txId = 2;</code>
-   * @return Whether the txId field is set.
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction tx = 1;</code>
+   * @return Whether the tx field is set.
    */
   @java.lang.Override
-  public boolean hasTxId() {
+  public boolean hasTx() {
     return ((bitField0_ & 0x00000001) != 0);
   }
   /**
-   * <code>required string txId = 2;</code>
-   * @return The txId.
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction tx = 1;</code>
+   * @return The tx.
    */
   @java.lang.Override
-  public java.lang.String getTxId() {
-    java.lang.Object ref = txId_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      if (bs.isValidUtf8()) {
-        txId_ = s;
-      }
-      return s;
-    }
+  public ai.sapper.hcdc.common.model.DFSTransaction getTx() {
+    return tx_ == null ? ai.sapper.hcdc.common.model.DFSTransaction.getDefaultInstance() : tx_;
   }
   /**
-   * <code>required string txId = 2;</code>
-   * @return The bytes for txId.
+   * <code>required .ai_sapper_hcdc_common_model.DFSTransaction tx = 1;</code>
    */
   @java.lang.Override
-  public com.google.protobuf.ByteString
-      getTxIdBytes() {
-    java.lang.Object ref = txId_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      txId_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
-  }
-
-  public static final int SEQUENCE_FIELD_NUMBER = 3;
-  private long sequence_;
-  /**
-   * <code>required int64 sequence = 3;</code>
-   * @return Whether the sequence field is set.
-   */
-  @java.lang.Override
-  public boolean hasSequence() {
-    return ((bitField0_ & 0x00000002) != 0);
-  }
-  /**
-   * <code>required int64 sequence = 3;</code>
-   * @return The sequence.
-   */
-  @java.lang.Override
-  public long getSequence() {
-    return sequence_;
+  public ai.sapper.hcdc.common.model.DFSTransactionOrBuilder getTxOrBuilder() {
+    return tx_ == null ? ai.sapper.hcdc.common.model.DFSTransaction.getDefaultInstance() : tx_;
   }
 
   public static final int ENTITY_FIELD_NUMBER = 4;
@@ -454,7 +414,7 @@ private static final long serialVersionUID = 0L;
    */
   @java.lang.Override
   public boolean hasEntity() {
-    return ((bitField0_ & 0x00000004) != 0);
+    return ((bitField0_ & 0x00000002) != 0);
   }
   /**
    * <code>required .ai_sapper_hcdc_common_model.DFSSchemaEntity entity = 4;</code>
@@ -480,7 +440,7 @@ private static final long serialVersionUID = 0L;
    */
   @java.lang.Override
   public boolean hasType() {
-    return ((bitField0_ & 0x00000008) != 0);
+    return ((bitField0_ & 0x00000004) != 0);
   }
   /**
    * <code>required string type = 5;</code>
@@ -528,7 +488,7 @@ private static final long serialVersionUID = 0L;
    */
   @java.lang.Override
   public boolean hasTimestamp() {
-    return ((bitField0_ & 0x00000010) != 0);
+    return ((bitField0_ & 0x00000008) != 0);
   }
   /**
    * <code>required uint64 timestamp = 6;</code>
@@ -950,7 +910,7 @@ private static final long serialVersionUID = 0L;
    */
   @java.lang.Override
   public boolean hasTarget() {
-    return ((bitField0_ & 0x00040000) != 0);
+    return ((bitField0_ & 0x00020000) != 0);
   }
   /**
    * <code>optional .ai_sapper_hcdc_common_model.DFSSchemaEntity target = 7;</code>
@@ -975,11 +935,7 @@ private static final long serialVersionUID = 0L;
     if (isInitialized == 1) return true;
     if (isInitialized == 0) return false;
 
-    if (!hasTxId()) {
-      memoizedIsInitialized = 0;
-      return false;
-    }
-    if (!hasSequence()) {
+    if (!hasTx()) {
       memoizedIsInitialized = 0;
       return false;
     }
@@ -992,6 +948,10 @@ private static final long serialVersionUID = 0L;
       return false;
     }
     if (!hasTimestamp()) {
+      memoizedIsInitialized = 0;
+      return false;
+    }
+    if (!getTx().isInitialized()) {
       memoizedIsInitialized = 0;
       return false;
     }
@@ -1091,21 +1051,18 @@ private static final long serialVersionUID = 0L;
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (((bitField0_ & 0x00000001) != 0)) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, txId_);
+      output.writeMessage(1, getTx());
     }
     if (((bitField0_ & 0x00000002) != 0)) {
-      output.writeInt64(3, sequence_);
-    }
-    if (((bitField0_ & 0x00000004) != 0)) {
       output.writeMessage(4, getEntity());
     }
-    if (((bitField0_ & 0x00000008) != 0)) {
+    if (((bitField0_ & 0x00000004) != 0)) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 5, type_);
     }
-    if (((bitField0_ & 0x00000010) != 0)) {
+    if (((bitField0_ & 0x00000008) != 0)) {
       output.writeUInt64(6, timestamp_);
     }
-    if (((bitField0_ & 0x00040000) != 0)) {
+    if (((bitField0_ & 0x00020000) != 0)) {
       output.writeMessage(7, getTarget());
     }
     if (changeCase_ == 8) {
@@ -1157,24 +1114,21 @@ private static final long serialVersionUID = 0L;
 
     size = 0;
     if (((bitField0_ & 0x00000001) != 0)) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, txId_);
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(1, getTx());
     }
     if (((bitField0_ & 0x00000002) != 0)) {
       size += com.google.protobuf.CodedOutputStream
-        .computeInt64Size(3, sequence_);
-    }
-    if (((bitField0_ & 0x00000004) != 0)) {
-      size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(4, getEntity());
     }
-    if (((bitField0_ & 0x00000008) != 0)) {
+    if (((bitField0_ & 0x00000004) != 0)) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, type_);
     }
-    if (((bitField0_ & 0x00000010) != 0)) {
+    if (((bitField0_ & 0x00000008) != 0)) {
       size += com.google.protobuf.CodedOutputStream
         .computeUInt64Size(6, timestamp_);
     }
-    if (((bitField0_ & 0x00040000) != 0)) {
+    if (((bitField0_ & 0x00020000) != 0)) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(7, getTarget());
     }
@@ -1245,15 +1199,10 @@ private static final long serialVersionUID = 0L;
     }
     ai.sapper.hcdc.common.model.DFSChangeDelta other = (ai.sapper.hcdc.common.model.DFSChangeDelta) obj;
 
-    if (hasTxId() != other.hasTxId()) return false;
-    if (hasTxId()) {
-      if (!getTxId()
-          .equals(other.getTxId())) return false;
-    }
-    if (hasSequence() != other.hasSequence()) return false;
-    if (hasSequence()) {
-      if (getSequence()
-          != other.getSequence()) return false;
+    if (hasTx() != other.hasTx()) return false;
+    if (hasTx()) {
+      if (!getTx()
+          .equals(other.getTx())) return false;
     }
     if (hasEntity() != other.hasEntity()) return false;
     if (hasEntity()) {
@@ -1343,14 +1292,9 @@ private static final long serialVersionUID = 0L;
     }
     int hash = 41;
     hash = (19 * hash) + getDescriptor().hashCode();
-    if (hasTxId()) {
-      hash = (37 * hash) + TXID_FIELD_NUMBER;
-      hash = (53 * hash) + getTxId().hashCode();
-    }
-    if (hasSequence()) {
-      hash = (37 * hash) + SEQUENCE_FIELD_NUMBER;
-      hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
-          getSequence());
+    if (hasTx()) {
+      hash = (37 * hash) + TX_FIELD_NUMBER;
+      hash = (53 * hash) + getTx().hashCode();
     }
     if (hasEntity()) {
       hash = (37 * hash) + ENTITY_FIELD_NUMBER;
@@ -1553,6 +1497,7 @@ private static final long serialVersionUID = 0L;
     private void maybeForceBuilderInitialization() {
       if (com.google.protobuf.GeneratedMessageV3
               .alwaysUseFieldBuilders) {
+        getTxFieldBuilder();
         getEntityFieldBuilder();
         getTargetFieldBuilder();
       }
@@ -1560,26 +1505,28 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public Builder clear() {
       super.clear();
-      txId_ = "";
+      if (txBuilder_ == null) {
+        tx_ = null;
+      } else {
+        txBuilder_.clear();
+      }
       bitField0_ = (bitField0_ & ~0x00000001);
-      sequence_ = 0L;
-      bitField0_ = (bitField0_ & ~0x00000002);
       if (entityBuilder_ == null) {
         entity_ = null;
       } else {
         entityBuilder_.clear();
       }
-      bitField0_ = (bitField0_ & ~0x00000004);
+      bitField0_ = (bitField0_ & ~0x00000002);
       type_ = "";
-      bitField0_ = (bitField0_ & ~0x00000008);
+      bitField0_ = (bitField0_ & ~0x00000004);
       timestamp_ = 0L;
-      bitField0_ = (bitField0_ & ~0x00000010);
+      bitField0_ = (bitField0_ & ~0x00000008);
       if (targetBuilder_ == null) {
         target_ = null;
       } else {
         targetBuilder_.clear();
       }
-      bitField0_ = (bitField0_ & ~0x00040000);
+      bitField0_ = (bitField0_ & ~0x00020000);
       changeCase_ = 0;
       change_ = null;
       return this;
@@ -1611,28 +1558,28 @@ private static final long serialVersionUID = 0L;
       int from_bitField0_ = bitField0_;
       int to_bitField0_ = 0;
       if (((from_bitField0_ & 0x00000001) != 0)) {
+        if (txBuilder_ == null) {
+          result.tx_ = tx_;
+        } else {
+          result.tx_ = txBuilder_.build();
+        }
         to_bitField0_ |= 0x00000001;
       }
-      result.txId_ = txId_;
       if (((from_bitField0_ & 0x00000002) != 0)) {
-        result.sequence_ = sequence_;
-        to_bitField0_ |= 0x00000002;
-      }
-      if (((from_bitField0_ & 0x00000004) != 0)) {
         if (entityBuilder_ == null) {
           result.entity_ = entity_;
         } else {
           result.entity_ = entityBuilder_.build();
         }
+        to_bitField0_ |= 0x00000002;
+      }
+      if (((from_bitField0_ & 0x00000004) != 0)) {
         to_bitField0_ |= 0x00000004;
       }
-      if (((from_bitField0_ & 0x00000008) != 0)) {
-        to_bitField0_ |= 0x00000008;
-      }
       result.type_ = type_;
-      if (((from_bitField0_ & 0x00000010) != 0)) {
+      if (((from_bitField0_ & 0x00000008) != 0)) {
         result.timestamp_ = timestamp_;
-        to_bitField0_ |= 0x00000010;
+        to_bitField0_ |= 0x00000008;
       }
       if (changeCase_ == 8) {
         if (schemaChangeBuilder_ == null) {
@@ -1725,13 +1672,13 @@ private static final long serialVersionUID = 0L;
           result.change_ = adminBuilder_.build();
         }
       }
-      if (((from_bitField0_ & 0x00040000) != 0)) {
+      if (((from_bitField0_ & 0x00020000) != 0)) {
         if (targetBuilder_ == null) {
           result.target_ = target_;
         } else {
           result.target_ = targetBuilder_.build();
         }
-        to_bitField0_ |= 0x00040000;
+        to_bitField0_ |= 0x00020000;
       }
       result.bitField0_ = to_bitField0_;
       result.changeCase_ = changeCase_;
@@ -1783,19 +1730,14 @@ private static final long serialVersionUID = 0L;
 
     public Builder mergeFrom(ai.sapper.hcdc.common.model.DFSChangeDelta other) {
       if (other == ai.sapper.hcdc.common.model.DFSChangeDelta.getDefaultInstance()) return this;
-      if (other.hasTxId()) {
-        bitField0_ |= 0x00000001;
-        txId_ = other.txId_;
-        onChanged();
-      }
-      if (other.hasSequence()) {
-        setSequence(other.getSequence());
+      if (other.hasTx()) {
+        mergeTx(other.getTx());
       }
       if (other.hasEntity()) {
         mergeEntity(other.getEntity());
       }
       if (other.hasType()) {
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000004;
         type_ = other.type_;
         onChanged();
       }
@@ -1869,10 +1811,7 @@ private static final long serialVersionUID = 0L;
 
     @java.lang.Override
     public final boolean isInitialized() {
-      if (!hasTxId()) {
-        return false;
-      }
-      if (!hasSequence()) {
+      if (!hasTx()) {
         return false;
       }
       if (!hasEntity()) {
@@ -1882,6 +1821,9 @@ private static final long serialVersionUID = 0L;
         return false;
       }
       if (!hasTimestamp()) {
+        return false;
+      }
+      if (!getTx().isInitialized()) {
         return false;
       }
       if (!getEntity().isInitialized()) {
@@ -1995,127 +1937,124 @@ private static final long serialVersionUID = 0L;
 
     private int bitField0_;
 
-    private java.lang.Object txId_ = "";
+    private ai.sapper.hcdc.common.model.DFSTransaction tx_;
+    private com.google.protobuf.SingleFieldBuilderV3<
+        ai.sapper.hcdc.common.model.DFSTransaction, ai.sapper.hcdc.common.model.DFSTransaction.Builder, ai.sapper.hcdc.common.model.DFSTransactionOrBuilder> txBuilder_;
     /**
-     * <code>required string txId = 2;</code>
-     * @return Whether the txId field is set.
+     * <code>required .ai_sapper_hcdc_common_model.DFSTransaction tx = 1;</code>
+     * @return Whether the tx field is set.
      */
-    public boolean hasTxId() {
+    public boolean hasTx() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
-     * <code>required string txId = 2;</code>
-     * @return The txId.
+     * <code>required .ai_sapper_hcdc_common_model.DFSTransaction tx = 1;</code>
+     * @return The tx.
      */
-    public java.lang.String getTxId() {
-      java.lang.Object ref = txId_;
-      if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          txId_ = s;
+    public ai.sapper.hcdc.common.model.DFSTransaction getTx() {
+      if (txBuilder_ == null) {
+        return tx_ == null ? ai.sapper.hcdc.common.model.DFSTransaction.getDefaultInstance() : tx_;
+      } else {
+        return txBuilder_.getMessage();
+      }
+    }
+    /**
+     * <code>required .ai_sapper_hcdc_common_model.DFSTransaction tx = 1;</code>
+     */
+    public Builder setTx(ai.sapper.hcdc.common.model.DFSTransaction value) {
+      if (txBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
         }
-        return s;
+        tx_ = value;
+        onChanged();
       } else {
-        return (java.lang.String) ref;
+        txBuilder_.setMessage(value);
       }
-    }
-    /**
-     * <code>required string txId = 2;</code>
-     * @return The bytes for txId.
-     */
-    public com.google.protobuf.ByteString
-        getTxIdBytes() {
-      java.lang.Object ref = txId_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        txId_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-    /**
-     * <code>required string txId = 2;</code>
-     * @param value The txId to set.
-     * @return This builder for chaining.
-     */
-    public Builder setTxId(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-      txId_ = value;
-      onChanged();
+      bitField0_ |= 0x00000001;
       return this;
     }
     /**
-     * <code>required string txId = 2;</code>
-     * @return This builder for chaining.
+     * <code>required .ai_sapper_hcdc_common_model.DFSTransaction tx = 1;</code>
      */
-    public Builder clearTxId() {
+    public Builder setTx(
+        ai.sapper.hcdc.common.model.DFSTransaction.Builder builderForValue) {
+      if (txBuilder_ == null) {
+        tx_ = builderForValue.build();
+        onChanged();
+      } else {
+        txBuilder_.setMessage(builderForValue.build());
+      }
+      bitField0_ |= 0x00000001;
+      return this;
+    }
+    /**
+     * <code>required .ai_sapper_hcdc_common_model.DFSTransaction tx = 1;</code>
+     */
+    public Builder mergeTx(ai.sapper.hcdc.common.model.DFSTransaction value) {
+      if (txBuilder_ == null) {
+        if (((bitField0_ & 0x00000001) != 0) &&
+            tx_ != null &&
+            tx_ != ai.sapper.hcdc.common.model.DFSTransaction.getDefaultInstance()) {
+          tx_ =
+            ai.sapper.hcdc.common.model.DFSTransaction.newBuilder(tx_).mergeFrom(value).buildPartial();
+        } else {
+          tx_ = value;
+        }
+        onChanged();
+      } else {
+        txBuilder_.mergeFrom(value);
+      }
+      bitField0_ |= 0x00000001;
+      return this;
+    }
+    /**
+     * <code>required .ai_sapper_hcdc_common_model.DFSTransaction tx = 1;</code>
+     */
+    public Builder clearTx() {
+      if (txBuilder_ == null) {
+        tx_ = null;
+        onChanged();
+      } else {
+        txBuilder_.clear();
+      }
       bitField0_ = (bitField0_ & ~0x00000001);
-      txId_ = getDefaultInstance().getTxId();
-      onChanged();
       return this;
     }
     /**
-     * <code>required string txId = 2;</code>
-     * @param value The bytes for txId to set.
-     * @return This builder for chaining.
+     * <code>required .ai_sapper_hcdc_common_model.DFSTransaction tx = 1;</code>
      */
-    public Builder setTxIdBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-      txId_ = value;
+    public ai.sapper.hcdc.common.model.DFSTransaction.Builder getTxBuilder() {
+      bitField0_ |= 0x00000001;
       onChanged();
-      return this;
-    }
-
-    private long sequence_ ;
-    /**
-     * <code>required int64 sequence = 3;</code>
-     * @return Whether the sequence field is set.
-     */
-    @java.lang.Override
-    public boolean hasSequence() {
-      return ((bitField0_ & 0x00000002) != 0);
+      return getTxFieldBuilder().getBuilder();
     }
     /**
-     * <code>required int64 sequence = 3;</code>
-     * @return The sequence.
+     * <code>required .ai_sapper_hcdc_common_model.DFSTransaction tx = 1;</code>
      */
-    @java.lang.Override
-    public long getSequence() {
-      return sequence_;
+    public ai.sapper.hcdc.common.model.DFSTransactionOrBuilder getTxOrBuilder() {
+      if (txBuilder_ != null) {
+        return txBuilder_.getMessageOrBuilder();
+      } else {
+        return tx_ == null ?
+            ai.sapper.hcdc.common.model.DFSTransaction.getDefaultInstance() : tx_;
+      }
     }
     /**
-     * <code>required int64 sequence = 3;</code>
-     * @param value The sequence to set.
-     * @return This builder for chaining.
+     * <code>required .ai_sapper_hcdc_common_model.DFSTransaction tx = 1;</code>
      */
-    public Builder setSequence(long value) {
-      bitField0_ |= 0x00000002;
-      sequence_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>required int64 sequence = 3;</code>
-     * @return This builder for chaining.
-     */
-    public Builder clearSequence() {
-      bitField0_ = (bitField0_ & ~0x00000002);
-      sequence_ = 0L;
-      onChanged();
-      return this;
+    private com.google.protobuf.SingleFieldBuilderV3<
+        ai.sapper.hcdc.common.model.DFSTransaction, ai.sapper.hcdc.common.model.DFSTransaction.Builder, ai.sapper.hcdc.common.model.DFSTransactionOrBuilder> 
+        getTxFieldBuilder() {
+      if (txBuilder_ == null) {
+        txBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+            ai.sapper.hcdc.common.model.DFSTransaction, ai.sapper.hcdc.common.model.DFSTransaction.Builder, ai.sapper.hcdc.common.model.DFSTransactionOrBuilder>(
+                getTx(),
+                getParentForChildren(),
+                isClean());
+        tx_ = null;
+      }
+      return txBuilder_;
     }
 
     private ai.sapper.hcdc.common.model.DFSSchemaEntity entity_;
@@ -2126,7 +2065,7 @@ private static final long serialVersionUID = 0L;
      * @return Whether the entity field is set.
      */
     public boolean hasEntity() {
-      return ((bitField0_ & 0x00000004) != 0);
+      return ((bitField0_ & 0x00000002) != 0);
     }
     /**
      * <code>required .ai_sapper_hcdc_common_model.DFSSchemaEntity entity = 4;</code>
@@ -2152,7 +2091,7 @@ private static final long serialVersionUID = 0L;
       } else {
         entityBuilder_.setMessage(value);
       }
-      bitField0_ |= 0x00000004;
+      bitField0_ |= 0x00000002;
       return this;
     }
     /**
@@ -2166,7 +2105,7 @@ private static final long serialVersionUID = 0L;
       } else {
         entityBuilder_.setMessage(builderForValue.build());
       }
-      bitField0_ |= 0x00000004;
+      bitField0_ |= 0x00000002;
       return this;
     }
     /**
@@ -2174,7 +2113,7 @@ private static final long serialVersionUID = 0L;
      */
     public Builder mergeEntity(ai.sapper.hcdc.common.model.DFSSchemaEntity value) {
       if (entityBuilder_ == null) {
-        if (((bitField0_ & 0x00000004) != 0) &&
+        if (((bitField0_ & 0x00000002) != 0) &&
             entity_ != null &&
             entity_ != ai.sapper.hcdc.common.model.DFSSchemaEntity.getDefaultInstance()) {
           entity_ =
@@ -2186,7 +2125,7 @@ private static final long serialVersionUID = 0L;
       } else {
         entityBuilder_.mergeFrom(value);
       }
-      bitField0_ |= 0x00000004;
+      bitField0_ |= 0x00000002;
       return this;
     }
     /**
@@ -2199,14 +2138,14 @@ private static final long serialVersionUID = 0L;
       } else {
         entityBuilder_.clear();
       }
-      bitField0_ = (bitField0_ & ~0x00000004);
+      bitField0_ = (bitField0_ & ~0x00000002);
       return this;
     }
     /**
      * <code>required .ai_sapper_hcdc_common_model.DFSSchemaEntity entity = 4;</code>
      */
     public ai.sapper.hcdc.common.model.DFSSchemaEntity.Builder getEntityBuilder() {
-      bitField0_ |= 0x00000004;
+      bitField0_ |= 0x00000002;
       onChanged();
       return getEntityFieldBuilder().getBuilder();
     }
@@ -2244,7 +2183,7 @@ private static final long serialVersionUID = 0L;
      * @return Whether the type field is set.
      */
     public boolean hasType() {
-      return ((bitField0_ & 0x00000008) != 0);
+      return ((bitField0_ & 0x00000004) != 0);
     }
     /**
      * <code>required string type = 5;</code>
@@ -2291,7 +2230,7 @@ private static final long serialVersionUID = 0L;
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000008;
+  bitField0_ |= 0x00000004;
       type_ = value;
       onChanged();
       return this;
@@ -2301,7 +2240,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder clearType() {
-      bitField0_ = (bitField0_ & ~0x00000008);
+      bitField0_ = (bitField0_ & ~0x00000004);
       type_ = getDefaultInstance().getType();
       onChanged();
       return this;
@@ -2316,7 +2255,7 @@ private static final long serialVersionUID = 0L;
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000008;
+  bitField0_ |= 0x00000004;
       type_ = value;
       onChanged();
       return this;
@@ -2329,7 +2268,7 @@ private static final long serialVersionUID = 0L;
      */
     @java.lang.Override
     public boolean hasTimestamp() {
-      return ((bitField0_ & 0x00000010) != 0);
+      return ((bitField0_ & 0x00000008) != 0);
     }
     /**
      * <code>required uint64 timestamp = 6;</code>
@@ -2345,7 +2284,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder setTimestamp(long value) {
-      bitField0_ |= 0x00000010;
+      bitField0_ |= 0x00000008;
       timestamp_ = value;
       onChanged();
       return this;
@@ -2355,7 +2294,7 @@ private static final long serialVersionUID = 0L;
      * @return This builder for chaining.
      */
     public Builder clearTimestamp() {
-      bitField0_ = (bitField0_ & ~0x00000010);
+      bitField0_ = (bitField0_ & ~0x00000008);
       timestamp_ = 0L;
       onChanged();
       return this;
@@ -4215,7 +4154,7 @@ private static final long serialVersionUID = 0L;
      * @return Whether the target field is set.
      */
     public boolean hasTarget() {
-      return ((bitField0_ & 0x00040000) != 0);
+      return ((bitField0_ & 0x00020000) != 0);
     }
     /**
      * <code>optional .ai_sapper_hcdc_common_model.DFSSchemaEntity target = 7;</code>
@@ -4241,7 +4180,7 @@ private static final long serialVersionUID = 0L;
       } else {
         targetBuilder_.setMessage(value);
       }
-      bitField0_ |= 0x00040000;
+      bitField0_ |= 0x00020000;
       return this;
     }
     /**
@@ -4255,7 +4194,7 @@ private static final long serialVersionUID = 0L;
       } else {
         targetBuilder_.setMessage(builderForValue.build());
       }
-      bitField0_ |= 0x00040000;
+      bitField0_ |= 0x00020000;
       return this;
     }
     /**
@@ -4263,7 +4202,7 @@ private static final long serialVersionUID = 0L;
      */
     public Builder mergeTarget(ai.sapper.hcdc.common.model.DFSSchemaEntity value) {
       if (targetBuilder_ == null) {
-        if (((bitField0_ & 0x00040000) != 0) &&
+        if (((bitField0_ & 0x00020000) != 0) &&
             target_ != null &&
             target_ != ai.sapper.hcdc.common.model.DFSSchemaEntity.getDefaultInstance()) {
           target_ =
@@ -4275,7 +4214,7 @@ private static final long serialVersionUID = 0L;
       } else {
         targetBuilder_.mergeFrom(value);
       }
-      bitField0_ |= 0x00040000;
+      bitField0_ |= 0x00020000;
       return this;
     }
     /**
@@ -4288,14 +4227,14 @@ private static final long serialVersionUID = 0L;
       } else {
         targetBuilder_.clear();
       }
-      bitField0_ = (bitField0_ & ~0x00040000);
+      bitField0_ = (bitField0_ & ~0x00020000);
       return this;
     }
     /**
      * <code>optional .ai_sapper_hcdc_common_model.DFSSchemaEntity target = 7;</code>
      */
     public ai.sapper.hcdc.common.model.DFSSchemaEntity.Builder getTargetBuilder() {
-      bitField0_ |= 0x00040000;
+      bitField0_ |= 0x00020000;
       onChanged();
       return getTargetFieldBuilder().getBuilder();
     }

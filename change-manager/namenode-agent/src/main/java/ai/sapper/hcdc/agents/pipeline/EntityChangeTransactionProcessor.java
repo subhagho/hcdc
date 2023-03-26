@@ -3,6 +3,7 @@ package ai.sapper.hcdc.agents.pipeline;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.MessageSender;
+import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.hcdc.agents.common.InvalidTransactionError;
 import ai.sapper.hcdc.agents.common.ProtoBufUtils;
 import ai.sapper.hcdc.agents.common.TransactionProcessor;
@@ -43,10 +44,11 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
     @Override
     public void processAddFileTxMessage(@NonNull DFSFileAdd data,
                                         @NonNull MessageObject<String, DFSChangeDelta> message,
-                                        long txId,
+                                        @NonNull BaseTxId txId,
                                         boolean retry) throws Exception {
         DFSFileState fileState = createFileState(data.getFile(),
-                message, txId,
+                message,
+                txId.getId(),
                 data.getModifiedTime(),
                 data.getBlockSize(),
                 data.getBlocksList(),
@@ -70,13 +72,13 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
     @Override
     public void processAppendFileTxMessage(@NonNull DFSFileAppend data,
                                            @NonNull MessageObject<String, DFSChangeDelta> message,
-                                           long txId,
+                                           @NonNull BaseTxId txId,
                                            boolean retry) throws Exception {
         String path = data.getFile().getEntity().getEntity();
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(path);
-        if (!checkTransactionState(fileState, data.getFile(), message, txId, retry)) {
+        if (!checkTransactionState(fileState, data.getFile(), message, txId.getId(), retry)) {
             return;
         }
 
@@ -98,7 +100,7 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
     @Override
     public void processDeleteFileTxMessage(@NonNull DFSFileDelete data,
                                            @NonNull MessageObject<String, DFSChangeDelta> message,
-                                           long txId,
+                                           @NonNull BaseTxId txId,
                                            boolean retry) throws Exception {
         String path = data.getFile().getEntity().getEntity();
         DFSFileState fileState = stateManager()
@@ -108,7 +110,7 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
             if (retry)
                 return;
         }
-        if (!checkTransactionState(fileState, data.getFile(), message, txId, retry)) {
+        if (!checkTransactionState(fileState, data.getFile(), message, txId.getId(), retry)) {
             return;
         }
 
@@ -130,13 +132,13 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
     @Override
     public void processAddBlockTxMessage(@NonNull DFSBlockAdd data,
                                          @NonNull MessageObject<String, DFSChangeDelta> message,
-                                         long txId,
+                                         @NonNull BaseTxId txId,
                                          boolean retry) throws Exception {
         String path = data.getFile().getEntity().getEntity();
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(path);
-        if (!checkTransactionState(fileState, data.getFile(), message, txId, retry)) {
+        if (!checkTransactionState(fileState, data.getFile(), message, txId.getId(), retry)) {
             return;
         }
         long lastBlockId = -1;
@@ -159,7 +161,7 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
                             data.getLastBlock().getSize(),
                             data.getLastBlock().getGenerationStamp(),
                             EBlockState.New,
-                            data.getTransaction().getTransactionId());
+                            data.getTransaction().getId());
         sender.send(message);
     }
 
@@ -172,18 +174,18 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
     @Override
     public void processUpdateBlocksTxMessage(@NonNull DFSBlockUpdate data,
                                              @NonNull MessageObject<String, DFSChangeDelta> message,
-                                             long txId,
+                                             @NonNull BaseTxId txId,
                                              boolean retry) throws Exception {
         String path = data.getFile().getEntity().getEntity();
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(path);
-        if (!checkTransactionState(fileState, data.getFile(), message, txId, retry)) {
+        if (!checkTransactionState(fileState, data.getFile(), message, txId.getId(), retry)) {
             return;
         }
         List<DFSBlock> blocks = data.getBlocksList();
         if (blocks.isEmpty()) {
-            throw new InvalidTransactionError(txId,
+            throw new InvalidTransactionError(txId.getId(),
                     DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getFileInfo().getHdfsPath(),
                     new Exception(String.format("File State out of sync, no block to update. [path=%s]",
@@ -193,14 +195,14 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
         for (DFSBlock block : blocks) {
             DFSBlockState bs = fileState.get(block.getBlockId());
             if (bs == null) {
-                throw new InvalidTransactionError(txId,
+                throw new InvalidTransactionError(txId.getId(),
                         DFSError.ErrorCode.SYNC_STOPPED,
                         fileState.getFileInfo().getHdfsPath(),
                         new Exception(String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
                                 fileState.getFileInfo().getHdfsPath(), block.getBlockId())))
                         .withFile(data.getFile());
             } else if (bs.getDataSize() != block.getSize()) {
-                throw new InvalidTransactionError(txId,
+                throw new InvalidTransactionError(txId.getId(),
                         DFSError.ErrorCode.SYNC_STOPPED,
                         fileState.getFileInfo().getHdfsPath(),
                         new Exception(String.format("File State out of sync, block size mismatch. [path=%s][blockID=%d]",
@@ -227,13 +229,13 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
     @Override
     public void processTruncateBlockTxMessage(@NonNull DFSBlockTruncate data,
                                               @NonNull MessageObject<String, DFSChangeDelta> message,
-                                              long txId,
+                                              @NonNull BaseTxId txId,
                                               boolean retry) throws Exception {
         String path = data.getFile().getEntity().getEntity();
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(path);
-        if (!checkTransactionState(fileState, data.getFile(), message, txId, retry)) {
+        if (!checkTransactionState(fileState, data.getFile(), message, txId.getId(), retry)) {
             return;
         }
     }
@@ -248,11 +250,12 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
     @Override
     public void processCloseFileTxMessage(@NonNull DFSFileClose data,
                                           @NonNull MessageObject<String, DFSChangeDelta> message,
-                                          long txId,
+                                          @NonNull BaseTxId txId,
                                           boolean retry) throws Exception {
         if (message.mode() == MessageObject.MessageMode.Snapshot) {
             DFSFileState fileState = createFileState(data.getFile(),
-                    message, txId,
+                    message,
+                    txId.getId(),
                     data.getModifiedTime(),
                     data.getBlockSize(),
                     data.getBlocksList(),
@@ -265,7 +268,7 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(path);
-        if (!checkTransactionState(fileState, data.getFile(), message, txId, retry)) {
+        if (!checkTransactionState(fileState, data.getFile(), message, txId.getId(), retry)) {
             return;
         }
 
@@ -274,7 +277,7 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
             for (DFSBlock block : blocks) {
                 DFSBlockState bs = fileState.get(block.getBlockId());
                 if (bs == null) {
-                    throw new InvalidTransactionError(txId,
+                    throw new InvalidTransactionError(txId.getId(),
                             DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getFileInfo().getHdfsPath(),
                             new Exception(String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
@@ -290,16 +293,16 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
                                     block.getSize(),
                                     block.getGenerationStamp(),
                                     EBlockState.Finalized,
-                                    txId);
+                                    txId.getId());
                 } else if (bs.getDataSize() != block.getSize()) {
-                    throw new InvalidTransactionError(txId,
+                    throw new InvalidTransactionError(txId.getId(),
                             DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getFileInfo().getHdfsPath(),
                             new Exception(String.format("File State out of sync, block size mismatch. [path=%s][blockID=%d]",
                                     fileState.getFileInfo().getHdfsPath(), block.getBlockId())))
                             .withFile(data.getFile());
                 } else {
-                    throw new InvalidTransactionError(txId,
+                    throw new InvalidTransactionError(txId.getId(),
                             DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getFileInfo().getHdfsPath(),
                             new Exception(String.format("File State out of sync, block state mismatch. [path=%s][blockID=%d]",
@@ -325,7 +328,7 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
     @Override
     public void processRenameFileTxMessage(@NonNull DFSFileRename data,
                                            @NonNull MessageObject<String, DFSChangeDelta> message,
-                                           long txId,
+                                           @NonNull BaseTxId txId,
                                            boolean retry) throws Exception {
         throw new InvalidMessageError(message.id(), "Rename transaction should not come...");
     }
@@ -339,8 +342,8 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
     @Override
     public void processIgnoreTxMessage(@NonNull DFSIgnoreTx data,
                                        @NonNull MessageObject<String, DFSChangeDelta> message,
-                                       long txId) throws Exception {
-        LOGGER.debug(getClass(), txId, String.format("Received Ignore Transaction: [ID=%d]", txId));
+                                       @NonNull BaseTxId txId) throws Exception {
+        LOGGER.debug(getClass(), txId.getId(), String.format("Received Ignore Transaction: [ID=%d]", txId.getId()));
     }
 
     /**
@@ -352,7 +355,7 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
     @Override
     public void processErrorTxMessage(@NonNull DFSError data,
                                       @NonNull MessageObject<String, DFSChangeDelta> message,
-                                      long txId) throws Exception {
+                                      @NonNull BaseTxId txId) throws Exception {
         DFSTransaction tnx = extractTransaction(data);
         if (data.hasFile()) {
             DFSFile df = data.getFile();
@@ -362,15 +365,15 @@ public class EntityChangeTransactionProcessor extends TransactionProcessor {
             if (fileState != null) {
                 fileState.setState(EFileState.Error);
                 if (tnx != null) {
-                    fileState.setLastTnxId(tnx.getTransactionId());
+                    fileState.setLastTnxId(tnx.getId());
                 }
                 fileState.setTimestamp(System.currentTimeMillis());
                 stateManager().fileStateHelper().update(fileState);
             }
         }
-        LOGGER.warn(getClass(), txId,
+        LOGGER.warn(getClass(), txId.getId(),
                 String.format("Received Error Message: %s. [TX=%d][ERROR CODE=%s]",
-                        data.getMessage(), txId, data.getCode().name()));
+                        data.getMessage(), txId.getId(), data.getCode().name()));
     }
 
     /**

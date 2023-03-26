@@ -2,12 +2,14 @@ package ai.sapper.hcdc.agents.pipeline;
 
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.messaging.MessageObject;
+import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
 import ai.sapper.hcdc.agents.model.DFSFileState;
 import ai.sapper.hcdc.agents.model.EFileState;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSTransaction;
+import ai.sapper.cdc.core.utils.ProtoUtils;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -69,7 +71,7 @@ public class EntityChangeDeltaProcessor extends ChangeDeltaProcessor {
                     || message.mode() == MessageObject.MessageMode.Recursive);
         }
         if (ret) {
-            ret = message.value().hasTxId();
+            ret = message.value().hasTx();
         }
         return ret;
     }
@@ -89,9 +91,15 @@ public class EntityChangeDeltaProcessor extends ChangeDeltaProcessor {
                         @NonNull Object data,
                         DFSTransaction tnx,
                         boolean retry) throws Exception {
+        BaseTxId txId = null;
+        if (tnx != null) {
+            txId = ProtoUtils.fromTx(tnx);
+        } else {
+            txId = new BaseTxId(-1);
+        }
         EntityChangeTransactionProcessor processor
                 = (EntityChangeTransactionProcessor) processor();
-        processor.processTxMessage(message, data, tnx, retry);
+        processor.processTxMessage(message, data, txId, retry);
     }
 
     public static class CDCChangeDeltaProcessorConfig extends ChangeDeltaProcessorConfig {

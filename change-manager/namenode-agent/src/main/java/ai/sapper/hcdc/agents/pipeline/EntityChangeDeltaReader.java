@@ -7,10 +7,12 @@ import ai.sapper.cdc.core.io.Archiver;
 import ai.sapper.cdc.core.io.EncryptionHandler;
 import ai.sapper.cdc.core.io.impl.CDCFileSystem;
 import ai.sapper.cdc.core.messaging.MessageObject;
+import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.common.ZkStateManager;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSTransaction;
+import ai.sapper.cdc.core.utils.ProtoUtils;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
@@ -117,7 +119,7 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
                     || message.mode() == MessageObject.MessageMode.Recursive);
         }
         if (ret) {
-            ret = message.value().hasTxId();
+            ret = message.value().hasTx();
         }
         return ret;
     }
@@ -137,9 +139,15 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
                         @NonNull Object data,
                         DFSTransaction tnx,
                         boolean retry) throws Exception {
+        BaseTxId txId = null;
+        if (tnx != null) {
+            txId = ProtoUtils.fromTx(tnx);
+        } else {
+            txId = new BaseTxId(-1);
+        }
         EntityChangeTransactionReader processor
                 = (EntityChangeTransactionReader) processor();
-        processor.processTxMessage(message, data, tnx, retry);
+        processor.processTxMessage(message, data, txId, retry);
     }
 
     @Getter

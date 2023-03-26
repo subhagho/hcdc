@@ -57,7 +57,7 @@ public class JsonConverter extends AvroBasedConverter {
                             @NonNull DFSFileState fileState,
                             @NonNull SchemaEntity schemaEntity,
                             AvroChangeType.@NonNull EChangeType op,
-                            long txId,
+                            @NonNull BaseTxId txId,
                             boolean snapshot) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
@@ -77,7 +77,8 @@ public class JsonConverter extends AvroBasedConverter {
                         line = line.trim();
                         if (Strings.isNullOrEmpty(line)) continue;
                         GenericRecord record = AvroUtils.jsonToAvroRecord(line, schema.getSchema());
-                        BaseTxId tid = new BaseTxId(txId, count);
+                        BaseTxId tid = new BaseTxId(txId);
+                        tid.setRecordId(count);
                         ChangeEvent event = convert(schema,
                                 record,
                                 fileState.getFileInfo().getHdfsPath(),

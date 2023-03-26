@@ -14,7 +14,7 @@ import ai.sapper.cdc.entity.schema.SchemaManager;
 import ai.sapper.hcdc.agents.model.NameNodeStatus;
 import ai.sapper.hcdc.agents.namenode.HadoopEnvConfig;
 import ai.sapper.hcdc.agents.namenode.NameNodeAdminClient;
-import ai.sapper.hcdc.utils.ProtoUtils;
+import ai.sapper.cdc.core.utils.ProtoUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.protobuf.MessageOrBuilder;

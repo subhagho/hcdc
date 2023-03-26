@@ -2,8 +2,12 @@ package ai.sapper.cdc.core.messaging;
 
 import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.core.messaging.KafkaMessage;
+import ai.sapper.cdc.core.messaging.MessageObject;
+import ai.sapper.cdc.core.messaging.MessagingError;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
 import ai.sapper.hcdc.common.model.*;
+import ai.sapper.cdc.core.utils.ProtoUtils;
 import com.google.common.base.Strings;
 import com.google.protobuf.MessageOrBuilder;
 import com.google.protobuf.util.JsonFormat;
@@ -31,7 +35,7 @@ public class ChangeDeltaSerDe {
         error.setFile(file);
         MessageObject<String, DFSChangeDelta> m = create(error.build(),
                 DFSError.class,
-                schemaEntity, -1, MessageObject.MessageMode.Error);
+                schemaEntity, MessageObject.MessageMode.Error);
         m.correlationId(messageId);
 
         return m;
@@ -44,27 +48,16 @@ public class ChangeDeltaSerDe {
                 .setOpCode(tnx.getOp().name())
                 .setTransaction(tnx)
                 .build();
-        return create(ignoreTx, DFSIgnoreTx.class, schemaEntity, -1, mode);
+        return create(ignoreTx, DFSIgnoreTx.class, schemaEntity, mode);
     }
 
     public static <T> MessageObject<String, DFSChangeDelta> create(@NonNull T data,
                                                                    @NonNull Class<? extends T> type,
                                                                    @NonNull SchemaEntity schemaEntity,
-                                                                   long sequence,
                                                                    @NonNull MessageObject.MessageMode mode) throws Exception {
         DFSChangeDelta delta = null;
         DFSChangeDelta.Builder builder = DFSChangeDelta.newBuilder();
-        if (mode == MessageObject.MessageMode.Snapshot &&
-                !(data instanceof DFSSchemaChange) &&
-                !(data instanceof DFSIgnoreTx)) {
-            if (sequence < 0) {
-                throw new Exception(
-                        String.format("Invalid Snapshot Sequence: Entity=[%s]", schemaEntity.toString()));
-            }
-            builder.setSequence(sequence);
-        } else {
-            builder.setSequence(0);
-        }
+
         String key = null;
         String id = null;
         if (type.equals(DFSFileAdd.class) &&
@@ -113,7 +106,7 @@ public class ChangeDeltaSerDe {
             id = UUID.randomUUID().toString();
         }
         MessageObject<String, DFSChangeDelta> message = new KafkaMessage<>();
-        message.correlationId(String.valueOf(delta.getTxId()));
+        message.correlationId(ProtoUtils.toString(delta.getTx()));
         message.mode(mode);
         message.key(key);
         message.value(delta);
@@ -164,7 +157,7 @@ public class ChangeDeltaSerDe {
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setTimestamp(System.currentTimeMillis())
-                .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
+                .setTx(data.getTransaction())
                 .setType(data.getClass().getCanonicalName())
                 .setDataChange(data);
         return String.valueOf(data.getFile().getInodeId());
@@ -174,7 +167,7 @@ public class ChangeDeltaSerDe {
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setTimestamp(System.currentTimeMillis())
-                .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
+                .setTx(data.getTransaction())
                 .setType(data.getClass().getCanonicalName())
                 .setFileAdd(data);
         return String.valueOf(data.getFile().getInodeId());
@@ -184,7 +177,7 @@ public class ChangeDeltaSerDe {
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setTimestamp(System.currentTimeMillis())
-                .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
+                .setTx(data.getTransaction())
                 .setType(data.getClass().getCanonicalName())
                 .setFileAppend(data);
         return String.valueOf(data.getFile().getInodeId());
@@ -194,7 +187,7 @@ public class ChangeDeltaSerDe {
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setTimestamp(System.currentTimeMillis())
-                .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
+                .setTx(data.getTransaction())
                 .setType(data.getClass().getCanonicalName())
                 .setFileDelete(data);
         return String.valueOf(data.getFile().getInodeId());
@@ -204,7 +197,7 @@ public class ChangeDeltaSerDe {
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setTimestamp(System.currentTimeMillis())
-                .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
+                .setTx(data.getTransaction())
                 .setType(data.getClass().getCanonicalName())
                 .setBlockAdd(data);
         return String.valueOf(data.getFile().getInodeId());
@@ -214,7 +207,7 @@ public class ChangeDeltaSerDe {
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setTimestamp(System.currentTimeMillis())
-                .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
+                .setTx(data.getTransaction())
                 .setType(data.getClass().getCanonicalName())
                 .setBlockUpdate(data);
         return String.valueOf(data.getFile().getInodeId());
@@ -224,7 +217,7 @@ public class ChangeDeltaSerDe {
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setTimestamp(System.currentTimeMillis())
-                .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
+                .setTx(data.getTransaction())
                 .setType(data.getClass().getCanonicalName())
                 .setBlockTruncate(data);
         return String.valueOf(data.getFile().getInodeId());
@@ -234,7 +227,7 @@ public class ChangeDeltaSerDe {
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setTimestamp(System.currentTimeMillis())
-                .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
+                .setTx(data.getTransaction())
                 .setType(data.getClass().getCanonicalName())
                 .setFileClose(data);
         return String.valueOf(data.getFile().getInodeId());
@@ -244,7 +237,7 @@ public class ChangeDeltaSerDe {
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setTimestamp(System.currentTimeMillis())
-                .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
+                .setTx(data.getTransaction())
                 .setType(data.getClass().getCanonicalName())
                 .setFileRename(data);
         return String.valueOf(data.getSrcFile().getInodeId());
@@ -254,7 +247,7 @@ public class ChangeDeltaSerDe {
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setTimestamp(System.currentTimeMillis())
-                .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
+                .setTx(data.getTransaction())
                 .setType(data.getClass().getCanonicalName())
                 .setIgnore(data);
         return String.valueOf(data.getFile().getInodeId());
@@ -264,7 +257,7 @@ public class ChangeDeltaSerDe {
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setTimestamp(System.currentTimeMillis())
-                .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
+                .setTx(data.getTransaction())
                 .setType(data.getClass().getCanonicalName())
                 .setError(data);
         return UUID.randomUUID().toString();
@@ -274,7 +267,7 @@ public class ChangeDeltaSerDe {
                                 @NonNull DFSChangeDelta.Builder builder) throws Exception {
         builder
                 .setTimestamp(System.currentTimeMillis())
-                .setTxId(String.valueOf(data.getTransaction().getTransactionId()))
+                .setTx(data.getTransaction())
                 .setType(data.getClass().getCanonicalName())
                 .setSchemaChange(data);
         return UUID.randomUUID().toString();

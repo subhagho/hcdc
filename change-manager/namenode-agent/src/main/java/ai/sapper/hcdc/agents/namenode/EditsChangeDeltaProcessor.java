@@ -3,6 +3,7 @@ package ai.sapper.hcdc.agents.namenode;
 import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.filters.DomainManager;
+import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
@@ -18,6 +19,7 @@ import ai.sapper.hcdc.agents.model.DFSTransactionType;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSFileClose;
 import ai.sapper.hcdc.common.model.DFSTransaction;
+import ai.sapper.cdc.core.utils.ProtoUtils;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -48,7 +50,7 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
                     || message.mode() == MessageObject.MessageMode.Backlog);
         }
         if (ret) {
-            ret = message.value().hasTxId();
+            ret = message.value().hasTx();
         }
         return ret;
     }
@@ -82,16 +84,22 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
                         @NonNull Object data,
                         DFSTransaction tnx,
                         boolean retry) throws Exception {
+        BaseTxId txId = null;
+        if (tnx != null) {
+            txId = ProtoUtils.fromTx(tnx);
+        } else {
+            txId = new BaseTxId(-1);
+        }
         EditsChangeTransactionProcessor processor
                 = (EditsChangeTransactionProcessor) processor();
         if (message.mode() == MessageObject.MessageMode.Backlog) {
-            processBacklogMessage(message, (tnx == null ? -1 : tnx.getTransactionId()));
+            processBacklogMessage(message, txId);
         } else {
-            processor.processTxMessage(message, data, tnx, retry);
+            processor.processTxMessage(message, data, txId, retry);
         }
     }
 
-    private void processBacklogMessage(MessageObject<String, DFSChangeDelta> message, long txId) throws Exception {
+    private void processBacklogMessage(MessageObject<String, DFSChangeDelta> message, BaseTxId txId) throws Exception {
         EditsChangeTransactionProcessor processor
                 = (EditsChangeTransactionProcessor) processor();
         DFSFileClose closeFile = ChangeDeltaSerDe.parse(message.value(), DFSFileClose.class);
@@ -123,15 +131,15 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
                             closeFile.getFile().getEntity().getEntity(),
                             fileState.getFileInfo().getInodeId()));
         }
-        if (rState.getSnapshotTxId() != txId) {
+        if (rState.getSnapshotTxId() != txId.getId()) {
             throw new InvalidMessageError(message.id(),
                     String.format("Snapshot transaction mismatch. [path=%s][inode=%d] [expected=%d][actual=%d]",
                             closeFile.getFile().getEntity().getEntity(),
                             fileState.getFileInfo().getInodeId(),
-                            rState.getSnapshotTxId(), txId));
+                            rState.getSnapshotTxId(), txId.getId()));
         }
-        if (fileState.getLastTnxId() > txId)
-            sendBackLogMessage(message, fileState, rState, txId);
+        if (fileState.getLastTnxId() > txId.getId())
+            sendBackLogMessage(message, fileState, rState, txId.getId());
     }
 
     private void sendBackLogMessage(MessageObject<String, DFSChangeDelta> message,
@@ -146,10 +154,8 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
             MessageObject<String, DFSChangeDelta> mesg = ChangeDeltaSerDe.create(closeFile,
                     DFSFileClose.class,
                     schemaEntity,
-                    message.value().getSequence(),
                     MessageObject.MessageMode.Backlog);
             sender().send(mesg);
-
         }
     }
 

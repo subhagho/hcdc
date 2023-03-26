@@ -123,7 +123,6 @@ public class EditsLogReader extends HDFSEditsReader {
                 MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(proto,
                         proto.getClass(),
                         tnx.entity(source),
-                        -1,
                         MessageObject.MessageMode.New);
                 sender.send(message);
                 txid = tnx.id();

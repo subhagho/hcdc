@@ -10,5 +10,6 @@ public enum EngineType {
     Cassandra,
     Vitess,
     HBase,
-    Kudu
+    Kudu,
+    HDFS
 }

@@ -69,7 +69,7 @@ public class ParquetConverter extends AvroBasedConverter {
                             @NonNull DFSFileState fileState,
                             @NonNull SchemaEntity schemaEntity,
                             AvroChangeType.@NonNull EChangeType op,
-                            long txId,
+                            @NonNull BaseTxId txId,
                             boolean snapshot) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         Configuration conf = new Configuration();
@@ -83,7 +83,8 @@ public class ParquetConverter extends AvroBasedConverter {
                 while (true) {
                     GenericRecord record = reader.read();
                     if (record == null) break;
-                    BaseTxId tid = new BaseTxId(txId, count);
+                    BaseTxId tid = new BaseTxId(txId);
+                    tid.setRecordId(count);
                     ChangeEvent event = convert(schema,
                             record,
                             fileState.getFileInfo().getHdfsPath(),

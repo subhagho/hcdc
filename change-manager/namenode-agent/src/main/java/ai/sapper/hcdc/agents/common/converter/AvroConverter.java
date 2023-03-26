@@ -61,7 +61,7 @@ public class AvroConverter extends AvroBasedConverter {
                             @NonNull DFSFileState fileState,
                             @NonNull SchemaEntity schemaEntity,
                             @NonNull AvroChangeType.EChangeType op,
-                            long txId,
+                            @NonNull BaseTxId txId,
                             boolean snapshot) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
@@ -74,7 +74,8 @@ public class AvroConverter extends AvroBasedConverter {
                     while (dataFileReader.hasNext()) {
                         GenericRecord record = dataFileReader.next();
                         if (record == null) break;
-                        BaseTxId tid = new BaseTxId(txId, count);
+                        BaseTxId tid = new BaseTxId(txId);
+                        tid.setRecordId(count);
                         ChangeEvent event = convert(schema,
                                 record,
                                 fileState.getFileInfo().getHdfsPath(),

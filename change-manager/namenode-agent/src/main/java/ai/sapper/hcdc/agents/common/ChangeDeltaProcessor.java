@@ -11,6 +11,7 @@ import ai.sapper.cdc.core.model.CDCAgentState;
 import ai.sapper.cdc.core.model.LongTxState;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSTransaction;
+import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.protobuf.MessageOrBuilder;
@@ -246,11 +247,11 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
             if (tnx != null) {
                 LOGGER.debug(getClass(), txId.getId(),
                         String.format("PROCESSING: [TXID=%d][OP=%s]",
-                                tnx.getTransactionId(), tnx.getOp().name()));
-                if (tnx.getTransactionId() != txId.getId()) {
+                                tnx.getId(), tnx.getOp().name()));
+                if (tnx.getId() != txId.getId()) {
                     throw new InvalidMessageError(message.id(),
                             String.format("Transaction ID mismatch: [expected=%d][actual=%d]",
-                                    txId.getId(), tnx.getTransactionId()));
+                                    txId.getId(), tnx.getId()));
                 }
             }
             process(message, data, tnx, retry);
