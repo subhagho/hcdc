@@ -36,6 +36,10 @@ public class AzureTableConnection implements Connection {
         return settings.getName();
     }
 
+    public String db() {
+        return settings.getDb();
+    }
+
     @Override
     public Connection init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                            @NonNull BaseEnv<?> env) throws ConnectionError {
