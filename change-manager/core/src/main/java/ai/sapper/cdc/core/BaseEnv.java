@@ -20,6 +20,7 @@ import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 
+import javax.ws.rs.NotFoundException;
 import java.io.File;
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -162,6 +163,18 @@ public abstract class BaseEnv<T extends Enum<?>> {
 
     public DistributedLock createLock(@NonNull String name) throws Exception {
         return createLock(stateManager.zkPath(), module(), name);
+    }
+
+    public void validate(@NonNull String key,
+                         @NonNull String value) throws Exception {
+        Preconditions.checkNotNull(keyStore);
+        String v = keyStore.read(key);
+        if (Strings.isNullOrEmpty(v)) {
+            throw new NotFoundException(String.format("Key not found: [key=%s]", key));
+        }
+        if (v.compareTo(value) != 0) {
+            throw new SecurityException(String.format("Invalid secret: [key=%s]", key));
+        }
     }
 
     public void setup(@NonNull String module,
