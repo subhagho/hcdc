@@ -4,6 +4,7 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'signing'
+    id 'idea'
 }
 
 repositories {
@@ -68,11 +69,15 @@ subprojects {
     apply plugin: "io.freefair.lombok"
     apply plugin: 'maven-publish'
     apply plugin: 'java-library'
+    apply plugin: 'idea'
 
     group 'ai.sapper.cdc'
     version '1.4-SNAPSHOT'
 
     java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(11)
+        }
         withSourcesJar()
     }
 

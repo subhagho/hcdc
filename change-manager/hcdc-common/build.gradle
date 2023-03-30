@@ -15,7 +15,7 @@ protobuf {
         // Download from repositories
         artifact = 'com.google.protobuf:protoc:3.21.5'
     }
-    generatedFilesBaseDir = 'hcdc-common/src'
+    //generatedFilesBaseDir = 'hcdc-common/src'
 
     generateProtoTasks {
 
