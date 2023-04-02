@@ -347,6 +347,31 @@ public class ReflectionUtils {
         }
     }
 
+    public static void setPrimitiveValue(@NonNull Object value,
+                                         @NonNull Object source,
+                                         @NonNull Field f) throws Exception {
+        Class<?> type = f.getType();
+        if (type.equals(boolean.class) || type.equals(Boolean.class)) {
+            setBooleanValue(source, f, value);
+        } else if (type.equals(short.class) || type.equals(Short.class)) {
+            setShortValue(source, f, value);
+        } else if (type.equals(int.class) || type.equals(Integer.class)) {
+            setIntValue(source, f, value);
+        } else if (type.equals(float.class) || type.equals(Float.class)) {
+            setFloatValue(source, f, value);
+        } else if (type.equals(double.class) || type.equals(Double.class)) {
+            setDoubleValue(source, f, value);
+        } else if (type.equals(long.class) || type.equals(Long.class)) {
+            setLongValue(source, f, value);
+        } else if (type.equals(char.class) || type.equals(Character.class)) {
+            setCharValue(source, f, value);
+        } else if (type.equals(Class.class)) {
+            setClassValue(source, f, value);
+        } else if (type.equals(String.class)) {
+            setStringValue(source, f, value);
+        }
+    }
+
     /**
      * Set the value of the field by converting the specified String value to the
      * required value type.
@@ -442,6 +467,83 @@ public class ReflectionUtils {
         }
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static Object setValue(@NonNull Object value,
+                                  @NonNull Object source,
+                                  @NonNull Field f) throws
+            ReflectionException {
+        try {
+            Object retV = value;
+            Class<?> type = f.getType();
+            if (ReflectionUtils
+                    .isPrimitiveTypeOrClass(f)) {
+                ReflectionUtils
+                        .setPrimitiveValue(value, source, f);
+            } else if (type.equals(String.class)) {
+                ReflectionUtils
+                        .setStringValue(source, f, value);
+            } else if (type.isEnum()) {
+                Object ev = null;
+                if (value instanceof Enum) {
+                    ev = value;
+                } else if (value instanceof String) {
+                    Class<Enum> et = (Class<Enum>) type;
+                    ev = Enum.valueOf(et, (String) value);
+                } else {
+                    throw new ReflectionException(String.format("Failed to convert to Enum[%s]. [type=%s]",
+                            type.getCanonicalName(),
+                            value.getClass().getCanonicalName()));
+                }
+
+                ReflectionUtils
+                        .setObjectValue(source, f, ev);
+                retV = ev;
+            } else if (type.equals(File.class)) {
+                File file = null;
+                if (value instanceof File) {
+                    file = (File) value;
+                } else if (value instanceof String) {
+                    file = new File((String) value);
+                } else {
+                    throw new ReflectionException(String.format("Failed to convert to File. [type=%s]",
+                            value.getClass().getCanonicalName()));
+                }
+                ReflectionUtils
+                        .setObjectValue(source, f, file);
+                retV = file;
+            } else if (type.equals(Class.class)) {
+                ReflectionUtils
+                        .setClassValue(source, f, value);
+            } else if (value instanceof String) {
+                String v = (String) value;
+                Class<?> cls = Class.forName(v.trim());
+                if (type.isAssignableFrom(cls)) {
+                    Object o = cls.getConstructor().newInstance();
+                    ReflectionUtils
+                            .setObjectValue(source, f, o);
+                    retV = o;
+                } else {
+                    throw new InstantiationException(
+                            "Cannot create instance of type [type="
+                                    + cls.getCanonicalName()
+                                    + "] and assign to field [field="
+                                    + f.getName() + "]");
+                }
+            } else {
+                throw new ReflectionException(String.format("Failed to set value. [type=%s][value=%s]",
+                        type.getCanonicalName(),
+                        value.getClass().getCanonicalName()));
+            }
+            return retV;
+        } catch (Exception e) {
+            throw new ReflectionException(
+                    "Error setting object value : [type="
+                            + source.getClass().getCanonicalName() + "][field="
+                            + f.getName() + "]",
+                    e);
+        }
+    }
+
     /**
      * Set the value of the specified field in the object to the value passed.
      *
@@ -450,7 +552,8 @@ public class ReflectionUtils {
      * @param value - Value to set to.
      * @throws Exception
      */
-    public static void setObjectValue(@NonNull Object o, @NonNull Field f,
+    public static void setObjectValue(@NonNull Object o,
+                                      @NonNull Field f,
                                       Object value)
             throws Exception {
 
@@ -525,8 +628,9 @@ public class ReflectionUtils {
      * @param value - Value to set.
      * @throws Exception
      */
-    public static void setStringValue(@NonNull Object o, @NonNull Field f,
-                                      String value)
+    public static void setStringValue(@NonNull Object o,
+                                      @NonNull Field f,
+                                      Object value)
             throws Exception {
         setObjectValue(o, f, value);
     }
@@ -539,12 +643,19 @@ public class ReflectionUtils {
      * @param value - Value to set.
      * @throws Exception
      */
-    public static void setBooleanValue(@NonNull Object o, @NonNull Field f,
-                                       @NonNull String value)
+    public static void setBooleanValue(@NonNull Object o,
+                                       @NonNull Field f,
+                                       @NonNull Object value)
             throws Exception {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(value));
-
-        boolean bv = Boolean.parseBoolean(value);
+        Boolean bv = null;
+        if (isBoolean(value.getClass())) {
+            bv = (Boolean) value;
+        } else if (value instanceof String) {
+            bv = Boolean.parseBoolean((String) value);
+        } else {
+            throw new Exception(String.format("Failed to convert to boolean. [type=%s]",
+                    value.getClass().getCanonicalName()));
+        }
         setObjectValue(o, f, bv);
     }
 
@@ -556,12 +667,19 @@ public class ReflectionUtils {
      * @param value - Value to set.
      * @throws Exception
      */
-    public static void setShortValue(@NonNull Object o, @NonNull Field f,
-                                     @NonNull String value)
+    public static void setShortValue(@NonNull Object o,
+                                     @NonNull Field f,
+                                     @NonNull Object value)
             throws Exception {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(value));
-
-        short sv = Short.parseShort(value);
+        Short sv = null;
+        if (isShort(value.getClass())) {
+            sv = (Short) value;
+        } else if (value instanceof String) {
+            sv = Short.parseShort((String) value);
+        } else {
+            throw new Exception(String.format("Failed to convert to short. [type=%s]",
+                    value.getClass().getCanonicalName()));
+        }
         setObjectValue(o, f, sv);
     }
 
@@ -573,12 +691,19 @@ public class ReflectionUtils {
      * @param value - Value to set.
      * @throws Exception
      */
-    public static void setIntValue(@NonNull Object o, @NonNull Field f,
-                                   @NonNull String value)
+    public static void setIntValue(@NonNull Object o,
+                                   @NonNull Field f,
+                                   @NonNull Object value)
             throws Exception {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(value));
-
-        int iv = Integer.parseInt(value);
+        Integer iv = null;
+        if (isInt(value.getClass())) {
+            iv = (Integer) value;
+        } else if (value instanceof String) {
+            iv = Integer.parseInt((String) value);
+        } else {
+            throw new Exception(String.format("Failed to convert to integer. [type=%s]",
+                    value.getClass().getCanonicalName()));
+        }
         setObjectValue(o, f, iv);
     }
 
@@ -590,12 +715,19 @@ public class ReflectionUtils {
      * @param value - Value to set.
      * @throws Exception
      */
-    public static void setLongValue(@NonNull Object o, @NonNull Field f,
-                                    @NonNull String value)
+    public static void setLongValue(@NonNull Object o,
+                                    @NonNull Field f,
+                                    @NonNull Object value)
             throws Exception {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(value));
-
-        long lv = Long.parseLong(value);
+        Long lv = null;
+        if (isLong(value.getClass())) {
+            lv = (Long) value;
+        } else if (value instanceof String) {
+            lv = Long.parseLong((String) value);
+        } else {
+            throw new Exception(String.format("Failed to convert to long. [type=%s]",
+                    value.getClass().getCanonicalName()));
+        }
         setObjectValue(o, f, lv);
     }
 
@@ -607,12 +739,19 @@ public class ReflectionUtils {
      * @param value - Value to set.
      * @throws Exception
      */
-    public static void setFloatValue(@NonNull Object o, @NonNull Field f,
-                                     @NonNull String value)
+    public static void setFloatValue(@NonNull Object o,
+                                     @NonNull Field f,
+                                     @NonNull Object value)
             throws Exception {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(value));
-
-        float fv = Float.parseFloat(value);
+        Float fv = null;
+        if (isFloat(value.getClass())) {
+            fv = (Float) value;
+        } else if (value instanceof String) {
+            fv = Float.parseFloat((String) value);
+        } else {
+            throw new Exception(String.format("Failed to convert to float. [type=%s]",
+                    value.getClass().getCanonicalName()));
+        }
         setObjectValue(o, f, fv);
     }
 
@@ -624,12 +763,19 @@ public class ReflectionUtils {
      * @param value - Value to set.
      * @throws Exception
      */
-    public static void setDoubleValue(@NonNull Object o, @NonNull Field f,
-                                      @NonNull String value)
+    public static void setDoubleValue(@NonNull Object o,
+                                      @NonNull Field f,
+                                      @NonNull Object value)
             throws Exception {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(value));
-
-        double dv = Double.parseDouble(value);
+        Double dv = null;
+        if (isDouble(value.getClass())) {
+            dv = (Double) value;
+        } else if (value instanceof String) {
+            dv = Double.parseDouble((String) value);
+        } else {
+            throw new Exception(String.format("Failed to convert to double. [type=%s]",
+                    value.getClass().getCanonicalName()));
+        }
         setObjectValue(o, f, dv);
     }
 
@@ -641,12 +787,19 @@ public class ReflectionUtils {
      * @param value - Value to set.
      * @throws Exception
      */
-    public static void setCharValue(@NonNull Object o, @NonNull Field f,
-                                    @NonNull String value)
+    public static void setCharValue(@NonNull Object o,
+                                    @NonNull Field f,
+                                    @NonNull Object value)
             throws Exception {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(value));
-
-        char cv = value.charAt(0);
+        Character cv = null;
+        if (isChar(value.getClass())) {
+            cv = (Character) value;
+        } else if (value instanceof String) {
+            cv = ((String) value).charAt(0);
+        } else {
+            throw new Exception(String.format("Failed to convert to char. [type=%s]",
+                    value.getClass().getCanonicalName()));
+        }
         setObjectValue(o, f, cv);
     }
 
@@ -658,12 +811,19 @@ public class ReflectionUtils {
      * @param value - Value to set.
      * @throws Exception
      */
-    public static void setClassValue(@NonNull Object o, @NonNull Field f,
-                                     @NonNull String value)
+    public static void setClassValue(@NonNull Object o,
+                                     @NonNull Field f,
+                                     @NonNull Object value)
             throws Exception {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(value));
-
-        Class<?> cv = Class.forName(value);
+        Class<?> cv = null;
+        if (value instanceof Class) {
+            cv = (Class<?>) value;
+        } else if (value instanceof String) {
+            Class.forName((String) value);
+        } else {
+            throw new Exception(String.format("Failed to convert to class. [type=%s]",
+                    value.getClass().getCanonicalName()));
+        }
         setObjectValue(o, f, cv);
     }
 
@@ -942,5 +1102,9 @@ public class ReflectionUtils {
 
     public static boolean isByte(@NonNull Class<?> type) {
         return (type.equals(byte.class) || type.equals(Byte.class) || type.equals(Byte.TYPE));
+    }
+
+    public static boolean isChar(@NonNull Class<?> type) {
+        return (type.equals(char.class) || type.equals(Character.class) || type.equals(Character.TYPE));
     }
 }
