@@ -19,6 +19,7 @@ public abstract class KeyStore {
     public static final String __CONFIG_PATH = "keystore";
     public static final String CONFIG_KEYSTORE_CLASS = String.format("%s.class", __CONFIG_PATH);
     public static final String CIPHER_TYPE = "PBEWithMD5AndDES";
+    public static final String DEFAULT_KEY = "__default__";
     private static final int DEFAULT_ITERATION_COUNT = 8;
     private static final int DEFAULT_KEY_LENGTH = 128;
     @Getter(AccessLevel.NONE)
@@ -43,6 +44,11 @@ public abstract class KeyStore {
     public void save(@NonNull String name,
                      @NonNull String value) throws Exception {
         save(name, value, extractValue(password, CIPHER_TYPE));
+    }
+
+    public boolean authenticate(@NonNull String key) throws Exception {
+        String value = read(DEFAULT_KEY);
+        return value.compareTo(key) == 0;
     }
 
     public String read(@NonNull String name) throws Exception {

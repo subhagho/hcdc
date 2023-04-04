@@ -74,6 +74,8 @@ public class JavaKeyStore extends KeyStore {
         try (FileOutputStream fos = new FileOutputStream(path)) {
             store.store(fos, password.toCharArray());
         }
+        save(DEFAULT_KEY, password);
+        flush(password);
     }
 
     @Override
