@@ -530,9 +530,8 @@ public class ReflectionUtils {
                                     + f.getName() + "]");
                 }
             } else {
-                throw new ReflectionException(String.format("Failed to set value. [type=%s][value=%s]",
-                        type.getCanonicalName(),
-                        value.getClass().getCanonicalName()));
+                ReflectionUtils
+                        .setObjectValue(source, f, value);
             }
             return retV;
         } catch (Exception e) {

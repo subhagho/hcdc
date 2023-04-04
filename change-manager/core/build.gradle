@@ -20,6 +20,9 @@ dependencies {
 
     // https://mvnrepository.com/artifact/software.amazon.awssdk/glacier
     implementation 'software.amazon.awssdk:glacier:2.20.26'
+    implementation 'com.azure:azure-storage-blob:12.21.1'
+    implementation 'com.azure:azure-identity:1.8.1'
+
     // https://mvnrepository.com/artifact/com.singlestore/singlestore-jdbc-client
     implementation 'com.singlestore:singlestore-jdbc-client:1.1.4'
     // https://mvnrepository.com/artifact/com.mchange/c3p0

@@ -2,6 +2,7 @@ package ai.sapper.cdc.common;
 
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.common.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -22,6 +23,7 @@ import org.apache.commons.configuration2.io.ProvidedURLLocationStrategy;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.*;
 
@@ -33,11 +35,51 @@ public class ConfigReader {
     public static final String __NODE_PARAMETER = "parameter";
     public static final String __PARAM_NAME = "name";
     public static final String __PARAM_VALUE = "value";
+    public static final String CONFIG_PARAMS = "parameters";
 
     private final HierarchicalConfiguration<ImmutableNode> config;
 
     public ConfigReader(@NonNull HierarchicalConfiguration<ImmutableNode> config, @NonNull String path) {
         this.config = config.configurationAt(path);
+    }
+
+    public void read(@NonNull Class<? extends ConfigReader> type) throws ConfigurationException {
+        try {
+            Field[] fields = ReflectionUtils.getAllFields(getClass());
+            if (fields != null) {
+                for (Field field : fields) {
+                    if (field.isAnnotationPresent(Config.class)) {
+                        Config c = field.getAnnotation(Config.class);
+                        if (c.name().compareTo(CONFIG_PARAMS) == 0) {
+                            Map<String, String> params = readParameters();
+                            ReflectionUtils.setValue(params, this, field);
+                            continue;
+                        }
+                        if (checkIfNodeExists(config, c.name())) {
+                            if (c.type().equals(String.class)) {
+                                ReflectionUtils.setValue(config.getString(c.name()), this, field);
+                            } else if (ReflectionUtils.isBoolean(c.type())) {
+                                ReflectionUtils.setValue(config.getBoolean(c.name()), this, field);
+                            } else if (ReflectionUtils.isShort(c.type())) {
+                                ReflectionUtils.setValue(config.getShort(c.name()), this, field);
+                            } else if (ReflectionUtils.isInt(c.type())) {
+                                ReflectionUtils.setValue(config.getInt(c.name()), this, field);
+                            } else if (ReflectionUtils.isLong(c.type())) {
+                                ReflectionUtils.setValue(config.getLong(c.name()), this, field);
+                            } else if (ReflectionUtils.isFloat(c.type())) {
+                                ReflectionUtils.setValue(config.getFloat(c.name()), this, field);
+                            } else if (ReflectionUtils.isDouble(c.type())) {
+                                ReflectionUtils.setValue(config.getDouble(c.name()), this, field);
+                            }
+                        } else if (c.required()) {
+                            throw new ConfigurationException(String.format("Required configuration not found. [name=%s]", c.name()));
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            throw new ConfigurationException(ex);
+        }
     }
 
     public boolean checkIfNodeExists(String path, @NonNull String name) {

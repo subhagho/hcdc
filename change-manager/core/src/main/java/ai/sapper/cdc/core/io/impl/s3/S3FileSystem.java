@@ -68,7 +68,8 @@ public class S3FileSystem extends LocalFileSystem {
      * @throws IOException
      */
     @Override
-    public CDCFileSystem init(@NonNull HierarchicalConfiguration<ImmutableNode> config, String pathPrefix) throws IOException {
+    public CDCFileSystem init(@NonNull HierarchicalConfiguration<ImmutableNode> config,
+                              @NonNull String pathPrefix) throws IOException {
         try {
             S3FileSystemConfig cfg = new S3FileSystemConfig(config, pathPrefix);
             cfg.read();

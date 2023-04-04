@@ -3,7 +3,13 @@
     <database>
         <header>
             <name>Test Database</name>
+            <version>10.2</version>
+            <type>MariaDb</type>
         </header>
+        <state>
+            <available>true</available>
+            <uptime>1000123498</uptime>
+        </state>
         <tables>
             <table tableType="system">
                 <name>users</name>

@@ -1,6 +1,10 @@
 package ai.sapper.cdc.common;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
+import com.google.common.base.Strings;
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
@@ -14,6 +18,28 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ConfigReaderTest {
+    @Getter
+    @Setter
+    public static class Database extends ConfigReader {
+        @Config(name = "header.name")
+        private String name;
+        @Config(name = "header.version", type = Double.class)
+        private double version;
+        @Config(name = "header.type")
+        private String type;
+        @Config(name = "state.available", type = Boolean.class)
+        private boolean available;
+        @Config(name = "state.uptime", type = Long.class)
+        private long uptime;
+        @Config(name = ConfigReader.CONFIG_PARAMS)
+        private Map<String, String> config;
+
+        public Database(@NonNull HierarchicalConfiguration<ImmutableNode> config,
+                        @NonNull String path) {
+            super(config, path);
+        }
+    }
+
     private static final String TEST_CONFIG_XML = "src/test/resources/configreader-test.xml";
 
     @Test
@@ -23,6 +49,21 @@ class ConfigReaderTest {
             ConfigReader reader = new ConfigReader(readFile(), "database");
             HierarchicalConfiguration<ImmutableNode> node = reader.get();
             assertNotNull(node);
+        } catch (Throwable t) {
+            DefaultLogger.LOGGER.error(DefaultLogger.stacktrace(t));
+            fail(t);
+        }
+    }
+
+    @Test
+    void readConfig() {
+        DefaultLogger.LOGGER.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "get"));
+        try {
+            Database reader = new Database(readFile(), "database");
+            reader.read(Database.class);
+            assertFalse(Strings.isNullOrEmpty(reader.name));
+            assertEquals(10.2, reader.version);
+            assertTrue(reader.available);
         } catch (Throwable t) {
             DefaultLogger.LOGGER.error(DefaultLogger.stacktrace(t));
             fail(t);
