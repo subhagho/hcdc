@@ -1,6 +1,7 @@
 package ai.sapper.cdc.core.io;
 
 import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.core.keystore.KeyStore;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -20,7 +21,9 @@ import java.util.Map;
 public abstract class FileSystem implements Closeable {
     private PathInfo root;
 
-    public abstract FileSystem init(@NonNull HierarchicalConfiguration<ImmutableNode> config, String pathPrefix) throws IOException;
+    public abstract FileSystem init(@NonNull HierarchicalConfiguration<ImmutableNode> config,
+                                    String pathPrefix,
+                                    KeyStore keyStore) throws IOException;
 
     public abstract PathInfo get(@NonNull String path, String domain) throws IOException;
 

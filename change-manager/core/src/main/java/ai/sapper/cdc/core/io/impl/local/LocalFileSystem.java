@@ -6,6 +6,7 @@ import ai.sapper.cdc.core.io.PathInfo;
 import ai.sapper.cdc.core.io.Reader;
 import ai.sapper.cdc.core.io.Writer;
 import ai.sapper.cdc.core.io.impl.CDCFileSystem;
+import ai.sapper.cdc.core.keystore.KeyStore;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -42,7 +43,9 @@ public class LocalFileSystem extends CDCFileSystem {
      * @throws IOException
      */
     @Override
-    public CDCFileSystem init(@NonNull HierarchicalConfiguration<ImmutableNode> config, String pathPrefix) throws IOException {
+    public CDCFileSystem init(@NonNull HierarchicalConfiguration<ImmutableNode> config,
+                              String pathPrefix,
+                              KeyStore keyStore) throws IOException {
         try {
             if (fsConfig == null) {
                 fsConfig = new LocalFileSystemConfig(config, pathPrefix);

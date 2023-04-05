@@ -75,7 +75,9 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
             if (fileSystemMocker == null) {
                 Class<? extends CDCFileSystem> fsc = (Class<? extends CDCFileSystem>) Class.forName(config.fsType);
                 fs = fsc.getDeclaredConstructor().newInstance();
-                fs.init(config.config(), EntityChangeDeltaReaderConfig.Constants.CONFIG_PATH_FS);
+                fs.init(config.config(),
+                        EntityChangeDeltaReaderConfig.Constants.CONFIG_PATH_FS,
+                        env().keyStore());
             } else {
                 fs = (CDCFileSystem) fileSystemMocker.create(config.config());
             }
