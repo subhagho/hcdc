@@ -206,8 +206,8 @@ public class KafkaAdminHelper implements Closeable {
     }
 
     public static class KafkaAdminConfig extends ConfigReader {
-        private static final String __CONFIG_PATH = "admin";
-        private static final String CONFIG_BOOTSTRAP = "servers";
+        public static final String __CONFIG_PATH = "admin";
+        public static final String CONFIG_BOOTSTRAP = "servers";
 
         private String bootstrapServers;
 
