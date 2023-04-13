@@ -98,7 +98,8 @@ public class JavaKeyStore extends KeyStore {
                      @NonNull String password) throws Exception {
         Preconditions.checkNotNull(store);
         String hash = ChecksumUtils.generateHash(password);
-        Preconditions.checkArgument(hash.equals(passwdHash));
+        if (!Strings.isNullOrEmpty(passwdHash))
+            Preconditions.checkArgument(hash.equals(passwdHash));
         java.security.KeyStore.SecretKeyEntry secret
                 = new java.security.KeyStore.SecretKeyEntry(generate(value, cipherAlgo));
         java.security.KeyStore.ProtectionParameter parameter
