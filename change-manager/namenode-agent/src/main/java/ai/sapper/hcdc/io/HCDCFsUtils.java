@@ -2,7 +2,7 @@ package ai.sapper.hcdc.io;
 
 import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.core.io.FileSystem;
-import ai.sapper.cdc.core.io.PathInfo;
+import ai.sapper.cdc.core.io.model.PathInfo;
 import ai.sapper.hcdc.agents.model.DFSBlockState;
 import ai.sapper.hcdc.agents.model.DFSFileState;
 import lombok.NonNull;

@@ -8,7 +8,7 @@ import ai.sapper.cdc.core.WebServiceClient;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.io.Archiver;
 import ai.sapper.cdc.core.io.EncryptionHandler;
-import ai.sapper.cdc.core.io.PathInfo;
+import ai.sapper.cdc.core.io.model.PathInfo;
 import ai.sapper.cdc.core.io.impl.CDCFileSystem;
 import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;

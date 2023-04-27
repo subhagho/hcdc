@@ -44,9 +44,9 @@ configurations.all {
 }
 
 dependencies {
-    implementation project(':common')
-    implementation project(':core')
-    implementation 'ai.sapper.cdc.framework:entity:1.2-SNAPSHOT'
+    implementation 'ai.sapper.cdc:common:1.0-SNAPSHOT'
+    implementation 'ai.sapper.cdc:core:1.0-SNAPSHOT'
+    implementation 'ai.sapper.cdc:entity:1.0-SNAPSHOT'
 
     implementation 'org.ehcache:ehcache:3.10.0'
     // https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-hdfs-client

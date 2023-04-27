@@ -6,7 +6,7 @@ import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.io.EncryptionHandler;
-import ai.sapper.cdc.core.io.PathInfo;
+import ai.sapper.cdc.core.io.model.PathInfo;
 import ai.sapper.cdc.core.io.impl.CDCFileSystem;
 import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.core.model.EFileType;

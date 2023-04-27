@@ -1,7 +1,7 @@
 package ai.sapper.hcdc.io;
 
 import ai.sapper.cdc.core.io.FileSystem;
-import ai.sapper.cdc.core.io.PathInfo;
+import ai.sapper.cdc.core.io.model.PathInfo;
 import ai.sapper.cdc.core.io.Reader;
 import ai.sapper.cdc.core.io.Writer;
 import ai.sapper.hcdc.agents.model.DFSBlockState;

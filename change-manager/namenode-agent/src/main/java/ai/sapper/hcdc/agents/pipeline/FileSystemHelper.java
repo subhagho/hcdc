@@ -1,7 +1,7 @@
 package ai.sapper.hcdc.agents.pipeline;
 
 import ai.sapper.cdc.common.schema.SchemaEntity;
-import ai.sapper.cdc.core.io.PathInfo;
+import ai.sapper.cdc.core.io.model.PathInfo;
 import ai.sapper.cdc.core.io.impl.CDCFileSystem;
 import ai.sapper.hcdc.agents.model.DFSBlockState;
 import ai.sapper.hcdc.agents.model.DFSFileState;
