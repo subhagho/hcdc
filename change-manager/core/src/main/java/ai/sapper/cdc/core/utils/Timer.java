@@ -16,11 +16,11 @@ public class Timer implements Closeable {
 
     public Timer(@NonNull DistributionSummary summary) {
         this.summary = summary;
-        startTime = System.currentTimeMillis();
+        startTime = System.nanoTime();
     }
 
     @Override
     public void close() throws IOException {
-        summary.record(System.currentTimeMillis() - startTime);
+        summary.record(System.nanoTime() - startTime);
     }
 }
