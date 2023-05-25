@@ -7,6 +7,8 @@ import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.MessageSender;
 import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.core.model.LongTxState;
+import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
+import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.hcdc.agents.model.DFSBlockState;
 import ai.sapper.hcdc.agents.model.DFSFileState;
 import ai.sapper.hcdc.agents.model.EBlockState;
@@ -30,21 +32,26 @@ public abstract class TransactionProcessor {
     public static final Logger LOG = LoggerFactory.getLogger(TransactionProcessor.class);
 
     private final String name;
-    private ZkStateManager stateManager;
+    private HCdcStateManager stateManager;
+    private HCdcSchemaManager schemaManager;
     private MessageSender<String, DFSChangeDelta> errorSender;
 
     public TransactionProcessor(@NonNull String name) {
         this.name = name;
     }
 
-    public TransactionProcessor withStateManager(@NonNull ZkStateManager stateManager) {
+    public TransactionProcessor withStateManager(@NonNull HCdcStateManager stateManager) {
         this.stateManager = stateManager;
-
         return this;
     }
 
     public TransactionProcessor withErrorQueue(@NonNull MessageSender<String, DFSChangeDelta> errorSender) {
         this.errorSender = errorSender;
+        return this;
+    }
+
+    public TransactionProcessor withSchemaManager(@NonNull HCdcSchemaManager schemaManager) {
+        this.schemaManager = schemaManager;
         return this;
     }
 
@@ -54,10 +61,8 @@ public abstract class TransactionProcessor {
                                                  boolean retry) throws Exception;
 
     public SchemaEntity isRegistered(String hdfsPath) throws Exception {
-        Preconditions.checkState(stateManager instanceof ProcessorStateManager);
-        DomainManager dm = ((ProcessorStateManager) stateManager).domainManager();
-
-        return dm.matches(hdfsPath);
+        Preconditions.checkNotNull(schemaManager);
+        return schemaManager.matches(hdfsPath);
     }
 
     public abstract void processAppendFileTxMessage(@NonNull DFSFileAppend data,
@@ -195,8 +200,8 @@ public abstract class TransactionProcessor {
     }
 
     public BaseTxId checkMessageSequence(MessageObject<String, DFSChangeDelta> message,
-                                     boolean ignoreMissing,
-                                     boolean retry) throws Exception {
+                                         boolean ignoreMissing,
+                                         boolean retry) throws Exception {
         BaseTxId txId = ProtoUtils.fromTx(message.value().getTx());
         if (message.mode() == MessageObject.MessageMode.New) {
             LongTxState txState = (LongTxState) stateManager().processingState();

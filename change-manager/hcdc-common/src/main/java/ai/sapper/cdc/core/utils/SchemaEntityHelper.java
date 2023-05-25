@@ -1,6 +1,6 @@
 package ai.sapper.cdc.core.utils;
 
-import ai.sapper.cdc.common.schema.SchemaEntity;
+import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.hcdc.common.model.DFSSchemaEntity;
 import lombok.NonNull;
 

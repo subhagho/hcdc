@@ -1,14 +1,12 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.DistributedLock;
-import ai.sapper.cdc.core.ManagerStateError;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.messaging.*;
-import ai.sapper.cdc.core.model.BaseTxId;
-import ai.sapper.cdc.core.model.CDCAgentState;
-import ai.sapper.cdc.core.model.LongTxState;
+import ai.sapper.cdc.core.model.BaseAgentState;
+import ai.sapper.cdc.core.state.StateManagerError;
+import ai.sapper.cdc.entity.model.BaseTxState;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSTransaction;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
@@ -43,7 +41,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     private static Logger LOG;
 
     private final String name;
-    private final ZkStateManager stateManager;
+    private final HCdcStateManager stateManager;
     private ChangeDeltaProcessorConfig processorConfig;
     private MessageSender<String, DFSChangeDelta> sender;
     private MessageSender<String, DFSChangeDelta> errorSender;
@@ -56,7 +54,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     private final boolean ignoreMissing;
     private DistributedLock __lock;
 
-    public ChangeDeltaProcessor(@NonNull ZkStateManager stateManager,
+    public ChangeDeltaProcessor(@NonNull HCdcStateManager stateManager,
                                 @NonNull String name,
                                 @NonNull EProcessorMode mode,
                                 boolean ignoreMissing) {
@@ -85,36 +83,16 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
                 this.processorConfig = config;
                 processorConfig.read();
 
-                sender = new HCDCMessagingBuilders.SenderBuilder()
-                        .config(processorConfig.senderConfig.config())
-                        .manager(manger)
-                        .connection(processorConfig().senderConfig.connection())
-                        .type(processorConfig().senderConfig.type())
-                        .partitioner(processorConfig().senderConfig.partitionerClass())
-                        .auditLogger(NameNodeEnv.get(name).auditLogger())
+                sender = new HCDCMessagingBuilders.SenderBuilder(env)
                         .build();
 
-                receiver = new HCDCMessagingBuilders.ReceiverBuilder()
-                        .config(processorConfig().receiverConfig.config())
-                        .manager(manger)
-                        .connection(processorConfig.receiverConfig.connection())
-                        .type(processorConfig.receiverConfig.type())
-                        .saveState(true)
-                        .zkConnection(stateManager().connection())
-                        .zkStatePath(stateManager.zkPath())
-                        .batchSize(processorConfig.receiverConfig.batchSize())
-                        .auditLogger(NameNodeEnv.get(name).auditLogger())
+                receiver = new HCDCMessagingBuilders.ReceiverBuilder(env)
                         .build();
 
                 if (!Strings.isNullOrEmpty(processorConfig.batchTimeout)) {
                     receiveBatchTimeout = Long.parseLong(processorConfig.batchTimeout);
                 }
-                errorSender = new HCDCMessagingBuilders.SenderBuilder()
-                        .config(processorConfig.errorConfig.config())
-                        .manager(manger)
-                        .connection(processorConfig().errorConfig.connection())
-                        .type(processorConfig().errorConfig.type())
-                        .partitioner(processorConfig().errorConfig.partitionerClass())
+                errorSender = new HCDCMessagingBuilders.SenderBuilder(env)
                         .build();
 
                 long txId = stateManager().getSnapshotTxId();
@@ -147,9 +125,9 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     @Override
     public void run() {
         try {
-            NameNodeEnv.get(name).agentState().state(CDCAgentState.EAgentState.Active);
+            NameNodeEnv.get(name).agentState().setState(BaseAgentState.EAgentState.Active);
             doRun();
-            NameNodeEnv.get(name).agentState().state(CDCAgentState.EAgentState.Stopped);
+            NameNodeEnv.get(name).agentState().setState(BaseAgentState.EAgentState.Stopped);
         } catch (Throwable t) {
             try {
                 NameNodeEnv.get(name).agentState().error(t);
@@ -162,13 +140,13 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
                 close();
             } catch (Exception ex) {
                 DefaultLogger.stacktrace(ex);
-                DefaultLogger.LOGGER.error(ex.getLocalizedMessage());
+                DefaultLogger.error(ex.getLocalizedMessage());
             }
         }
     }
 
-    public LongTxState updateReadState(String messageId) throws ManagerStateError {
-        LongTxState state = (LongTxState) stateManager.processingState();
+    public BaseTxState updateReadState(String messageId) throws StateManagerError {
+        BaseTxState state = (BaseTxState) stateManager.processingState();
         processedMessageId = state.getCurrentMessageId();
 
         return (LongTxState) stateManager.updateMessageId(messageId);

@@ -1,11 +1,9 @@
 package ai.sapper.cdc.core.utils;
 
-import ai.sapper.cdc.common.model.AvroChangeType;
-import ai.sapper.cdc.common.schema.SchemaEntity;
-import ai.sapper.cdc.common.schema.SchemaVersion;
-import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.core.model.EngineType;
 import ai.sapper.cdc.entity.model.*;
+import ai.sapper.cdc.entity.schema.SchemaEntity;
+import ai.sapper.cdc.entity.schema.SchemaVersion;
 import ai.sapper.hcdc.common.model.DFSTransaction;
 import lombok.NonNull;
 

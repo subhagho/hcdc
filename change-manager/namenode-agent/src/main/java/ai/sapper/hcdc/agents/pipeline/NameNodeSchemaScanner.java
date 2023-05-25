@@ -9,8 +9,8 @@ import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.io.EncryptionHandler;
 import ai.sapper.cdc.entity.schema.SchemaManager;
 import ai.sapper.hcdc.agents.common.CDCDataConverter;
+import ai.sapper.hcdc.agents.common.HCdcStateManager;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
-import ai.sapper.hcdc.agents.common.ZkStateManager;
 import ai.sapper.hcdc.agents.model.DFSFileState;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
@@ -33,7 +33,7 @@ public class NameNodeSchemaScanner {
     private static final int THREAD_SLEEP_INTERVAL = 5000; // 5 secs.
     private NameNodeFileScannerConfig config;
     private HdfsConnection connection;
-    private final ZkStateManager stateManager;
+    private final HCdcStateManager stateManager;
     private final String name;
     private SchemaManager schemaManager;
 
@@ -41,7 +41,7 @@ public class NameNodeSchemaScanner {
     private NameNodeEnv env;
     private EncryptionHandler<ByteBuffer, ByteBuffer> encryptionHandler;
 
-    public NameNodeSchemaScanner(@NonNull ZkStateManager stateManager, @NonNull String name) {
+    public NameNodeSchemaScanner(@NonNull HCdcStateManager stateManager, @NonNull String name) {
         this.stateManager = stateManager;
         this.name = name;
     }
@@ -126,7 +126,7 @@ public class NameNodeSchemaScanner {
         private final String name;
         private DFSFileState fileState;
         private HdfsConnection hdfsConnection;
-        private ZkStateManager stateManager;
+        private HCdcStateManager stateManager;
         private SchemaManager schemaManager;
         private EncryptionHandler<ByteBuffer, ByteBuffer> encryptionHandler;
 

@@ -1,10 +1,10 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
-import ai.sapper.cdc.core.StateManagerError;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
+import ai.sapper.cdc.core.state.StateManagerError;
+import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.hcdc.agents.model.DFSFileInfo;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import com.google.common.base.Preconditions;

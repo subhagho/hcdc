@@ -11,7 +11,7 @@ import ai.sapper.cdc.core.model.BlockTransactionDelta;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.common.ProcessorStateManager;
-import ai.sapper.hcdc.agents.common.ZkStateManager;
+import ai.sapper.hcdc.agents.common.HCdcStateManager;
 import ai.sapper.hcdc.agents.model.DFSBlockState;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.agents.model.DFSFileState;
@@ -37,7 +37,7 @@ import java.io.IOException;
 public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
     private static final Logger LOG = LoggerFactory.getLogger(EditsChangeDeltaProcessor.class.getCanonicalName());
 
-    public EditsChangeDeltaProcessor(@NonNull ZkStateManager stateManager,
+    public EditsChangeDeltaProcessor(@NonNull HCdcStateManager stateManager,
                                      @NonNull String name) {
         super(stateManager, name, EProcessorMode.Committer, false);
     }

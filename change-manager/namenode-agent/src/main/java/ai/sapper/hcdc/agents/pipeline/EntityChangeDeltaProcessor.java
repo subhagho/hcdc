@@ -4,7 +4,7 @@ import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
-import ai.sapper.hcdc.agents.common.ZkStateManager;
+import ai.sapper.hcdc.agents.common.HCdcStateManager;
 import ai.sapper.hcdc.agents.model.DFSFileState;
 import ai.sapper.hcdc.agents.model.EFileState;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
@@ -28,7 +28,7 @@ public class EntityChangeDeltaProcessor extends ChangeDeltaProcessor {
     private static Logger LOG = LoggerFactory.getLogger(EntityChangeDeltaProcessor.class.getCanonicalName());
 
 
-    public EntityChangeDeltaProcessor(@NonNull ZkStateManager stateManager, @NonNull String name) {
+    public EntityChangeDeltaProcessor(@NonNull HCdcStateManager stateManager, @NonNull String name) {
         super(stateManager, name, EProcessorMode.Reader, true);
     }
 

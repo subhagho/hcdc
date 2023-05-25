@@ -26,7 +26,7 @@ import ai.sapper.hcdc.agents.model.*;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.io.FSBlock;
 import ai.sapper.hcdc.io.FSFile;
-import ai.sapper.hcdc.io.HCDCFsUtils;
+import ai.sapper.hcdc.io.HCdcFsUtils;
 import ai.sapper.hcdc.messaging.HCDCChangeDeltaSerDe;
 import com.google.common.base.Strings;
 import lombok.NonNull;
@@ -229,7 +229,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 txId.getId(),
                 retry);
         if (!fileState.hasError() && rState.isEnabled()) {
-            FSFile file = HCDCFsUtils.get(fileState, schemaEntity, fs);
+            FSFile file = HCdcFsUtils.get(fileState, schemaEntity, fs);
 
             rState = stateManager()
                     .replicaStateHelper()
@@ -317,7 +317,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             }
         }
         if (!fileState.hasError() && rState.isEnabled()) {
-            FSFile file = HCDCFsUtils.get(fileState, schemaEntity, fs);
+            FSFile file = HCdcFsUtils.get(fileState, schemaEntity, fs);
             CDCDataConverter converter = new CDCDataConverter(NameNodeEnv.get(name()).dbSource())
                     .withFileSystem(fs)
                     .withSchemaManager(NameNodeEnv.get(name()).schemaManager());
@@ -438,7 +438,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 txId.getId(),
                 retry);
         if (!fileState.hasError() && rState.canUpdate()) {
-            FSFile file = HCDCFsUtils.get(fileState, schemaEntity, fs);
+            FSFile file = HCdcFsUtils.get(fileState, schemaEntity, fs);
 
             DFSBlock dataBlock = data.getLastBlock();
             DFSBlockState block = fileState.get(dataBlock.getBlockId());
@@ -524,7 +524,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 txId.getId(),
                 retry);
         if (!fileState.hasError() && rState.canUpdate()) {
-            FSFile file = HCDCFsUtils.get(fileState, schemaEntity, fs);
+            FSFile file = HCdcFsUtils.get(fileState, schemaEntity, fs);
 
             for (DFSBlock block : blocks) {
                 DFSBlockState bs = fileState.get(block.getBlockId());
@@ -679,7 +679,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             try (HDFSBlockReader reader = new HDFSBlockReader(connection.dfsClient(),
                     rState.getFileInfo().getHdfsPath())) {
                 reader.init(encryptionHandler);
-                FSFile file = HCDCFsUtils.get(fileState, schemaEntity, fs);
+                FSFile file = HCdcFsUtils.get(fileState, schemaEntity, fs);
 
                 SchemaManager schemaManager = NameNodeEnv.get(name()).schemaManager();
                 AvroEntitySchema prevSchema = schemaManager.get(rState.getEntity());

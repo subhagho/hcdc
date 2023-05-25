@@ -3,9 +3,9 @@ package ai.sapper.hcdc.agents.common;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
-import ai.sapper.cdc.core.StateManagerError;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
-import ai.sapper.cdc.core.model.BlockTransactionDelta;
+import ai.sapper.cdc.core.state.StateManagerError;
+import ai.sapper.cdc.entity.model.BlockTransactionDelta;
 import ai.sapper.hcdc.agents.main.NameNodeReplicator;
 import ai.sapper.hcdc.agents.model.*;
 import ai.sapper.hcdc.common.model.DFSError;
@@ -343,11 +343,11 @@ public class FileStateHelper {
                 DFSFileState fileState = get(hdfsPath);
                 if (fileState != null) {
                     client.delete().forPath(fileState.getZkPath());
-                    DefaultLogger.LOGGER.debug(String.format("Deleted file: [path=%s]", hdfsPath));
+                    DefaultLogger.debug(String.format("Deleted file: [path=%s]", hdfsPath));
                 } else if (checkIsDirectoryPath(hdfsPath)) {
                     String path = getFilePath(hdfsPath);
                     client.delete().deletingChildrenIfNeeded().forPath(path);
-                    DefaultLogger.LOGGER.debug(String.format("Deleted directory: [path=%s]", hdfsPath));
+                    DefaultLogger.debug(String.format("Deleted directory: [path=%s]", hdfsPath));
                 }
                 return fileState;
             } catch (Exception ex) {
@@ -495,11 +495,11 @@ public class FileStateHelper {
             if (client.checkExists().forPath(path) != null) {
                 byte[] data = client.getData().forPath(path);
                 if (data != null && data.length > 0) {
-                    DefaultLogger.LOGGER.debug(
+                    DefaultLogger.debug(
                             String.format("Specified path is a file. [path=%s]", hdfsPath));
                     return false;
                 }
-                DefaultLogger.LOGGER.debug(
+                DefaultLogger.debug(
                         String.format("Specified path found. [path=%s]", hdfsPath));
                 return true;
             }

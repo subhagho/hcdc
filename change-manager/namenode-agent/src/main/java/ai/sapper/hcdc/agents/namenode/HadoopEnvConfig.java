@@ -93,7 +93,7 @@ public class HadoopEnvConfig {
         } else {
             readConfig();
         }
-        DefaultLogger.LOGGER.info(String.format("Using NameNode Admin URL [%s]", nameNodeAdminUrl));
+        DefaultLogger.info(String.format("Using NameNode Admin URL [%s]", nameNodeAdminUrl));
     }
 
     private void readConfig() throws Exception {
@@ -130,7 +130,7 @@ public class HadoopEnvConfig {
                     String.format("NameNode instance not found in HDFS configuration. [instance=%s][namenodes=%s][file=%s]",
                             nameNodeInstanceName, nns, cf.getAbsolutePath()));
         }
-        DefaultLogger.LOGGER.info(String.format("Using NameNode instance [%s.%s]", ns, nn));
+        DefaultLogger.info(String.format("Using NameNode instance [%s.%s]", ns, nn));
         String urlKey = String.format(Constants.HDFS_NN_URL, ns, nn);
         nameNodeAdminUrl = config.getProperty(urlKey);
         if (Strings.isNullOrEmpty(nameNodeAdminUrl)) {

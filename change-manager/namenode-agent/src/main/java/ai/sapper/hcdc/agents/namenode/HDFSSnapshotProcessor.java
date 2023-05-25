@@ -48,12 +48,12 @@ import java.util.concurrent.TimeUnit;
 public class HDFSSnapshotProcessor {
     private Logger LOG;
     private final String name;
-    private final ZkStateManager stateManager;
+    private final HCdcStateManager stateManager;
     private MessageSender<String, DFSChangeDelta> sender;
     private MessageSender<String, DFSChangeDelta> tnxSender;
     private HDFSSnapshotProcessorConfig processorConfig;
 
-    public HDFSSnapshotProcessor(@NonNull ZkStateManager stateManager,
+    public HDFSSnapshotProcessor(@NonNull HCdcStateManager stateManager,
                                  @NonNull String name) {
         this.stateManager = stateManager;
         this.name = name;

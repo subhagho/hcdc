@@ -7,8 +7,8 @@ import ai.sapper.cdc.core.messaging.HCDCMessagingBuilders;
 import ai.sapper.cdc.core.messaging.MessageSender;
 import ai.sapper.cdc.core.messaging.MessagingConfig;
 import ai.sapper.cdc.core.model.CDCAgentState;
+import ai.sapper.hcdc.agents.common.HCdcStateManager;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
-import ai.sapper.hcdc.agents.common.ZkStateManager;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
@@ -25,11 +25,11 @@ import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 @Accessors(fluent = true)
 public abstract class HDFSEditsReader implements Runnable {
     protected final String name;
-    protected final ZkStateManager stateManager;
+    protected final HCdcStateManager stateManager;
     protected MessageSender<String, DFSChangeDelta> sender;
     protected HDFSEditsReaderConfig processorConfig;
 
-    public HDFSEditsReader(@NonNull String name, @NonNull ZkStateManager stateManager) {
+    public HDFSEditsReader(@NonNull String name, @NonNull HCdcStateManager stateManager) {
         this.name = name;
         this.stateManager = stateManager;
     }

@@ -4,11 +4,12 @@ import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.BaseEnv;
-import ai.sapper.cdc.core.BaseStateManager;
-import ai.sapper.cdc.core.ManagerStateError;
-import ai.sapper.cdc.core.StateManagerError;
-import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.core.model.Heartbeat;
+import ai.sapper.cdc.core.state.BaseStateManager;
+import ai.sapper.cdc.core.state.BaseStateManagerSettings;
+import ai.sapper.cdc.core.state.ProcessStateManager;
+import ai.sapper.cdc.core.state.StateManagerError;
+import ai.sapper.cdc.entity.model.BaseTxState;
 import ai.sapper.hcdc.agents.model.ModuleTxState;
 import ai.sapper.hcdc.agents.model.SnapshotState;
 import com.google.common.base.Preconditions;
@@ -24,7 +25,11 @@ import java.nio.charset.StandardCharsets;
 
 @Getter
 @Accessors(fluent = true)
-public class ZkStateManager extends BaseStateManager<BaseTxId> {
+public class HCdcStateManager extends ProcessStateManager<BaseTxState> {
+
+    protected HCdcStateManager() {
+        super(HCdcProcessingState.class);
+    }
 
     public static class Constants {
         public static final String ZK_PATH_FILES = "/files";
@@ -41,16 +46,14 @@ public class ZkStateManager extends BaseStateManager<BaseTxId> {
     private final FileStateHelper fileStateHelper = new FileStateHelper();
 
 
-    public ZkStateManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                               @NonNull BaseEnv<?> env,
-                               @NonNull String source) throws StateManagerError {
+    public HCdcStateManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                                 @NonNull BaseEnv<?> env) throws StateManagerError {
         Preconditions.checkState(!Strings.isNullOrEmpty(name()));
         try {
-            ZkStateManagerConfig config = new ZkStateManagerConfig(xmlConfig);
-            config.read();
-
-            withConfig(config);
-            super.init(env);
+            super.init(xmlConfig,
+                    BaseStateManagerSettings.__CONFIG_PATH,
+                    env,
+                    HCdcStateManagerSettings.class);
 
             this.source = source;
             CuratorFramework client = connection().client();
@@ -132,7 +135,7 @@ public class ZkStateManager extends BaseStateManager<BaseTxId> {
         state.setUpdatedTimestamp(System.currentTimeMillis());
         String json = JSONUtils.asString(state, SnapshotState.class);
         client.setData().forPath(zkSnapshotStatePath, json.getBytes(StandardCharsets.UTF_8));
-        DefaultLogger.LOGGER.debug(String.format("Updated Snapshot Sequence [%s]", state));
+        DefaultLogger.debug(String.format("Updated Snapshot Sequence [%s]", state));
         return state;
     }
 
@@ -264,25 +267,15 @@ public class ZkStateManager extends BaseStateManager<BaseTxId> {
 
 
     public String basePath() {
-        return config().basePath();
+        return settings().getBasePath();
     }
 
     @Override
-    public Heartbeat heartbeat(@NonNull String instance) throws ManagerStateError {
+    public Heartbeat heartbeat(@NonNull String instance) throws StateManagerError {
         try {
             return heartbeat(instance, NameNodeEnv.get(name()).agentState());
         } catch (Exception ex) {
-            throw new ManagerStateError(ex);
-        }
-    }
-
-    @Getter
-    @Accessors(fluent = true)
-    public static class ZkStateManagerConfig extends BaseStateManager.BaseStateManagerConfig {
-        public static final String __CONFIG_PATH = "managers.state";
-
-        public ZkStateManagerConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
-            super(config, __CONFIG_PATH);
+            throw new StateManagerError(ex);
         }
     }
 }

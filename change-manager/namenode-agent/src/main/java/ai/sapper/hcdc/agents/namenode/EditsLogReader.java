@@ -7,7 +7,7 @@ import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.hcdc.agents.common.DFSEditsFileFinder;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
-import ai.sapper.hcdc.agents.common.ZkStateManager;
+import ai.sapper.hcdc.agents.common.HCdcStateManager;
 import ai.sapper.hcdc.agents.model.DFSEditLogBatch;
 import ai.sapper.hcdc.agents.model.DFSTransactionType;
 import ai.sapper.hcdc.agents.model.ModuleTxState;
@@ -32,7 +32,7 @@ public class EditsLogReader extends HDFSEditsReader {
 
     private File editsDir;
 
-    public EditsLogReader(@NonNull ZkStateManager stateManager, @NonNull String name) {
+    public EditsLogReader(@NonNull HCdcStateManager stateManager, @NonNull String name) {
         super(name, stateManager);
     }
 

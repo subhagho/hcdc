@@ -1,11 +1,9 @@
 package ai.sapper.cdc.core.messaging;
 
-import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.cdc.core.messaging.KafkaMessage;
-import ai.sapper.cdc.core.messaging.MessageObject;
-import ai.sapper.cdc.core.messaging.MessagingError;
+import ai.sapper.cdc.core.messaging.kafka.KafkaMessage;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
+import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.cdc.core.utils.ProtoUtils;
 import com.google.common.base.Strings;
@@ -110,7 +108,7 @@ public class ChangeDeltaSerDe {
         message.mode(mode);
         message.key(key);
         message.value(delta);
-        if (DefaultLogger.LOGGER.isDebugEnabled()) {
+        if (DefaultLogger.isDebugEnabled()) {
             JsonFormat.Printer printer = JsonFormat.printer().preservingProtoFieldNames();
             StringBuilder mesg = new StringBuilder();
             mesg.append("Message: [").append(message.id()).append("]\n");
@@ -118,7 +116,7 @@ public class ChangeDeltaSerDe {
             mesg.append("Domain: [").append(schemaEntity).append("]\n");
             mesg.append("Data: [\n").append(printer.print((MessageOrBuilder) data)).append("\n]");
 
-            DefaultLogger.LOGGER.debug(mesg.toString());
+            DefaultLogger.debug(mesg.toString());
         }
         return message;
     }

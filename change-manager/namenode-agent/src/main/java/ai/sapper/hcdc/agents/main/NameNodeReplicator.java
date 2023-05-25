@@ -11,7 +11,7 @@ import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.core.model.LongTxState;
 import ai.sapper.hcdc.agents.common.NameNodeEnv;
 import ai.sapper.hcdc.agents.common.NameNodeError;
-import ai.sapper.hcdc.agents.common.ZkStateManager;
+import ai.sapper.hcdc.agents.common.HCdcStateManager;
 import ai.sapper.hcdc.agents.model.DFSFileState;
 import ai.sapper.hcdc.agents.model.EBlockState;
 import ai.sapper.hcdc.agents.model.EFileState;
@@ -60,7 +60,7 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNodeEnvState
     private FileSystem fs;
     private HierarchicalConfiguration<ImmutableNode> config;
     private ReplicatorConfig replicatorConfig;
-    private ZkStateManager stateManager;
+    private HCdcStateManager stateManager;
     private NameNodeEnv env;
 
     @Parameter(names = {"--imageDir", "-d"}, required = true, description = "Path to the directory containing FS Image file.")

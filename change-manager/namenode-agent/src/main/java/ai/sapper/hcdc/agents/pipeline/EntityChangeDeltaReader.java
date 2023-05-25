@@ -9,7 +9,7 @@ import ai.sapper.cdc.core.io.impl.CDCFileSystem;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
-import ai.sapper.hcdc.agents.common.ZkStateManager;
+import ai.sapper.hcdc.agents.common.HCdcStateManager;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSTransaction;
 import ai.sapper.cdc.core.utils.ProtoUtils;
@@ -39,7 +39,7 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
     private WebServiceClient client;
     private EncryptionHandler<ByteBuffer, ByteBuffer> encryptionHandler;
 
-    public EntityChangeDeltaReader(@NonNull ZkStateManager stateManager, @NonNull String name) {
+    public EntityChangeDeltaReader(@NonNull HCdcStateManager stateManager, @NonNull String name) {
         super(stateManager, name, EProcessorMode.Committer, true);
     }
 
