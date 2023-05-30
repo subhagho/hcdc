@@ -3,9 +3,9 @@ package ai.sapper.hcdc.agents.common;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.MessageSender;
+import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.utils.ProtoUtils;
 import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
-import ai.sapper.cdc.entity.model.BaseTxId;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.hcdc.agents.model.DFSBlockState;
 import ai.sapper.hcdc.agents.model.DFSFileState;
@@ -54,7 +54,7 @@ public abstract class TransactionProcessor {
 
     public abstract void processAddFileTxMessage(@NonNull DFSFileAdd data,
                                                  @NonNull MessageObject<String, DFSChangeDelta> message,
-                                                 @NonNull BaseTxId txId,
+                                                 @NonNull HCdcTxId txId,
                                                  boolean retry) throws Exception;
 
     public SchemaEntity isRegistered(String hdfsPath) throws Exception {
@@ -64,52 +64,52 @@ public abstract class TransactionProcessor {
 
     public abstract void processAppendFileTxMessage(@NonNull DFSFileAppend data,
                                                     @NonNull MessageObject<String, DFSChangeDelta> message,
-                                                    @NonNull BaseTxId txId,
+                                                    @NonNull HCdcTxId txId,
                                                     boolean retry) throws Exception;
 
     public abstract void processDeleteFileTxMessage(@NonNull DFSFileDelete data,
                                                     @NonNull MessageObject<String, DFSChangeDelta> message,
-                                                    @NonNull BaseTxId txId,
+                                                    @NonNull HCdcTxId txId,
                                                     boolean retry) throws Exception;
 
     public abstract void processAddBlockTxMessage(@NonNull DFSBlockAdd data,
                                                   @NonNull MessageObject<String, DFSChangeDelta> message,
-                                                  @NonNull BaseTxId txId,
+                                                  @NonNull HCdcTxId txId,
                                                   boolean retry) throws Exception;
 
     public abstract void processUpdateBlocksTxMessage(@NonNull DFSBlockUpdate data,
                                                       @NonNull MessageObject<String, DFSChangeDelta> message,
-                                                      @NonNull BaseTxId txId,
+                                                      @NonNull HCdcTxId txId,
                                                       boolean retry) throws Exception;
 
     public abstract void processTruncateBlockTxMessage(@NonNull DFSBlockTruncate data,
                                                        @NonNull MessageObject<String, DFSChangeDelta> message,
-                                                       @NonNull BaseTxId txId,
+                                                       @NonNull HCdcTxId txId,
                                                        boolean retry) throws Exception;
 
     public abstract void processCloseFileTxMessage(@NonNull DFSFileClose data,
                                                    @NonNull MessageObject<String, DFSChangeDelta> message,
-                                                   @NonNull BaseTxId txId,
+                                                   @NonNull HCdcTxId txId,
                                                    boolean retry) throws Exception;
 
     public abstract void processRenameFileTxMessage(@NonNull DFSFileRename data,
                                                     @NonNull MessageObject<String, DFSChangeDelta> message,
-                                                    @NonNull BaseTxId txId,
+                                                    @NonNull HCdcTxId txId,
                                                     boolean retry) throws Exception;
 
     public abstract void processIgnoreTxMessage(@NonNull DFSIgnoreTx data,
                                                 @NonNull MessageObject<String, DFSChangeDelta> message,
-                                                @NonNull BaseTxId txId) throws Exception;
+                                                @NonNull HCdcTxId txId) throws Exception;
 
     public abstract void processErrorTxMessage(@NonNull DFSError data,
                                                @NonNull MessageObject<String, DFSChangeDelta> message,
-                                               @NonNull BaseTxId txId) throws Exception;
+                                               @NonNull HCdcTxId txId) throws Exception;
 
     public abstract void handleError(@NonNull MessageObject<String, DFSChangeDelta> message,
                                      @NonNull Object data,
                                      @NonNull InvalidTransactionError te) throws Exception;
 
-    public void updateTransaction(@NonNull BaseTxId txId,
+    public void updateTransaction(@NonNull HCdcTxId txId,
                                   @NonNull MessageObject<String, DFSChangeDelta> message) throws Exception {
         if (message.mode() == MessageObject.MessageMode.New
                 && txId.getId() > 0) {
@@ -170,7 +170,7 @@ public abstract class TransactionProcessor {
 
     public void processTxMessage(@NonNull MessageObject<String, DFSChangeDelta> message,
                                  @NonNull Object data,
-                                 @NonNull BaseTxId txId,
+                                 @NonNull HCdcTxId txId,
                                  boolean retry) throws Exception {
         if (data instanceof DFSFileAdd) {
             processAddFileTxMessage((DFSFileAdd) data, message, txId, retry);
@@ -197,13 +197,13 @@ public abstract class TransactionProcessor {
         }
     }
 
-    public BaseTxId checkMessageSequence(MessageObject<String, DFSChangeDelta> message,
+    public HCdcTxId checkMessageSequence(MessageObject<String, DFSChangeDelta> message,
                                          boolean ignoreMissing,
                                          boolean retry) throws Exception {
-        BaseTxId txId = ProtoUtils.fromTx(message.value().getTx());
+        HCdcTxId txId = ProtoUtils.fromTx(message.value().getTx());
         if (message.mode() == MessageObject.MessageMode.New) {
             HCdcProcessingState txState = (HCdcProcessingState) stateManager().processingState();
-            long offset = txState.getProcessedOffset().getOffset().getId();
+            long offset = txState.getProcessedOffset().getId();
             if (offset < 0) {
                 return txId;
             }
@@ -214,7 +214,7 @@ public abstract class TransactionProcessor {
                                     offset + 1, txId.getId()));
                 }
             }
-            if (txId.compare(txState.getProcessedOffset().getOffset(), false) <= 0) {
+            if (txId.compare(txState.getProcessedOffset(), false) <= 0) {
                 if (retry) {
                     return txId;
                 }

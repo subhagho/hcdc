@@ -1,11 +1,20 @@
 package ai.sapper.hcdc.agents.common;
 
+import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.messaging.*;
+import ai.sapper.cdc.core.messaging.builders.MessageSenderBuilder;
 import ai.sapper.cdc.core.model.BaseAgentState;
+import ai.sapper.cdc.core.model.HCdcTxId;
+import ai.sapper.cdc.core.processing.MessageProcessor;
+import ai.sapper.cdc.core.processing.Processor;
 import ai.sapper.cdc.core.state.StateManagerError;
+import ai.sapper.hcdc.agents.model.EHCdcProcessorState;
+import ai.sapper.hcdc.agents.settings.ChangeDeltaProcessorSettings;
+import ai.sapper.hcdc.agents.settings.HDFSSnapshotProcessorSettings;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSTransaction;
 import com.google.common.base.Preconditions;
@@ -29,7 +38,7 @@ import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 
 @Getter
 @Accessors(fluent = true)
-public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
+public abstract class ChangeDeltaProcessor extends MessageProcessor<String, DFSChangeDelta, EHCdcProcessorState, HCdcTxId> {
     public enum EProcessorMode {
         Reader, Committer
     }
@@ -38,28 +47,24 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
 
     private static Logger LOG;
 
-    private final String name;
-    private final HCdcStateManager stateManager;
-    private ChangeDeltaProcessorConfig processorConfig;
     private MessageSender<String, DFSChangeDelta> sender;
-    private MessageSender<String, DFSChangeDelta> errorSender;
-    private MessageReceiver<String, DFSChangeDelta> receiver;
     private long receiveBatchTimeout = 1000;
     private NameNodeEnv env;
     private String processedMessageId = null;
     private TransactionProcessor processor;
     private final EProcessorMode mode;
     private final boolean ignoreMissing;
-    private DistributedLock __lock;
+    private final Class<? extends ChangeDeltaProcessorSettings> settingsType;
 
-    public ChangeDeltaProcessor(@NonNull HCdcStateManager stateManager,
-                                @NonNull String name,
+    public ChangeDeltaProcessor(@NonNull NameNodeEnv env,
+                                @NonNull Class<? extends ChangeDeltaProcessorSettings> settingsType,
                                 @NonNull EProcessorMode mode,
                                 boolean ignoreMissing) {
-        this.stateManager = stateManager;
-        this.name = name;
+        super(env, HCdcProcessingState.class);
+        Preconditions.checkState(super.stateManager() instanceof HCdcStateManager);
         this.mode = mode;
         this.ignoreMissing = ignoreMissing;
+        this.settingsType = settingsType;
     }
 
     public ChangeDeltaProcessor withProcessor(@NonNull TransactionProcessor processor) {
@@ -67,139 +72,28 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
         return this;
     }
 
-    public ChangeDeltaProcessor init(@NonNull ChangeDeltaProcessorConfig config,
-                                     @NonNull ConnectionManager manger) throws ConfigurationException {
-        try {
-            LOG = LoggerFactory.getLogger(getClass());
-
-            env = NameNodeEnv.get(name);
-            Preconditions.checkNotNull(env);
-
-            __lock = env.createLock(env.moduleInstance().getName());
-            __lock.lock();
-            try {
-                this.processorConfig = config;
-                processorConfig.read();
-
-                sender = new HCDCMessagingBuilders.SenderBuilder(env)
-                        .build();
-
-                receiver = new HCDCMessagingBuilders.ReceiverBuilder(env)
-                        .build();
-
-                if (!Strings.isNullOrEmpty(processorConfig.batchTimeout)) {
-                    receiveBatchTimeout = Long.parseLong(processorConfig.batchTimeout);
-                }
-                errorSender = new HCDCMessagingBuilders.SenderBuilder(env)
-                        .build();
-
-                long txId = stateManager().getSnapshotTxId();
-            /*
-            LongTxState state = (LongTxState) stateManager.processingState();
-            if (txId > state.getProcessedTxId()) {
-                state = (LongTxState) stateManager.update(txId);
-            }
-             */
-            } finally {
-                __lock.unlock();
-            }
-            return this;
-        } catch (Exception ex) {
-            throw new ConfigurationException(ex);
-        }
-    }
-
-    /**
-     * When an object implementing interface <code>Runnable</code> is used
-     * to create a thread, starting the thread causes the object's
-     * <code>run</code> method to be called in that separately executing
-     * thread.
-     * <p>
-     * The general contract of the method <code>run</code> is that it may
-     * take any action whatsoever.
-     *
-     * @see Thread#run()
-     */
     @Override
-    public void run() {
-        try {
-            NameNodeEnv.get(name).agentState().setState(BaseAgentState.EAgentState.Active);
-            doRun();
-            NameNodeEnv.get(name).agentState().setState(BaseAgentState.EAgentState.Stopped);
-        } catch (Throwable t) {
-            try {
-                NameNodeEnv.get(name).agentState().error(t);
-                env.LOG.error(t.getLocalizedMessage(), t);
-            } catch (Exception ex) {
-                env.LOG.error(ex.getLocalizedMessage(), ex);
-            }
-        } finally {
-            try {
-                close();
-            } catch (Exception ex) {
-                DefaultLogger.stacktrace(ex);
-                DefaultLogger.error(ex.getLocalizedMessage());
-            }
+    public Processor<EHCdcProcessorState, HCdcTxId> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                                                         String path) throws ConfigurationException {
+        if (Strings.isNullOrEmpty(path)) {
+            path = ChangeDeltaProcessorSettings.__CONFIG_PATH;
         }
+        receiverConfig = new ChangeDeltaProcessorConfig(xmlConfig, path, settingsType);
+        return super.init(xmlConfig, path);
     }
+
+    @Override
+    protected void postInit(@NonNull MessagingProcessorSettings settings) throws Exception {
+        sender = ((ChangeDeltaProcessorConfig) receiverConfig).readSender(env);
+        receiveBatchTimeout = ((ChangeDeltaProcessorSettings) settings).getReceiveBatchTimeout();
+    }
+
 
     public BaseTxState updateReadState(String messageId) throws StateManagerError {
         BaseTxState state = (BaseTxState) stateManager.processingState();
         processedMessageId = state.getCurrentMessageId();
 
         return (LongTxState) stateManager.updateMessageId(messageId);
-    }
-
-    public void doRun() throws Throwable {
-        Preconditions.checkNotNull(processor);
-        Preconditions.checkNotNull(sender);
-        Preconditions.checkNotNull(receiver);
-        Preconditions.checkNotNull(errorSender);
-        try {
-            while (NameNodeEnv.get(name()).state().isAvailable()) {
-                List<MessageObject<String, DFSChangeDelta>> batch
-                        = receiver().nextBatch(receiveBatchTimeout);
-                if (batch == null || batch.isEmpty()) {
-                    Thread.sleep(receiveBatchTimeout);
-                    continue;
-                }
-                LOG.debug(String.format("Received messages. [count=%d]", batch.size()));
-                __lock.lock();
-                try {
-                    batchStart();
-                    for (MessageObject<String, DFSChangeDelta> message : batch) {
-                        int retryCount = 0;
-                        while (true) {
-                            try {
-                                handleMessage(message);
-                                break;
-                            } catch (DistributedLock.LockError le) {
-                                if (retryCount > LOCK_RETRY_COUNT) {
-                                    throw new Exception(
-                                            String.format("Error acquiring lock. [error=%s][retries=%d]",
-                                                    le.getLocalizedMessage(), retryCount));
-                                }
-                                LOG.warn(String.format("Failed to acquire lock, will retry... [error=%s][retries=%d]",
-                                        le.getLocalizedMessage(), retryCount));
-                                Thread.sleep(receiveBatchTimeout);
-                                retryCount++;
-                            } catch (InvalidMessageError me) {
-                                LOG.error(me.getLocalizedMessage());
-                                errorSender.send(message);
-                            }
-                        }
-                    }
-                    batchEnd();
-                } finally {
-                    __lock.unlock();
-                }
-            }
-            LOG.warn(String.format("[%s]] thread stopped.", name));
-        } catch (Throwable t) {
-            LOG.error(String.format("[%s]] thread terminated with error.", name), t);
-            DefaultLogger.stacktrace(LOG, t);
-            throw t;
-        }
     }
 
     private void handleMessage(MessageObject<String, DFSChangeDelta> message) throws Throwable {
@@ -268,12 +162,12 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     }
 
     public void commit(@NonNull MessageObject<String, DFSChangeDelta> message,
-                       @NonNull BaseTxId txId) throws Exception {
+                       @NonNull HCdcTxId txId) throws Exception {
         if (txId.getId() > 0) {
             if (message.mode() == MessageObject.MessageMode.New ||
                     message.mode() == MessageObject.MessageMode.Snapshot) {
                 boolean snapshot = (message.mode() == MessageObject.MessageMode.Snapshot);
-                if (stateManager().processingState().getProcessedTxId().compare(txId, snapshot) < 0) {
+                if (stateManager().processingState().getProcessedOffset().compare(txId, snapshot) < 0) {
                     stateManager().update(txId);
                 }
                 if (stateManager.moduleTxState().getCommittedTxId() < txId.getId()) {
@@ -289,7 +183,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
     public void error(@NonNull MessageObject<String, DFSChangeDelta> message,
                       @NonNull Object data,
                       @NonNull Throwable error,
-                      BaseTxId txId) throws Throwable {
+                      HCdcTxId txId) throws Throwable {
         if (error instanceof InvalidTransactionError) {
             LOGGER.error(getClass(), ((InvalidTransactionError) error).getTxId(), error);
             processor.handleError(message, data, (InvalidTransactionError) error);
@@ -301,7 +195,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
         } else {
             throw error;
         }
-        errorSender.send(message);
+        errorLogger.send(message);
         receiver.ack(message.id());
     }
 
@@ -314,8 +208,7 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
                                  DFSTransaction tnx,
                                  boolean retry) throws Exception;
 
-    public abstract ChangeDeltaProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                                              @NonNull ConnectionManager manger) throws ConfigurationException;
+    public abstract ChangeDeltaProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException;
 
     @Override
     public void close() throws IOException {
@@ -323,73 +216,40 @@ public abstract class ChangeDeltaProcessor implements Runnable, Closeable {
             sender.close();
             sender = null;
         }
-        if (receiver != null) {
-            receiver.close();
-            receiver = null;
-        }
-        if (errorSender != null) {
-            errorSender.close();
-            errorSender = null;
-        }
+        super.close();
     }
 
     @Getter
     @Setter
     @Accessors(fluent = true)
-    public static class ChangeDeltaProcessorConfig extends ConfigReader {
-        public static final String __CONFIG_PATH = "processor.source";
+    public static class ChangeDeltaProcessorConfig extends MessagingProcessorConfig {
 
-        public static class Constants {
-            public static final String __CONFIG_PATH_SENDER = "sender";
-            public static final String __CONFIG_PATH_RECEIVER = "receiver";
-            public static final String __CONFIG_PATH_ERROR = "errorQueue";
-            public static final String CONFIG_RECEIVE_TIMEOUT = "readBatchTimeout";
+        public ChangeDeltaProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config,
+                                          @NonNull Class<? extends ChangeDeltaProcessorSettings> settingsType) {
+            super(config, ChangeDeltaProcessorSettings.__CONFIG_PATH, settingsType);
         }
 
-        private MessagingConfig senderConfig;
-        private MessagingConfig receiverConfig;
-        private MessagingConfig errorConfig;
-        private String batchTimeout;
-
-        public ChangeDeltaProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
-            super(config, __CONFIG_PATH);
+        public ChangeDeltaProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config,
+                                          @NonNull String path,
+                                          @NonNull Class<? extends ChangeDeltaProcessorSettings> settingsType) {
+            super(config, path, settingsType);
         }
 
-        public ChangeDeltaProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config, @NonNull String path) {
-            super(config, path);
-        }
-
-        public void read() throws ConfigurationException {
-            if (get() == null) {
-                throw new ConfigurationException("Kafka Configuration not drt or is NULL");
+        @SuppressWarnings("unchecked")
+        public MessageSender<String, DFSChangeDelta> readSender(@NonNull BaseEnv<?> env) throws Exception {
+            ChangeDeltaProcessorSettings settings = (ChangeDeltaProcessorSettings) settings();
+            MessageSenderBuilder<String, DFSChangeDelta> builder
+                    = (MessageSenderBuilder<String, DFSChangeDelta>) settings.getBuilderType()
+                    .getDeclaredConstructor(BaseEnv.class, Class.class)
+                    .newInstance(env, settings.getBuilderSettingsType());
+            HierarchicalConfiguration<ImmutableNode> eConfig
+                    = config().configurationAt(HDFSSnapshotProcessorSettings.__CONFIG_PATH_SENDER);
+            if (eConfig == null) {
+                throw new ConfigurationException(
+                        String.format("Sender queue configuration not found. [path=%s]",
+                                HDFSSnapshotProcessorSettings.__CONFIG_PATH_SENDER));
             }
-            try {
-                HierarchicalConfiguration<ImmutableNode> config = get().configurationAt(Constants.__CONFIG_PATH_SENDER);
-                if (config == null) {
-                    throw new ConfigurationException(String.format("Sender configuration node not found. [path=%s]", Constants.__CONFIG_PATH_SENDER));
-                }
-                senderConfig = new MessagingConfig();
-                senderConfig.read(config);
-                if (config.containsKey(Constants.CONFIG_RECEIVE_TIMEOUT)) {
-                    batchTimeout = config.getString(Constants.CONFIG_RECEIVE_TIMEOUT);
-                }
-
-                config = get().configurationAt(Constants.__CONFIG_PATH_RECEIVER);
-                if (config == null) {
-                    throw new ConfigurationException(String.format("Receiver configuration node not found. [path=%s]", Constants.__CONFIG_PATH_RECEIVER));
-                }
-                receiverConfig = new MessagingConfig();
-                receiverConfig.read(config);
-
-                config = get().configurationAt(Constants.__CONFIG_PATH_ERROR);
-                if (config == null) {
-                    throw new ConfigurationException(String.format("Error Queue configuration node not found. [path=%s]", Constants.__CONFIG_PATH_ERROR));
-                }
-                errorConfig = new MessagingConfig();
-                errorConfig.read(config);
-            } catch (Exception ex) {
-                throw new ConfigurationException(ex);
-            }
+            return builder.build(eConfig);
         }
     }
 }

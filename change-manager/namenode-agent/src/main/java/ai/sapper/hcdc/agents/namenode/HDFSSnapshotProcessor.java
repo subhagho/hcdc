@@ -4,10 +4,10 @@ import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.core.BaseEnv;
+import ai.sapper.cdc.core.DistributedLock;
+import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.filters.*;
-import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
-import ai.sapper.cdc.core.messaging.MessageObject;
-import ai.sapper.cdc.core.messaging.MessageSender;
+import ai.sapper.cdc.core.messaging.*;
 import ai.sapper.cdc.core.messaging.builders.MessageSenderBuilder;
 import ai.sapper.cdc.core.model.EngineType;
 import ai.sapper.cdc.core.model.HCdcTxId;
@@ -16,16 +16,14 @@ import ai.sapper.cdc.core.processing.ProcessingState;
 import ai.sapper.cdc.core.processing.Processor;
 import ai.sapper.cdc.core.processing.ProcessorState;
 import ai.sapper.cdc.core.utils.FileSystemUtils;
-import ai.sapper.cdc.core.utils.ProtoUtils;
 import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
-import ai.sapper.hcdc.agents.common.HCdcStateManager;
-import ai.sapper.hcdc.agents.common.NameNodeEnv;
-import ai.sapper.hcdc.agents.common.ProtoBufUtils;
-import ai.sapper.hcdc.agents.common.SnapshotError;
+import ai.sapper.hcdc.agents.common.*;
 import ai.sapper.hcdc.agents.model.*;
 import ai.sapper.hcdc.agents.settings.HDFSSnapshotProcessorSettings;
 import ai.sapper.hcdc.common.model.*;
+import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
+import ai.sapper.cdc.core.utils.ProtoUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -56,9 +54,9 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
     private HDFSSnapshotProcessorSettings settings;
     private HCdcSchemaManager schemaManager;
 
-    protected HDFSSnapshotProcessor(@NonNull ProcessStateManager<EHCdcProcessorState, HCdcTxId> stateManager,
-                                    @NonNull Class<? extends ProcessingState<EHCdcProcessorState, HCdcTxId>> stateType) {
-        super(stateManager, stateType);
+    protected HDFSSnapshotProcessor(@NonNull NameNodeEnv env) {
+        super(env, HCdcProcessingState.class);
+        Preconditions.checkState(stateManager() instanceof HCdcStateManager);
     }
 
     @Override
