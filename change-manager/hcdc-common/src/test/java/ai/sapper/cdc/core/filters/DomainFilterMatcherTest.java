@@ -1,7 +1,5 @@
 package ai.sapper.cdc.core.filters;
 
-import ai.sapper.cdc.common.filters.DomainFilterMatcher;
-import ai.sapper.cdc.common.filters.DomainFilters;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import org.junit.jupiter.api.Test;
 

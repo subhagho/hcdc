@@ -2,10 +2,10 @@ package ai.sapper.cdc.core.messaging;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.messaging.kafka.KafkaMessage;
+import ai.sapper.cdc.core.utils.ProtoUtils;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.hcdc.common.model.*;
-import ai.sapper.cdc.core.utils.ProtoUtils;
 import com.google.common.base.Strings;
 import com.google.protobuf.MessageOrBuilder;
 import com.google.protobuf.util.JsonFormat;
@@ -108,7 +108,7 @@ public class ChangeDeltaSerDe {
         message.mode(mode);
         message.key(key);
         message.value(delta);
-        if (DefaultLogger.isDebugEnabled()) {
+        if (DefaultLogger.isTraceEnabled()) {
             JsonFormat.Printer printer = JsonFormat.printer().preservingProtoFieldNames();
             StringBuilder mesg = new StringBuilder();
             mesg.append("Message: [").append(message.id()).append("]\n");

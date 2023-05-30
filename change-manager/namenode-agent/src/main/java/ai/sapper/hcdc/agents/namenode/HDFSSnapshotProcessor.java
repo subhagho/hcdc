@@ -1,42 +1,45 @@
 package ai.sapper.hcdc.agents.namenode;
 
-import ai.sapper.cdc.common.ConfigReader;
-import ai.sapper.cdc.common.filters.DomainFilter;
-import ai.sapper.cdc.common.filters.DomainFilterMatcher;
-import ai.sapper.cdc.common.filters.DomainFilters;
-import ai.sapper.cdc.common.filters.Filter;
-import ai.sapper.cdc.common.schema.SchemaEntity;
+import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
-import ai.sapper.cdc.core.DistributedLock;
-import ai.sapper.cdc.core.connections.ConnectionManager;
-import ai.sapper.cdc.core.filters.DomainManager;
-import ai.sapper.cdc.core.filters.FilterAddCallback;
-import ai.sapper.cdc.core.messaging.*;
-import ai.sapper.cdc.core.model.BaseTxId;
-import ai.sapper.cdc.core.model.EngineType;
-import ai.sapper.cdc.core.utils.FileSystemUtils;
-import ai.sapper.hcdc.agents.common.*;
-import ai.sapper.hcdc.agents.model.DFSBlockState;
-import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
-import ai.sapper.hcdc.agents.model.DFSFileState;
-import ai.sapper.hcdc.agents.model.EFileState;
-import ai.sapper.hcdc.common.model.*;
+import ai.sapper.cdc.core.BaseEnv;
+import ai.sapper.cdc.core.filters.*;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
+import ai.sapper.cdc.core.messaging.MessageObject;
+import ai.sapper.cdc.core.messaging.MessageSender;
+import ai.sapper.cdc.core.messaging.builders.MessageSenderBuilder;
+import ai.sapper.cdc.core.model.EngineType;
+import ai.sapper.cdc.core.model.HCdcTxId;
+import ai.sapper.cdc.core.processing.ProcessStateManager;
+import ai.sapper.cdc.core.processing.ProcessingState;
+import ai.sapper.cdc.core.processing.Processor;
+import ai.sapper.cdc.core.processing.ProcessorState;
+import ai.sapper.cdc.core.utils.FileSystemUtils;
 import ai.sapper.cdc.core.utils.ProtoUtils;
+import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
+import ai.sapper.cdc.entity.schema.SchemaEntity;
+import ai.sapper.hcdc.agents.common.HCdcStateManager;
+import ai.sapper.hcdc.agents.common.NameNodeEnv;
+import ai.sapper.hcdc.agents.common.ProtoBufUtils;
+import ai.sapper.hcdc.agents.common.SnapshotError;
+import ai.sapper.hcdc.agents.model.*;
+import ai.sapper.hcdc.agents.settings.HDFSSnapshotProcessorSettings;
+import ai.sapper.hcdc.common.model.*;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.parquet.Strings;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -45,129 +48,116 @@ import java.util.concurrent.TimeUnit;
 
 @Getter
 @Accessors(fluent = true)
-public class HDFSSnapshotProcessor {
+public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTxId> {
     private Logger LOG;
-    private final String name;
-    private final HCdcStateManager stateManager;
     private MessageSender<String, DFSChangeDelta> sender;
-    private MessageSender<String, DFSChangeDelta> tnxSender;
+    private MessageSender<String, DFSChangeDelta> adminSender;
     private HDFSSnapshotProcessorConfig processorConfig;
+    private HDFSSnapshotProcessorSettings settings;
+    private HCdcSchemaManager schemaManager;
 
-    public HDFSSnapshotProcessor(@NonNull HCdcStateManager stateManager,
-                                 @NonNull String name) {
-        this.stateManager = stateManager;
-        this.name = name;
+    protected HDFSSnapshotProcessor(@NonNull ProcessStateManager<EHCdcProcessorState, HCdcTxId> stateManager,
+                                    @NonNull Class<? extends ProcessingState<EHCdcProcessorState, HCdcTxId>> stateType) {
+        super(stateManager, stateType);
     }
 
-    public HDFSSnapshotProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                                      @NonNull ConnectionManager manger) throws ConfigurationException {
+    @Override
+    public Processor<EHCdcProcessorState, HCdcTxId> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+                                                         String path) throws ConfigurationException {
+        Preconditions.checkState(env instanceof NameNodeEnv);
+        if (Strings.isNullOrEmpty(path)) {
+            path = HDFSSnapshotProcessorSettings.__CONFIG_PATH;
+        }
         try {
-            processorConfig = new HDFSSnapshotProcessorConfig(xmlConfig);
+            processorConfig = new HDFSSnapshotProcessorConfig(xmlConfig, path);
             processorConfig.read();
-
-            sender = new HCDCMessagingBuilders.SenderBuilder()
-                    .config(processorConfig.senderConfig.config())
-                    .manager(manger)
-                    .connection(processorConfig().senderConfig.connection())
-                    .type(processorConfig().senderConfig.type())
-                    .partitioner(processorConfig().senderConfig.partitionerClass())
-                    .auditLogger(NameNodeEnv.get(name).auditLogger())
-                    .build();
-
-            tnxSender = new HCDCMessagingBuilders.SenderBuilder()
-                    .config(processorConfig.tnxSenderConfig.config())
-                    .manager(manger)
-                    .connection(processorConfig().tnxSenderConfig.connection())
-                    .type(processorConfig().tnxSenderConfig.type())
-                    .partitioner(processorConfig().tnxSenderConfig.partitionerClass())
-                    .auditLogger(NameNodeEnv.get(name).auditLogger())
-                    .build();
-            if (stateManager instanceof ProcessorStateManager) {
-                ((ProcessorStateManager) stateManager)
-                        .domainManager()
-                        .withFilterAddCallback(new SnapshotCallBack(this, processorConfig().executorPoolSize));
+            settings = (HDFSSnapshotProcessorSettings) processorConfig.settings();
+            super.init(settings);
+            sender = processorConfig.readSender(env);
+            adminSender = processorConfig.readAdminSender(env);
+            schemaManager = ((NameNodeEnv) env).schemaManager();
+            if (schemaManager == null) {
+                throw new Exception(String.format("[%s] Schema Manager not initialized...", name()));
             }
-            LOG = NameNodeEnv.get(name).LOG;
+            LOG = LoggerFactory.getLogger(getClass());
+            state.setState(ProcessorState.EProcessorState.Initialized);
             return this;
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
+            state.error(ex);
+            try {
+                updateError(ex);
+            } catch (Throwable t) {
+                DefaultLogger.stacktrace(t);
+                DefaultLogger.error(LOG, "Failed to save state...", t);
+            }
             throw new ConfigurationException(ex);
         }
     }
 
-    public int run() throws Exception {
-        Preconditions.checkState(stateManager instanceof ProcessorStateManager);
-        DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
-        Preconditions.checkNotNull(domainManager.hdfsConnection());
-        domainManager.refresh();
-
-        int count = 0;
-        long txId = stateManager.getModuleState().getReceivedTxId();
-        BaseTxId tx = new BaseTxId(txId);
-        try (DistributedLock lock = NameNodeEnv.get(name).globalLock()
-                .withLockTimeout(processorConfig.defaultLockTimeout)) {
-            if (DistributedLock.withRetry(lock, 5, 1000)) {
-                try {
-                    for (String domain : domainManager.matchers().keySet()) {
-                        DefaultLogger.LOGGER.info(String.format("Running snapshot for domain. [domain=%s]", domain));
-                        DomainFilterMatcher matcher = domainManager.matchers().get(domain);
-                        if (matcher != null) {
-                            List<DomainFilterMatcher.PathFilter> filters = matcher.patterns();
-                            if (filters != null && !filters.isEmpty()) {
-                                for (DomainFilterMatcher.PathFilter filter : filters) {
-                                    count += processFilter(filter, domain, tx);
-                                }
-                            }
+    @Override
+    protected void doRun() throws Throwable {
+        checkState();
+        schemaManager.refresh();
+        HCdcStateManager stateManager = (HCdcStateManager) stateManager();
+        __lock().lock();
+        try {
+            HCdcTxId txId = stateManager.processingState().getOffset();
+            int count = 0;
+            for (String domain : schemaManager.matchers().keySet()) {
+                DefaultLogger.info(LOG, String.format("Running snapshot for domain. [domain=%s]", domain));
+                DomainFilterMatcher matcher = schemaManager.matchers().get(domain);
+                if (matcher != null) {
+                    List<DomainFilterMatcher.PathFilter> filters = matcher.patterns();
+                    if (filters != null && !filters.isEmpty()) {
+                        for (DomainFilterMatcher.PathFilter filter : filters) {
+                            count += processFilter(filter, domain, txId);
                         }
                     }
-                    stateManager.updateSnapshotTx(txId);
-                    return count;
-                } finally {
-                    lock.unlock();
                 }
-            } else {
-                throw new Exception(String.format("Failed to acquire lock. [lock=%s]", lock.toString()));
             }
+        } finally {
+            __lock().unlock();
         }
     }
 
     public DomainFilters addFilter(@NonNull String domain,
                                    @NonNull Filter filter,
                                    String group) throws Exception {
-        DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
-        return domainManager.add(domain, filter.getEntity(), filter.getPath(), filter.getRegex(), group);
+        checkState();
+        return schemaManager.add(domain, filter.getEntity(), filter.getPath(), filter.getRegex(), group);
     }
 
     public DomainFilter updateGroup(@NonNull String domain,
                                     @NonNull String entity,
-                                    @NonNull String group) {
-        DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
-        return domainManager.updateGroup(domain, entity, group);
+                                    @NonNull String group) throws Exception {
+        checkState();
+        return schemaManager.updateGroup(domain, entity, group);
     }
 
     public DomainFilter removeFilter(@NonNull String domain,
                                      @NonNull String entity) throws Exception {
-        DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
-        return domainManager.remove(domain, entity);
+        checkState();
+        return schemaManager.remove(domain, entity);
     }
 
     public List<Filter> removeFilter(@NonNull String domain,
                                      @NonNull String entity,
                                      @NonNull String path) throws Exception {
-        DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
-        return domainManager.remove(domain, entity, path);
+        checkState();
+        return schemaManager.remove(domain, entity, path);
     }
 
     public Filter removeFilter(@NonNull String domain,
                                @NonNull Filter filter) throws Exception {
-        DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
-        return domainManager.remove(domain, filter.getEntity(), filter.getPath(), filter.getRegex());
+        checkState();
+        return schemaManager.remove(domain, filter.getEntity(), filter.getPath(), filter.getRegex());
     }
 
     public int processFilter(@NonNull Filter filter,
                              @NonNull String domain,
-                             @NonNull BaseTxId txId) throws Exception {
-        DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
-        DomainFilterMatcher matcher = domainManager.matchers().get(domain);
+                             @NonNull HCdcTxId txId) throws Exception {
+        checkState();
+        DomainFilterMatcher matcher = schemaManager.matchers().get(domain);
         if (matcher == null) {
             throw new Exception(String.format("No matcher found for domain. [domain=%s]", domain));
         }
@@ -181,13 +171,13 @@ public class HDFSSnapshotProcessor {
 
     public int processFilter(@NonNull DomainFilterMatcher.PathFilter filter,
                              String domain,
-                             @NonNull BaseTxId txId) throws Exception {
-        DomainManager domainManager = ((ProcessorStateManager) stateManager).domainManager();
-        FileSystem fs = domainManager.hdfsConnection().fileSystem();
+                             @NonNull HCdcTxId txId) throws Exception {
+        checkState();
+        FileSystem fs = schemaManager.hdfsConnection().fileSystem();
         List<Path> paths = FileSystemUtils.list(filter.path(), fs);
         int count = 0;
         if (paths != null) {
-            DefaultLogger.LOGGER.debug(
+            DefaultLogger.debug(
                     String.format("Files returned for path. [path=%s][count=%d]", filter.path(), paths.size()));
             for (Path path : paths) {
                 URI uri = path.toUri();
@@ -206,25 +196,21 @@ public class HDFSSnapshotProcessor {
 
     public int processFilterWithLock(@NonNull DomainFilterMatcher.PathFilter filter,
                                      String domain,
-                                     @NonNull BaseTxId txId) throws Exception {
-        try (DistributedLock lock = NameNodeEnv.get(name).globalLock()
-                .withLockTimeout(processorConfig().defaultLockTimeout())) {
-            if (DistributedLock.withRetry(lock, 5, 500)) {
-                try {
-                    return processFilter(filter, domain, txId);
-                } finally {
-                    lock.unlock();
-                }
-            } else {
-                throw new Exception(String.format("Failed to acquire lock. [lock=%s]", lock.toString()));
-            }
+                                     @NonNull HCdcTxId txId) throws Exception {
+        checkState();
+        __lock().lock();
+        try {
+            return processFilter(filter, domain, txId);
+        } finally {
+            __lock().unlock();
         }
     }
 
     private void runSnapshot(@NonNull String hdfsPath,
                              @NonNull SchemaEntity entity,
-                             @NonNull BaseTxId txId) throws SnapshotError {
+                             @NonNull HCdcTxId txId) throws SnapshotError {
         try {
+            HCdcStateManager stateManager = (HCdcStateManager) stateManager();
             DefaultLogger.debug(LOG, String.format("Generating snapshot for file. [path=%s]", hdfsPath));
             DFSFileState fileState = stateManager
                     .fileStateHelper()
@@ -240,7 +226,7 @@ public class HDFSSnapshotProcessor {
                     .replicaStateHelper()
                     .get(entity, fileState.getFileInfo().getInodeId());
             if (rState != null) {
-                if (rState.getSnapshotTxId() > txId.getId()) {
+                if (rState.getOffset().getSnapshotTxId() > txId.getId()) {
                     return;
                 }
                 stateManager
@@ -251,7 +237,7 @@ public class HDFSSnapshotProcessor {
                     .replicaStateHelper()
                     .create(fileState.getFileInfo(), entity, true);
 
-            long seq = stateManager().nextSnapshotSeq();
+            long seq = ((HCdcStateManager) stateManager()).nextSequence(1);
             txId.setSequence(seq);
             txId.setType(EngineType.HDFS);
 
@@ -263,8 +249,9 @@ public class HDFSSnapshotProcessor {
                     entity,
                     MessageObject.MessageMode.Snapshot);
             sender.send(message);
-
-            rState.setSnapshotTxId(fileState.getLastTnxId());
+            DFSReplicationOffset offset = rState.getOffset();
+            offset.setSnapshotTxId(fileState.getLastTnxId());
+            offset.setSnapshotSeq(seq);
             rState.setSnapshotTime(System.currentTimeMillis());
             ProtoBufUtils.update(fileState, rState);
             stateManager
@@ -279,20 +266,14 @@ public class HDFSSnapshotProcessor {
 
     public DFSFileReplicaState snapshotDone(@NonNull String hdfsPath,
                                             @NonNull SchemaEntity entity,
-                                            @NonNull BaseTxId txId) throws SnapshotError {
-        Preconditions.checkState(tnxSender != null);
+                                            @NonNull HCdcTxId txId) throws SnapshotError {
         try {
-            try (DistributedLock lock = NameNodeEnv.get(name).globalLock()
-                    .withLockTimeout(processorConfig().defaultLockTimeout())) {
-                if (DistributedLock.withRetry(lock, 5, 500)) {
-                    try {
-                        return processDone(hdfsPath, entity, txId);
-                    } finally {
-                        lock.unlock();
-                    }
-                } else {
-                    throw new SnapshotError(String.format("Failed to acquire lock. [lock=%s]", lock.toString()));
-                }
+            checkState();
+            __lock().lock();
+            try {
+                return processDone(hdfsPath, entity, txId);
+            } finally {
+                __lock().unlock();
             }
         } catch (SnapshotError se) {
             throw se;
@@ -303,7 +284,8 @@ public class HDFSSnapshotProcessor {
 
     private DFSFileReplicaState processDone(@NonNull String hdfsPath,
                                             @NonNull SchemaEntity entity,
-                                            @NonNull BaseTxId tnxId) throws Exception {
+                                            @NonNull HCdcTxId tnxId) throws Exception {
+        HCdcStateManager stateManager = (HCdcStateManager) stateManager();
         DFSFileState fileState = stateManager
                 .fileStateHelper()
                 .get(hdfsPath);
@@ -317,28 +299,31 @@ public class HDFSSnapshotProcessor {
         if (rState == null) {
             throw new SnapshotError(String.format("HDFS File replication record not found. [path=%s]", hdfsPath));
         }
-        if (tnxId.getId() != rState.getSnapshotTxId()) {
-            throw new SnapshotError(String.format("Snapshot transaction mismatch. [expected=%d][actual=%d]", rState.getSnapshotTxId(), tnxId));
+        DFSReplicationOffset offset = rState.getOffset();
+        if (tnxId.getId() != offset.getSnapshotTxId()) {
+            throw new SnapshotError(
+                    String.format("Snapshot transaction mismatch. [expected=%d][actual=%s]",
+                            offset.getSnapshotTxId(), tnxId));
         }
         if (rState.isSnapshotReady()) {
             DefaultLogger.warn(LOG, String.format("Duplicate Call: Snapshot Done: [path=%s]", rState.getFileInfo().getHdfsPath()));
             return rState;
         }
         long lastTxId = tnxId.getId();
-        if (fileState.getLastTnxId() > rState.getSnapshotTxId()) {
+        if (fileState.getLastTnxId() > offset.getSnapshotTxId()) {
             DFSFileClose closeFile = generateSnapshot(fileState, true, tnxId);
             MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(closeFile,
                     DFSFileClose.class,
                     entity,
                     MessageObject.MessageMode.Backlog);
-            tnxSender.send(message);
+            adminSender.send(message);
             lastTxId = fileState.getLastTnxId();
         }
         rState.setSnapshotReady(true);
         rState.setSnapshotTime(System.currentTimeMillis());
         rState.setLastReplicationTime(System.currentTimeMillis());
-        rState.setLastReplicatedTx(lastTxId);
-        rState.setState(EFileState.Finalized);
+        offset.setLastReplicatedTxId(lastTxId);
+        rState.setFileState(EFileState.Finalized);
         ProtoBufUtils.update(fileState, rState);
         stateManager
                 .replicaStateHelper()
@@ -348,7 +333,7 @@ public class HDFSSnapshotProcessor {
 
     public static DFSFileClose generateSnapshot(@NonNull DFSFileState state,
                                                 @NonNull DFSFile file,
-                                                @NonNull BaseTxId txId) throws Exception {
+                                                @NonNull HCdcTxId txId) throws Exception {
         DFSTransaction tx = ProtoUtils.buildTx(txId, DFSTransaction.Operation.CLOSE);
 
         DFSFileClose.Builder builder = DFSFileClose.newBuilder();
@@ -368,7 +353,7 @@ public class HDFSSnapshotProcessor {
 
     public static DFSFileClose generateSnapshot(@NonNull DFSFileState state,
                                                 boolean addBlocks,
-                                                @NonNull BaseTxId txId) throws Exception {
+                                                @NonNull HCdcTxId txId) throws Exception {
         DFSTransaction tx = ProtoUtils.buildTx(txId, DFSTransaction.Operation.CLOSE);
 
         DFSFile file = state.getFileInfo().proto();
@@ -402,61 +387,64 @@ public class HDFSSnapshotProcessor {
         return builder.build();
     }
 
+    private void checkState() throws Exception {
+        if (state.isAvailable() || state.isInitialized()) {
+            return;
+        }
+        throw new Exception(String.format("[%s] Processor not available.", name()));
+    }
+
+    @Override
+    public void close() throws IOException {
+
+    }
+
     @Getter
-    @Setter
     @Accessors(fluent = true)
     public static class HDFSSnapshotProcessorConfig extends ConfigReader {
         private static final String __CONFIG_PATH = "processor.snapshot";
-        private static final String __CONFIG_PATH_SENDER = "sender";
-        private static final String __CONFIG_PATH_TNX_SENDER = "tnxSender";
-        private static final String CONFIG_LOCK_TIMEOUT = "lockTimeout";
         private static final String CONFIG_EXECUTOR_POOL_SIZE = "executorPoolSize";
 
-        private MessagingConfig senderConfig;
-        private MessagingConfig tnxSenderConfig;
-        private long defaultLockTimeout = 5 * 60 * 1000;
-        private int executorPoolSize = 4;
-
         public HDFSSnapshotProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
-            super(config, __CONFIG_PATH);
+            super(config, __CONFIG_PATH, HDFSSnapshotProcessorSettings.class);
         }
 
         public HDFSSnapshotProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config, @NonNull String path) {
-            super(config, path);
+            super(config, path, HDFSSnapshotProcessorSettings.class);
         }
 
-        public void read() throws ConfigurationException {
-            if (get() == null) {
-                throw new ConfigurationException("Kafka Configuration not drt or is NULL");
+        @SuppressWarnings("unchecked")
+        public MessageSender<String, DFSChangeDelta> readSender(@NonNull BaseEnv<?> env) throws Exception {
+            HDFSSnapshotProcessorSettings settings = (HDFSSnapshotProcessorSettings) settings();
+            MessageSenderBuilder<String, DFSChangeDelta> builder
+                    = (MessageSenderBuilder<String, DFSChangeDelta>) settings.getBuilderType()
+                    .getDeclaredConstructor(BaseEnv.class, Class.class)
+                    .newInstance(env, settings.getBuilderSettingsType());
+            HierarchicalConfiguration<ImmutableNode> eConfig
+                    = config().configurationAt(HDFSSnapshotProcessorSettings.__CONFIG_PATH_SENDER);
+            if (eConfig == null) {
+                throw new ConfigurationException(
+                        String.format("Sender queue configuration not found. [path=%s]",
+                                HDFSSnapshotProcessorSettings.__CONFIG_PATH_SENDER));
             }
-            try {
-                HierarchicalConfiguration<ImmutableNode> config = get().configurationAt(__CONFIG_PATH_SENDER);
-                if (config == null) {
-                    throw new ConfigurationException(String.format("Sender configuration node not found. [path=%s]", __CONFIG_PATH_SENDER));
-                }
-                senderConfig = new MessagingConfig();
-                senderConfig.read(config);
+            return builder.build(eConfig);
+        }
 
-                config = get().configurationAt(__CONFIG_PATH_TNX_SENDER);
-                if (config == null) {
-                    throw new ConfigurationException(String.format("Sender configuration node not found. [path=%s]", __CONFIG_PATH_TNX_SENDER));
-                }
-                tnxSenderConfig = new MessagingConfig();
-                tnxSenderConfig.read(config);
-
-                if (get().containsKey(CONFIG_LOCK_TIMEOUT)) {
-                    String s = get().getString(CONFIG_LOCK_TIMEOUT);
-                    if (!Strings.isNullOrEmpty(s)) {
-                        defaultLockTimeout = Long.parseLong(s);
-                    }
-                }
-                if (get().containsKey(CONFIG_EXECUTOR_POOL_SIZE)) {
-                    String s = get().getString(CONFIG_EXECUTOR_POOL_SIZE);
-                    executorPoolSize = Integer.parseInt(s);
-                }
-            } catch (Exception ex) {
-                throw new ConfigurationException(ex);
+        @SuppressWarnings("unchecked")
+        public MessageSender<String, DFSChangeDelta> readAdminSender(@NonNull BaseEnv<?> env) throws Exception {
+            HDFSSnapshotProcessorSettings settings = (HDFSSnapshotProcessorSettings) settings();
+            MessageSenderBuilder<String, DFSChangeDelta> builder
+                    = (MessageSenderBuilder<String, DFSChangeDelta>) settings.getAdminBuilderType()
+                    .getDeclaredConstructor(BaseEnv.class, Class.class)
+                    .newInstance(env, settings.getAdminBuilderSettingsType());
+            HierarchicalConfiguration<ImmutableNode> eConfig
+                    = config().configurationAt(HDFSSnapshotProcessorSettings.__CONFIG_PATH_ADMIN);
+            if (eConfig == null) {
+                throw new ConfigurationException(
+                        String.format("Admin Sender queue configuration not found. [path=%s]",
+                                HDFSSnapshotProcessorSettings.__CONFIG_PATH_ADMIN));
             }
+            return builder.build(eConfig);
         }
     }
 
@@ -516,14 +504,14 @@ public class HDFSSnapshotProcessor {
                 DefaultLogger.info(processor.LOG,
                         String.format("Processing filer: [filter=%s]",
                                 JSONUtils.asString(filter.filter(), Filter.class)));
-                int count = processor.processFilterWithLock(filter, matcher.domain(), new BaseTxId(-1));
+                int count = processor.processFilterWithLock(filter, matcher.domain(), new HCdcTxId(-1));
                 DefaultLogger.info(processor.LOG,
                         String.format("Processed filer: [filter=%s][files=%d]",
                                 JSONUtils.asString(filter.filter(), Filter.class), count));
             } catch (Exception ex) {
                 DefaultLogger.error(processor.LOG,
                         String.format("Error processing filter: %s", filter.filter().toString()), ex);
-                DefaultLogger.debug(processor.LOG, DefaultLogger.stacktrace(ex));
+                DefaultLogger.stacktrace(ex);
             }
         }
     }

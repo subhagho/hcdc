@@ -1,6 +1,8 @@
 package ai.sapper.hcdc.agents.model;
 
+import ai.sapper.cdc.core.state.OffsetState;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -12,24 +14,27 @@ import java.util.Map;
 
 @Getter
 @Setter
-public class DFSFileReplicaState {
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
+        property = "@class")
+public class DFSFileReplicaState extends OffsetState<EFileReplicationState, DFSReplicationOffset> {
     private DFSFileInfo fileInfo;
     private SchemaEntity entity;
     private String zkPath;
-    private boolean enabled = false;
-    private long snapshotTxId = -1;
-    private long lastReplicatedTx = -1;
-    private long snapshotTime;
     private boolean snapshotReady = false;
+    private long snapshotTime;
     private long lastReplicationTime;
     private long updateTime = 0;
     private long recordCount = 0;
 
-    private EFileState state = EFileState.Unknown;
+    private EFileState fileState = EFileState.Unknown;
     private Map<String, String> storagePath;
     private Map<Long, DFSReplicationDelta> replicationDeltas;
 
     private List<DFSBlockReplicaState> blocks = new ArrayList<>();
+
+    public DFSFileReplicaState() {
+        super(EFileReplicationState.Error, EFileReplicationState.Unknown);
+    }
 
     public void addDelta(@NonNull DFSReplicationDelta delta) {
         if (replicationDeltas == null) {
@@ -96,7 +101,7 @@ public class DFSFileReplicaState {
     }
 
     public boolean canUpdate() {
-        return (state == EFileState.New || state == EFileState.Updating);
+        return (fileState == EFileState.New || fileState == EFileState.Updating);
     }
 
     public void clear() {

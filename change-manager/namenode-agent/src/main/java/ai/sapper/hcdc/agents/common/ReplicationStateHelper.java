@@ -7,6 +7,7 @@ import ai.sapper.cdc.core.state.StateManagerError;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.hcdc.agents.model.DFSFileInfo;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
+import ai.sapper.hcdc.agents.model.DFSReplicationOffset;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -74,10 +75,7 @@ public class ReplicationStateHelper {
                 state.setFileInfo(new DFSFileInfo(file));
                 state.setEntity(schemaEntity);
                 state.setZkPath(path);
-                state.setEnabled(enable);
-                if (enable) {
-                    state.setSnapshotTxId(0);
-                }
+                state.setOffset(new DFSReplicationOffset());
                 state.setUpdateTime(System.currentTimeMillis());
 
                 String json = JSONUtils.asString(state, DFSFileReplicaState.class);

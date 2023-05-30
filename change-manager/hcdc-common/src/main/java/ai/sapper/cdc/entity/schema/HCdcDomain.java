@@ -1,7 +1,6 @@
 package ai.sapper.cdc.entity.schema;
 
 import ai.sapper.cdc.core.filters.DomainFilters;
-import ai.sapper.cdc.entity.schema.Domain;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.Setter;

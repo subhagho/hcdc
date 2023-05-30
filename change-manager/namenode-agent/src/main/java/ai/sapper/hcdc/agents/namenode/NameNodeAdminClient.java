@@ -49,7 +49,7 @@ public class NameNodeAdminClient {
                 connection = new WebServiceConnection(getClass().getSimpleName(), url);
                 client = new WebServiceClient(connection);
             }
-            DefaultLogger.LOGGER.debug(String.format("NameNode Status URL: [%s]", up));
+            DefaultLogger.debug(String.format("NameNode Status URL: [%s]", up));
             Map<String, String> query = new HashMap<>(1);
             query.put(Constants.PATH_NN_QUERY_KEY, Constants.PATH_NN_QUERY);
 
@@ -58,7 +58,7 @@ public class NameNodeAdminClient {
             Map<String, String> bean = response.findBeanByName(Constants.REGEX_NAME);
             if (bean != null) {
                 NameNodeStatus status = new NameNodeStatus().parse(bean);
-                DefaultLogger.LOGGER.info(
+                DefaultLogger.info(
                         String.format("[%s] Received NN state [State=%s][Transition Time=%d]",
                                 status.getHost(), status.getState(), status.getHaLastTransitionTime()));
                 return status;

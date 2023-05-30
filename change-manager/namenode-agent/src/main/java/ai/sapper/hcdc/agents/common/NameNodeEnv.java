@@ -5,17 +5,18 @@ import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.ReflectionUtils;
 import ai.sapper.cdc.core.BaseEnv;
+import ai.sapper.cdc.core.BaseEnvSettings;
 import ai.sapper.cdc.core.ExitCallback;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.model.BaseAgentState;
-import ai.sapper.cdc.core.state.BaseStateManagerSettings;
+import ai.sapper.cdc.core.utils.ProtoUtils;
 import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
 import ai.sapper.cdc.entity.manager.SchemaManager;
+import ai.sapper.cdc.entity.manager.SchemaManagerSettings;
 import ai.sapper.cdc.entity.model.DbSource;
 import ai.sapper.hcdc.agents.model.NameNodeStatus;
 import ai.sapper.hcdc.agents.namenode.HadoopEnvConfig;
 import ai.sapper.hcdc.agents.namenode.NameNodeAdminClient;
-import ai.sapper.cdc.core.utils.ProtoUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.protobuf.MessageOrBuilder;
@@ -37,7 +38,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
     public final Logger LOG;
 
     public static final String NN_IGNORE_TNX = "%s.IGNORE";
-
+    private String source;
     private NameNodeEnvConfig nEnvConfig;
     private HdfsConnection hdfsConnection;
     private HCdcStateManager stateManager;
@@ -65,6 +66,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
             nEnvConfig = new NameNodeEnvConfig(xmlConfig);
             super.init(xmlConfig, nEnvConfig, new NameNodeEnvState());
             NameNodeEnvSettings settings = (NameNodeEnvSettings) settings();
+            source = settings.getSource();
             if (settings.isReadHadoopConfig()) {
                 hdfsConnection = connectionManager()
                         .getConnection(settings.getHdfsAdminConnection(),
@@ -94,10 +96,12 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
                 stateManager = (HCdcStateManager) super.stateManager();
                 stateManager.checkAgentState(HCdcProcessingState.class);
             }
-            if (ConfigReader.checkIfNodeExists(config().config(),
-                    BaseStateManagerSettings.__CONFIG_PATH)) {
+            HierarchicalConfiguration<ImmutableNode> mConfig
+                    = baseConfig().configurationAt(BaseEnvSettings.Constants.__CONFIG_PATH_MANAGERS);
+            if (ConfigReader.checkIfNodeExists(mConfig,
+                    SchemaManagerSettings.__CONFIG_PATH)) {
                 schemaManager = new HCdcSchemaManager();
-                schemaManager.init(baseConfig(),
+                schemaManager.init(mConfig,
                         this);
             }
 
@@ -114,7 +118,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
 
     public String hdfsTmpDir() {
         Preconditions.checkState(state().isAvailable());
-        return ((NameNodeEnvSettings)settings()).getHdfsTmpDir();
+        return ((NameNodeEnvSettings) settings()).getHdfsTmpDir();
     }
 
     public ENameNodeEnvState error(@NonNull Throwable t) {
@@ -169,11 +173,16 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
     public static ENameNodeEnvState dispose(@NonNull String name) throws NameNodeError {
         BaseEnv.initLock();
         try {
-            NameNodeEnv env = (NameNodeEnv) BaseEnv.remove(name);
+            NameNodeEnv env = BaseEnv.get(name, NameNodeEnv.class);
             if (env == null) {
                 throw new NameNodeError(String.format("NameNode Env instance not found. [name=%s]", name));
             }
+            if (!BaseEnv.remove(name)) {
+                DefaultLogger.warn(String.format("Failed to remove env. [name=%s]", name));
+            }
             return env.stop();
+        } catch (Exception ex) {
+            throw new NameNodeError(ex);
         } finally {
             BaseEnv.initUnLock();
         }
@@ -270,12 +279,17 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
     public static class NameNodeEnvState extends AbstractEnvState<ENameNodeEnvState> {
 
         public NameNodeEnvState() {
-            super(ENameNodeEnvState.Error);
+            super(ENameNodeEnvState.Error, ENameNodeEnvState.Unknown);
             setState(ENameNodeEnvState.Unknown);
         }
 
         public boolean isAvailable() {
             return (getState() == ENameNodeEnvState.Initialized);
+        }
+
+        @Override
+        public boolean isTerminated() {
+            return (getState() == ENameNodeEnvState.Disposed || hasError());
         }
     }
 

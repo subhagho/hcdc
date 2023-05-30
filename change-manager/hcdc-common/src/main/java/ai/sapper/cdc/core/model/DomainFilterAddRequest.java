@@ -1,6 +1,6 @@
 package ai.sapper.cdc.core.model;
 
-import ai.sapper.cdc.common.filters.Filter;
+import ai.sapper.cdc.core.filters.Filter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;

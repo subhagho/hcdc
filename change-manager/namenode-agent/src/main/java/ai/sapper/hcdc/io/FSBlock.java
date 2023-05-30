@@ -1,9 +1,9 @@
 package ai.sapper.hcdc.io;
 
 import ai.sapper.cdc.core.io.FileSystem;
-import ai.sapper.cdc.core.io.model.PathInfo;
 import ai.sapper.cdc.core.io.Reader;
 import ai.sapper.cdc.core.io.Writer;
+import ai.sapper.cdc.core.io.model.PathInfo;
 import ai.sapper.hcdc.agents.model.DFSBlockState;
 import com.google.common.base.Preconditions;
 import lombok.AccessLevel;

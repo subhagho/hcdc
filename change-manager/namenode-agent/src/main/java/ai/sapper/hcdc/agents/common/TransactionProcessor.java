@@ -1,20 +1,17 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.cdc.common.schema.SchemaEntity;
-import ai.sapper.cdc.core.filters.DomainManager;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.MessageSender;
-import ai.sapper.cdc.core.model.BaseTxId;
-import ai.sapper.cdc.core.model.LongTxState;
+import ai.sapper.cdc.core.utils.ProtoUtils;
 import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
+import ai.sapper.cdc.entity.model.BaseTxId;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.hcdc.agents.model.DFSBlockState;
 import ai.sapper.hcdc.agents.model.DFSFileState;
 import ai.sapper.hcdc.agents.model.EBlockState;
 import ai.sapper.hcdc.agents.model.EFileState;
 import ai.sapper.hcdc.common.model.*;
-import ai.sapper.cdc.core.utils.ProtoUtils;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -114,7 +111,8 @@ public abstract class TransactionProcessor {
 
     public void updateTransaction(@NonNull BaseTxId txId,
                                   @NonNull MessageObject<String, DFSChangeDelta> message) throws Exception {
-        if (message.mode() == MessageObject.MessageMode.New && txId.getId() > 0) {
+        if (message.mode() == MessageObject.MessageMode.New
+                && txId.getId() > 0) {
             stateManager().update(txId);
             LOGGER.debug(getClass(),
                     txId.getId(),
@@ -204,24 +202,25 @@ public abstract class TransactionProcessor {
                                          boolean retry) throws Exception {
         BaseTxId txId = ProtoUtils.fromTx(message.value().getTx());
         if (message.mode() == MessageObject.MessageMode.New) {
-            LongTxState txState = (LongTxState) stateManager().processingState();
-            if (txState.getProcessedTxId().getId() < 0) {
+            HCdcProcessingState txState = (HCdcProcessingState) stateManager().processingState();
+            long offset = txState.getProcessedOffset().getOffset().getId();
+            if (offset < 0) {
                 return txId;
             }
-            if (txId.getId() != txState.getProcessedTxId().getId() + 1) {
+            if (txId.getId() != offset + 1) {
                 if (!ignoreMissing) {
                     throw new InvalidMessageError(message.id(),
                             String.format("Detected missing transaction. [expected=%d][current=%d]",
-                                    txState.getProcessedTxId().getId() + 1, txId.getId()));
+                                    offset + 1, txId.getId()));
                 }
             }
-            if (txId.compare(txState.getProcessedTxId(), false) <= 0) {
+            if (txId.compare(txState.getProcessedOffset().getOffset(), false) <= 0) {
                 if (retry) {
                     return txId;
                 }
                 throw new InvalidMessageError(message.id(),
                         String.format("Duplicate message: Transaction already processed. [TXID=%d][CURRENT=%d]",
-                                txId.getId(), txState.getProcessedTxId().getId()));
+                                txId.getId(), offset));
 
             }
         }

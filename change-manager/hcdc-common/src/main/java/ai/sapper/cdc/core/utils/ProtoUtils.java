@@ -1,6 +1,7 @@
 package ai.sapper.cdc.core.utils;
 
 import ai.sapper.cdc.core.model.EngineType;
+import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.entity.model.*;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.cdc.entity.schema.SchemaVersion;
@@ -8,7 +9,7 @@ import ai.sapper.hcdc.common.model.DFSTransaction;
 import lombok.NonNull;
 
 public class ProtoUtils {
-    public static DFSTransaction buildTx(@NonNull BaseTxId txId,
+    public static DFSTransaction buildTx(@NonNull HCdcTxId txId,
                                          @NonNull DFSTransaction.Operation op) {
         return DFSTransaction.newBuilder()
                 .setId(txId.getId())
@@ -19,8 +20,8 @@ public class ProtoUtils {
                 .build();
     }
 
-    public static BaseTxId fromTx(@NonNull DFSTransaction tx) {
-        BaseTxId id = new BaseTxId();
+    public static HCdcTxId fromTx(@NonNull DFSTransaction tx) {
+        HCdcTxId id = new HCdcTxId();
         id.setType(EngineType.HDFS);
         id.setId(tx.getId());
         id.setSequence(tx.getSequence());
@@ -36,7 +37,7 @@ public class ProtoUtils {
                 tx.getRecordId());
     }
 
-    public static Transaction build(@NonNull BaseTxId txId) {
+    public static Transaction build(@NonNull HCdcTxId txId) {
         Sequence sequence = Sequence.newBuilder()
                 .setMajor(txId.getSequence())
                 .setMinor((int) txId.getRecordId())

@@ -1,11 +1,11 @@
 package ai.sapper.hcdc.agents.common.converter;
 
-import ai.sapper.cdc.common.model.AvroChangeType;
 import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.schema.SchemaHelper;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.core.model.EFileType;
+import ai.sapper.cdc.core.utils.ProtoUtils;
 import ai.sapper.cdc.entity.BasicDataTypeReaders;
 import ai.sapper.cdc.entity.DataType;
 import ai.sapper.cdc.entity.DataTypeReader;
@@ -16,7 +16,6 @@ import ai.sapper.cdc.entity.jdbc.DbEntitySchema;
 import ai.sapper.cdc.entity.model.*;
 import ai.sapper.cdc.entity.schema.SchemaField;
 import ai.sapper.hcdc.agents.common.FormatConverter;
-import ai.sapper.cdc.core.utils.ProtoUtils;
 import com.google.protobuf.ByteString;
 import lombok.NonNull;
 import org.apache.avro.Schema;

@@ -98,8 +98,13 @@ public class HCdcSchemaManager extends SchemaManager {
         }
     }
 
-    public synchronized void refresh() throws Exception {
-        initFilters(false);
+    public void refresh() throws Exception {
+        schemaLock().lock();
+        try {
+            initFilters(false);
+        } finally {
+            schemaLock().unlock();
+        }
     }
 
     public SchemaEntity matches(@NonNull String path) {
@@ -124,7 +129,6 @@ public class HCdcSchemaManager extends SchemaManager {
     public DomainFilter updateGroup(@NonNull String domain,
                                     @NonNull String entity,
                                     @NonNull String group) {
-        Preconditions.checkState(state().isRunning());
         if (matchers.containsKey(domain)) {
             DomainFilterMatcher matcher = matchers.get(domain);
             return matcher.updateGroup(entity, group);
