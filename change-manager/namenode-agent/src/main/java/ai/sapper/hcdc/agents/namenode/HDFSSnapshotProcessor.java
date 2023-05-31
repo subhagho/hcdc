@@ -4,15 +4,13 @@ import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.core.BaseEnv;
-import ai.sapper.cdc.core.DistributedLock;
-import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.filters.*;
 import ai.sapper.cdc.core.messaging.*;
 import ai.sapper.cdc.core.messaging.builders.MessageSenderBuilder;
+import ai.sapper.cdc.core.model.EHCdcProcessorState;
 import ai.sapper.cdc.core.model.EngineType;
+import ai.sapper.cdc.core.model.HCdcProcessingState;
 import ai.sapper.cdc.core.model.HCdcTxId;
-import ai.sapper.cdc.core.processing.ProcessStateManager;
-import ai.sapper.cdc.core.processing.ProcessingState;
 import ai.sapper.cdc.core.processing.Processor;
 import ai.sapper.cdc.core.processing.ProcessorState;
 import ai.sapper.cdc.core.utils.FileSystemUtils;
@@ -394,7 +392,14 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
 
     @Override
     public void close() throws IOException {
-
+        if (sender != null) {
+            sender.close();
+            sender = null;
+        }
+        if (adminSender != null) {
+            adminSender.close();
+            adminSender = null;
+        }
     }
 
     @Getter

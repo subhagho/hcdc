@@ -9,6 +9,7 @@ import ai.sapper.cdc.core.BaseEnvSettings;
 import ai.sapper.cdc.core.ExitCallback;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.model.BaseAgentState;
+import ai.sapper.cdc.core.model.HCdcProcessingState;
 import ai.sapper.cdc.core.utils.ProtoUtils;
 import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
 import ai.sapper.cdc.entity.manager.SchemaManager;

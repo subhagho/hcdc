@@ -1,9 +1,7 @@
-package ai.sapper.hcdc.agents.common;
+package ai.sapper.cdc.core.model;
 
 import ai.sapper.cdc.core.messaging.kafka.KafkaOffset;
-import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.processing.ProcessingState;
-import ai.sapper.hcdc.agents.model.EHCdcProcessorState;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.NonNull;

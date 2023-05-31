@@ -1,18 +1,14 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.cdc.common.config.ConfigReader;
-import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.BaseEnv;
-import ai.sapper.cdc.core.DistributedLock;
-import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.messaging.*;
 import ai.sapper.cdc.core.messaging.builders.MessageSenderBuilder;
-import ai.sapper.cdc.core.model.BaseAgentState;
+import ai.sapper.cdc.core.model.HCdcProcessingState;
 import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.processing.MessageProcessor;
 import ai.sapper.cdc.core.processing.Processor;
 import ai.sapper.cdc.core.state.StateManagerError;
-import ai.sapper.hcdc.agents.model.EHCdcProcessorState;
+import ai.sapper.cdc.core.model.EHCdcProcessorState;
 import ai.sapper.hcdc.agents.settings.ChangeDeltaProcessorSettings;
 import ai.sapper.hcdc.agents.settings.HDFSSnapshotProcessorSettings;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
@@ -28,11 +24,8 @@ import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.io.IOException;
-import java.util.List;
 
 import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 
@@ -90,7 +83,7 @@ public abstract class ChangeDeltaProcessor extends MessageProcessor<String, DFSC
 
 
     public BaseTxState updateReadState(String messageId) throws StateManagerError {
-        BaseTxState state = (BaseTxState) stateManager.processingState();
+        BaseTxState state = (BaseTxState) stateManager().processingState();
         processedMessageId = state.getCurrentMessageId();
 
         return (LongTxState) stateManager.updateMessageId(messageId);
@@ -98,7 +91,7 @@ public abstract class ChangeDeltaProcessor extends MessageProcessor<String, DFSC
 
     private void handleMessage(MessageObject<String, DFSChangeDelta> message) throws Throwable {
 
-        BaseTxId txId = null;
+        HCdcTxId txId = null;
         if (!isValidMessage(message)) {
             throw new InvalidMessageError(message.id(),
                     String.format("Invalid Message mode. [id=%s][mode=%s]", message.id(), message.mode().name()));

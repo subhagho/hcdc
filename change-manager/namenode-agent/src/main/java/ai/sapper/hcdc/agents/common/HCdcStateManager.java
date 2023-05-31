@@ -2,12 +2,13 @@ package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.BaseEnv;
+import ai.sapper.cdc.core.model.HCdcProcessingState;
 import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.model.Heartbeat;
 import ai.sapper.cdc.core.processing.ProcessStateManager;
 import ai.sapper.cdc.core.state.BaseStateManagerSettings;
 import ai.sapper.cdc.core.state.StateManagerError;
-import ai.sapper.hcdc.agents.model.EHCdcProcessorState;
+import ai.sapper.cdc.core.model.EHCdcProcessorState;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
