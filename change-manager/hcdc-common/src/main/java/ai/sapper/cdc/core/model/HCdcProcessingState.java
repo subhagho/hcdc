@@ -1,5 +1,6 @@
 package ai.sapper.cdc.core.model;
 
+import ai.sapper.cdc.core.messaging.ReceiverOffset;
 import ai.sapper.cdc.core.messaging.kafka.KafkaOffset;
 import ai.sapper.cdc.core.processing.ProcessingState;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -15,12 +16,12 @@ import lombok.Setter;
         property = "@class"
 )
 public class HCdcProcessingState extends ProcessingState<EHCdcProcessorState, HCdcTxId> {
-    private KafkaOffset messageOffset;
+    private ReceiverOffset messageOffset;
 
-    public HCdcProcessingState() {
+    public HCdcProcessingState(@NonNull ReceiverOffset messageOffset) {
         super(EHCdcProcessorState.Error, EHCdcProcessorState.Unknown);
         setProcessedOffset(new HCdcTxId());
-        messageOffset = new KafkaOffset();
+        this.messageOffset = messageOffset;
     }
 
     public HCdcProcessingState(@NonNull ProcessingState<EHCdcProcessorState, HCdcTxId> state) {

@@ -31,7 +31,8 @@ import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 
 @Getter
 @Accessors(fluent = true)
-public abstract class ChangeDeltaProcessor extends MessageProcessor<String, DFSChangeDelta, EHCdcProcessorState, HCdcTxId> {
+public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
+        extends MessageProcessor<String, DFSChangeDelta, EHCdcProcessorState, HCdcTxId, MO> {
     public enum EProcessorMode {
         Reader, Committer
     }
@@ -60,19 +61,19 @@ public abstract class ChangeDeltaProcessor extends MessageProcessor<String, DFSC
         this.settingsType = settingsType;
     }
 
-    public ChangeDeltaProcessor withProcessor(@NonNull TransactionProcessor processor) {
+    public ChangeDeltaProcessor<MO> withProcessor(@NonNull TransactionProcessor processor) {
         this.processor = processor;
         return this;
     }
 
     @Override
-    public Processor<EHCdcProcessorState, HCdcTxId> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+    public ChangeDeltaProcessor<MO> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                                                          String path) throws ConfigurationException {
         if (Strings.isNullOrEmpty(path)) {
             path = ChangeDeltaProcessorSettings.__CONFIG_PATH;
         }
         receiverConfig = new ChangeDeltaProcessorConfig(xmlConfig, path, settingsType);
-        return super.init(xmlConfig, path);
+        return (ChangeDeltaProcessor<MO>) super.init(xmlConfig, path);
     }
 
     @Override
@@ -82,8 +83,8 @@ public abstract class ChangeDeltaProcessor extends MessageProcessor<String, DFSC
     }
 
 
-    public BaseTxState updateReadState(String messageId) throws StateManagerError {
-        BaseTxState state = (BaseTxState) stateManager().processingState();
+    public HCdcProcessingState updateReadState(String messageId) throws StateManagerError {
+        HCdcProcessingState state = (HCdcProcessingState) stateManager().processingState();
         processedMessageId = state.getCurrentMessageId();
 
         return (LongTxState) stateManager.updateMessageId(messageId);
@@ -192,16 +193,12 @@ public abstract class ChangeDeltaProcessor extends MessageProcessor<String, DFSC
         receiver.ack(message.id());
     }
 
-    public abstract void batchStart() throws Exception;
-
-    public abstract void batchEnd() throws Exception;
-
     public abstract void process(@NonNull MessageObject<String, DFSChangeDelta> message,
                                  @NonNull Object data,
                                  DFSTransaction tnx,
                                  boolean retry) throws Exception;
 
-    public abstract ChangeDeltaProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException;
+    public abstract ChangeDeltaProcessor<MO> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException;
 
     @Override
     public void close() throws IOException {
