@@ -13,7 +13,7 @@ import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.entity.schema.SchemaManager;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.hcdc.agents.main.SnapshotRunner;
-import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
+import ai.sapper.cdc.core.model.dfs.DFSFileReplicaState;
 import ai.sapper.hcdc.services.ServiceHelper;
 import com.google.common.base.Strings;
 import org.springframework.http.HttpStatus;

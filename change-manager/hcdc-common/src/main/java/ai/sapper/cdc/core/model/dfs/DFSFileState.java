@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.agents.model;
+package ai.sapper.cdc.core.model.dfs;
 
 import ai.sapper.cdc.core.model.EFileState;
 import ai.sapper.cdc.core.model.EFileType;
@@ -88,7 +88,7 @@ public class DFSFileState {
     public void reset() {
         blocks.clear();
         numBlocks = 0;
-        fileInfo.setSchemaLocation(null);
+        fileInfo.setSchemaURI(null);
         fileInfo.setFileType(EFileType.UNKNOWN);
         dataSize = 0;
         blockSize = 0;

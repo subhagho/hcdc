@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.agents.model;
+package ai.sapper.cdc.core.model.dfs;
 
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.entity.schema.SchemaVersion;
@@ -17,7 +17,7 @@ public class DFSFileInfo {
     private String hdfsPath;
     private long inodeId;
     private EFileType fileType = EFileType.UNKNOWN;
-    private String schemaLocation;
+    private String schemaURI;
     private SchemaVersion schemaVersion;
 
     public DFSFileInfo() {
@@ -28,7 +28,7 @@ public class DFSFileInfo {
         this.hdfsPath = source.hdfsPath;
         this.inodeId = source.inodeId;
         this.fileType = source.fileType;
-        this.schemaLocation = source.schemaLocation;
+        this.schemaURI = source.schemaURI;
     }
 
     public DFSFile proto() {
@@ -41,8 +41,8 @@ public class DFSFileInfo {
         builder.setEntity(entity)
                 .setInodeId(inodeId)
                 .setFileType(fileType.name());
-        if (!Strings.isNullOrEmpty(schemaLocation)) {
-            builder.setSchemaLocation(schemaLocation);
+        if (!Strings.isNullOrEmpty(schemaURI)) {
+            builder.setSchemaLocation(schemaURI);
         }
         return builder.build();
     }
@@ -56,8 +56,8 @@ public class DFSFileInfo {
         builder.setEntity(entity)
                 .setInodeId(inodeId)
                 .setFileType(fileType.name());
-        if (!Strings.isNullOrEmpty(schemaLocation)) {
-            builder.setSchemaLocation(schemaLocation);
+        if (!Strings.isNullOrEmpty(schemaURI)) {
+            builder.setSchemaLocation(schemaURI);
         }
         return builder.build();
     }
@@ -71,7 +71,7 @@ public class DFSFileInfo {
             fileType = EFileType.valueOf(file.getFileType());
         }
         if (file.hasSchemaLocation()) {
-            schemaLocation = file.getSchemaLocation();
+            schemaURI = file.getSchemaLocation();
         }
         Preconditions.checkState(!Strings.isNullOrEmpty(namespace));
         Preconditions.checkState(!Strings.isNullOrEmpty(hdfsPath));

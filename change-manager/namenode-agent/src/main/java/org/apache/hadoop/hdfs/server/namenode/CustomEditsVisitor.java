@@ -3,7 +3,7 @@ package org.apache.hadoop.hdfs.server.namenode;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.agents.common.DFSAgentError;
 import ai.sapper.cdc.core.NameNodeEnv;
-import ai.sapper.hcdc.agents.model.DFSEditLogBatch;
+import ai.sapper.cdc.core.model.dfs.DFSEditLogBatch;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.hadoop.hdfs.tools.offlineEditsViewer.OfflineEditsVisitor;
@@ -77,7 +77,7 @@ public class CustomEditsVisitor implements OfflineEditsVisitor {
         try {
             parser.parse(op, batch);
         } catch (DFSAgentError e) {
-            DefaultLogger.LOGGER.error(String.format("Error parsing OP Code [%s]", op.opCode.name()), e);
+            DefaultLogger.error(String.format("Error parsing OP Code [%s]", op.opCode.name()), e);
             throw new IOException(e);
         }
     }

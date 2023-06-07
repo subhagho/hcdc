@@ -4,6 +4,7 @@ import ai.sapper.cdc.common.model.AvroChangeType;
 import ai.sapper.cdc.common.model.services.SnapshotDoneRequest;
 import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.schema.SchemaVersion;
+import ai.sapper.cdc.core.InvalidTransactionError;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.WebServiceClient;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
@@ -19,12 +20,12 @@ import ai.sapper.cdc.core.messaging.MessageSender;
 import ai.sapper.cdc.core.model.EFileState;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.model.HDFSBlockData;
+import ai.sapper.cdc.core.model.dfs.*;
 import ai.sapper.cdc.core.utils.HFSHelper;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
 import ai.sapper.cdc.entity.avro.AvroEntitySchema;
 import ai.sapper.cdc.entity.schema.SchemaManager;
 import ai.sapper.hcdc.agents.common.*;
-import ai.sapper.hcdc.agents.model.*;
 import ai.sapper.hcdc.common.model.*;
 import ai.sapper.hcdc.io.FSBlock;
 import ai.sapper.hcdc.io.FSFile;
@@ -352,7 +353,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             AvroEntitySchema schema = schemaManager.get(rState.getEntity());
             if (schema != null) {
                 if (!Strings.isNullOrEmpty(schema.getZkPath())) {
-                    rState.getFileInfo().setSchemaLocation(schema.getZkPath());
+                    rState.getFileInfo().setSchemaURI(schema.getZkPath());
                 }
                 dfile = ProtoBufUtils.update(dfile, schema.getZkPath());
             } else {
@@ -769,7 +770,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     AvroEntitySchema schema = schemaManager.get(rState.getEntity());
                     if (schema != null) {
                         if (!Strings.isNullOrEmpty(schema.getZkPath())) {
-                            rState.getFileInfo().setSchemaLocation(schema.getZkPath());
+                            rState.getFileInfo().setSchemaURI(schema.getZkPath());
                         }
                         if (schema.getVersion() != null) {
                             if (prevSchema != null) {

@@ -23,6 +23,8 @@ import java.util.regex.Pattern;
 @Getter
 @Accessors(fluent = true)
 public class HCdcSchemaManager extends SchemaManager {
+    public static final String DEFAULT_DOMAIN = "HadoopCDC";
+
     private static final String IGNORE_REGEX = "(.*)\\.(_*)COPYING(_*)|/tmp/(.*)|(.*)\\.hive-staging(.*)";
     private HdfsConnection hdfsConnection;
     private Map<String, DomainFilterMatcher> matchers = new HashMap<>();

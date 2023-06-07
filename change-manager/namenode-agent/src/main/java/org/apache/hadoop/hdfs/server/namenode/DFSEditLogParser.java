@@ -2,8 +2,8 @@ package org.apache.hadoop.hdfs.server.namenode;
 
 import ai.sapper.hcdc.agents.common.DFSAgentError;
 import ai.sapper.cdc.core.NameNodeEnv;
-import ai.sapper.hcdc.agents.model.DFSEditLogBatch;
-import ai.sapper.hcdc.agents.model.DFSTransactionType;
+import ai.sapper.cdc.core.model.dfs.DFSEditLogBatch;
+import ai.sapper.cdc.core.model.dfs.DFSTransactionType;
 import ai.sapper.hcdc.common.model.DFSFileRename;
 import ai.sapper.hcdc.common.model.DFSTransaction;
 import com.google.common.base.Preconditions;

@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.cdc.core.HCdcStateManager;
+import ai.sapper.cdc.core.InvalidTransactionError;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.MessageSender;
@@ -9,9 +10,9 @@ import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.utils.ProtoUtils;
 import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
-import ai.sapper.hcdc.agents.model.DFSBlockState;
-import ai.sapper.hcdc.agents.model.DFSFileState;
-import ai.sapper.hcdc.agents.model.EBlockState;
+import ai.sapper.cdc.core.model.dfs.DFSBlockState;
+import ai.sapper.cdc.core.model.dfs.DFSFileState;
+import ai.sapper.cdc.core.model.dfs.EBlockState;
 import ai.sapper.cdc.core.model.EFileState;
 import ai.sapper.hcdc.common.model.*;
 import com.google.common.base.Preconditions;

@@ -3,8 +3,8 @@ package ai.sapper.hcdc.io;
 import ai.sapper.cdc.core.io.FileSystem;
 import ai.sapper.cdc.core.io.model.PathInfo;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
-import ai.sapper.hcdc.agents.model.DFSBlockState;
-import ai.sapper.hcdc.agents.model.DFSFileState;
+import ai.sapper.cdc.core.model.dfs.DFSBlockState;
+import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import lombok.NonNull;
 
 import java.io.IOException;

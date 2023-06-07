@@ -4,8 +4,8 @@ import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.hcdc.agents.common.DFSAgentError;
 import ai.sapper.hcdc.agents.common.DFSEditsFileFinder;
 import ai.sapper.cdc.core.NameNodeEnv;
-import ai.sapper.hcdc.agents.model.DFSEditLogBatch;
-import ai.sapper.hcdc.agents.model.DFSTransactionType;
+import ai.sapper.cdc.core.model.dfs.DFSEditLogBatch;
+import ai.sapper.cdc.core.model.dfs.DFSTransactionType;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -71,7 +71,7 @@ public class EditsLogFileReader {
             List<DFSEditsFileFinder.EditsLogFile> files = DFSEditsFileFinder.findEditsFiles(dir, startTxId, endTxId);
             if (files != null && !files.isEmpty()) {
                 for (DFSEditsFileFinder.EditsLogFile file : files) {
-                    DefaultLogger.LOGGER.info(
+                    DefaultLogger.info(
                             String.format("Reading transactions from edits file. [%s][startTx=%d, endTx=%d]",
                                     file.path(), startTxId, endTxId));
                     EditsLogFileReader viewer = new EditsLogFileReader();

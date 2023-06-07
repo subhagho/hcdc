@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.agents.common;
+package ai.sapper.cdc.core;
 
 import ai.sapper.hcdc.common.model.DFSError;
 import ai.sapper.hcdc.common.model.DFSFile;

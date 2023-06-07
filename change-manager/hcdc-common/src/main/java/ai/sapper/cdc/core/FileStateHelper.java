@@ -4,10 +4,10 @@ import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
+import ai.sapper.cdc.core.model.EFileState;
+import ai.sapper.cdc.core.model.dfs.*;
 import ai.sapper.cdc.core.state.StateManagerError;
 import ai.sapper.cdc.entity.model.BlockTransactionDelta;
-import ai.sapper.hcdc.agents.main.NameNodeReplicator;
-import ai.sapper.hcdc.agents.model.*;
 import ai.sapper.hcdc.common.model.DFSError;
 import ai.sapper.hcdc.common.model.DFSFile;
 import com.google.common.base.Preconditions;
@@ -111,7 +111,7 @@ public class FileStateHelper {
     }
 
     public DFSFileState create(@NonNull String namespace,
-                               @NonNull NameNodeReplicator.DFSInode inode,
+                               @NonNull NameNode.DFSInode inode,
                                @NonNull EFileState state,
                                long txId) throws StateManagerError {
         Preconditions.checkNotNull(connection);

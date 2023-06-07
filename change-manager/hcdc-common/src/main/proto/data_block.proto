@@ -37,7 +37,7 @@ message DFSFile {
   required DFSSchemaEntity entity = 1;
   required int64 inodeId = 2;
   optional string fileType = 3;
-  optional string schemaLocation = 4;
+  optional string schemaURI = 4;
 }
 
 message DFSBlock {

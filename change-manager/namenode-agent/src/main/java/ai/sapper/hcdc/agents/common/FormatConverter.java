@@ -11,7 +11,7 @@ import ai.sapper.cdc.entity.model.DbSource;
 import ai.sapper.cdc.entity.schema.EntitySchema;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.cdc.entity.types.DataType;
-import ai.sapper.hcdc.agents.model.DFSFileState;
+import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -44,9 +44,9 @@ public abstract class FormatConverter extends ValueParser {
         if (schemaEntity != null) {
             AvroEntitySchema schema = schemaManager().getSchema(schemaEntity, AvroEntitySchema.class);
             if (schema == null) {
-                if (!Strings.isNullOrEmpty(fileState.getFileInfo().getSchemaLocation())) {
+                if (!Strings.isNullOrEmpty(fileState.getFileInfo().getSchemaURI())) {
                     schema = schemaManager().getSchema(schemaEntity,
-                            fileState.getFileInfo().getSchemaLocation(),
+                            fileState.getFileInfo().getSchemaURI(),
                             AvroEntitySchema.class);
                 }
             }

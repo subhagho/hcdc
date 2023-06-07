@@ -1,8 +1,8 @@
 package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.cdc.core.model.EFileType;
-import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
-import ai.sapper.hcdc.agents.model.DFSFileState;
+import ai.sapper.cdc.core.model.dfs.DFSFileReplicaState;
+import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import ai.sapper.hcdc.common.model.DFSFile;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -20,7 +20,7 @@ public class ProtoBufUtils {
             }
         }
         if (file.hasSchemaLocation()) {
-            fileState.getFileInfo().setSchemaLocation(file.getSchemaLocation());
+            fileState.getFileInfo().setSchemaURI(file.getSchemaLocation());
             updated = true;
         }
         return updated;
@@ -37,7 +37,7 @@ public class ProtoBufUtils {
             }
         }
         if (file.hasSchemaLocation()) {
-            replicaState.getFileInfo().setSchemaLocation(file.getSchemaLocation());
+            replicaState.getFileInfo().setSchemaURI(file.getSchemaLocation());
             updated = true;
         }
         return updated;
@@ -50,8 +50,8 @@ public class ProtoBufUtils {
             replicaState.getFileInfo().setFileType(fileState.getFileInfo().getFileType());
             updated = true;
         }
-        if (!Strings.isNullOrEmpty(fileState.getFileInfo().getSchemaLocation())) {
-            replicaState.getFileInfo().setSchemaLocation(fileState.getFileInfo().getSchemaLocation());
+        if (!Strings.isNullOrEmpty(fileState.getFileInfo().getSchemaURI())) {
+            replicaState.getFileInfo().setSchemaURI(fileState.getFileInfo().getSchemaURI());
             updated = true;
         }
         return updated;

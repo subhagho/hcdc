@@ -1,17 +1,17 @@
 package ai.sapper.hcdc.agents.pipeline;
 
-import ai.sapper.cdc.common.ConfigReader;
-import ai.sapper.cdc.common.schema.SchemaEntity;
+import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.io.EncryptionHandler;
-import ai.sapper.cdc.entity.schema.SchemaManager;
+import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
+import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.hcdc.agents.common.CDCDataConverter;
 import ai.sapper.cdc.core.HCdcStateManager;
 import ai.sapper.cdc.core.NameNodeEnv;
-import ai.sapper.hcdc.agents.model.DFSFileState;
+import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
@@ -35,7 +35,7 @@ public class NameNodeSchemaScanner {
     private HdfsConnection connection;
     private final HCdcStateManager stateManager;
     private final String name;
-    private SchemaManager schemaManager;
+    private HCdcSchemaManager schemaManager;
 
     private ThreadPoolExecutor executorService;
     private NameNodeEnv env;
@@ -54,20 +54,20 @@ public class NameNodeSchemaScanner {
 
             env = NameNodeEnv.get(name);
             Preconditions.checkNotNull(env);
-
-            connection = manger.getConnection(config.hdfsConnection, HdfsConnection.class);
+            NameNodeFileScannerSettings settings = (NameNodeFileScannerSettings) config.settings();
+            connection = manger.getConnection(settings.getHdfsConnection(), HdfsConnection.class);
             if (connection == null) {
                 throw new ConfigurationException(
-                        String.format("HDFS Connection not found. [name=%s]", config.hdfsConnection));
+                        String.format("HDFS Connection not found. [name=%s]", settings.getHdfsConnection()));
             }
             if (!connection.isConnected()) connection.connect();
-            if (config.encryptorClass != null) {
-                encryptionHandler = config.encryptorClass.getDeclaredConstructor().newInstance();
+            if (settings.getEncryptorClass() != null) {
+                encryptionHandler = settings.getEncryptorClass().getDeclaredConstructor().newInstance();
                 encryptionHandler.init(config.config());
             }
 
-            executorService = new ThreadPoolExecutor(config.threads,
-                    config.threads,
+            executorService = new ThreadPoolExecutor(settings.getThreads(),
+                    settings.getThreads(),
                     1000,
                     TimeUnit.SECONDS,
                     new LinkedBlockingDeque<Runnable>());
@@ -77,23 +77,24 @@ public class NameNodeSchemaScanner {
         }
     }
 
-    public NameNodeSchemaScanner withSchemaManager(@NonNull SchemaManager schemaManager) {
+    public NameNodeSchemaScanner withSchemaManager(@NonNull HCdcSchemaManager schemaManager) {
         this.schemaManager = schemaManager;
         return this;
     }
 
     public void run() throws Exception {
         try {
+            NameNodeFileScannerSettings settings = (NameNodeFileScannerSettings) config.settings();
             List<DFSFileState> files = stateManager
                     .fileStateHelper()
                     .listFiles(null);
             if (files != null && !files.isEmpty()) {
                 for (DFSFileState fs : files) {
                     long inode = fs.getFileInfo().getInodeId();
-                    if (inode % config.shardCount == config.shardId) {
+                    if (inode % settings.getShardCount() == settings.getShardId()) {
                         FileScannerTask task = new FileScannerTask(name)
                                 .fileState(fs)
-                                .schemaManager(new SchemaManager(schemaManager))
+                                .schemaManager(schemaManager)
                                 .hdfsConnection(connection)
                                 .encryptionHandler(encryptionHandler)
                                 .stateManager(stateManager);
@@ -127,7 +128,7 @@ public class NameNodeSchemaScanner {
         private DFSFileState fileState;
         private HdfsConnection hdfsConnection;
         private HCdcStateManager stateManager;
-        private SchemaManager schemaManager;
+        private HCdcSchemaManager schemaManager;
         private EncryptionHandler<ByteBuffer, ByteBuffer> encryptionHandler;
 
         public FileScannerTask(@NonNull String name) {
@@ -157,14 +158,14 @@ public class NameNodeSchemaScanner {
                     if (encryptionHandler != null) {
                         converter.withEncryptionHandler(encryptionHandler);
                     }
-                    SchemaEntity schemaEntity = new SchemaEntity(SchemaManager.DEFAULT_DOMAIN,
+                    SchemaEntity schemaEntity = new SchemaEntity(HCdcSchemaManager.DEFAULT_DOMAIN,
                             fileState.getFileInfo().getHdfsPath());
                     CDCDataConverter.ExtractSchemaResponse response = converter.extractSchema(fileState, schemaEntity);
                     if (response != null) {
                         if (response.schema() != null) {
-                            String path = schemaManager().schemaPath(schemaEntity);
+                            String path = schemaManager.getSchemaEntityURI(schemaEntity);
                             if (!Strings.isNullOrEmpty(path)) {
-                                fileState.getFileInfo().setSchemaLocation(path);
+                                fileState.getFileInfo().setSchemaURI(path);
                             }
                         }
                         fileState.getFileInfo().setFileType(response.fileType());
@@ -183,7 +184,7 @@ public class NameNodeSchemaScanner {
                 }
             } catch (Throwable t) {
                 DefaultLogger.stacktrace(t);
-                DefaultLogger.LOGGER.error(t.getLocalizedMessage());
+                DefaultLogger.error(t.getLocalizedMessage());
             }
         }
     }
@@ -193,64 +194,28 @@ public class NameNodeSchemaScanner {
     public static class NameNodeFileScannerConfig extends ConfigReader {
         private static final String __CONFIG_PATH = "scanner.files";
 
-        public static class Constants {
-            public static final String CONFIG_HDFS_CONN = "hdfs";
-            public static final String CONFIG_SHARD_PATH = "shards";
-            public static final String CONFIG_SHARD_COUNT = String.format("%s.count", CONFIG_SHARD_PATH);
-            public static final String CONFIG_SHARD_ID = String.format("%s.id", CONFIG_SHARD_PATH);
-            public static final String CONFIG_THREAD_COUNT = "threads";
-            public static final String CONFIG_ENCRYPTOR_CLASS = String.format("%s.class", EncryptionHandler.__CONFIG_PATH);
-        }
-
-        private String hdfsConnection;
-        private HierarchicalConfiguration<ImmutableNode> fsConfig;
-        private int shardCount = 1;
-        private int shardId = 0;
-        private int threads = 1;
-        private Class<? extends EncryptionHandler<ByteBuffer, ByteBuffer>> encryptorClass;
 
         public NameNodeFileScannerConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
-            super(config, __CONFIG_PATH);
+            super(config, __CONFIG_PATH, NameNodeFileScannerSettings.class);
         }
 
-        @SuppressWarnings("unchecked")
         public void read() throws ConfigurationException {
+            super.read();
             try {
-                hdfsConnection = get().getString(Constants.CONFIG_HDFS_CONN);
-                if (Strings.isNullOrEmpty(hdfsConnection)) {
-                    throw new ConfigurationException(
-                            String.format("File Scanner Error: missing configuration. [name=%s]",
-                                    Constants.CONFIG_HDFS_CONN));
+                NameNodeFileScannerSettings settings = (NameNodeFileScannerSettings) settings();
+                if (settings.getShardCount() > 1) {
+                    if (settings.getShardId() < 0) {
+                        throw new ConfigurationException(
+                                String.format("File Scanner Error: missing configuration. [name=%s]",
+                                        NameNodeFileScannerSettings.Constants.CONFIG_SHARD_ID));
+                    }
                 }
 
-                if (get().containsKey(Constants.CONFIG_SHARD_PATH)) {
-                    shardCount = get().getInt(Constants.CONFIG_SHARD_COUNT);
-                    if (shardCount < 0) {
-                        throw new ConfigurationException(
-                                String.format("File Scanner Error: missing configuration. [name=%s]",
-                                        Constants.CONFIG_SHARD_COUNT));
-                    }
-                    if (shardCount > 0) {
-                        shardId = get().getInt(Constants.CONFIG_SHARD_ID);
-                        if (shardId < 0) {
-                            throw new ConfigurationException(
-                                    String.format("File Scanner Error: missing configuration. [name=%s]",
-                                            Constants.CONFIG_SHARD_ID));
-                        }
-                    }
-                }
-                if (get().containsKey(Constants.CONFIG_THREAD_COUNT)) {
-                    threads = get().getInt(Constants.CONFIG_THREAD_COUNT);
-                    if (threads < 0) {
-                        throw new ConfigurationException(
-                                String.format("File Scanner Error: missing configuration. [name=%s]",
-                                        Constants.CONFIG_THREAD_COUNT));
-                    }
-                }
-                if (checkIfNodeExists(get(), EncryptionHandler.__CONFIG_PATH)) {
-                    String s = get().getString(EntityChangeDeltaReader.EntityChangeDeltaReaderConfig.Constants.CONFIG_ENCRYPTOR_CLASS);
-                    checkStringValue(s, getClass(), EntityChangeDeltaReader.EntityChangeDeltaReaderConfig.Constants.CONFIG_ENCRYPTOR_CLASS);
-                    encryptorClass = (Class<? extends EncryptionHandler<ByteBuffer, ByteBuffer>>) Class.forName(s);
+
+                if (settings.getThreads() <= 0) {
+                    throw new ConfigurationException(
+                            String.format("File Scanner Error: missing configuration. [name=%s]",
+                                    NameNodeFileScannerSettings.Constants.CONFIG_THREAD_COUNT));
                 }
             } catch (Exception ex) {
                 throw new ConfigurationException(ex);

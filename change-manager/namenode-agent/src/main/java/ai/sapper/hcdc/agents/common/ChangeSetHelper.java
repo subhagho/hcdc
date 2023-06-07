@@ -1,12 +1,12 @@
 package ai.sapper.hcdc.agents.common;
 
+import ai.sapper.cdc.core.io.FileSystem;
 import ai.sapper.cdc.core.io.Reader;
-import ai.sapper.cdc.core.io.impl.CDCFileSystem;
 import ai.sapper.cdc.core.io.model.PathInfo;
-import ai.sapper.cdc.core.model.BlockTransactionDelta;
-import ai.sapper.hcdc.agents.model.DFSBlockReplicaState;
-import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
-import ai.sapper.hcdc.agents.model.DFSFileState;
+import ai.sapper.cdc.core.model.dfs.DFSBlockReplicaState;
+import ai.sapper.cdc.core.model.dfs.DFSFileReplicaState;
+import ai.sapper.cdc.core.model.dfs.DFSFileState;
+import ai.sapper.cdc.entity.model.BlockTransactionDelta;
 import lombok.NonNull;
 
 import java.io.File;
@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.Map;
 
 public class ChangeSetHelper {
-    public static boolean createChangeSet(@NonNull CDCFileSystem fs,
+    public static boolean createChangeSet(@NonNull FileSystem fs,
                                           @NonNull DFSFileState fileState,
                                           @NonNull DFSFileReplicaState replicaState,
                                           @NonNull File dest,
@@ -29,7 +29,7 @@ public class ChangeSetHelper {
                 byte[] buffer = new byte[bufflen];
                 for (DFSBlockReplicaState block : replicaState.getBlocks()) {
                     if (changeSet.containsKey(block.getBlockId())) {
-                        PathInfo path = fs.get(block.getStoragePath());
+                        PathInfo path = fs.parsePathInfo(block.getStoragePath());
                         try (Reader reader = fs.reader(path)) {
                             BlockTransactionDelta delta = changeSet.get(block.getBlockId());
                             reader.seek((int) delta.getStartOffset());
