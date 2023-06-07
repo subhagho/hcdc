@@ -1,20 +1,20 @@
 package ai.sapper.hcdc.agents.common.converter;
 
-import ai.sapper.cdc.common.schema.SchemaEntity;
-import ai.sapper.cdc.common.schema.SchemaHelper;
 import ai.sapper.cdc.common.utils.JSONUtils;
-import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.core.model.EFileType;
+import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.utils.ProtoUtils;
-import ai.sapper.cdc.entity.BasicDataTypeReaders;
-import ai.sapper.cdc.entity.DataType;
-import ai.sapper.cdc.entity.DataTypeReader;
-import ai.sapper.cdc.entity.DecimalType;
 import ai.sapper.cdc.entity.avro.AvroDataTypeReaders;
 import ai.sapper.cdc.entity.avro.AvroEntitySchema;
 import ai.sapper.cdc.entity.jdbc.DbEntitySchema;
 import ai.sapper.cdc.entity.model.*;
+import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.cdc.entity.schema.SchemaField;
+import ai.sapper.cdc.entity.schema.SchemaHelper;
+import ai.sapper.cdc.entity.types.BasicDataTypeReaders;
+import ai.sapper.cdc.entity.types.DataType;
+import ai.sapper.cdc.entity.types.DataTypeReader;
+import ai.sapper.cdc.entity.types.DecimalType;
 import ai.sapper.hcdc.agents.common.FormatConverter;
 import com.google.protobuf.ByteString;
 import lombok.NonNull;
@@ -35,7 +35,7 @@ public abstract class AvroBasedConverter extends FormatConverter {
                                @NonNull GenericRecord record,
                                @NonNull String sourcePath,
                                @NonNull AvroChangeType.EChangeType op,
-                               @NonNull BaseTxId txId,
+                               @NonNull HCdcTxId txId,
                                boolean snapshot) throws Exception {
         Transaction tnx = ProtoUtils.build(txId);
         DbChangeRecord change = buildChangeRecord(schema.getSchemaEntity(),

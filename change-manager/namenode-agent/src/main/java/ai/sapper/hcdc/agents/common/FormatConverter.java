@@ -1,16 +1,16 @@
 package ai.sapper.hcdc.agents.common;
 
-import ai.sapper.cdc.common.model.AvroChangeType;
-import ai.sapper.cdc.common.schema.SchemaEntity;
-import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.core.model.EFileType;
-import ai.sapper.cdc.entity.DataType;
+import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.entity.ValueParser;
 import ai.sapper.cdc.entity.avro.AvroEntitySchema;
+import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
+import ai.sapper.cdc.entity.model.AvroChangeType;
 import ai.sapper.cdc.entity.model.DbPrimitiveValue;
 import ai.sapper.cdc.entity.model.DbSource;
 import ai.sapper.cdc.entity.schema.EntitySchema;
-import ai.sapper.cdc.entity.schema.SchemaManager;
+import ai.sapper.cdc.entity.schema.SchemaEntity;
+import ai.sapper.cdc.entity.types.DataType;
 import ai.sapper.hcdc.agents.model.DFSFileState;
 import lombok.Getter;
 import lombok.NonNull;
@@ -25,7 +25,7 @@ import java.io.IOException;
 @Getter
 @Accessors(fluent = true)
 public abstract class FormatConverter extends ValueParser {
-    private SchemaManager schemaManager;
+    private HCdcSchemaManager schemaManager;
     private final EFileType fileType;
     private final DbSource source;
 
@@ -35,17 +35,19 @@ public abstract class FormatConverter extends ValueParser {
         this.source = source;
     }
 
-    public FormatConverter withSchemaManager(@NonNull SchemaManager schemaManager) {
+    public FormatConverter withSchemaManager(@NonNull HCdcSchemaManager schemaManager) {
         this.schemaManager = schemaManager;
         return this;
     }
 
-    public AvroEntitySchema hasSchema(DFSFileState fileState, SchemaEntity schemaEntity) throws Exception {
+    public AvroEntitySchema hasSchema(@NonNull DFSFileState fileState, SchemaEntity schemaEntity) throws Exception {
         if (schemaEntity != null) {
-            AvroEntitySchema schema = schemaManager().get(schemaEntity);
+            AvroEntitySchema schema = schemaManager().getSchema(schemaEntity, AvroEntitySchema.class);
             if (schema == null) {
                 if (!Strings.isNullOrEmpty(fileState.getFileInfo().getSchemaLocation())) {
-                    schema = schemaManager().get(schemaEntity, fileState.getFileInfo().getSchemaLocation());
+                    schema = schemaManager().getSchema(schemaEntity,
+                            fileState.getFileInfo().getSchemaLocation(),
+                            AvroEntitySchema.class);
                 }
             }
             return schema;
@@ -60,7 +62,7 @@ public abstract class FormatConverter extends ValueParser {
                                      @NonNull DFSFileState fileState,
                                      @NonNull SchemaEntity schemaEntity,
                                      @NonNull AvroChangeType.EChangeType op,
-                                     @NonNull BaseTxId txId,
+                                     @NonNull HCdcTxId txId,
                                      boolean snapshot) throws IOException;
 
     public abstract boolean supportsPartial();

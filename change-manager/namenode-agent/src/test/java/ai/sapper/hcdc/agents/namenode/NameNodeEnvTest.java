@@ -4,7 +4,7 @@ import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.DistributedLock;
-import ai.sapper.hcdc.agents.common.NameNodeEnv;
+import ai.sapper.cdc.core.NameNodeEnv;
 import com.google.common.base.Preconditions;
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.junit.jupiter.api.BeforeAll;

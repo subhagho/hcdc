@@ -5,7 +5,7 @@ import ai.sapper.cdc.common.model.services.ConfigSource;
 import ai.sapper.cdc.common.model.services.EResponseState;
 import ai.sapper.cdc.common.model.services.ReplicatorConfigSource;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.hcdc.agents.common.NameNodeEnv;
+import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.hcdc.agents.main.NameNodeReplicator;
 import ai.sapper.hcdc.agents.main.SchemaScanner;
 import com.google.common.base.Strings;

@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.agents.model;
+package ai.sapper.cdc.core.model;
 
 import com.google.common.base.Strings;
 import lombok.Getter;

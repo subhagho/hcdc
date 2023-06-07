@@ -11,7 +11,7 @@ import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.entity.schema.SchemaManager;
-import ai.sapper.hcdc.agents.common.NameNodeEnv;
+import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.hcdc.agents.main.SnapshotRunner;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.services.ServiceHelper;

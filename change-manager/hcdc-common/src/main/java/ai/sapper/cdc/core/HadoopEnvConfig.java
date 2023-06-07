@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.agents.namenode;
+package ai.sapper.cdc.core;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import com.google.common.base.Strings;

@@ -1,11 +1,11 @@
-package ai.sapper.hcdc.agents.namenode;
+package ai.sapper.cdc.core;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.WebServiceClient;
 import ai.sapper.cdc.core.connections.WebServiceConnection;
 import ai.sapper.cdc.core.model.JMXResponse;
-import ai.sapper.hcdc.agents.common.NameNodeError;
-import ai.sapper.hcdc.agents.model.NameNodeStatus;
+import ai.sapper.cdc.core.NameNodeError;
+import ai.sapper.cdc.core.model.NameNodeStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.NonNull;

@@ -1,11 +1,11 @@
 package ai.sapper.hcdc.utils;
 
-import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.cdc.core.filters.DomainManager;
-import ai.sapper.hcdc.agents.common.NameNodeEnv;
-import ai.sapper.hcdc.agents.common.ProcessorStateManager;
+import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
+import ai.sapper.cdc.core.HCdcStateManager;
+import ai.sapper.cdc.core.NameNodeEnv;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import lombok.Getter;
@@ -27,7 +27,7 @@ public class DomainFilterLoader {
     @Parameter(names = {"--filters", "-f"}, required = true, description = "Path to the file containing the filter definitions.")
     private String filters;
 
-    public void read(@NonNull String path, @NonNull DomainManager domainManager) throws Exception {
+    public void read(@NonNull String path, @NonNull HCdcSchemaManager domainManager) throws Exception {
         File file = new File(path);
         if (!file.exists()) {
             throw new IOException(String.format("File not found. [path=%s]", file.getAbsolutePath()));
@@ -55,7 +55,7 @@ public class DomainFilterLoader {
                                 !Strings.isNullOrEmpty(p) &&
                                 !Strings.isNullOrEmpty(r)) {
                             domainManager.add(d, e, p, r, g);
-                            DefaultLogger.LOGGER.info(String.format("Registered Filter: [DOMAIN=%s][PATH=%s][REGEX=%s]", d, p, r));
+                            DefaultLogger.info(String.format("Registered Filter: [DOMAIN=%s][PATH=%s][REGEX=%s]", d, p, r));
                         }
                     }
                 }
@@ -70,15 +70,15 @@ public class DomainFilterLoader {
             JCommander.newBuilder().addObject(loader).build().parse(args);
             XMLConfiguration config = ConfigReader.read(loader.configfile, EConfigFileType.File);
             NameNodeEnv.setup(name, DomainFilterLoader.class, config);
-            if (!(NameNodeEnv.get(name).stateManager() instanceof ProcessorStateManager)) {
+            if (NameNodeEnv.get(name).stateManager() == null) {
                 throw new Exception(
-                        String.format("Invalid StateManager instance. [expected=%s]",
-                                ProcessorStateManager.class.getCanonicalName()));
+                        String.format("Invalid StateManager instance: State Manager not defined. [expected=%s]",
+                                HCdcStateManager.class.getCanonicalName()));
             }
-            loader.read(loader.filters, ((ProcessorStateManager) NameNodeEnv.get(name).stateManager()).domainManager());
+            loader.read(loader.filters, NameNodeEnv.get(name).schemaManager());
         } catch (Throwable t) {
-            DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(t));
-            DefaultLogger.LOGGER.error(t.getLocalizedMessage());
+            DefaultLogger.stacktrace(t);
+            DefaultLogger.error(t.getLocalizedMessage());
             t.printStackTrace();
         }
     }

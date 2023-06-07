@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.services;
 
-import ai.sapper.hcdc.agents.common.NameNodeEnv;
+import ai.sapper.cdc.core.NameNodeEnv;
 import lombok.NonNull;
 
 public class ServiceHelper {

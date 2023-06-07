@@ -1,21 +1,20 @@
 package ai.sapper.hcdc.agents.main;
 
-import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.cdc.core.Service;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
-import ai.sapper.cdc.core.model.BaseTxId;
-import ai.sapper.cdc.core.model.LongTxState;
-import ai.sapper.hcdc.agents.common.HCdcStateManager;
-import ai.sapper.hcdc.agents.common.NameNodeEnv;
-import ai.sapper.hcdc.agents.common.NameNodeError;
+import ai.sapper.cdc.core.model.HCdcProcessingState;
+import ai.sapper.cdc.core.model.HCdcTxId;
+import ai.sapper.cdc.core.HCdcStateManager;
+import ai.sapper.cdc.core.NameNodeEnv;
+import ai.sapper.cdc.core.NameNodeError;
 import ai.sapper.hcdc.agents.model.DFSFileState;
 import ai.sapper.hcdc.agents.model.EBlockState;
-import ai.sapper.hcdc.agents.model.EFileState;
-import ai.sapper.hcdc.agents.model.ModuleTxState;
+import ai.sapper.cdc.core.model.EFileState;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.base.Preconditions;
@@ -73,7 +72,7 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNodeEnvState
     @Parameter(names = {"--tmp"}, description = "Temp directory to use to create local files. [DEFAULT=System.getProperty(\"java.io.tmpdir\")]")
     private String tempDir = System.getProperty("java.io.tmpdir");
 
-    private BaseTxId txnId;
+    private HCdcTxId txnId;
     private final Map<Long, DFSInode> inodes = new HashMap<>();
     private final Map<Long, DFSDirectory> directoryMap = new HashMap<>();
 
@@ -133,7 +132,6 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNodeEnvState
             return this;
         } catch (Throwable t) {
             DefaultLogger.stacktrace(t);
-            DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(t));
             throw new NameNodeError(t);
         }
     }
@@ -183,10 +181,10 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNodeEnvState
                             String.format("WARNING: Will delete existing file structure, if present. [path=%s]",
                                     stateManager.fileStateHelper().getFilePath(null)));
                     stateManager.deleteAll();
+                    HCdcProcessingState processingState = (HCdcProcessingState) stateManager.initState(txnId);
 
                     copy();
 
-                    LongTxState nnTxState = (LongTxState) stateManager.initState(txnId);
                     ModuleTxState mTx = stateManager.updateReceivedTx(txnId.getId());
                     mTx = stateManager.updateSnapshotTx(txnId.getId());
                     DefaultLogger.info(env.LOG,

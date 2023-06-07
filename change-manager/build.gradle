@@ -34,7 +34,7 @@ publishing {
             from components.java
 
             pom {
-                name = 'HCDC Change Manager'
+                name = 'Hadoop CDC Change Manager'
                 description = 'Hadoop Change Data capture framework'
                 url = 'https://sapper.ai'
 
@@ -76,7 +76,7 @@ subprojects {
 
     java {
         toolchain {
-            languageVersion = JavaLanguageVersion.of(11)
+            languageVersion = JavaLanguageVersion.of(17)
         }
         withSourcesJar()
     }

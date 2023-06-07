@@ -1,5 +1,7 @@
 package ai.sapper.hcdc.agents.model;
 
+import ai.sapper.cdc.core.model.EFileReplicationState;
+import ai.sapper.cdc.core.model.EFileState;
 import ai.sapper.cdc.core.state.OffsetState;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;

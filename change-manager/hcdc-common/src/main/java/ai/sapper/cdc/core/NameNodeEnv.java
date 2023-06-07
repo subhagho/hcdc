@@ -1,23 +1,18 @@
-package ai.sapper.hcdc.agents.common;
+package ai.sapper.cdc.core;
 
 import ai.sapper.cdc.common.AbstractEnvState;
 import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.ReflectionUtils;
-import ai.sapper.cdc.core.BaseEnv;
-import ai.sapper.cdc.core.BaseEnvSettings;
-import ai.sapper.cdc.core.ExitCallback;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.model.BaseAgentState;
 import ai.sapper.cdc.core.model.HCdcProcessingState;
+import ai.sapper.cdc.core.model.NameNodeStatus;
 import ai.sapper.cdc.core.utils.ProtoUtils;
 import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
 import ai.sapper.cdc.entity.manager.SchemaManager;
 import ai.sapper.cdc.entity.manager.SchemaManagerSettings;
 import ai.sapper.cdc.entity.model.DbSource;
-import ai.sapper.hcdc.agents.model.NameNodeStatus;
-import ai.sapper.hcdc.agents.namenode.HadoopEnvConfig;
-import ai.sapper.hcdc.agents.namenode.NameNodeAdminClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.protobuf.MessageOrBuilder;

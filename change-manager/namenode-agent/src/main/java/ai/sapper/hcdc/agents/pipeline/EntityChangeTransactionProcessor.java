@@ -10,7 +10,7 @@ import ai.sapper.hcdc.agents.common.TransactionProcessor;
 import ai.sapper.hcdc.agents.model.DFSBlockState;
 import ai.sapper.hcdc.agents.model.DFSFileState;
 import ai.sapper.hcdc.agents.model.EBlockState;
-import ai.sapper.hcdc.agents.model.EFileState;
+import ai.sapper.cdc.core.model.EFileState;
 import ai.sapper.hcdc.common.model.*;
 import com.google.common.base.Strings;
 import lombok.NonNull;

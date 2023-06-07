@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.agents.model;
 
+import ai.sapper.cdc.core.model.EFileState;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.entity.model.BlockTransactionDelta;
 import ai.sapper.hcdc.common.model.DFSFile;

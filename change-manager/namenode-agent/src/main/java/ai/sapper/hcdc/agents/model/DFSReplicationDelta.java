@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.agents.model;
 
-import ai.sapper.cdc.common.model.AvroChangeType;
+import ai.sapper.cdc.entity.model.AvroChangeType;
 import lombok.Getter;
 import lombok.Setter;
 

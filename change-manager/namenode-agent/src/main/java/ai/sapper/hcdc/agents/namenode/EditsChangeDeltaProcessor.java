@@ -11,7 +11,7 @@ import ai.sapper.cdc.core.model.BlockTransactionDelta;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.common.ProcessorStateManager;
-import ai.sapper.hcdc.agents.common.HCdcStateManager;
+import ai.sapper.cdc.core.HCdcStateManager;
 import ai.sapper.hcdc.agents.model.DFSBlockState;
 import ai.sapper.hcdc.agents.model.DFSFileReplicaState;
 import ai.sapper.hcdc.agents.model.DFSFileState;

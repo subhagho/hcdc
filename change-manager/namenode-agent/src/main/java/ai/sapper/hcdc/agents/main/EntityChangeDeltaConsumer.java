@@ -4,7 +4,7 @@ import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.Service;
-import ai.sapper.hcdc.agents.common.NameNodeEnv;
+import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.hcdc.agents.pipeline.EntityChangeDeltaProcessor;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;

@@ -1,10 +1,10 @@
 package ai.sapper.hcdc.utils;
 
 
-import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.hcdc.agents.common.NameNodeEnv;
+import ai.sapper.cdc.core.NameNodeEnv;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.base.Preconditions;
@@ -45,7 +45,7 @@ public class Setup {
             loader.run();
         } catch (Throwable t) {
             DefaultLogger.stacktrace(t);
-            DefaultLogger.LOGGER.error(t.getLocalizedMessage());
+            DefaultLogger.error(t.getLocalizedMessage());
             t.printStackTrace();
         }
     }

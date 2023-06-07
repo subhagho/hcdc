@@ -9,7 +9,7 @@ import ai.sapper.cdc.core.io.impl.CDCFileSystem;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
-import ai.sapper.hcdc.agents.common.HCdcStateManager;
+import ai.sapper.cdc.core.HCdcStateManager;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSTransaction;
 import ai.sapper.cdc.core.utils.ProtoUtils;
