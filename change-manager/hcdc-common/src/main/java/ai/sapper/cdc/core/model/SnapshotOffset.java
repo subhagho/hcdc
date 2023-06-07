@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.agents.model;
+package ai.sapper.cdc.core.model;
 
 import ai.sapper.cdc.core.state.Offset;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;

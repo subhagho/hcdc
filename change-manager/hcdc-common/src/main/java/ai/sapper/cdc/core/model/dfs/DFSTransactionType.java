@@ -2,9 +2,9 @@ package ai.sapper.cdc.core.model.dfs;
 
 import ai.sapper.cdc.core.messaging.ChangeDeltaMessage;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
+import ai.sapper.cdc.core.model.DFSAgentError;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
-import ai.sapper.hcdc.agents.common.DFSAgentError;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.hcdc.common.model.*;
 import com.google.common.base.Preconditions;

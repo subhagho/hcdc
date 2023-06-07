@@ -4,7 +4,7 @@ import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.processing.Processor;
-import ai.sapper.hcdc.agents.common.DFSEditsFileFinder;
+import ai.sapper.cdc.core.DFSEditsFileFinder;
 import ai.sapper.cdc.core.model.HCdcProcessingState;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.HCdcStateManager;

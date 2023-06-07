@@ -1,5 +1,6 @@
 package ai.sapper.cdc.core.model.dfs;
 
+import ai.sapper.cdc.core.model.SnapshotOffset;
 import ai.sapper.cdc.core.state.Offset;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.base.Preconditions;

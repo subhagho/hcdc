@@ -1,6 +1,6 @@
 package ai.sapper.cdc.core.model.dfs;
 
-import ai.sapper.hcdc.agents.common.DFSEditsFileFinder;
+import ai.sapper.cdc.core.DFSEditsFileFinder;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;

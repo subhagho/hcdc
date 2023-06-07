@@ -1,7 +1,7 @@
 package ai.sapper.hcdc.agents.namenode;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.hcdc.agents.common.DFSEditsFileFinder;
+import ai.sapper.cdc.core.DFSEditsFileFinder;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

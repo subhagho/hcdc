@@ -42,7 +42,7 @@ public class DFSFileInfo {
                 .setInodeId(inodeId)
                 .setFileType(fileType.name());
         if (!Strings.isNullOrEmpty(schemaURI)) {
-            builder.setSchemaLocation(schemaURI);
+            builder.setSchemaURI(schemaURI);
         }
         return builder.build();
     }
@@ -57,7 +57,7 @@ public class DFSFileInfo {
                 .setInodeId(inodeId)
                 .setFileType(fileType.name());
         if (!Strings.isNullOrEmpty(schemaURI)) {
-            builder.setSchemaLocation(schemaURI);
+            builder.setSchemaURI(schemaURI);
         }
         return builder.build();
     }
@@ -70,8 +70,8 @@ public class DFSFileInfo {
         if (file.hasFileType()) {
             fileType = EFileType.valueOf(file.getFileType());
         }
-        if (file.hasSchemaLocation()) {
-            schemaURI = file.getSchemaLocation();
+        if (file.hasSchemaURI()) {
+            schemaURI = file.getSchemaURI();
         }
         Preconditions.checkState(!Strings.isNullOrEmpty(namespace));
         Preconditions.checkState(!Strings.isNullOrEmpty(hdfsPath));

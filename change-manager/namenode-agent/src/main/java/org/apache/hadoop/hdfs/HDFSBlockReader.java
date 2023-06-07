@@ -2,7 +2,7 @@ package org.apache.hadoop.hdfs;
 
 import ai.sapper.cdc.common.cache.LRUCache;
 import ai.sapper.cdc.core.io.EncryptionHandler;
-import ai.sapper.cdc.entity.model.HDFSBlockData;
+import ai.sapper.cdc.core.model.HDFSBlockData;
 import ai.sapper.hcdc.io.EncryptionContext;
 import com.google.common.base.Preconditions;
 import lombok.Getter;

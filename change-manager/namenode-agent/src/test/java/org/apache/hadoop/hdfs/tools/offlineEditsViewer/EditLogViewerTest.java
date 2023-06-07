@@ -3,7 +3,7 @@ package org.apache.hadoop.hdfs.tools.offlineEditsViewer;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.hcdc.agents.common.DFSEditsFileFinder;
+import ai.sapper.cdc.core.DFSEditsFileFinder;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.model.dfs.DFSEditLogBatch;
 import ai.sapper.cdc.core.model.dfs.DFSTransactionType;
