@@ -122,11 +122,11 @@ public class AvroConverter extends AvroBasedConverter {
         DatumReader<GenericRecord> datumReader = new GenericDatumReader<>();
         try (DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(file, datumReader)) {
             Schema schema = dataFileReader.getSchema();
-            AvroEntitySchema avs = new AvroEntitySchema();
+            AvroEntitySchema avs = (AvroEntitySchema) schemaManager().createSchema(schemaEntity);
             SchemaEntity se = new SchemaEntity(schemaEntity);
             avs.setSchemaEntity(se);
             avs.withSchema(schema, true);
-            return schemaManager().checkAndSave(avs, schemaEntity);
+            return schemaManager().updateSchema(avs);
         }
     }
 

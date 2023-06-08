@@ -22,14 +22,11 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 @Getter
 @Accessors(fluent = true)
 public abstract class HDFSEditsReader extends Processor<EHCdcProcessorState, HCdcTxId> {
-    protected final NameNodeEnv env;
     protected MessageSender<String, DFSChangeDelta> sender;
     protected HDFSEditsReaderSettings settings;
 
-    public HDFSEditsReader(@NonNull NameNodeEnv env,
-                           @NonNull HCdcStateManager stateManager) {
-        super(stateManager, HCdcProcessingState.class);
-        this.env = env;
+    public HDFSEditsReader(@NonNull NameNodeEnv env) {
+        super(env, HCdcProcessingState.class);
     }
 
     @SuppressWarnings("unchecked")

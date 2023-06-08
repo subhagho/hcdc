@@ -1,9 +1,9 @@
 package ai.sapper.hcdc.messaging;
 
-import ai.sapper.cdc.common.model.AvroChangeType;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.model.dfs.DFSFileReplicaState;
+import ai.sapper.cdc.entity.model.AvroChangeType;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSFile;
 import ai.sapper.hcdc.common.model.DFSSchemaChange;

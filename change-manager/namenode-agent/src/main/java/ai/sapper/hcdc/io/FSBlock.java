@@ -3,6 +3,8 @@ package ai.sapper.hcdc.io;
 import ai.sapper.cdc.core.io.FileSystem;
 import ai.sapper.cdc.core.io.Reader;
 import ai.sapper.cdc.core.io.Writer;
+import ai.sapper.cdc.core.io.model.DirectoryInode;
+import ai.sapper.cdc.core.io.model.FileInode;
 import ai.sapper.cdc.core.io.model.PathInfo;
 import ai.sapper.cdc.core.model.dfs.DFSBlockState;
 import com.google.common.base.Preconditions;
@@ -20,29 +22,43 @@ public class FSBlock implements Closeable {
     public static final String EXT_BLOCK_FILE = "blk";
 
     private final FileSystem fs;
-    private final PathInfo directory;
+    private final DirectoryInode directory;
     private final long blockId;
     private final long previousBlockId;
     private final String filename;
-    private final PathInfo path;
+    private FileInode path;
     private long size = -1;
     @Getter(AccessLevel.NONE)
     private Writer writer = null;
     @Getter(AccessLevel.NONE)
     private Reader reader = null;
 
-    public FSBlock(@NonNull PathInfo directory,
-                      long blockId,
-                      long previousBlockId,
-                      @NonNull FileSystem fs,
-                      String domain) throws IOException {
+    public FSBlock(@NonNull DirectoryInode directory,
+                   long blockId,
+                   long previousBlockId,
+                   @NonNull FileSystem fs,
+                   String domain) throws IOException {
         this.fs = fs;
         this.directory = directory;
         this.blockId = blockId;
         this.previousBlockId = previousBlockId;
         filename = blockFile(blockId, previousBlockId);
-        path = fs.get(String.format("%s/%s", directory.path(), filename), domain, false);
+        setup(filename, blockId, false);
     }
+
+    public FSBlock(@NonNull DFSBlockState blockState,
+                   @NonNull DirectoryInode directory,
+                   @NonNull FileSystem fs,
+                   String domain,
+                   boolean create) throws IOException {
+        this.directory = directory;
+        this.fs = fs;
+        this.blockId = blockState.getBlockId();
+        this.previousBlockId = blockState.getPrevBlockId();
+        filename = blockFile(blockState.getBlockId(), blockState.getPrevBlockId());
+        setup(filename, blockState.getBlockId(), create);
+    }
+
 
     private String blockFile(long blockId, long previousBlockId) {
         String p = String.valueOf(previousBlockId);
@@ -50,40 +66,17 @@ public class FSBlock implements Closeable {
         return String.format("%d-%s.%s", blockId, p, EXT_BLOCK_FILE);
     }
 
-    public FSBlock(@NonNull DFSBlockState blockState,
-                      @NonNull PathInfo directory,
-                      @NonNull FileSystem fs,
-                      String domain) throws IOException {
-        this.directory = directory;
-        this.fs = fs;
-        this.blockId = blockState.getBlockId();
-        this.previousBlockId = blockState.getPrevBlockId();
-        filename = blockFile(blockState.getBlockId(), blockState.getPrevBlockId());
-        path = fs.get(String.format("%s/%s", directory.path(), filename), domain, false);
-        setup(blockState, false);
-    }
-
-    public FSBlock(@NonNull DFSBlockState blockState,
-                      @NonNull PathInfo directory,
-                      @NonNull FileSystem fs,
-                      String domain,
-                      boolean create) throws IOException {
-        this.directory = directory;
-        this.fs = fs;
-        this.blockId = blockState.getBlockId();
-        this.previousBlockId = blockState.getPrevBlockId();
-        filename = blockFile(blockState.getBlockId(), blockState.getPrevBlockId());
-        path = fs.get(String.format("%s/%s", directory.path(), filename), domain, false);
-        setup(blockState, create);
-    }
-
-    private void setup(DFSBlockState blockState, boolean create) throws IOException {
-        boolean exists = path.exists();
-        if (!create && !exists) {
-            throw new IOException(String.format("Block File not found. [block ID=%d][path=%s]",
-                    blockState.getBlockId(),
-                    path.path()));
-        } else if (!exists) {
+    private void setup(String path,
+                       long blockId,
+                       boolean create) throws IOException {
+        this.path = (FileInode) fs.getInode(directory().getDomain(), path);
+        if (this.path == null) {
+            if (!create) {
+                throw new IOException(String.format("Block File not found. [block ID=%d][path=%s]",
+                        blockId,
+                        path));
+            }
+            this.path = fs.create(directory, path);
             write(new byte[0]);
             close();
         }
@@ -91,7 +84,7 @@ public class FSBlock implements Closeable {
 
     public long size() throws IOException {
         if (size < 0) {
-            if (!path.exists()) {
+            if (!fs.exists(path.getPathInfo())) {
                 size = 0;
             } else {
                 size = path.size();
@@ -165,11 +158,11 @@ public class FSBlock implements Closeable {
     }
 
     public boolean exists() throws IOException {
-        return path.exists();
+        return fs.exists(path.getPathInfo());
     }
 
     protected boolean delete() throws IOException {
-        return fs.delete(path);
+        return fs.delete(path.getPathInfo());
     }
 
     /**

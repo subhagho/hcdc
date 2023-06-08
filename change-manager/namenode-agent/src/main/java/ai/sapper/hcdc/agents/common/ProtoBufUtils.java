@@ -19,8 +19,8 @@ public class ProtoBufUtils {
                 updated = true;
             }
         }
-        if (file.hasSchemaLocation()) {
-            fileState.getFileInfo().setSchemaURI(file.getSchemaLocation());
+        if (file.hasSchemaURI()) {
+            fileState.getFileInfo().setSchemaURI(file.getSchemaURI());
             updated = true;
         }
         return updated;
@@ -36,8 +36,8 @@ public class ProtoBufUtils {
                 updated = true;
             }
         }
-        if (file.hasSchemaLocation()) {
-            replicaState.getFileInfo().setSchemaURI(file.getSchemaLocation());
+        if (file.hasSchemaURI()) {
+            replicaState.getFileInfo().setSchemaURI(file.getSchemaURI());
             updated = true;
         }
         return updated;
@@ -61,7 +61,7 @@ public class ProtoBufUtils {
                                  @NonNull String schemaLocation) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(schemaLocation));
         DFSFile.Builder builder = file.toBuilder();
-        builder.setSchemaLocation(schemaLocation);
+        builder.setSchemaURI(schemaLocation);
 
         return builder.build();
     }

@@ -2,6 +2,7 @@ package ai.sapper.hcdc.io;
 
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.io.FileSystem;
+import ai.sapper.cdc.core.io.model.DirectoryInode;
 import ai.sapper.cdc.core.io.model.PathInfo;
 import ai.sapper.cdc.core.model.dfs.DFSBlockState;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
@@ -28,54 +29,37 @@ import java.util.zip.ZipOutputStream;
 public class FSFile implements Closeable {
     private final String domain;
     private final FileSystem fs;
-    private final PathInfo directory;
+    private DirectoryInode directory;
     @Getter(AccessLevel.NONE)
     private final List<FSBlock> blocks = new ArrayList<>();
     @Getter(AccessLevel.NONE)
     private int currentIndex = 0;
 
-    public FSFile(@NonNull String domain,
-                  @NonNull PathInfo directory,
-                  @NonNull FileSystem fs) {
-        this.domain = domain;
-        this.directory = directory;
-        this.fs = fs;
-    }
-
     public FSFile(@NonNull DFSFileState fileState,
-                  String domain,
-                  @NonNull FileSystem fs,
-                  boolean create) throws IOException {
-        this.domain = domain;
-        this.fs = fs;
-        String p = PathUtils.formatPath(String.format("%s/", fileState.getFileInfo().getHdfsPath()));
-        directory = fs.get(p, domain);
-        setup(create, fileState);
-    }
-
-    public FSFile(@NonNull DFSFileState fileState,
-                  String domain,
+                  @NonNull String domain,
                   @NonNull FileSystem fs) throws IOException {
         this.domain = domain;
         this.fs = fs;
         String p = PathUtils.formatPath(String.format("%s/", fileState.getFileInfo().getHdfsPath()));
-        directory = fs.get(p, domain);
-        setup(false, fileState);
+        setup(fileState, p);
     }
 
-    private void setup(boolean create, DFSFileState fileState) throws IOException {
-        if (!directory.exists()) {
-            if (!create) {
-                throw new IOException(String.format("FS File does not exist. [path=%s]", directory.path()));
-            }
-            fs.mkdirs(directory);
-        } else {
-            if (!directory.isDirectory()) {
-                throw new IOException(
-                        String.format("Specified path already exists and not a directory. [path=%s]",
-                                directory.path()));
-            }
+    private void setup(DFSFileState fileState,
+                       String path) throws IOException {
+        directory = (DirectoryInode) fs.getInode(domain, path);
+        if (directory == null) {
+            directory = fs.mkdirs(domain, path);
         }
+        if (directory.getPathInfo() == null) {
+            PathInfo pi = fs.parsePathInfo(directory.getPath());
+            directory.setPathInfo(pi);
+        }
+        if (!directory.isDirectory()) {
+            throw new IOException(
+                    String.format("Specified path already exists and not a directory. [path=%s]",
+                            directory.getAbsolutePath()));
+        }
+
         if (fileState.hasBlocks()) {
             for (DFSBlockState blockState : fileState.getBlocks()) {
                 FSBlock block = new FSBlock(blockState, directory, fs, domain, create);
@@ -97,12 +81,6 @@ public class FSFile implements Closeable {
 
     public Collection<FSBlock> getBlocksList() {
         return blocks;
-    }
-
-    public void open(boolean overwrite) throws IOException {
-        if (!directory.exists()) {
-            fs.mkdirs(directory);
-        }
     }
 
     public synchronized void reset() throws IOException {
@@ -225,7 +203,7 @@ public class FSFile implements Closeable {
     }
 
     public boolean exists() throws IOException {
-        return directory.exists();
+        return fs.exists(directory.getPathInfo());
     }
 
     public synchronized int delete() throws IOException {
@@ -238,7 +216,7 @@ public class FSFile implements Closeable {
             }
             blocks.clear();
         }
-        fs.delete(directory);
+        fs.delete(directory.getPathInfo());
         return count;
     }
 

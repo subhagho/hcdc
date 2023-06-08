@@ -52,7 +52,7 @@ public class DFSEditsFileFinder {
                     String s = m.group(1);
                     if (!Strings.isNullOrEmpty(s)) {
                         long txid = Long.parseLong(s);
-                        DefaultLogger.LOGGER.debug(
+                        DefaultLogger.debug(
                                 String.format("[START TX ID=%d] [file=%s]", txid, file.getAbsolutePath()));
                         return file.getAbsolutePath();
                     }

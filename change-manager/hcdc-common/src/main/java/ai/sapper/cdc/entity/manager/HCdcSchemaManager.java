@@ -3,6 +3,7 @@ package ai.sapper.cdc.entity.manager;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.filters.*;
 import ai.sapper.cdc.core.processing.ProcessorState;
+import ai.sapper.cdc.entity.avro.AvroEntitySchema;
 import ai.sapper.cdc.entity.schema.Domain;
 import ai.sapper.cdc.entity.schema.EntitySchema;
 import ai.sapper.cdc.entity.schema.HCdcDomain;
@@ -46,12 +47,20 @@ public class HCdcSchemaManager extends SchemaManager {
     @Override
     public SchemaEntity createEntity(@NonNull String domain,
                                      @NonNull String name) throws Exception {
+        SchemaEntity se = getEntity(domain, name);
+        if (se != null) {
+            return se;
+        }
         return new SchemaEntity(domain, name);
     }
 
     @Override
     public EntitySchema createSchema(@NonNull SchemaEntity schemaEntity) throws Exception {
-        return null;
+        AvroEntitySchema schema = getSchema(schemaEntity, AvroEntitySchema.class);
+        if (schema != null) {
+            return schema;
+        }
+        return createSchema(schemaEntity, AvroEntitySchema.class);
     }
 
     public void addFilterCallback(@NonNull FilterAddCallback callback) {

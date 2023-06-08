@@ -1,22 +1,21 @@
 package ai.sapper.hcdc.agents.common.converter;
 
-import ai.sapper.cdc.common.model.AvroChangeType;
-import ai.sapper.cdc.common.schema.AvroUtils;
-import ai.sapper.cdc.common.schema.SchemaEntity;
-import ai.sapper.cdc.common.schema.SchemaEvolutionValidator;
-import ai.sapper.cdc.common.schema.SchemaHelper;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.PathUtils;
-import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.core.model.EFileType;
+import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.model.HDFSBlockData;
-import ai.sapper.cdc.entity.CDCSchemaEntity;
-import ai.sapper.cdc.entity.DataType;
 import ai.sapper.cdc.entity.avro.AvroEntitySchema;
+import ai.sapper.cdc.entity.model.AvroChangeType;
 import ai.sapper.cdc.entity.model.ChangeEvent;
 import ai.sapper.cdc.entity.model.DbSource;
 import ai.sapper.cdc.core.model.dfs.DFSBlockState;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
+import ai.sapper.cdc.entity.schema.AvroUtils;
+import ai.sapper.cdc.entity.schema.SchemaEntity;
+import ai.sapper.cdc.entity.schema.SchemaEvolutionValidator;
+import ai.sapper.cdc.entity.schema.SchemaHelper;
+import ai.sapper.cdc.entity.types.DataType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -57,7 +56,7 @@ public class JsonConverter extends AvroBasedConverter {
                             @NonNull DFSFileState fileState,
                             @NonNull SchemaEntity schemaEntity,
                             AvroChangeType.@NonNull EChangeType op,
-                            @NonNull BaseTxId txId,
+                            @NonNull HCdcTxId txId,
                             boolean snapshot) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
@@ -77,7 +76,7 @@ public class JsonConverter extends AvroBasedConverter {
                         line = line.trim();
                         if (Strings.isNullOrEmpty(line)) continue;
                         GenericRecord record = AvroUtils.jsonToAvroRecord(line, schema.getSchema());
-                        BaseTxId tid = new BaseTxId(txId);
+                        HCdcTxId tid = new HCdcTxId(txId);
                         tid.setRecordId(count);
                         ChangeEvent event = convert(schema,
                                 record,
@@ -141,7 +140,7 @@ public class JsonConverter extends AvroBasedConverter {
                         }
 
                         if (DefaultLogger.isGreaterOrEqual(maxLevel, Level.ERROR)) {
-                            DefaultLogger.LOGGER.warn(
+                            DefaultLogger.warn(
                                     String.format("Found incompatible schema. [schema=%s][entity=%s]",
                                             _schema.toString(true), schemaEntity.toString()));
                         } else {
@@ -152,12 +151,10 @@ public class JsonConverter extends AvroBasedConverter {
             }
         }
         if (schema != null) {
-            AvroEntitySchema avs = new AvroEntitySchema();
-            CDCSchemaEntity se = new CDCSchemaEntity(schemaEntity);
-            avs.setSchemaEntity(se);
+            AvroEntitySchema avs = (AvroEntitySchema) schemaManager().createSchema(schemaEntity);
             avs.withSchema(schema, true);
 
-            return schemaManager().checkAndSave(avs, schemaEntity);
+            return schemaManager().updateSchema(avs);
         }
         return null;
     }

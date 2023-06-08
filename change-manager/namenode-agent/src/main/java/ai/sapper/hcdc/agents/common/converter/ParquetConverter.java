@@ -1,18 +1,17 @@
 package ai.sapper.hcdc.agents.common.converter;
 
-import ai.sapper.cdc.common.model.AvroChangeType;
-import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.utils.PathUtils;
-import ai.sapper.cdc.core.model.BaseTxId;
 import ai.sapper.cdc.core.model.EFileType;
+import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.model.HDFSBlockData;
-import ai.sapper.cdc.entity.CDCSchemaEntity;
-import ai.sapper.cdc.entity.DataType;
 import ai.sapper.cdc.entity.avro.AvroEntitySchema;
+import ai.sapper.cdc.entity.model.AvroChangeType;
 import ai.sapper.cdc.entity.model.ChangeEvent;
 import ai.sapper.cdc.entity.model.DbSource;
 import ai.sapper.cdc.core.model.dfs.DFSBlockState;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
+import ai.sapper.cdc.entity.schema.SchemaEntity;
+import ai.sapper.cdc.entity.types.DataType;
 import com.google.common.base.Preconditions;
 import lombok.NonNull;
 import org.apache.avro.Schema;
@@ -68,8 +67,8 @@ public class ParquetConverter extends AvroBasedConverter {
                             @NonNull File output,
                             @NonNull DFSFileState fileState,
                             @NonNull SchemaEntity schemaEntity,
-                            AvroChangeType.@NonNull EChangeType op,
-                            @NonNull BaseTxId txId,
+                            @NonNull AvroChangeType.EChangeType op,
+                            @NonNull HCdcTxId txId,
                             boolean snapshot) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         Configuration conf = new Configuration();
@@ -83,7 +82,7 @@ public class ParquetConverter extends AvroBasedConverter {
                 while (true) {
                     GenericRecord record = reader.read();
                     if (record == null) break;
-                    BaseTxId tid = new BaseTxId(txId);
+                    HCdcTxId tid = new HCdcTxId(txId);
                     tid.setRecordId(count);
                     ChangeEvent event = convert(schema,
                             record,
@@ -110,10 +109,9 @@ public class ParquetConverter extends AvroBasedConverter {
                      ParquetFileReader.open(HadoopInputFile.fromPath(new Path(file.toURI()), conf))) {
             MessageType pschema = reader.getFooter().getFileMetaData().getSchema();
             Schema schema = new AvroSchemaConverter(conf).convert(pschema);
-            AvroEntitySchema avs = new AvroEntitySchema();
-            CDCSchemaEntity se = new CDCSchemaEntity(schemaEntity);
-            avs.setSchemaEntity(se);avs.withSchema(schema, true);
-            return schemaManager().checkAndSave(avs, schemaEntity);
+            AvroEntitySchema avs = (AvroEntitySchema) schemaManager().createSchema(schemaEntity);
+            avs.withSchema(schema, true);
+            return schemaManager().updateSchema(avs);
         }
     }
 
