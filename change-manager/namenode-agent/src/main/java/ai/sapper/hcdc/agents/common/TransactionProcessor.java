@@ -1,6 +1,7 @@
 package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.cdc.core.InvalidTransactionError;
+import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.MessageSender;
@@ -35,14 +36,14 @@ public abstract class TransactionProcessor {
     private HCdcStateManager stateManager;
     private HCdcSchemaManager schemaManager;
     private MessageSender<String, DFSChangeDelta> errorSender;
+    private final NameNodeEnv env;
 
-    public TransactionProcessor(@NonNull String name) {
+    public TransactionProcessor(@NonNull String name,
+                                @NonNull NameNodeEnv env) {
         this.name = name;
-    }
-
-    public TransactionProcessor withStateManager(@NonNull HCdcStateManager stateManager) {
-        this.stateManager = stateManager;
-        return this;
+        this.env = env;
+        this.stateManager = env.stateManager();
+        this.schemaManager = env.schemaManager();
     }
 
     public TransactionProcessor withErrorQueue(@NonNull MessageSender<String, DFSChangeDelta> errorSender) {
@@ -50,10 +51,6 @@ public abstract class TransactionProcessor {
         return this;
     }
 
-    public TransactionProcessor withSchemaManager(@NonNull HCdcSchemaManager schemaManager) {
-        this.schemaManager = schemaManager;
-        return this;
-    }
 
     public abstract void processAddFileTxMessage(@NonNull DFSFileAdd data,
                                                  @NonNull MessageObject<String, DFSChangeDelta> message,

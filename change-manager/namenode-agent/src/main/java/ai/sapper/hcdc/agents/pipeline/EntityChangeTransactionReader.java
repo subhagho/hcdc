@@ -1,30 +1,25 @@
 package ai.sapper.hcdc.agents.pipeline;
 
-import ai.sapper.cdc.common.model.AvroChangeType;
-import ai.sapper.cdc.common.model.services.SnapshotDoneRequest;
-import ai.sapper.cdc.common.schema.SchemaEntity;
-import ai.sapper.cdc.common.schema.SchemaVersion;
 import ai.sapper.cdc.core.InvalidTransactionError;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.WebServiceClient;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.io.Archiver;
 import ai.sapper.cdc.core.io.EncryptionHandler;
-import ai.sapper.cdc.core.io.impl.CDCFileSystem;
+import ai.sapper.cdc.core.io.FileSystem;
 import ai.sapper.cdc.core.io.model.PathInfo;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.MessageSender;
-import ai.sapper.cdc.core.model.BaseTxId;
-import ai.sapper.cdc.core.model.EFileState;
-import ai.sapper.cdc.core.model.EFileType;
-import ai.sapper.cdc.core.model.HDFSBlockData;
+import ai.sapper.cdc.core.model.*;
 import ai.sapper.cdc.core.model.dfs.*;
 import ai.sapper.cdc.core.utils.HFSHelper;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
 import ai.sapper.cdc.entity.avro.AvroEntitySchema;
-import ai.sapper.cdc.entity.schema.SchemaManager;
+import ai.sapper.cdc.entity.model.AvroChangeType;
+import ai.sapper.cdc.entity.schema.SchemaEntity;
+import ai.sapper.cdc.entity.schema.SchemaVersion;
 import ai.sapper.hcdc.agents.common.CDCDataConverter;
 import ai.sapper.hcdc.agents.common.ProtoBufUtils;
 import ai.sapper.hcdc.agents.common.TransactionProcessor;
@@ -47,14 +42,14 @@ import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 public class EntityChangeTransactionReader extends TransactionProcessor {
     public static final String SERVICE_SNAPSHOT_DONE = "snapshotDone";
     private MessageSender<String, DFSChangeDelta> sender;
-    private CDCFileSystem fs;
+    private FileSystem fs;
     private HdfsConnection connection;
     private WebServiceClient client;
     private Archiver archiver;
     private EncryptionHandler<ByteBuffer, ByteBuffer> encryptionHandler;
 
-    public EntityChangeTransactionReader(@NonNull String name) {
-        super(name);
+    public EntityChangeTransactionReader(@NonNull String name, @NonNull NameNodeEnv env) {
+        super(name, env);
     }
 
     public EntityChangeTransactionReader withHdfsConnection(@NonNull HdfsConnection connection) {
@@ -67,7 +62,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         return this;
     }
 
-    public EntityChangeTransactionReader withFileSystem(@NonNull CDCFileSystem fs) {
+    public EntityChangeTransactionReader withFileSystem(@NonNull FileSystem fs) {
         this.fs = fs;
         return this;
     }
@@ -100,7 +95,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
     @Override
     public void processAddFileTxMessage(@NonNull DFSFileAdd data,
                                         @NonNull MessageObject<String, DFSChangeDelta> message,
-                                        @NonNull BaseTxId txId,
+                                        @NonNull HCdcTxId txId,
                                         boolean retry) throws Exception {
         SchemaEntity schemaEntity = SchemaEntityHelper.parse(message.value().getEntity());
         if (Strings.isNullOrEmpty(schemaEntity.getDomain()) ||
@@ -118,7 +113,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
     private DFSFileReplicaState registerFile(DFSFile file,
                                              SchemaEntity schemaEntity,
                                              MessageObject<String, DFSChangeDelta> message,
-                                             BaseTxId txId,
+                                             HCdcTxId txId,
                                              boolean retry) throws Exception {
         String hdfsPath = file.getEntity().getEntity();
         DFSFileState fileState = stateManager()
@@ -149,13 +144,13 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                         .create(fileState.getFileInfo(),
                                 schemaEntity,
                                 true);
-            rState.setSnapshotTxId(fileState.getLastTnxId());
+            rState.getOffset().setSnapshotTxId(fileState.getLastTnxId());
             rState.setSnapshotTime(System.currentTimeMillis());
             rState.setSnapshotReady(message.mode() != MessageObject.MessageMode.Snapshot);
-            rState.setState(EFileState.New);
+            rState.setState(EFileReplicationState.New);
             rState.copyBlocks(fileState);
-            rState.setStoragePath(fsf.directory().pathConfig());
-            rState.setLastReplicatedTx(txId.getId());
+            rState.setStoragePath(fsf.directory().getPath());
+            rState.getOffset().setLastReplicatedTxId(txId.getId());
             rState.setLastReplicationTime(System.currentTimeMillis());
 
             rState = stateManager().replicaStateHelper().update(rState);
@@ -182,18 +177,20 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     file.getEntity().getEntity(),
                     new Exception(String.format("File not setup for replication. [path=%s]",
                             file.getEntity().getEntity())));
-        } else if (rState.getLastReplicatedTx() >= txId) {
+        } else if (rState.getOffset().getLastReplicatedTxId() >= txId) {
             if (message.mode() == MessageObject.MessageMode.New && !retry) {
                 throw new InvalidMessageError(message.id(),
                         String.format("Duplicate message detected: [path=%s]",
                                 fileState.getFileInfo().getHdfsPath()));
-            } else if (retry && txId != rState.getLastReplicatedTx()) {
+            } else if (retry && txId != rState.getOffset().getLastReplicatedTxId()) {
                 throw new InvalidTransactionError(txId,
                         DFSError.ErrorCode.SYNC_STOPPED,
                         fileState.getFileInfo().getHdfsPath(),
                         new Exception(
                                 String.format("Invalid processed transaction. [path=%s][expected tx=%d][replicated tx=%d]",
-                                        fileState.getFileInfo().getHdfsPath(), txId, rState.getLastReplicatedTx())))
+                                        fileState.getFileInfo().getHdfsPath(),
+                                        txId,
+                                        rState.getOffset().getLastReplicatedTxId())))
                         .withFile(file);
             }
         }
@@ -209,7 +206,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
     @Override
     public void processAppendFileTxMessage(@NonNull DFSFileAppend data,
                                            @NonNull MessageObject<String, DFSChangeDelta> message,
-                                           @NonNull BaseTxId txId,
+                                           @NonNull HCdcTxId txId,
                                            boolean retry) throws Exception {
         String path = data.getFile().getEntity().getEntity();
         DFSFileState fileState = stateManager()
@@ -239,8 +236,8 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             rState = stateManager()
                     .replicaStateHelper()
                     .get(schemaEntity, fileState.getFileInfo().getInodeId());
-            rState.setState(EFileState.Updating);
-            rState.setLastReplicatedTx(txId.getId());
+            rState.setState(EFileReplicationState.InProgress);
+            rState.getOffset().setLastReplicatedTxId(txId.getId());
             rState.setLastReplicationTime(System.currentTimeMillis());
             rState = stateManager().replicaStateHelper().update(rState);
 
@@ -264,7 +261,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
     @Override
     public void processDeleteFileTxMessage(@NonNull DFSFileDelete data,
                                            @NonNull MessageObject<String, DFSChangeDelta> message,
-                                           @NonNull BaseTxId txId,
+                                           @NonNull HCdcTxId txId,
                                            boolean retry) throws Exception {
         String path = data.getFile().getEntity().getEntity();
         DFSFileState fileState = stateManager()
@@ -306,18 +303,20 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                                 path)))
                         .withFile(data.getFile());
             return;
-        } else if (rState.getLastReplicatedTx() >= txId.getId()) {
+        } else if (rState.getOffset().getLastReplicatedTxId() >= txId.getId()) {
             if (message.mode() == MessageObject.MessageMode.New && !retry) {
                 throw new InvalidMessageError(message.id(),
                         String.format("Duplicate message detected: [path=%s]",
                                 fileState.getFileInfo().getHdfsPath()));
-            } else if (retry && txId.getId() != rState.getLastReplicatedTx()) {
+            } else if (retry && txId.getId() != rState.getOffset().getLastReplicatedTxId()) {
                 throw new InvalidTransactionError(txId.getId(),
                         DFSError.ErrorCode.SYNC_STOPPED,
                         fileState.getFileInfo().getHdfsPath(),
                         new Exception(
                                 String.format("Invalid processed transaction. [path=%s][expected tx=%d][replicated tx=%d]",
-                                        fileState.getFileInfo().getHdfsPath(), txId.getId(), rState.getLastReplicatedTx())))
+                                        fileState.getFileInfo().getHdfsPath(),
+                                        txId.getId(),
+                                        rState.getOffset().getLastReplicatedTxId())))
                         .withFile(data.getFile());
             }
         }
@@ -350,9 +349,8 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             rDelta.setRecordCount(response.recordCount());
             rState.addDelta(rDelta);
 
-            SchemaManager schemaManager = NameNodeEnv.get(name()).schemaManager();
             DFSFile dfile = data.getFile();
-            AvroEntitySchema schema = schemaManager.get(rState.getEntity());
+            AvroEntitySchema schema = schemaManager().getSchema(rState.getEntity(), AvroEntitySchema.class);
             if (schema != null) {
                 if (!Strings.isNullOrEmpty(schema.getZkPath())) {
                     rState.getFileInfo().setSchemaURI(schema.getZkPath());
@@ -381,16 +379,11 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             sender.send(m);
 
             if (archiver != null) {
-                String p = String.format("%s/%d", fileState.getFileInfo().getHdfsPath(),
-                        fileState.getFileInfo().getInodeId());
-                PathInfo tp = archiver.getTargetPath(p, schemaEntity);
-                PathInfo ap = archiver.archive(file.directory(), tp, fs);
-                rState.setStoragePath(ap.pathConfig());
+
             }
             file.delete();
 
-            rState.setEnabled(false);
-            rState.setLastReplicatedTx(txId.getId());
+            rState.getOffset().setLastReplicatedTxId(txId.getId());
             rState.setLastReplicationTime(System.currentTimeMillis());
 
             stateManager()
@@ -418,7 +411,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
     @Override
     public void processAddBlockTxMessage(@NonNull DFSBlockAdd data,
                                          @NonNull MessageObject<String, DFSChangeDelta> message,
-                                         @NonNull BaseTxId txId,
+                                         @NonNull HCdcTxId txId,
                                          boolean retry) throws Exception {
         String path = data.getFile().getEntity().getEntity();
         DFSFileState fileState = stateManager()
@@ -471,7 +464,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             b.setDataSize(block.getDataSize());
             b.setUpdateTime(System.currentTimeMillis());
 
-            rState.setLastReplicatedTx(txId.getId());
+            rState.getOffset().setLastReplicatedTxId(txId.getId());
             rState.setLastReplicationTime(System.currentTimeMillis());
             rState = stateManager().replicaStateHelper().update(rState);
             LOGGER.debug(getClass(), txId.getId(),
@@ -495,7 +488,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
     @Override
     public void processUpdateBlocksTxMessage(@NonNull DFSBlockUpdate data,
                                              @NonNull MessageObject<String, DFSChangeDelta> message,
-                                             @NonNull BaseTxId txId,
+                                             @NonNull HCdcTxId txId,
                                              boolean retry) throws Exception {
         String path = data.getFile().getEntity().getEntity();
         DFSFileState fileState = stateManager()
@@ -574,7 +567,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 b.setDataSize(bs.getDataSize());
                 b.setUpdateTime(System.currentTimeMillis());
 
-                rState.setLastReplicatedTx(txId.getId());
+                rState.getOffset().setLastReplicatedTxId(txId.getId());
                 rState.setLastReplicationTime(System.currentTimeMillis());
 
                 rState = stateManager().replicaStateHelper().update(rState);
@@ -600,7 +593,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
     @Override
     public void processTruncateBlockTxMessage(@NonNull DFSBlockTruncate data,
                                               @NonNull MessageObject<String, DFSChangeDelta> message,
-                                              @NonNull BaseTxId txId,
+                                              @NonNull HCdcTxId txId,
                                               boolean retry) throws Exception {
         String path = data.getFile().getEntity().getEntity();
         DFSFileState fileState = stateManager()
@@ -642,7 +635,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
     @Override
     public void processCloseFileTxMessage(@NonNull DFSFileClose data,
                                           @NonNull MessageObject<String, DFSChangeDelta> message,
-                                          @NonNull BaseTxId txId,
+                                          @NonNull HCdcTxId txId,
                                           boolean retry) throws Exception {
         SchemaEntity schemaEntity = SchemaEntityHelper.parse(message.value().getEntity());
         String path = data.getFile().getEntity().getEntity();
@@ -679,18 +672,17 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 txId.getId(),
                 retry);
         schemaEntity = rState.getEntity();
-        long startTxId = rState.getLastReplicatedTx();
+        long startTxId = rState.getOffset().getLastReplicatedTxId();
         if (!fileState.hasError() && rState.canUpdate()) {
             try (HDFSBlockReader reader = new HDFSBlockReader(connection.dfsClient(),
                     rState.getFileInfo().getHdfsPath())) {
                 reader.init(encryptionHandler);
                 FSFile file = HCdcFsUtils.get(fileState, schemaEntity, fs);
 
-                SchemaManager schemaManager = NameNodeEnv.get(name()).schemaManager();
-                AvroEntitySchema prevSchema = schemaManager.get(rState.getEntity());
+                AvroEntitySchema prevSchema = schemaManager().getSchema(rState.getEntity(), AvroEntitySchema.class);
                 CDCDataConverter converter = new CDCDataConverter(NameNodeEnv.get(name()).dbSource())
                         .withFileSystem(fs)
-                        .withSchemaManager(schemaManager);
+                        .withSchemaManager(schemaManager());
                 if (encryptionHandler != null) {
                     converter.withEncryptionHandler(encryptionHandler);
                 }
@@ -737,7 +729,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                                     .withFile(data.getFile());
                         } else {
                             rState.removeDelta(txId.getId());
-                            PathInfo pi = fs.get(rDelta.getFsPath());
+                            PathInfo pi = fs.parsePathInfo(rDelta.getFsPath());
                             if (pi.exists()) {
                                 fs.delete(pi);
                             }
@@ -769,7 +761,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                         rState.setRecordCount(rState.getRecordCount() + response.recordCount());
                     }
                     DFSFile dfile = data.getFile();
-                    AvroEntitySchema schema = schemaManager.get(rState.getEntity());
+                    AvroEntitySchema schema = schemaManager().getSchema(rState.getEntity(), AvroEntitySchema.class);
                     if (schema != null) {
                         if (!Strings.isNullOrEmpty(schema.getZkPath())) {
                             rState.getFileInfo().setSchemaURI(schema.getZkPath());
@@ -832,8 +824,8 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
 
                 rState.setSnapshotReady(true);
                 rState.setSnapshotTime(System.currentTimeMillis());
-                rState.setState(EFileState.Finalized);
-                rState.setLastReplicatedTx(txId.getId());
+                rState.setState(EFileReplicationState.Finalized);
+                rState.getOffset().setLastReplicatedTxId(txId.getId());
                 rState.setLastReplicationTime(System.currentTimeMillis());
 
                 rState = stateManager().replicaStateHelper().update(rState);
@@ -874,8 +866,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             op = AvroChangeType.EChangeType.EntityUpdate;
             changed = true;
         }
-        SchemaManager schemaManager = NameNodeEnv.get(name()).schemaManager();
-        AvroEntitySchema ned = schemaManager.get(replicaState.getEntity(), updated);
+        AvroEntitySchema ned = schemaManager().getSchema(replicaState.getEntity(), updated, AvroEntitySchema.class);
         if (ned == null) {
             throw new Exception(
                     String.format("Entity Schema not found. [entity=%s][version=%s]",
@@ -886,7 +877,8 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         if (changed) {
             String currentPath = null;
             if (current != null) {
-                AvroEntitySchema ed = schemaManager.get(replicaState.getEntity(), current);
+                AvroEntitySchema ed = schemaManager().getSchema(replicaState.getEntity(),
+                        current, AvroEntitySchema.class);
                 if (ed == null) {
                     throw new Exception(
                             String.format("Entity Schema not found. [entity=%s][version=%s]",
@@ -918,7 +910,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         SnapshotDoneRequest request
                 = new SnapshotDoneRequest(
                 replicaState.getEntity(),
-                replicaState.getSnapshotTxId(),
+                replicaState.getOffset().getSnapshotTxId(),
                 fileState.getFileInfo().getHdfsPath());
         return client.post(SERVICE_SNAPSHOT_DONE,
                 DFSFileReplicaState.class,
@@ -961,7 +953,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         fsBlock.write(data.data().array());
         fsBlock.close();
 
-        blockState.setStoragePath(fsBlock.path().pathConfig());
+        blockState.setStoragePath(fsBlock.path().getPath());
         blockState.setState(EFileState.Finalized);
         return data.dataSize();
     }
@@ -975,7 +967,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
     @Override
     public void processRenameFileTxMessage(@NonNull DFSFileRename data,
                                            @NonNull MessageObject<String, DFSChangeDelta> message,
-                                           @NonNull BaseTxId txId,
+                                           @NonNull HCdcTxId txId,
                                            boolean retry) throws Exception {
         throw new InvalidMessageError(message.id(), "Rename transaction should not come...");
     }
@@ -989,7 +981,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
     @Override
     public void processIgnoreTxMessage(@NonNull DFSIgnoreTx data,
                                        @NonNull MessageObject<String, DFSChangeDelta> message,
-                                       @NonNull BaseTxId txId) throws Exception {
+                                       @NonNull HCdcTxId txId) throws Exception {
         LOGGER.debug(getClass(), txId.getId(), String.format("Received Ignore Transaction: [ID=%d]", txId.getId()));
     }
 
@@ -1002,7 +994,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
     @Override
     public void processErrorTxMessage(@NonNull DFSError data,
                                       @NonNull MessageObject<String, DFSChangeDelta> message,
-                                      @NonNull BaseTxId txId) throws Exception {
+                                      @NonNull HCdcTxId txId) throws Exception {
         DFSTransaction tnx = extractTransaction(data);
         if (data.hasFile()) {
             DFSFile df = data.getFile();
@@ -1016,9 +1008,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                             .replicaStateHelper()
                             .get(schemaEntity, fileState.getFileInfo().getInodeId());
                     if (rState != null) {
-                        rState.setState(EFileState.Error);
+                        rState.setState(EFileReplicationState.Error);
                         if (tnx != null)
-                            rState.setLastReplicatedTx(tnx.getId());
+                            rState.getOffset().setLastReplicatedTxId(tnx.getId());
                         rState.setLastReplicationTime(System.currentTimeMillis());
 
                         stateManager().replicaStateHelper().update(rState);
@@ -1055,9 +1047,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                             .replicaStateHelper()
                             .get(schemaEntity, fileState.getFileInfo().getInodeId());
                     if (rState != null) {
-                        rState.setState(EFileState.Error);
+                        rState.setState(EFileReplicationState.Error);
                         if (tnx != null)
-                            rState.setLastReplicatedTx(tnx.getId());
+                            rState.getOffset().setLastReplicatedTxId(tnx.getId());
                         rState.setLastReplicationTime(System.currentTimeMillis());
 
                         stateManager().replicaStateHelper().update(rState);

@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.agents.main;
 
-import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.NameNodeEnv;
@@ -50,11 +50,11 @@ public class EntityChangeDeltaRunner implements Service<NameNodeEnv.ENameNodeEnv
             env = NameNodeEnv.setup(name(), getClass(), config);
 
             processor = new EntityChangeDeltaReader(NameNodeEnv.get(name()).stateManager(), name());
-            processor.init(NameNodeEnv.get(name()).configNode(), NameNodeEnv.get(name()).connectionManager());
+            processor.init(env.baseConfig(),env.connectionManager());
             return this;
         } catch (Throwable t) {
             DefaultLogger.stacktrace(t);
-            DefaultLogger.LOGGER.error(t.getLocalizedMessage());
+            DefaultLogger.error(t.getLocalizedMessage());
             NameNodeEnv.get(name()).error(t);
             throw t;
         }
@@ -105,7 +105,7 @@ public class EntityChangeDeltaRunner implements Service<NameNodeEnv.ENameNodeEnv
         } catch (Throwable t) {
             t.printStackTrace();
             DefaultLogger.stacktrace(t);
-            DefaultLogger.LOGGER.error(t.getLocalizedMessage());
+            DefaultLogger.error(t.getLocalizedMessage());
         }
     }
 }

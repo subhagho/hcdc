@@ -5,6 +5,7 @@ import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.io.Archiver;
 import ai.sapper.cdc.core.io.EncryptionHandler;
+import ai.sapper.cdc.core.io.FileSystem;
 import ai.sapper.cdc.core.io.impl.CDCFileSystem;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.model.BaseTxId;
@@ -30,12 +31,12 @@ import java.nio.ByteBuffer;
 public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
     private static Logger LOG = LoggerFactory.getLogger(EntityChangeDeltaReader.class);
 
-    private CDCFileSystem fs;
+    private FileSystem fs;
     private Archiver archiver;
 
     private EntityChangeDeltaReaderConfig config;
     private HdfsConnection connection;
-    private CDCFileSystem.FileSystemMocker fileSystemMocker;
+    private FileSystem.FileSystemMocker fileSystemMocker;
     private WebServiceClient client;
     private EncryptionHandler<ByteBuffer, ByteBuffer> encryptionHandler;
 
