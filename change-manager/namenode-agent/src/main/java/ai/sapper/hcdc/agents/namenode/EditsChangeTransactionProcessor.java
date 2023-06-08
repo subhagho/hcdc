@@ -1,21 +1,21 @@
 package ai.sapper.hcdc.agents.namenode;
 
-import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.cdc.core.model.BaseTxId;
+import ai.sapper.cdc.core.InvalidTransactionError;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.MessageSender;
-import ai.sapper.cdc.core.model.BlockTransactionDelta;
 import ai.sapper.cdc.core.model.EFileState;
 import ai.sapper.cdc.core.model.EFileType;
+import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.model.dfs.*;
+import ai.sapper.cdc.core.utils.ProtoUtils;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
-import ai.sapper.cdc.core.InvalidTransactionError;
+import ai.sapper.cdc.entity.model.BlockTransactionDelta;
+import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.hcdc.agents.common.TransactionProcessor;
 import ai.sapper.hcdc.common.model.*;
-import ai.sapper.cdc.core.utils.ProtoUtils;
 import com.google.common.base.Strings;
 import lombok.NonNull;
 
@@ -57,7 +57,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
     @Override
     public void processAddFileTxMessage(@NonNull DFSFileAdd data,
                                         @NonNull MessageObject<String, DFSChangeDelta> message,
-                                        @NonNull BaseTxId txId,
+                                        @NonNull HCdcTxId txId,
                                         boolean retry) throws Exception {
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
@@ -110,7 +110,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                         .create(fileState.getFileInfo(),
                                 schemaEntity,
                                 true);
-            rState.setSnapshotTxId(fileState.getLastTnxId());
+            rState.getOffset().setSnapshotTxId(fileState.getLastTnxId());
             rState.setSnapshotTime(System.currentTimeMillis());
             rState.setSnapshotReady(true);
             rState.copyBlocks(fileState);
@@ -135,7 +135,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
     @Override
     public void processAppendFileTxMessage(@NonNull DFSFileAppend data,
                                            @NonNull MessageObject<String, DFSChangeDelta> message,
-                                           @NonNull BaseTxId txId,
+                                           @NonNull HCdcTxId txId,
                                            boolean retry) throws Exception {
         String path = data.getFile().getEntity().getEntity();
         DFSFileState fileState = stateManager()
@@ -180,7 +180,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
 
     private void checkDirectoryRename(DFSFileRename data,
                                       MessageObject<String, DFSChangeDelta> message,
-                                      BaseTxId txId) throws Exception {
+                                      HCdcTxId txId) throws Exception {
         List<DFSFileState> files = stateManager()
                 .fileStateHelper()
                 .listFiles(data.getSrcFile().getEntity().getEntity());
@@ -205,7 +205,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                                            String destDir,
                                            MessageObject<String, DFSChangeDelta> message,
                                            DFSFileRename renameFile,
-                                           BaseTxId txId) throws Exception {
+                                           HCdcTxId txId) throws Exception {
         if (fileState.checkDeleted()) return;
         if (!fileState.hasError()) {
             String destFile = fileState.getFileInfo().getHdfsPath().replace(srcDir, destDir);
@@ -235,7 +235,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
 
     private void checkDirectoryDelete(DFSFileDelete data,
                                       MessageObject<String, DFSChangeDelta> message,
-                                      BaseTxId txId) throws Exception {
+                                      HCdcTxId txId) throws Exception {
         List<DFSFileState> files = stateManager()
                 .fileStateHelper()
                 .listFiles(data.getFile().getEntity().getEntity());
@@ -259,7 +259,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
     private boolean updateFileRecursiveDelete(DFSFileState fileState,
                                               MessageObject<String, DFSChangeDelta> message,
                                               DFSFileDelete deleteFile,
-                                              BaseTxId txId) throws Exception {
+                                              HCdcTxId txId) throws Exception {
         SchemaEntity schemaEntity = isRegistered(fileState.getFileInfo().getHdfsPath());
         if (schemaEntity == null) {
             LOGGER.warn(getClass(), txId.getId(),
@@ -301,7 +301,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
     @Override
     public void processDeleteFileTxMessage(@NonNull DFSFileDelete data,
                                            @NonNull MessageObject<String, DFSChangeDelta> message,
-                                           @NonNull BaseTxId txId,
+                                           @NonNull HCdcTxId txId,
                                            boolean retry) throws Exception {
         String path = data.getFile().getEntity().getEntity();
         DFSFileState fileState = stateManager()
@@ -389,7 +389,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
     @Override
     public void processAddBlockTxMessage(@NonNull DFSBlockAdd data,
                                          @NonNull MessageObject<String, DFSChangeDelta> message,
-                                         @NonNull BaseTxId txId,
+                                         @NonNull HCdcTxId txId,
                                          boolean retry) throws Exception {
         String path = data.getFile().getEntity().getEntity();
         DFSFileState fileState = stateManager()
@@ -469,7 +469,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
     @Override
     public void processUpdateBlocksTxMessage(@NonNull DFSBlockUpdate data,
                                              @NonNull MessageObject<String, DFSChangeDelta> message,
-                                             @NonNull BaseTxId txId,
+                                             @NonNull HCdcTxId txId,
                                              boolean retry) throws Exception {
         String path = data.getFile().getEntity().getEntity();
         DFSFileState fileState = stateManager()
@@ -561,7 +561,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
     @Override
     public void processTruncateBlockTxMessage(@NonNull DFSBlockTruncate data,
                                               @NonNull MessageObject<String, DFSChangeDelta> message,
-                                              @NonNull BaseTxId txId,
+                                              @NonNull HCdcTxId txId,
                                               boolean retry) throws Exception {
         String path = data.getFile().getEntity().getEntity();
         DFSFileState fileState = stateManager()
@@ -581,7 +581,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
     @Override
     public void processCloseFileTxMessage(@NonNull DFSFileClose data,
                                           @NonNull MessageObject<String, DFSChangeDelta> message,
-                                          @NonNull BaseTxId txId,
+                                          @NonNull HCdcTxId txId,
                                           boolean retry) throws Exception {
         String path = data.getFile().getEntity().getEntity();
         DFSFileState fileState = stateManager()
@@ -693,7 +693,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
     @Override
     public void processRenameFileTxMessage(@NonNull DFSFileRename data,
                                            @NonNull MessageObject<String, DFSChangeDelta> message,
-                                           @NonNull BaseTxId txId,
+                                           @NonNull HCdcTxId txId,
                                            boolean retry) throws Exception {
         String path = data.getSrcFile().getEntity().getEntity();
         DFSFileState fileState = stateManager()
@@ -795,7 +795,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
     @Override
     public void processIgnoreTxMessage(@NonNull DFSIgnoreTx data,
                                        @NonNull MessageObject<String, DFSChangeDelta> message,
-                                       @NonNull BaseTxId txId) throws Exception {
+                                       @NonNull HCdcTxId txId) throws Exception {
         sender.send(message);
     }
 
@@ -808,7 +808,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
     @Override
     public void processErrorTxMessage(@NonNull DFSError data,
                                       @NonNull MessageObject<String, DFSChangeDelta> message,
-                                      @NonNull BaseTxId txId) throws Exception {
+                                      @NonNull HCdcTxId txId) throws Exception {
         throw new InvalidMessageError(message.id(), data.getMessage());
     }
 

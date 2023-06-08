@@ -1,9 +1,6 @@
 package ai.sapper.hcdc.agents.settings;
 
 import ai.sapper.cdc.common.config.Config;
-import ai.sapper.cdc.common.config.Settings;
-import ai.sapper.cdc.core.messaging.builders.MessageReceiverBuilder;
-import ai.sapper.cdc.core.messaging.builders.MessageReceiverSettings;
 import ai.sapper.cdc.core.messaging.builders.MessageSenderBuilder;
 import ai.sapper.cdc.core.messaging.builders.MessageSenderSettings;
 import ai.sapper.cdc.core.processing.ProcessorSettings;

@@ -4,6 +4,7 @@ import ai.sapper.cdc.core.model.EFileReplicationState;
 import ai.sapper.cdc.core.model.EFileState;
 import ai.sapper.cdc.core.state.OffsetState;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.NonNull;
@@ -104,6 +105,11 @@ public class DFSFileReplicaState extends OffsetState<EFileReplicationState, DFSR
 
     public boolean canUpdate() {
         return (fileState == EFileState.New || fileState == EFileState.Updating);
+    }
+
+    @JsonIgnore
+    public boolean isEnabled() {
+        return (fileState != EFileState.Unknown && fileState != EFileState.Deleted && fileState != EFileState.Error);
     }
 
     public void clear() {

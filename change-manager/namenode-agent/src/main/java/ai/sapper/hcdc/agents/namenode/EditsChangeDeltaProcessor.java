@@ -1,26 +1,29 @@
 package ai.sapper.hcdc.agents.namenode;
 
-import ai.sapper.cdc.common.schema.SchemaEntity;
-import ai.sapper.cdc.core.connections.ConnectionManager;
-import ai.sapper.cdc.core.filters.DomainManager;
-import ai.sapper.cdc.core.model.BaseTxId;
+import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
-import ai.sapper.cdc.core.model.BlockTransactionDelta;
-import ai.sapper.cdc.core.utils.SchemaEntityHelper;
-import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
-import ai.sapper.hcdc.agents.common.ProcessorStateManager;
-import ai.sapper.cdc.core.HCdcStateManager;
+import ai.sapper.cdc.core.messaging.ReceiverOffset;
+import ai.sapper.cdc.core.model.EHCdcProcessorState;
+import ai.sapper.cdc.core.model.HCdcMessageProcessingState;
+import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.model.dfs.DFSBlockState;
 import ai.sapper.cdc.core.model.dfs.DFSFileReplicaState;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import ai.sapper.cdc.core.model.dfs.DFSTransactionType;
+import ai.sapper.cdc.core.processing.MessageProcessorState;
+import ai.sapper.cdc.core.state.HCdcStateManager;
+import ai.sapper.cdc.core.utils.ProtoUtils;
+import ai.sapper.cdc.core.utils.SchemaEntityHelper;
+import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
+import ai.sapper.cdc.entity.model.BlockTransactionDelta;
+import ai.sapper.cdc.entity.schema.SchemaEntity;
+import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
+import ai.sapper.hcdc.agents.settings.ChangeDeltaProcessorSettings;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSFileClose;
 import ai.sapper.hcdc.common.model.DFSTransaction;
-import ai.sapper.cdc.core.utils.ProtoUtils;
-import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -34,12 +37,17 @@ import java.io.IOException;
 
 @Getter
 @Accessors(fluent = true)
-public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
+public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends ChangeDeltaProcessor<MO> {
     private static final Logger LOG = LoggerFactory.getLogger(EditsChangeDeltaProcessor.class.getCanonicalName());
+    private HCdcSchemaManager schemaManager;
 
-    public EditsChangeDeltaProcessor(@NonNull HCdcStateManager stateManager,
+    public EditsChangeDeltaProcessor(@NonNull NameNodeEnv env,
                                      @NonNull String name) {
-        super(stateManager, name, EProcessorMode.Committer, false);
+        super(env,
+                ChangeDeltaProcessorSettings.class,
+                EProcessorMode.Committer,
+                false);
+        schemaManager = env.schemaManager();
     }
 
     @Override
@@ -55,40 +63,17 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
         return ret;
     }
 
-
-    public ChangeDeltaProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                                     @NonNull ConnectionManager manger) throws ConfigurationException {
-        ChangeDeltaProcessorConfig config = new ChangeDeltaProcessorConfig(xmlConfig);
-        super.init(config, manger);
-        EditsChangeTransactionProcessor processor = (EditsChangeTransactionProcessor) new EditsChangeTransactionProcessor(name())
-                .withSenderQueue(sender())
-                .withStateManager(stateManager())
-                .withErrorQueue(errorSender());
-        return withProcessor(processor);
-    }
-
-    @Override
-    public void batchStart() throws Exception {
-        Preconditions.checkState(stateManager() instanceof ProcessorStateManager);
-        DomainManager dm = ((ProcessorStateManager) stateManager()).domainManager();
-        dm.refresh();
-    }
-
-    @Override
-    public void batchEnd() throws Exception {
-
-    }
-
     @Override
     public void process(@NonNull MessageObject<String, DFSChangeDelta> message,
                         @NonNull Object data,
+                        @NonNull HCdcMessageProcessingState<MO> pState,
                         DFSTransaction tnx,
                         boolean retry) throws Exception {
-        BaseTxId txId = null;
+        HCdcTxId txId = null;
         if (tnx != null) {
             txId = ProtoUtils.fromTx(tnx);
         } else {
-            txId = new BaseTxId(-1);
+            txId = new HCdcTxId(-1);
         }
         EditsChangeTransactionProcessor processor
                 = (EditsChangeTransactionProcessor) processor();
@@ -99,11 +84,22 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
         }
     }
 
-    private void processBacklogMessage(MessageObject<String, DFSChangeDelta> message, BaseTxId txId) throws Exception {
+    @Override
+    public ChangeDeltaProcessor<MO> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
+        super.init(xmlConfig, null);
+        EditsChangeTransactionProcessor processor = (EditsChangeTransactionProcessor) new EditsChangeTransactionProcessor(name())
+                .withSenderQueue(sender())
+                .withStateManager((HCdcStateManager) stateManager())
+                .withErrorQueue(errorLogger);
+        return withProcessor(processor);
+    }
+
+    private void processBacklogMessage(MessageObject<String, DFSChangeDelta> message, HCdcTxId txId) throws Exception {
+        HCdcStateManager stateManager = (HCdcStateManager) stateManager();
         EditsChangeTransactionProcessor processor
                 = (EditsChangeTransactionProcessor) processor();
         DFSFileClose closeFile = ChangeDeltaSerDe.parse(message.value(), DFSFileClose.class);
-        DFSFileState fileState = stateManager()
+        DFSFileState fileState = stateManager
                 .fileStateHelper()
                 .get(closeFile.getFile().getEntity().getEntity());
         if (fileState == null) {
@@ -116,7 +112,7 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
                     String.format("HDFS File Not registered. [path=%s]",
                             closeFile.getFile().getEntity().getEntity()));
         }
-        DFSFileReplicaState rState = stateManager()
+        DFSFileReplicaState rState = stateManager
                 .replicaStateHelper()
                 .get(schemaEntity, fileState.getFileInfo().getInodeId());
         if (rState == null || !rState.isEnabled()) {
@@ -131,12 +127,12 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
                             closeFile.getFile().getEntity().getEntity(),
                             fileState.getFileInfo().getInodeId()));
         }
-        if (rState.getSnapshotTxId() != txId.getId()) {
+        if (rState.getOffset().getSnapshotTxId() != txId.getId()) {
             throw new InvalidMessageError(message.id(),
                     String.format("Snapshot transaction mismatch. [path=%s][inode=%d] [expected=%d][actual=%d]",
                             closeFile.getFile().getEntity().getEntity(),
                             fileState.getFileInfo().getInodeId(),
-                            rState.getSnapshotTxId(), txId.getId()));
+                            rState.getOffset().getSnapshotTxId(), txId.getId()));
         }
         if (fileState.getLastTnxId() > txId.getId())
             sendBackLogMessage(message, fileState, rState, txId.getId());
@@ -189,7 +185,7 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
                 }
             }
         }
-        rState.setLastReplicatedTx(fileState.getLastTnxId());
+        rState.getOffset().setLastReplicatedTxId(fileState.getLastTnxId());
         rState.setLastReplicationTime(System.currentTimeMillis());
 
         return closeFile;
@@ -198,6 +194,16 @@ public class EditsChangeDeltaProcessor extends ChangeDeltaProcessor {
 
     @Override
     public void close() throws IOException {
+
+    }
+
+    @Override
+    protected void batchStart(@NonNull MessageProcessorState<EHCdcProcessorState, HCdcTxId, MO> state) throws Exception {
+        schemaManager.refresh();
+    }
+
+    @Override
+    protected void batchEnd(@NonNull MessageProcessorState<EHCdcProcessorState, HCdcTxId, MO> state) throws Exception {
 
     }
 }

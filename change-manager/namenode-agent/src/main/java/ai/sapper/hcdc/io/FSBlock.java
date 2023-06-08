@@ -5,7 +5,6 @@ import ai.sapper.cdc.core.io.Reader;
 import ai.sapper.cdc.core.io.Writer;
 import ai.sapper.cdc.core.io.model.DirectoryInode;
 import ai.sapper.cdc.core.io.model.FileInode;
-import ai.sapper.cdc.core.io.model.PathInfo;
 import ai.sapper.cdc.core.model.dfs.DFSBlockState;
 import com.google.common.base.Preconditions;
 import lombok.AccessLevel;

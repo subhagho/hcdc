@@ -3,9 +3,9 @@ package ai.sapper.hcdc.io;
 import ai.sapper.cdc.core.io.FileSystem;
 import ai.sapper.cdc.core.io.model.DirectoryInode;
 import ai.sapper.cdc.core.io.model.PathInfo;
-import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.cdc.core.model.dfs.DFSBlockState;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
+import ai.sapper.cdc.entity.schema.SchemaEntity;
 import lombok.NonNull;
 
 import java.io.IOException;

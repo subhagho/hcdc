@@ -1,17 +1,16 @@
 package ai.sapper.hcdc.agents.namenode;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.core.DFSEditsFileFinder;
+import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.MessageObject;
-import ai.sapper.cdc.core.processing.Processor;
-import ai.sapper.cdc.core.DFSEditsFileFinder;
+import ai.sapper.cdc.core.model.EHCdcProcessorState;
 import ai.sapper.cdc.core.model.HCdcProcessingState;
-import ai.sapper.cdc.core.NameNodeEnv;
-import ai.sapper.cdc.core.HCdcStateManager;
+import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.model.dfs.DFSEditLogBatch;
 import ai.sapper.cdc.core.model.dfs.DFSTransactionType;
-import ai.sapper.cdc.core.model.EHCdcProcessorState;
-import ai.sapper.cdc.core.model.HCdcTxId;
+import ai.sapper.cdc.core.processing.Processor;
 import ai.sapper.hcdc.agents.settings.HDFSEditsReaderSettings;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import com.google.common.base.Preconditions;
@@ -37,10 +36,10 @@ public class EditsLogReader extends HDFSEditsReader {
 
     private File editsDir;
     private HierarchicalConfiguration<ImmutableNode> config;
+    private HCdcTxId txId;
 
-    public EditsLogReader(@NonNull NameNodeEnv env,
-                          @NonNull HCdcStateManager stateManager) {
-        super(env, stateManager);
+    public EditsLogReader(@NonNull NameNodeEnv env) {
+        super(env);
     }
 
     @Override
@@ -50,6 +49,7 @@ public class EditsLogReader extends HDFSEditsReader {
             path = HDFSEditsReaderSettings.__CONFIG_PATH;
         }
         try {
+            NameNodeEnv env = (NameNodeEnv) this.env;
             config = xmlConfig.configurationAt(path);
             Preconditions.checkNotNull(env.hadoopConfig());
             String dir = env.hadoopConfig().nameNodeEditsDir();
@@ -76,9 +76,10 @@ public class EditsLogReader extends HDFSEditsReader {
     public void doRun() throws Exception {
         __lock().lock();
         try {
+            NameNodeEnv env = (NameNodeEnv) this.env;
             HCdcProcessingState pState = (HCdcProcessingState) processingState();
             EditsLogFileReader reader = new EditsLogFileReader();
-            HCdcTxId txId = pState.getProcessedOffset();
+            txId = pState.getProcessedOffset();
             if (txId.getId() < 0) {
                 LOGGER.warn(String.format("Name Node replication not initialized. [source=%s]",
                         env.source()));

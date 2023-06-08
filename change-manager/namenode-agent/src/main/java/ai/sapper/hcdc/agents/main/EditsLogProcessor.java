@@ -1,11 +1,11 @@
 package ai.sapper.hcdc.agents.main;
 
-import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.DistributedLock;
-import ai.sapper.cdc.core.Service;
 import ai.sapper.cdc.core.NameNodeEnv;
+import ai.sapper.cdc.core.Service;
 import ai.sapper.hcdc.agents.namenode.EditsLogReader;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -27,6 +27,7 @@ public class EditsLogProcessor implements Service<NameNodeEnv.ENameNodeEnvState>
     private EditsLogReader processor;
     private Thread runner;
     private NameNodeEnv env;
+
     @Override
     public Service<NameNodeEnv.ENameNodeEnvState> setConfigFile(@NonNull String path) {
         configFile = path;
@@ -49,14 +50,12 @@ public class EditsLogProcessor implements Service<NameNodeEnv.ENameNodeEnvState>
             config = ConfigReader.read(configFile, fileSource);
             env = NameNodeEnv.setup(name(), getClass(), config);
 
-            processor = new EditsLogReader(NameNodeEnv.get(getClass().getSimpleName()).stateManager(), name());
-            processor.init(NameNodeEnv.get(name()).configNode(),
-                    NameNodeEnv.get(name())
-                            .connectionManager());
+            processor = new EditsLogReader(env);
+            processor.init(env.baseConfig(), null);
             return this;
         } catch (Throwable t) {
             DefaultLogger.stacktrace(t);
-            DefaultLogger.LOGGER.error(t.getLocalizedMessage());
+            DefaultLogger.error(t.getLocalizedMessage());
             NameNodeEnv.get(name()).error(t);
             throw t;
         }
@@ -103,7 +102,8 @@ public class EditsLogProcessor implements Service<NameNodeEnv.ENameNodeEnvState>
         try (DistributedLock lock = NameNodeEnv.get(name()).globalLock()) {
             lock.lock();
             try {
-                return processor.doRun();
+                processor.doRun();
+                return processor.txId().getId();
             } finally {
                 lock.unlock();
             }
@@ -118,7 +118,7 @@ public class EditsLogProcessor implements Service<NameNodeEnv.ENameNodeEnvState>
             runner.start();
         } catch (Throwable t) {
             DefaultLogger.stacktrace(t);
-            DefaultLogger.LOGGER.error(t.getLocalizedMessage());
+            DefaultLogger.error(t.getLocalizedMessage());
             t.printStackTrace();
         }
     }

@@ -1,16 +1,17 @@
 package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.cdc.core.BaseEnv;
-import ai.sapper.cdc.core.HCdcStateManager;
 import ai.sapper.cdc.core.InvalidTransactionError;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.messaging.*;
 import ai.sapper.cdc.core.messaging.builders.MessageSenderBuilder;
+import ai.sapper.cdc.core.model.EHCdcProcessorState;
+import ai.sapper.cdc.core.model.HCdcMessageProcessingState;
 import ai.sapper.cdc.core.model.HCdcProcessingState;
 import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.processing.MessageProcessor;
-import ai.sapper.cdc.core.state.StateManagerError;
-import ai.sapper.cdc.core.model.EHCdcProcessorState;
+import ai.sapper.cdc.core.processing.MessageProcessorState;
+import ai.sapper.cdc.core.state.HCdcStateManager;
 import ai.sapper.hcdc.agents.settings.ChangeDeltaProcessorSettings;
 import ai.sapper.hcdc.agents.settings.HDFSSnapshotProcessorSettings;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
@@ -58,6 +59,7 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
                                 boolean ignoreMissing) {
         super(env, HCdcProcessingState.class);
         Preconditions.checkState(super.stateManager() instanceof HCdcStateManager);
+        Preconditions.checkState(super.stateManager().processingState() instanceof HCdcMessageProcessingState<MO>);
         this.mode = mode;
         this.ignoreMissing = ignoreMissing;
         this.settingsType = settingsType;
@@ -70,7 +72,7 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
 
     @Override
     public ChangeDeltaProcessor<MO> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                                                         String path) throws ConfigurationException {
+                                         String path) throws ConfigurationException {
         if (Strings.isNullOrEmpty(path)) {
             path = ChangeDeltaProcessorSettings.__CONFIG_PATH;
         }
@@ -84,27 +86,16 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
         receiveBatchTimeout = ((ChangeDeltaProcessorSettings) settings).getReceiveBatchTimeout();
     }
 
-
-    public HCdcProcessingState updateReadState(String messageId) throws StateManagerError {
-        HCdcProcessingState state = (HCdcProcessingState) stateManager().processingState();
-        processedMessageId = state.getCurrentMessageId();
-
-        return (LongTxState) stateManager.updateMessageId(messageId);
-    }
-
-    private void handleMessage(MessageObject<String, DFSChangeDelta> message) throws Throwable {
-
+    @Override
+    protected void process(@NonNull MessageObject<String, DFSChangeDelta> message,
+                           @NonNull MessageProcessorState<EHCdcProcessorState, HCdcTxId, MO> processorState) throws Exception {
         HCdcTxId txId = null;
         if (!isValidMessage(message)) {
             throw new InvalidMessageError(message.id(),
                     String.format("Invalid Message mode. [id=%s][mode=%s]", message.id(), message.mode().name()));
         }
-
-        LongTxState state = updateReadState(message.id());
-        boolean retry = false;
-        if (!Strings.isNullOrEmpty(state.getCurrentMessageId()) &&
-                !Strings.isNullOrEmpty(processedMessageId()))
-            retry = state.getCurrentMessageId().compareTo(processedMessageId()) == 0;
+        HCdcMessageProcessingState<MO> pState = (HCdcMessageProcessingState<MO>) processorState;
+        boolean retry = pState.isLastProcessedMessage(processedMessageId);
         txId = processor.checkMessageSequence(message, ignoreMissing, retry);
         Object data = ChangeDeltaSerDe.parse(message.value(),
                 Class.forName(message.value().getType()));
@@ -120,12 +111,12 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
                                     txId.getId(), tnx.getId()));
                 }
             }
-            process(message, data, tnx, retry);
-            NameNodeEnv.audit(name, getClass(), (MessageOrBuilder) data);
+            process(message, data, pState, tnx, retry);
+            NameNodeEnv.audit(name(), getClass(), (MessageOrBuilder) data);
             if (mode == EProcessorMode.Reader) {
-                commitReceived(message, txId);
+                commitReceived(message, txId, pState);
             } else
-                commit(message, txId);
+                commit(message, txId, pState);
         } catch (Exception ex) {
             error(message, data, ex, txId);
         }
@@ -134,23 +125,14 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
     public abstract boolean isValidMessage(@NonNull MessageObject<String, DFSChangeDelta> message);
 
     public void commitReceived(@NonNull MessageObject<String, DFSChangeDelta> message,
-                               @NonNull BaseTxId txId) throws Exception {
+                               @NonNull HCdcTxId txId,
+                               @NonNull HCdcMessageProcessingState<MO> pState) throws Exception {
         if (txId.getId() > 0) {
             if (message.mode() == MessageObject.MessageMode.New ||
                     message.mode() == MessageObject.MessageMode.Snapshot) {
                 boolean snapshot = (message.mode() == MessageObject.MessageMode.Snapshot);
-                if (stateManager().processingState().getProcessedTxId().compare(txId, snapshot) < 0) {
-                    stateManager().update(txId);
-                }
-                if (stateManager.moduleTxState().getReceivedTxId() < txId.getId()) {
-                    stateManager().updateReceivedTx(txId.getId());
-                    LOGGER.info(getClass(), txId.getId(),
-                            String.format("Received transaction delta. [TXID=%s]", txId.asString()));
-                }
-                if (message.mode() == MessageObject.MessageMode.Snapshot) {
-                    if (stateManager().getModuleState().getSnapshotTxId() < txId.getId()) {
-                        stateManager().updateSnapshotTx(txId.getId());
-                    }
+                if (pState.getReceivedTx().compare(txId, snapshot) < 0) {
+                    pState.setProcessedOffset(txId);
                 }
             }
         }
@@ -158,18 +140,19 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
     }
 
     public void commit(@NonNull MessageObject<String, DFSChangeDelta> message,
-                       @NonNull HCdcTxId txId) throws Exception {
+                       @NonNull HCdcTxId txId,
+                       @NonNull HCdcMessageProcessingState<MO> pState) throws Exception {
         if (txId.getId() > 0) {
             if (message.mode() == MessageObject.MessageMode.New ||
                     message.mode() == MessageObject.MessageMode.Snapshot) {
                 boolean snapshot = (message.mode() == MessageObject.MessageMode.Snapshot);
-                if (stateManager().processingState().getProcessedOffset().compare(txId, snapshot) < 0) {
-                    stateManager().update(txId);
+                if (pState.getProcessedOffset().compare(txId, snapshot) < 0) {
+                    pState.updateProcessedTxId(txId.getId());
                 }
-                if (stateManager.moduleTxState().getCommittedTxId() < txId.getId()) {
-                    stateManager().updateCommittedTx(txId.getId());
-                    LOGGER.info(getClass(), txId.getId(),
-                            String.format("Committed transaction delta. [TXID=%s]", txId.asString()));
+                if (snapshot) {
+                    if (pState.getSnapshotOffset().getSnapshotTxId() < txId.getId()) {
+                        pState.updateSnapshotTxId(txId.getId());
+                    }
                 }
             }
         }
@@ -178,8 +161,8 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
 
     public void error(@NonNull MessageObject<String, DFSChangeDelta> message,
                       @NonNull Object data,
-                      @NonNull Throwable error,
-                      HCdcTxId txId) throws Throwable {
+                      @NonNull Exception error,
+                      HCdcTxId txId) throws Exception {
         if (error instanceof InvalidTransactionError) {
             LOGGER.error(getClass(), ((InvalidTransactionError) error).getTxId(), error);
             processor.handleError(message, data, (InvalidTransactionError) error);
@@ -197,6 +180,7 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
 
     public abstract void process(@NonNull MessageObject<String, DFSChangeDelta> message,
                                  @NonNull Object data,
+                                 @NonNull HCdcMessageProcessingState<MO> pState,
                                  DFSTransaction tnx,
                                  boolean retry) throws Exception;
 
@@ -216,6 +200,10 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
     @Accessors(fluent = true)
     public static class ChangeDeltaProcessorConfig extends MessagingProcessorConfig {
 
+        public ChangeDeltaProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
+            super(config, ChangeDeltaProcessorSettings.__CONFIG_PATH, ChangeDeltaProcessorSettings.class);
+        }
+
         public ChangeDeltaProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config,
                                           @NonNull Class<? extends ChangeDeltaProcessorSettings> settingsType) {
             super(config, ChangeDeltaProcessorSettings.__CONFIG_PATH, settingsType);
@@ -231,9 +219,9 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
         public MessageSender<String, DFSChangeDelta> readSender(@NonNull BaseEnv<?> env) throws Exception {
             ChangeDeltaProcessorSettings settings = (ChangeDeltaProcessorSettings) settings();
             MessageSenderBuilder<String, DFSChangeDelta> builder
-                    = (MessageSenderBuilder<String, DFSChangeDelta>) settings.getBuilderType()
+                    = (MessageSenderBuilder<String, DFSChangeDelta>) settings.getSendBuilderType()
                     .getDeclaredConstructor(BaseEnv.class, Class.class)
-                    .newInstance(env, settings.getBuilderSettingsType());
+                    .newInstance(env, settings.getSendBuilderSettingsType());
             HierarchicalConfiguration<ImmutableNode> eConfig
                     = config().configurationAt(HDFSSnapshotProcessorSettings.__CONFIG_PATH_SENDER);
             if (eConfig == null) {

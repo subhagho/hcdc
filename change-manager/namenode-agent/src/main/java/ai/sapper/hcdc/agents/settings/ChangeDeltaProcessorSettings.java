@@ -23,9 +23,9 @@ public class ChangeDeltaProcessorSettings extends MessagingProcessorSettings {
     }
 
     @Config(name = Constants.CONFIG_SENDER_BUILDER_TYPE, type = Class.class)
-    private Class<? extends MessageSenderBuilder<?, ?>> builderType;
+    private Class<? extends MessageSenderBuilder<?, ?>> sendBuilderType;
     @Config(name = Constants.CONFIG_SENDER_BUILDER_SETTINGS_TYPE, type = Class.class)
-    private Class<? extends MessageSenderSettings> builderSettingsType;
+    private Class<? extends MessageSenderSettings> sendBuilderSettingsType;
     @Config(name = Constants.CONFIG_RECEIVE_TIMEOUT, required = false, type = Long.class)
     private long receiveBatchTimeout = 1000;
 }

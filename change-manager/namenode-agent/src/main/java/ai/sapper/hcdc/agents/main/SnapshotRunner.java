@@ -1,10 +1,10 @@
 package ai.sapper.hcdc.agents.main;
 
-import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.cdc.core.Service;
 import ai.sapper.cdc.core.NameNodeEnv;
+import ai.sapper.cdc.core.Service;
 import ai.sapper.hcdc.agents.namenode.HDFSSnapshotProcessor;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -47,16 +47,13 @@ public class SnapshotRunner implements Service<NameNodeEnv.ENameNodeEnvState> {
             Preconditions.checkNotNull(fileSource);
             config = ConfigReader.read(configFile, fileSource);
             env = NameNodeEnv.setup(name(), getClass(), config);
-            processor = new HDFSSnapshotProcessor(NameNodeEnv.get(name()).stateManager(), name());
-            processor.init(NameNodeEnv.get(name())
-                            .configNode(),
-                    NameNodeEnv.get(name())
-                            .connectionManager());
+            processor = new HDFSSnapshotProcessor(env);
+            processor.init(env.baseConfig(), null);
             return this;
         } catch (Throwable t) {
-            DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(t));
-            DefaultLogger.LOGGER.error(t.getLocalizedMessage());
-            NameNodeEnv.get(name()).error(t);
+            DefaultLogger.stacktrace(env.LOG, t);
+            DefaultLogger.error(env.LOG, t.getLocalizedMessage());
+            env.error(t);
             throw t;
         }
     }
@@ -105,14 +102,14 @@ public class SnapshotRunner implements Service<NameNodeEnv.ENameNodeEnvState> {
             } catch (Throwable t) {
                 t.printStackTrace();
                 DefaultLogger.stacktrace(t);
-                DefaultLogger.LOGGER.error(t.getLocalizedMessage());
+                DefaultLogger.error(t.getLocalizedMessage());
             } finally {
                 runner.stop();
             }
         } catch (Throwable t) {
             t.printStackTrace();
             DefaultLogger.stacktrace(t);
-            DefaultLogger.LOGGER.error(t.getLocalizedMessage());
+            DefaultLogger.error(t.getLocalizedMessage());
         }
     }
 }

@@ -62,7 +62,7 @@ public class FSFile implements Closeable {
 
         if (fileState.hasBlocks()) {
             for (DFSBlockState blockState : fileState.getBlocks()) {
-                FSBlock block = new FSBlock(blockState, directory, fs, domain, create);
+                FSBlock block = new FSBlock(blockState, directory, fs, domain, true);
                 blocks.add(block);
             }
         }

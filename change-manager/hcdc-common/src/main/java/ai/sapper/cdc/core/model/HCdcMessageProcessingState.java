@@ -1,7 +1,7 @@
 package ai.sapper.cdc.core.model;
 
 import ai.sapper.cdc.core.messaging.ReceiverOffset;
-import ai.sapper.cdc.core.processing.ProcessingState;
+import ai.sapper.cdc.core.processing.MessageProcessorState;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -16,25 +16,19 @@ import lombok.Setter;
         include = JsonTypeInfo.As.PROPERTY,
         property = "@class"
 )
-public class HCdcProcessingState extends ProcessingState<EHCdcProcessorState, HCdcTxId> {
+public class HCdcMessageProcessingState<M extends ReceiverOffset> extends MessageProcessorState<EHCdcProcessorState, HCdcTxId, M> {
     private String lastMessageId;
     private SnapshotOffset snapshotOffset;
+    private HCdcTxId receivedTx;
 
-    public HCdcProcessingState() {
+    public HCdcMessageProcessingState() {
         super(EHCdcProcessorState.Error, EHCdcProcessorState.Unknown);
-        snapshotOffset = new SnapshotOffset();
     }
 
-    public HCdcProcessingState(@NonNull ReceiverOffset messageOffset) {
-        super(EHCdcProcessorState.Error, EHCdcProcessorState.Unknown);
-        setProcessedOffset(new HCdcTxId());
-    }
-
-    public HCdcProcessingState(@NonNull HCdcProcessingState state) {
+    public HCdcMessageProcessingState(@NonNull MessageProcessorState<EHCdcProcessorState, HCdcTxId, M> state) {
         super(state);
-        snapshotOffset = state.getSnapshotOffset();
-        lastMessageId = state.getLastMessageId();
     }
+
 
     public boolean isLastProcessedMessage(@NonNull String messageId) {
         if (!Strings.isNullOrEmpty(lastMessageId)) {
@@ -43,7 +37,7 @@ public class HCdcProcessingState extends ProcessingState<EHCdcProcessorState, HC
         return false;
     }
 
-    public HCdcProcessingState updateProcessedTxId(long processedTxId) throws Exception {
+    public HCdcMessageProcessingState<M> updateProcessedTxId(long processedTxId) throws Exception {
         if (getProcessedOffset().getId() > processedTxId) {
             throw new Exception(
                     String.format("Invalid transaction: [current=%d][specified=%s]",
@@ -53,8 +47,8 @@ public class HCdcProcessingState extends ProcessingState<EHCdcProcessorState, HC
         return this;
     }
 
-    public HCdcProcessingState updateProcessedRecordId(long processedTxId,
-                                                       long recordId) throws Exception {
+    public HCdcMessageProcessingState<M> updateProcessedRecordId(long processedTxId,
+                                                                 long recordId) throws Exception {
         if (getProcessedOffset().getId() != processedTxId) {
             throw new Exception(
                     String.format("Invalid transaction: [current=%d][specified=%s]",
@@ -69,7 +63,36 @@ public class HCdcProcessingState extends ProcessingState<EHCdcProcessorState, HC
         return this;
     }
 
-    public HCdcProcessingState updateSnapshotTxId(long snapshotTxId) throws Exception {
+    public HCdcMessageProcessingState<M> updateReceivedTxId(long processedTxId) throws Exception {
+        if (receivedTx == null) {
+            receivedTx = new HCdcTxId(processedTxId);
+        }
+        if (receivedTx.getId() > processedTxId) {
+            throw new Exception(
+                    String.format("Invalid transaction: [current=%d][specified=%s]",
+                            getProcessedOffset().getId(), processedTxId));
+        }
+        receivedTx.setId(processedTxId);
+        return this;
+    }
+
+    public HCdcMessageProcessingState<M> updateReceivedRecordId(long processedTxId,
+                                                                long recordId) throws Exception {
+        if (receivedTx.getId() != processedTxId) {
+            throw new Exception(
+                    String.format("Invalid transaction: [current=%d][specified=%s]",
+                            getProcessedOffset().getId(), processedTxId));
+        }
+        if (receivedTx.getRecordId() > recordId) {
+            throw new Exception(
+                    String.format("Invalid record: [current=%d][specified=%s]",
+                            getProcessedOffset().getRecordId(), recordId));
+        }
+        receivedTx.setRecordId(recordId);
+        return this;
+    }
+
+    public HCdcMessageProcessingState<M> updateSnapshotTxId(long snapshotTxId) throws Exception {
         Preconditions.checkNotNull(snapshotOffset);
         if (snapshotOffset.getSnapshotTxId() > snapshotTxId) {
             throw new Exception(
@@ -80,8 +103,8 @@ public class HCdcProcessingState extends ProcessingState<EHCdcProcessorState, HC
         return this;
     }
 
-    public HCdcProcessingState updateSnapshotSequence(long snapshotTxId,
-                                                      long sequence) throws Exception {
+    public HCdcMessageProcessingState<M> updateSnapshotSequence(long snapshotTxId,
+                                                                long sequence) throws Exception {
         Preconditions.checkNotNull(snapshotOffset);
         if (snapshotOffset.getSnapshotTxId() != snapshotTxId) {
             throw new Exception(

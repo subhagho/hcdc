@@ -1,7 +1,6 @@
 package ai.sapper.cdc.core;
 
 import ai.sapper.cdc.common.config.Config;
-import ai.sapper.cdc.core.BaseEnvSettings;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;

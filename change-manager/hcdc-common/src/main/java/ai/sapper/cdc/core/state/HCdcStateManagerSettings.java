@@ -1,7 +1,6 @@
-package ai.sapper.cdc.core;
+package ai.sapper.cdc.core.state;
 
 import ai.sapper.cdc.common.config.Config;
-import ai.sapper.cdc.core.state.BaseStateManagerSettings;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.Setter;

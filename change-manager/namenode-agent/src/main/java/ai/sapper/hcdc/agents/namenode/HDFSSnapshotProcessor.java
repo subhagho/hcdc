@@ -4,10 +4,11 @@ import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.core.BaseEnv;
-import ai.sapper.cdc.core.HCdcStateManager;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.filters.*;
-import ai.sapper.cdc.core.messaging.*;
+import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
+import ai.sapper.cdc.core.messaging.MessageObject;
+import ai.sapper.cdc.core.messaging.MessageSender;
 import ai.sapper.cdc.core.messaging.builders.MessageSenderBuilder;
 import ai.sapper.cdc.core.model.*;
 import ai.sapper.cdc.core.model.dfs.DFSBlockState;
@@ -16,14 +17,15 @@ import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import ai.sapper.cdc.core.model.dfs.DFSReplicationOffset;
 import ai.sapper.cdc.core.processing.Processor;
 import ai.sapper.cdc.core.processing.ProcessorState;
+import ai.sapper.cdc.core.state.HCdcStateManager;
 import ai.sapper.cdc.core.utils.FileSystemUtils;
+import ai.sapper.cdc.core.utils.ProtoUtils;
 import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
-import ai.sapper.hcdc.agents.common.*;
+import ai.sapper.hcdc.agents.common.ProtoBufUtils;
+import ai.sapper.hcdc.agents.common.SnapshotError;
 import ai.sapper.hcdc.agents.settings.HDFSSnapshotProcessorSettings;
 import ai.sapper.hcdc.common.model.*;
-import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
-import ai.sapper.cdc.core.utils.ProtoUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -54,7 +56,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
     private HDFSSnapshotProcessorSettings settings;
     private HCdcSchemaManager schemaManager;
 
-    protected HDFSSnapshotProcessor(@NonNull NameNodeEnv env) {
+    public HDFSSnapshotProcessor(@NonNull NameNodeEnv env) {
         super(env, HCdcProcessingState.class);
         Preconditions.checkState(stateManager() instanceof HCdcStateManager);
     }

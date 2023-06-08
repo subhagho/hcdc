@@ -10,7 +10,7 @@
         </paths>
         <managers>
             <state>
-                <stateManagerClass>ai.sapper.cdc.core.HCdcStateManager</stateManagerClass>
+                <stateManagerClass>ai.sapper.cdc.core.state.HCdcStateManager</stateManagerClass>
                 <basePath>/ai/sapper/cdc/edits</basePath>
                 <connection>zk-state-connection</connection>
             </state>

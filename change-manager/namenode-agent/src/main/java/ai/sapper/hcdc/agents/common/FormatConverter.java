@@ -2,6 +2,7 @@ package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.model.HCdcTxId;
+import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import ai.sapper.cdc.entity.ValueParser;
 import ai.sapper.cdc.entity.avro.AvroEntitySchema;
 import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
@@ -11,7 +12,6 @@ import ai.sapper.cdc.entity.model.DbSource;
 import ai.sapper.cdc.entity.schema.EntitySchema;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.cdc.entity.types.DataType;
-import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;

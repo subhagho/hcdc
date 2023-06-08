@@ -1,13 +1,16 @@
-package ai.sapper.cdc.core;
+package ai.sapper.cdc.core.state;
 
 import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.BaseEnv;
+import ai.sapper.cdc.core.FileStateHelper;
+import ai.sapper.cdc.core.NameNodeEnv;
+import ai.sapper.cdc.core.ReplicationStateHelper;
+import ai.sapper.cdc.core.model.EHCdcProcessorState;
 import ai.sapper.cdc.core.model.HCdcProcessingState;
 import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.model.Heartbeat;
 import ai.sapper.cdc.core.processing.ProcessStateManager;
-import ai.sapper.cdc.core.state.BaseStateManagerSettings;
-import ai.sapper.cdc.core.state.StateManagerError;
-import ai.sapper.cdc.core.model.EHCdcProcessorState;
+import ai.sapper.cdc.core.processing.ProcessingState;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
@@ -21,8 +24,12 @@ import org.apache.curator.framework.CuratorFramework;
 @Accessors(fluent = true)
 public class HCdcStateManager extends ProcessStateManager<EHCdcProcessorState, HCdcTxId> {
 
-    protected HCdcStateManager() {
+    public HCdcStateManager() {
         super(HCdcProcessingState.class);
+    }
+
+    protected HCdcStateManager(@NonNull Class<? extends ProcessingState<EHCdcProcessorState, HCdcTxId>> stateType) {
+        super(stateType);
     }
 
     public static class Constants {
@@ -44,8 +51,8 @@ public class HCdcStateManager extends ProcessStateManager<EHCdcProcessorState, H
                     BaseStateManagerSettings.__CONFIG_PATH,
                     env,
                     HCdcStateManagerSettings.class);
-
-            this.source = source;
+            HCdcStateManagerSettings settings = (HCdcStateManagerSettings) super.settings();
+            this.source = settings.getSource();
             CuratorFramework client = connection().client();
             String zkFSPath = new PathUtils.ZkPathBuilder(zkModulePath())
                     .withPath(Constants.ZK_PATH_FILES)

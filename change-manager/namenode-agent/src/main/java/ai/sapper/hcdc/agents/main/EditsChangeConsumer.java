@@ -3,8 +3,8 @@ package ai.sapper.hcdc.agents.main;
 import ai.sapper.cdc.common.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.cdc.core.Service;
 import ai.sapper.cdc.core.NameNodeEnv;
+import ai.sapper.cdc.core.Service;
 import ai.sapper.hcdc.agents.namenode.EditsChangeDeltaProcessor;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -112,7 +112,7 @@ public class EditsChangeConsumer implements Service<NameNodeEnv.ENameNodeEnvStat
         } catch (Throwable t) {
             t.printStackTrace();
             DefaultLogger.stacktrace(t);
-            DefaultLogger.LOGGER.error(t.getLocalizedMessage());
+            DefaultLogger.error(t.getLocalizedMessage());
         }
     }
 }

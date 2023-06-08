@@ -4,17 +4,18 @@ import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.DistributedLock;
+import ai.sapper.cdc.core.NameNodeEnv;
+import ai.sapper.cdc.core.NameNodeError;
 import ai.sapper.cdc.core.Service;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
+import ai.sapper.cdc.core.model.EFileState;
 import ai.sapper.cdc.core.model.HCdcProcessingState;
 import ai.sapper.cdc.core.model.HCdcTxId;
-import ai.sapper.cdc.core.HCdcStateManager;
-import ai.sapper.cdc.core.NameNodeEnv;
-import ai.sapper.cdc.core.NameNodeError;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import ai.sapper.cdc.core.model.dfs.EBlockState;
-import ai.sapper.cdc.core.model.EFileState;
+import ai.sapper.cdc.core.model.dfs.NameNode;
+import ai.sapper.cdc.core.state.HCdcStateManager;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.base.Preconditions;
@@ -23,12 +24,12 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
+import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.tools.offlineImageViewer.PBImageXmlWriter;
 
-import javax.naming.ConfigurationException;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.PrintStream;
@@ -38,7 +39,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -69,11 +72,11 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNodeEnvState
     private String configSource;
     private EConfigFileType fileSource = EConfigFileType.File;
     @Parameter(names = {"--tmp"}, description = "Temp directory to use to create local files. [DEFAULT=System.getProperty(\"java.io.tmpdir\")]")
-    private String tempDir = System.getProperty("java.io.tmpdir");
+    private String tempDir = String.format("%s/hadoop/cdc", System.getProperty("java.io.tmpdir"));
 
     private HCdcTxId txnId;
-    private final Map<Long, DFSInode> inodes = new HashMap<>();
-    private final Map<Long, DFSDirectory> directoryMap = new HashMap<>();
+    private final Map<Long, NameNode.DFSInode> inodes = new HashMap<>();
+    private final Map<Long, NameNode.DFSDirectory> directoryMap = new HashMap<>();
 
     public NameNodeReplicator withFsImageDir(@NonNull String path) {
         fsImageDir = path;
@@ -125,7 +128,9 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNodeEnvState
 
             File td = new File(tempDir);
             if (!td.exists()) {
-                td.mkdirs();
+                if (!td.mkdirs()) {
+                    throw new Exception(String.format("Failed to create temp directory. [%s]", tempDir));
+                }
             }
 
             return this;
@@ -183,11 +188,13 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNodeEnvState
                     HCdcProcessingState processingState = (HCdcProcessingState) stateManager.initState(txnId);
 
                     copy();
-
-                    ModuleTxState mTx = stateManager.updateReceivedTx(txnId.getId());
-                    mTx = stateManager.updateSnapshotTx(txnId.getId());
+                    processingState.updateProcessedTxId(txnId.getId())
+                            .updateProcessedRecordId(txnId.getId(), txnId.getRecordId())
+                            .updateSnapshotTxId(txnId.getId())
+                            .updateSnapshotSequence(txnId.getId(), txnId.getRecordId());
+                    processingState = (HCdcProcessingState) stateManager.update(processingState);
                     DefaultLogger.info(env.LOG,
-                            String.format("NameNode replication done. [state=%s][module state=%s]", nnTxState, mTx));
+                            String.format("NameNode replication done. [state=%s]", processingState));
 
                 } finally {
                     lock.unlock();
@@ -202,8 +209,8 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNodeEnvState
 
     private void copy() throws Exception {
         for (long id : inodes.keySet()) {
-            DFSInode inode = inodes.get(id);
-            if (inode.type == EInodeType.DIRECTORY) continue;
+            NameNode.DFSInode inode = inodes.get(id);
+            if (inode.type() == NameNode.EInodeType.DIRECTORY) continue;
             DefaultLogger.debug(env.LOG, String.format("Copying HDFS file entry. [path=%s]", inode.path()));
 
             DFSFileState fileState = stateManager
@@ -212,20 +219,20 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNodeEnvState
                             inode,
                             EFileState.Finalized,
                             txnId.getId());
-            if (inode.blocks != null && !inode.blocks.isEmpty()) {
+            if (inode.blocks() != null && !inode.blocks().isEmpty()) {
                 long prevBlockId = -1;
-                for (DFSInodeBlock block : inode.blocks) {
+                for (NameNode.DFSInodeBlock block : inode.blocks()) {
                     fileState = stateManager
                             .fileStateHelper()
                             .addOrUpdateBlock(fileState.getFileInfo().getHdfsPath(),
-                                    block.id,
+                                    block.id(),
                                     prevBlockId,
-                                    inode.mTime,
-                                    block.numBytes,
-                                    block.genStamp,
+                                    inode.mTime(),
+                                    block.numBytes(),
+                                    block.genStamp(),
                                     EBlockState.Finalized,
                                     txnId.getId());
-                    prevBlockId = block.id;
+                    prevBlockId = block.id();
                 }
             }
             NameNodeEnv.audit(name(), getClass(), fileState);
@@ -239,22 +246,22 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNodeEnvState
             throw new NameNodeError(String.format("NameNode Last Transaction ID not found. [file=%s]", file));
         }
         long tid = Long.parseLong(s);
-        txnId = new BaseTxId(tid);
+        txnId = new HCdcTxId(tid);
 
         List<HierarchicalConfiguration<ImmutableNode>> nodes = rootNode.configurationsAt(Constants.NODE_INODES);
         if (nodes != null && !nodes.isEmpty()) {
             for (HierarchicalConfiguration<ImmutableNode> node : nodes) {
-                DFSInode inode = readInode(node);
+                NameNode.DFSInode inode = readInode(node);
                 if (inode != null) {
-                    inodes.put(inode.id, inode);
+                    inodes.put(inode.id(), inode);
                 }
             }
         }
         List<HierarchicalConfiguration<ImmutableNode>> dnodes = rootNode.configurationsAt(Constants.NODE_DIR_NODE);
         if (dnodes != null && !dnodes.isEmpty()) {
             for (HierarchicalConfiguration<ImmutableNode> node : dnodes) {
-                DFSDirectory dir = new DFSDirectory().read(node);
-                directoryMap.put(dir.id, dir);
+                NameNode.DFSDirectory dir = new NameNode.DFSDirectory().read(node);
+                directoryMap.put(dir.id(), dir);
             }
         }
         long rid = findRootInodeId();
@@ -264,16 +271,16 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNodeEnvState
 
     private void findChildren(long id) {
         if (directoryMap.containsKey(id)) {
-            DFSInode inode = inodes.get(id);
+            NameNode.DFSInode inode = inodes.get(id);
             Preconditions.checkNotNull(inode);
-            if (inode.children != null && !inode.children.isEmpty()) return;
-            DFSDirectory dir = directoryMap.get(id);
-            if (dir.children != null && !dir.children.isEmpty()) {
-                for (long cid : dir.children) {
-                    DFSInode cnode = inodes.get(cid);
+            if (inode.children() != null && !inode.children().isEmpty()) return;
+            NameNode.DFSDirectory dir = directoryMap.get(id);
+            if (dir.children() != null && !dir.children().isEmpty()) {
+                for (long cid : dir.children()) {
+                    NameNode.DFSInode cnode = inodes.get(cid);
                     Preconditions.checkNotNull(cnode);
                     inode.addChild(cnode);
-                    findChildren(cnode.id);
+                    findChildren(cnode.id());
                 }
             }
         }
@@ -281,16 +288,16 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNodeEnvState
 
     private long findRootInodeId() {
         for (long id : inodes.keySet()) {
-            DFSInode inode = inodes.get(id);
-            if (Strings.isNullOrEmpty(inode.name)) {
+            NameNode.DFSInode inode = inodes.get(id);
+            if (Strings.isNullOrEmpty(inode.name())) {
                 return id;
             }
         }
         return -1L;
     }
 
-    private DFSInode readInode(HierarchicalConfiguration<ImmutableNode> node) throws Exception {
-        return new DFSInode().read(node);
+    private NameNode.DFSInode readInode(HierarchicalConfiguration<ImmutableNode> node) throws Exception {
+        return new NameNode.DFSInode().read(node);
     }
 
     private File findImageFile(File dir) throws Exception {
@@ -359,10 +366,7 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNodeEnvState
         }
 
         public void read() throws ConfigurationException {
-            hdfsConnection = get().getString(CONFIG_CONNECTION_HDFS);
-            if (Strings.isNullOrEmpty(hdfsConnection)) {
-                throw new ConfigurationException(String.format("NameNode Replicator Configuration Error: missing [%s]", CONFIG_CONNECTION_HDFS));
-            }
+            hdfsConnection = read(CONFIG_CONNECTION_HDFS);
         }
     }
 
