@@ -1,6 +1,5 @@
 package ai.sapper.cdc.entity.manager;
 
-import ai.sapper.cdc.common.model.services.PathOrSchema;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.filters.*;
 import ai.sapper.cdc.core.processing.ProcessorState;

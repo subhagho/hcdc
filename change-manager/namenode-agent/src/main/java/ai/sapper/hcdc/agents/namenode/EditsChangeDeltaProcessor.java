@@ -1,6 +1,5 @@
 package ai.sapper.hcdc.agents.namenode;
 
-import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;

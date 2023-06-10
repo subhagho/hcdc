@@ -10,7 +10,8 @@ import org.apache.commons.configuration2.XMLConfiguration;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class DomainFilterLoaderTest {
     private static final String __CONFIG_PATH = "src/test/resources/configs/hcdc-agent.xml";
