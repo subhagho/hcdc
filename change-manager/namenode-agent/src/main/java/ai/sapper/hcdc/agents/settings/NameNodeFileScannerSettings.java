@@ -1,4 +1,4 @@
-package ai.sapper.hcdc.agents.pipeline;
+package ai.sapper.hcdc.agents.settings;
 
 import ai.sapper.cdc.common.config.Config;
 import ai.sapper.cdc.common.config.Settings;

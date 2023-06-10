@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.agents.pipeline;
 
-import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.NameNodeEnv;
@@ -25,7 +25,7 @@ class NameNodeSchemaScannerTest {
             NameNodeSchemaScanner scanner = new NameNodeSchemaScanner(NameNodeEnv.get(name).stateManager(), name);
             scanner
                     .withSchemaManager(NameNodeEnv.get(name).schemaManager())
-                    .init(NameNodeEnv.get(name).configNode(), NameNodeEnv.get(name).connectionManager());
+                    .init(NameNodeEnv.get(name).baseConfig(), NameNodeEnv.get(name).connectionManager());
             scanner.run();
 
             NameNodeEnv.dispose(name);

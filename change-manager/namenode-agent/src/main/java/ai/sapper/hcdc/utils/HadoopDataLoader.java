@@ -1,8 +1,9 @@
 package ai.sapper.hcdc.utils;
 
-import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.core.BaseEnvSettings;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.utils.UtilsEnv;
@@ -53,7 +54,7 @@ public class HadoopDataLoader {
         try {
             config = ConfigReader.read(configfile, EConfigFileType.File);
             UtilsEnv env = new UtilsEnv(getClass().getSimpleName());
-            env.init(config, new UtilsEnv.UtilsState());
+            env.init(config, new UtilsEnv.UtilsState(), BaseEnvSettings.class);
 
             loaderConfig = new LoaderConfig(env.rootConfig());
             loaderConfig.read();
@@ -74,8 +75,8 @@ public class HadoopDataLoader {
             read(new File(dataFolder));
 
         } catch (Throwable t) {
-            DefaultLogger.LOGGER.error(t.getLocalizedMessage());
-            DefaultLogger.LOGGER.debug(DefaultLogger.stacktrace(t));
+            DefaultLogger.error(t.getLocalizedMessage());
+            DefaultLogger.stacktrace(t);
             throw new Exception(t);
         }
     }
@@ -117,7 +118,7 @@ public class HadoopDataLoader {
                     if (!td.exists()) {
                         td.mkdirs();
                     }
-                    DefaultLogger.LOGGER.debug(String.format("Writing local files to [%s]", td.getAbsolutePath()));
+                    DefaultLogger.debug(String.format("Writing local files to [%s]", td.getAbsolutePath()));
                     int arrayIndex = 0;
                     OutputDataWriter<List<String>> writer = null;
                     while (true) {

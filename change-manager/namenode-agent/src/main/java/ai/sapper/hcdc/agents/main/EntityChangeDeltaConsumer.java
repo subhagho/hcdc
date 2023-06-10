@@ -5,6 +5,8 @@ import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.Service;
+import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
+import ai.sapper.hcdc.agents.namenode.EditsChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.pipeline.EntityChangeDeltaProcessor;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -24,7 +26,7 @@ public class EntityChangeDeltaConsumer implements Service<NameNodeEnv.ENameNodeE
     private EConfigFileType fileSource = EConfigFileType.File;
     private HierarchicalConfiguration<ImmutableNode> config;
     private Thread runner;
-    private EntityChangeDeltaProcessor processor;
+    private EntityChangeDeltaProcessor<?> processor;
     private NameNodeEnv env;
 
     @Override
@@ -39,6 +41,7 @@ public class EntityChangeDeltaConsumer implements Service<NameNodeEnv.ENameNodeE
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     public Service<NameNodeEnv.ENameNodeEnvState> init() throws Exception {
         try {
             Preconditions.checkState(!Strings.isNullOrEmpty(configFile));
@@ -49,9 +52,15 @@ public class EntityChangeDeltaConsumer implements Service<NameNodeEnv.ENameNodeE
             config = ConfigReader.read(configFile, fileSource);
             env = NameNodeEnv.setup(name(), getClass(), config);
 
-            processor = new EntityChangeDeltaProcessor(NameNodeEnv.get(name()).stateManager(), name());
-            processor.init(env.baseConfig(),
-                    env.connectionManager());
+            Class<? extends EntityChangeDeltaProcessor<?>> type
+                    = (Class<? extends EntityChangeDeltaProcessor<?>>) ChangeDeltaProcessor.readProcessorType(env.baseConfig());
+            if (type == null) {
+                throw new Exception("EditsChangeDeltaProcessor implementation not specified...");
+            }
+
+            processor = type.getDeclaredConstructor(NameNodeEnv.class, String.class)
+                    .newInstance(env, name());
+            processor.init(env.baseConfig());
             return this;
         } catch (Throwable t) {
             DefaultLogger.stacktrace(t);

@@ -1,16 +1,21 @@
 package ai.sapper.hcdc.agents.pipeline;
 
-import ai.sapper.cdc.core.connections.ConnectionManager;
+import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.messaging.MessageObject;
-import ai.sapper.cdc.core.model.BaseTxId;
+import ai.sapper.cdc.core.messaging.ReceiverOffset;
 import ai.sapper.cdc.core.model.EFileState;
+import ai.sapper.cdc.core.model.EHCdcProcessorState;
+import ai.sapper.cdc.core.model.HCdcMessageProcessingState;
+import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
+import ai.sapper.cdc.core.processing.MessageProcessorState;
 import ai.sapper.cdc.core.state.HCdcStateManager;
 import ai.sapper.cdc.core.utils.ProtoUtils;
+import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
+import ai.sapper.hcdc.agents.settings.EntityChangeDeltaProcessorSettings;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSTransaction;
-import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -24,34 +29,24 @@ import java.util.List;
 
 @Getter
 @Accessors(fluent = true)
-public class EntityChangeDeltaProcessor extends ChangeDeltaProcessor {
+public class EntityChangeDeltaProcessor<MO extends ReceiverOffset> extends ChangeDeltaProcessor<MO> {
     private static Logger LOG = LoggerFactory.getLogger(EntityChangeDeltaProcessor.class.getCanonicalName());
+    private final HCdcSchemaManager schemaManager;
 
 
-    public EntityChangeDeltaProcessor(@NonNull HCdcStateManager stateManager, @NonNull String name) {
-        super(stateManager, name, EProcessorMode.Reader, true);
-    }
-
-    public ChangeDeltaProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                                           @NonNull ConnectionManager manger) throws ConfigurationException {
-        ChangeDeltaProcessorConfig config = new CDCChangeDeltaProcessorConfig(xmlConfig);
-        super.init(config, manger);
-        EntityChangeTransactionProcessor processor = (EntityChangeTransactionProcessor) new EntityChangeTransactionProcessor(name())
-                .withSenderQueue(sender())
-                .withStateManager(stateManager())
-                .withErrorQueue(errorSender());
-        return withProcessor(processor);
+    public EntityChangeDeltaProcessor(@NonNull NameNodeEnv env,
+                                      @NonNull String name) {
+        super(env, EntityChangeDeltaProcessorSettings.class, EProcessorMode.Reader, true);
+        schemaManager = env.schemaManager();
+        this.name = name;
     }
 
     public void cleanFileState() throws Exception {
-        Preconditions.checkState(sender() != null);
-        Preconditions.checkState(receiver() != null);
-        Preconditions.checkState(errorSender() != null);
-
-        List<DFSFileState> files = stateManager().fileStateHelper().listFiles(null, EFileState.Deleted);
+        HCdcStateManager stateManager = (HCdcStateManager) stateManager();
+        List<DFSFileState> files = stateManager.fileStateHelper().listFiles(null, EFileState.Deleted);
         if (files != null && !files.isEmpty()) {
             for (DFSFileState file : files) {
-                DFSFileState f = stateManager().fileStateHelper().delete(file.getFileInfo().getHdfsPath());
+                DFSFileState f = stateManager.fileStateHelper().delete(file.getFileInfo().getHdfsPath());
                 if (f != null) {
                     LOG.debug(String.format("File node deleted. [path=%s]", f.getFileInfo().getHdfsPath()));
                 } else {
@@ -77,36 +72,39 @@ public class EntityChangeDeltaProcessor extends ChangeDeltaProcessor {
     }
 
     @Override
-    public void batchStart() throws Exception {
-
-    }
-
-    @Override
-    public void batchEnd() throws Exception {
-
-    }
-
-    @Override
     public void process(@NonNull MessageObject<String, DFSChangeDelta> message,
                         @NonNull Object data,
+                        @NonNull HCdcMessageProcessingState<MO> pState,
                         DFSTransaction tnx,
                         boolean retry) throws Exception {
-        BaseTxId txId = null;
+        HCdcTxId txId = null;
         if (tnx != null) {
             txId = ProtoUtils.fromTx(tnx);
         } else {
-            txId = new BaseTxId(-1);
+            txId = new HCdcTxId(-1);
         }
         EntityChangeTransactionProcessor processor
                 = (EntityChangeTransactionProcessor) processor();
         processor.processTxMessage(message, data, txId, retry);
     }
 
-    public static class CDCChangeDeltaProcessorConfig extends ChangeDeltaProcessorConfig {
-        public static final String __CONFIG_PATH = "processor.cdc";
+    @Override
+    public ChangeDeltaProcessor<MO> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
+        super.init(xmlConfig, null);
+        EntityChangeTransactionProcessor processor
+                = (EntityChangeTransactionProcessor) new EntityChangeTransactionProcessor(name(), env())
+                .withSenderQueue(sender())
+                .withErrorQueue(errorLogger);
+        return withProcessor(processor);
+    }
 
-        public CDCChangeDeltaProcessorConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
-            super(config, __CONFIG_PATH);
-        }
+    @Override
+    protected void batchStart(@NonNull MessageProcessorState<EHCdcProcessorState, HCdcTxId, MO> messageProcessorState) throws Exception {
+
+    }
+
+    @Override
+    protected void batchEnd(@NonNull MessageProcessorState<EHCdcProcessorState, HCdcTxId, MO> messageProcessorState) throws Exception {
+
     }
 }

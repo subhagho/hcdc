@@ -12,6 +12,7 @@ import ai.sapper.cdc.core.state.HCdcStateManager;
 import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.hcdc.agents.common.CDCDataConverter;
+import ai.sapper.hcdc.agents.settings.NameNodeFileScannerSettings;
 import com.google.common.base.Preconditions;
 import lombok.Getter;
 import lombok.NonNull;

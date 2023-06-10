@@ -1,5 +1,6 @@
 package ai.sapper.hcdc.agents.namenode;
 
+import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
@@ -39,7 +40,7 @@ import java.io.IOException;
 @Accessors(fluent = true)
 public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends ChangeDeltaProcessor<MO> {
     private static final Logger LOG = LoggerFactory.getLogger(EditsChangeDeltaProcessor.class.getCanonicalName());
-    private HCdcSchemaManager schemaManager;
+    private final HCdcSchemaManager schemaManager;
 
     public EditsChangeDeltaProcessor(@NonNull NameNodeEnv env,
                                      @NonNull String name) {
@@ -48,6 +49,7 @@ public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends Change
                 EProcessorMode.Committer,
                 false);
         schemaManager = env.schemaManager();
+        this.name = name;
     }
 
     @Override
@@ -87,9 +89,9 @@ public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends Change
     @Override
     public ChangeDeltaProcessor<MO> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
         super.init(xmlConfig, null);
-        EditsChangeTransactionProcessor processor = (EditsChangeTransactionProcessor) new EditsChangeTransactionProcessor(name())
+        EditsChangeTransactionProcessor processor
+                = (EditsChangeTransactionProcessor) new EditsChangeTransactionProcessor(name(), env())
                 .withSenderQueue(sender())
-                .withStateManager((HCdcStateManager) stateManager())
                 .withErrorQueue(errorLogger);
         return withProcessor(processor);
     }

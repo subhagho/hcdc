@@ -1,10 +1,11 @@
 package ai.sapper.hcdc.agents.pipeline;
 
-import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.NameNodeEnv;
-import ai.sapper.cdc.core.io.impl.CDCFileSystem;
+import ai.sapper.cdc.core.io.FileSystem;
 import ai.sapper.cdc.core.io.impl.s3.S3FileSystem;
 import com.adobe.testing.s3mock.junit5.S3MockExtension;
 import lombok.NonNull;
@@ -41,9 +42,9 @@ class EntityChangeDeltaReaderTest {
             NameNodeEnv.setup(name, getClass(), config);
 
             EntityChangeDeltaReader processor
-                    = new EntityChangeDeltaReader(NameNodeEnv.get(name).stateManager(), name)
+                    = new EntityChangeDeltaReader(NameNodeEnv.get(name))
                     .withMockFileSystem(new S3Mocker(s3Client));
-            processor.init(NameNodeEnv.get(name).configNode(), NameNodeEnv.get(name).connectionManager());
+            processor.init(NameNodeEnv.get(name).baseConfig());
             processor.run();
         } catch (Throwable t) {
             DefaultLogger.stacktrace(t);
@@ -51,7 +52,7 @@ class EntityChangeDeltaReaderTest {
         }
     }
 
-    public static class S3Mocker implements CDCFileSystem.FileSystemMocker {
+    public static class S3Mocker implements FileSystem.FileSystemMocker {
         private final S3Client s3Client;
 
         public S3Mocker(@NonNull S3Client s3Client) {
@@ -64,12 +65,14 @@ class EntityChangeDeltaReaderTest {
          * @throws Exception
          */
         @Override
-        public CDCFileSystem create(@NonNull HierarchicalConfiguration<ImmutableNode> config) throws Exception {
-            return (S3FileSystem) new S3FileSystem()
-                    .withClient(s3Client)
-                    .init(config,
-                            EntityChangeDeltaReader.EntityChangeDeltaReaderConfig.Constants.CONFIG_PATH_FS,
-                            null);
+        public FileSystem create(@NonNull HierarchicalConfiguration<ImmutableNode> config,
+                                 @NonNull BaseEnv<?> env) throws Exception {
+            S3FileSystem fs = new S3FileSystem()
+                    .withClient(s3Client);
+            fs.init(config,
+                    env,
+                    new S3FileSystem.S3FileSystemConfigReader(config));
+            return fs;
         }
     }
 }

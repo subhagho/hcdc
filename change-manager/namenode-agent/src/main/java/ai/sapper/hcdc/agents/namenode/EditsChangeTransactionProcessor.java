@@ -2,6 +2,7 @@ package ai.sapper.hcdc.agents.namenode;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.InvalidTransactionError;
+import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
@@ -26,8 +27,8 @@ import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 public class EditsChangeTransactionProcessor extends TransactionProcessor {
     private MessageSender<String, DFSChangeDelta> sender;
 
-    public EditsChangeTransactionProcessor(@NonNull String name) {
-        super(name);
+    public EditsChangeTransactionProcessor(@NonNull String name, @NonNull NameNodeEnv env) {
+        super(name, env);
     }
 
     public TransactionProcessor withSenderQueue(@NonNull MessageSender<String, DFSChangeDelta> sender) {

@@ -42,8 +42,6 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
 
     public static final int LOCK_RETRY_COUNT = 16;
 
-    private static Logger LOG;
-
     private MessageSender<String, DFSChangeDelta> sender;
     private long receiveBatchTimeout = 1000;
     private NameNodeEnv env;
@@ -52,6 +50,7 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
     private final EProcessorMode mode;
     private final boolean ignoreMissing;
     private final Class<? extends ChangeDeltaProcessorSettings> settingsType;
+    protected String name;
 
     public ChangeDeltaProcessor(@NonNull NameNodeEnv env,
                                 @NonNull Class<? extends ChangeDeltaProcessorSettings> settingsType,
@@ -59,7 +58,7 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
                                 boolean ignoreMissing) {
         super(env, HCdcProcessingState.class);
         Preconditions.checkState(super.stateManager() instanceof HCdcStateManager);
-        Preconditions.checkState(super.stateManager().processingState() instanceof HCdcMessageProcessingState<MO>);
+        Preconditions.checkState(super.stateManager().processingState() instanceof HCdcMessageProcessingState);
         this.mode = mode;
         this.ignoreMissing = ignoreMissing;
         this.settingsType = settingsType;
@@ -193,6 +192,19 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
             sender = null;
         }
         super.close();
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Class<? extends ChangeDeltaProcessor<?>> readProcessorType(
+            @NonNull HierarchicalConfiguration<ImmutableNode> config) throws Exception {
+        HierarchicalConfiguration<ImmutableNode> node = config.configurationAt(ChangeDeltaProcessorSettings.__CONFIG_PATH);
+        if (node != null) {
+            String cname = node.getString(ChangeDeltaProcessorSettings.__CONFIG_PROCESSOR_TYPE);
+            if (!Strings.isNullOrEmpty(cname)) {
+                return (Class<? extends ChangeDeltaProcessor<?>>) Class.forName(cname);
+            }
+        }
+        return null;
     }
 
     @Getter

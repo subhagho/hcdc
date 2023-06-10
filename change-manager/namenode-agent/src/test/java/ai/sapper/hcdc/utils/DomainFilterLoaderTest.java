@@ -1,11 +1,10 @@
 package ai.sapper.hcdc.utils;
 
-import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.NameNodeEnv;
-import ai.sapper.cdc.core.filters.DomainManager;
-import ai.sapper.hcdc.agents.common.ProcessorStateManager;
+import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
 import com.google.common.base.Preconditions;
 import org.apache.commons.configuration2.XMLConfiguration;
 import org.junit.jupiter.api.BeforeAll;
@@ -29,16 +28,14 @@ class DomainFilterLoaderTest {
     void read() {
         try {
             String name = getClass().getSimpleName();
-            NameNodeEnv.setup(name, getClass(), xmlConfiguration);
-            DefaultLogger.LOGGER.info(
+            NameNodeEnv env = NameNodeEnv.setup(name, getClass(), xmlConfiguration);
+            DefaultLogger.info(
                     String.format("Name Node Agent environment initialized. [namespace=%s]",
-                            NameNodeEnv.get(name).module()));
-            assertNotNull(NameNodeEnv.get(name).stateManager());
-            assertTrue(NameNodeEnv.get(name).stateManager() instanceof ProcessorStateManager);
-            DomainManager domainManager = ((ProcessorStateManager) NameNodeEnv.get(name).stateManager()).domainManager();
-            assertNotNull(domainManager);
+                            env.module()));
+            assertNotNull(env.schemaManager());
+            HCdcSchemaManager schemaManager = env.schemaManager();
 
-            new DomainFilterLoader().read(TEST_DOMAIN_FILE, domainManager);
+            new DomainFilterLoader().read(TEST_DOMAIN_FILE, schemaManager);
             NameNodeEnv.dispose(name);
         } catch (Throwable t) {
             DefaultLogger.stacktrace(t);

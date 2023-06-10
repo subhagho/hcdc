@@ -1,18 +1,20 @@
 package ai.sapper.hcdc.services.namenode;
 
-import ai.sapper.cdc.common.filters.DomainFilter;
-import ai.sapper.cdc.common.filters.DomainFilters;
-import ai.sapper.cdc.common.filters.Filter;
 import ai.sapper.cdc.common.model.services.BasicResponse;
 import ai.sapper.cdc.common.model.services.ConfigSource;
 import ai.sapper.cdc.common.model.services.EResponseState;
 import ai.sapper.cdc.common.model.services.PathOrSchema;
-import ai.sapper.cdc.common.schema.SchemaEntity;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.NameNodeEnv;
-import ai.sapper.cdc.core.model.BaseTxId;
+import ai.sapper.cdc.core.filters.DomainFilter;
+import ai.sapper.cdc.core.filters.DomainFilters;
+import ai.sapper.cdc.core.filters.Filter;
+import ai.sapper.cdc.core.model.DomainFilterAddRequest;
+import ai.sapper.cdc.core.model.HCdcTxId;
+import ai.sapper.cdc.core.model.SnapshotDoneRequest;
 import ai.sapper.cdc.core.model.dfs.DFSFileReplicaState;
-import ai.sapper.cdc.entity.schema.SchemaManager;
+import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
+import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.hcdc.agents.main.SnapshotRunner;
 import ai.sapper.hcdc.services.ServiceHelper;
 import com.google.common.base.Strings;
@@ -106,17 +108,17 @@ public class SnapshotService {
     }
 
     @RequestMapping(value = "/snapshot/run", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<Integer>> run() {
+    public ResponseEntity<BasicResponse<String>> run() {
         try {
-            DefaultLogger.LOGGER.info("Snapshot run called...");
+            DefaultLogger.info("Snapshot run called...");
             ServiceHelper.checkService(processor.name(), processor);
-            int count = processor.getProcessor().run();
+            processor.getProcessor().run();
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
-                    count),
+                    "Snapshot run successful..."),
                     HttpStatus.OK);
         } catch (Throwable t) {
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
-                    -1).withError(t),
+                    t.getLocalizedMessage()).withError(t),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -126,7 +128,7 @@ public class SnapshotService {
         try {
             ServiceHelper.checkService(processor.name(), processor);
             SchemaEntity entity = new SchemaEntity(request.getDomain(), request.getEntity());
-            BaseTxId tid = new BaseTxId(request.getTransactionId());
+            HCdcTxId tid = new HCdcTxId(request.getTransactionId());
 
             DFSFileReplicaState rState = processor.getProcessor()
                     .snapshotDone(request.getHdfsPath(),
@@ -193,7 +195,7 @@ public class SnapshotService {
     public ResponseEntity<List<PathOrSchema>> expandDomain(@PathVariable("domain") String domain) {
         try {
             ServiceHelper.checkService(processor.name(), processor);
-            SchemaManager schemaManager = NameNodeEnv.get(processor.name())
+            HCdcSchemaManager schemaManager = NameNodeEnv.get(processor.name())
                     .schemaManager();
             if (schemaManager == null) {
                 throw new Exception("SchemaManager not initialized...");
@@ -215,7 +217,7 @@ public class SnapshotService {
                                                          @RequestBody String path) {
         try {
             ServiceHelper.checkService(processor.name(), processor);
-            SchemaManager schemaManager = NameNodeEnv.get(processor.name())
+            HCdcSchemaManager schemaManager = NameNodeEnv.get(processor.name())
                     .schemaManager();
             if (schemaManager == null) {
                 throw new Exception("SchemaManager not initialized...");

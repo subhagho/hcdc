@@ -1,20 +1,23 @@
 package ai.sapper.hcdc.agents.pipeline;
 
+import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.WebServiceClient;
 import ai.sapper.cdc.core.connections.ConnectionManager;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.io.Archiver;
 import ai.sapper.cdc.core.io.EncryptionHandler;
 import ai.sapper.cdc.core.io.FileSystem;
-import ai.sapper.cdc.core.io.impl.CDCFileSystem;
 import ai.sapper.cdc.core.messaging.MessageObject;
-import ai.sapper.cdc.core.model.BaseTxId;
-import ai.sapper.cdc.core.state.HCdcStateManager;
+import ai.sapper.cdc.core.messaging.ReceiverOffset;
+import ai.sapper.cdc.core.model.EHCdcProcessorState;
+import ai.sapper.cdc.core.model.HCdcMessageProcessingState;
+import ai.sapper.cdc.core.model.HCdcTxId;
+import ai.sapper.cdc.core.processing.MessageProcessorState;
 import ai.sapper.cdc.core.utils.ProtoUtils;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
+import ai.sapper.hcdc.agents.settings.EntityChangeDeltaReaderSettings;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSTransaction;
-import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -28,82 +31,76 @@ import java.nio.ByteBuffer;
 
 @Getter
 @Accessors(fluent = true)
-public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
+public class EntityChangeDeltaReader<MO extends ReceiverOffset> extends ChangeDeltaProcessor<MO> {
     private static Logger LOG = LoggerFactory.getLogger(EntityChangeDeltaReader.class);
 
     private FileSystem fs;
     private Archiver archiver;
 
-    private EntityChangeDeltaReaderConfig config;
     private HdfsConnection connection;
     private FileSystem.FileSystemMocker fileSystemMocker;
     private WebServiceClient client;
     private EncryptionHandler<ByteBuffer, ByteBuffer> encryptionHandler;
 
-    public EntityChangeDeltaReader(@NonNull HCdcStateManager stateManager, @NonNull String name) {
-        super(stateManager, name, EProcessorMode.Committer, true);
+    public EntityChangeDeltaReader(@NonNull NameNodeEnv env) {
+        super(env, EntityChangeDeltaReaderSettings.class, EProcessorMode.Committer, true);
     }
 
-    public EntityChangeDeltaReader withMockFileSystem(@NonNull CDCFileSystem.FileSystemMocker fileSystemMocker) {
+    public EntityChangeDeltaReader<MO> withMockFileSystem(@NonNull FileSystem.FileSystemMocker fileSystemMocker) {
         this.fileSystemMocker = fileSystemMocker;
         return this;
     }
 
+
     /**
      * @param xmlConfig
-     * @param manger
      * @return
      * @throws ConfigurationException
      */
     @Override
-    public ChangeDeltaProcessor init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                                     @NonNull ConnectionManager manger) throws ConfigurationException {
+    public ChangeDeltaProcessor<MO> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
         try {
-            config = new EntityChangeDeltaReaderConfig(xmlConfig);
-            config.read();
-
-            super.init(config, manger);
-
-            EntityChangeTransactionReader processor = new EntityChangeTransactionReader(name());
-
-            connection = manger.getConnection(config.hdfsConnection, HdfsConnection.class);
+            super.init(xmlConfig, null);
+            ConnectionManager manger = env().connectionManager();
+            EntityChangeTransactionReader processor = new EntityChangeTransactionReader(name(), env());
+            EntityChangeDeltaReaderSettings settings = (EntityChangeDeltaReaderSettings) receiverConfig.settings();
+            connection = manger.getConnection(settings.getHdfsConnection(), HdfsConnection.class);
             if (connection == null) {
                 throw new ConfigurationException(
-                        String.format("HDFS Connection not found. [name=%s]", config.hdfsConnection));
+                        String.format("HDFS Connection not found. [name=%s]", settings.getHdfsConnection()));
             }
             if (!connection.isConnected()) connection.connect();
 
             if (fileSystemMocker == null) {
-                Class<? extends CDCFileSystem> fsc = (Class<? extends CDCFileSystem>) Class.forName(config.fsType);
-                fs = fsc.getDeclaredConstructor().newInstance();
-                fs.init(config.config(),
-                        EntityChangeDeltaReaderConfig.Constants.CONFIG_PATH_FS,
-                        env().keyStore());
+                fs = env().fileSystemManager().read(receiverConfig.config());
             } else {
-                fs = (CDCFileSystem) fileSystemMocker.create(config.config());
+                fs = fileSystemMocker.create(receiverConfig.config(), env());
             }
             client = new WebServiceClient();
-            client.init(config.config(),
-                    EntityChangeDeltaReaderConfig.Constants.CONFIG_WS_PATH,
+            client.init(receiverConfig.config(),
+                    EntityChangeDeltaReaderSettings.Constants.CONFIG_WS_PATH,
                     manger);
 
+            /*
+             * TODO: Add archival
+             *
             if (!Strings.isNullOrEmpty(config.archiverClass)) {
                 Class<? extends Archiver> cls = (Class<? extends Archiver>) Class.forName(config.archiverClass);
                 archiver = cls.getDeclaredConstructor().newInstance();
                 archiver.init(config.config(), Archiver.CONFIG_ARCHIVER);
             }
+            */
 
             processor.withFileSystem(fs)
                     .withArchiver(archiver)
                     .withHdfsConnection(connection)
                     .withClient(client)
                     .withSenderQueue(sender())
-                    .withStateManager(stateManager())
-                    .withErrorQueue(errorSender());
+                    .withErrorQueue(errorLogger);
 
-            if (config.encryptorClass != null) {
-                encryptionHandler = config.encryptorClass.getDeclaredConstructor().newInstance();
-                encryptionHandler.init(config.config());
+            if (settings.getEncryptorClass() != null) {
+                encryptionHandler = settings.getEncryptorClass().getDeclaredConstructor().newInstance();
+                encryptionHandler.init(receiverConfig.config());
                 processor.withEncryptionHandler(encryptionHandler);
             }
             return withProcessor(processor);
@@ -128,93 +125,29 @@ public class EntityChangeDeltaReader extends ChangeDeltaProcessor {
     }
 
     @Override
-    public void batchStart() throws Exception {
-
-    }
-
-    @Override
-    public void batchEnd() throws Exception {
-
-    }
-
-    @Override
     public void process(@NonNull MessageObject<String, DFSChangeDelta> message,
                         @NonNull Object data,
+                        @NonNull HCdcMessageProcessingState<MO> pState,
                         DFSTransaction tnx,
                         boolean retry) throws Exception {
-        BaseTxId txId = null;
+        HCdcTxId txId = null;
         if (tnx != null) {
             txId = ProtoUtils.fromTx(tnx);
         } else {
-            txId = new BaseTxId(-1);
+            txId = new HCdcTxId(-1);
         }
         EntityChangeTransactionReader processor
                 = (EntityChangeTransactionReader) processor();
         processor.processTxMessage(message, data, txId, retry);
     }
 
-    @Getter
-    @Accessors(fluent = true)
-    public static class EntityChangeDeltaReaderConfig extends ChangeDeltaProcessorConfig {
-        public static final String __CONFIG_PATH = "processor.files";
+    @Override
+    protected void batchStart(@NonNull MessageProcessorState<EHCdcProcessorState, HCdcTxId, MO> messageProcessorState) throws Exception {
 
-        public static class Constants {
-            public static final String CONFIG_PATH_FS = "filesystem";
-            public static final String CONFIG_FS_TYPE = String.format("%s.type", CONFIG_PATH_FS);
-            public static final String CONFIG_HDFS_CONN = "hdfs";
-            public static final String CONFIG_WS_PATH = "snapshot";
-            public static final String CONFIG_ARCHIVER_CLASS = String.format("%s.class", Archiver.CONFIG_ARCHIVER);
-            public static final String CONFIG_ENCRYPTOR_CLASS = String.format("%s.class", EncryptionHandler.__CONFIG_PATH);
-        }
+    }
 
-        private String fsType;
-        private String hdfsConnection;
-        private String archiverClass;
-        private HierarchicalConfiguration<ImmutableNode> fsConfig;
-        private Class<? extends EncryptionHandler<ByteBuffer, ByteBuffer>> encryptorClass;
+    @Override
+    protected void batchEnd(@NonNull MessageProcessorState<EHCdcProcessorState, HCdcTxId, MO> messageProcessorState) throws Exception {
 
-        public EntityChangeDeltaReaderConfig(@NonNull HierarchicalConfiguration<ImmutableNode> config) {
-            super(config, __CONFIG_PATH);
-        }
-
-        /**
-         * @throws ConfigurationException
-         */
-        @SuppressWarnings("unchecked")
-        @Override
-        public void read() throws ConfigurationException {
-            super.read();
-
-            try {
-                fsConfig = get().configurationAt(Constants.CONFIG_PATH_FS);
-                if (fsConfig == null) {
-                    throw new ConfigurationException(
-                            String.format("File Processor Error: missing configuration. [path=%s]",
-                                    Constants.CONFIG_PATH_FS));
-                }
-                fsType = get().getString(Constants.CONFIG_FS_TYPE);
-                if (Strings.isNullOrEmpty(fsType)) {
-                    throw new ConfigurationException(
-                            String.format("File Processor Error: missing configuration. [name=%s]",
-                                    Constants.CONFIG_FS_TYPE));
-                }
-                hdfsConnection = get().getString(Constants.CONFIG_HDFS_CONN);
-                if (Strings.isNullOrEmpty(hdfsConnection)) {
-                    throw new ConfigurationException(
-                            String.format("File Processor Error: missing configuration. [name=%s]",
-                                    Constants.CONFIG_HDFS_CONN));
-                }
-                if (get().containsKey(Constants.CONFIG_ARCHIVER_CLASS)) {
-                    archiverClass = get().getString(Constants.CONFIG_ARCHIVER_CLASS);
-                }
-                if (checkIfNodeExists(get(), EncryptionHandler.__CONFIG_PATH)) {
-                    String s = get().getString(Constants.CONFIG_ENCRYPTOR_CLASS);
-                    checkStringValue(s, getClass(), Constants.CONFIG_ENCRYPTOR_CLASS);
-                    encryptorClass = (Class<? extends EncryptionHandler<ByteBuffer, ByteBuffer>>) Class.forName(s);
-                }
-            } catch (Exception ex) {
-                throw new ConfigurationException(ex);
-            }
-        }
     }
 }

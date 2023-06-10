@@ -1,6 +1,6 @@
 package ai.sapper.hcdc.agents.namenode;
 
-import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.DistributedLock;
@@ -30,7 +30,7 @@ class NameNodeEnvTest {
             String name = getClass().getSimpleName();
 
             NameNodeEnv.setup(name, getClass(), xmlConfiguration);
-            DefaultLogger.LOGGER.info(String.format("Name Node Agent environment initialized. [source=%s]",
+            DefaultLogger.info(String.format("Name Node Agent environment initialized. [source=%s]",
                     NameNodeEnv.get(name).source()));
             assertNotNull(NameNodeEnv.get(name).hdfsConnection());
             assertNotNull(NameNodeEnv.get(name).stateManager().connection());
@@ -49,7 +49,7 @@ class NameNodeEnvTest {
             String name = getClass().getSimpleName();
 
             NameNodeEnv.setup(name, getClass(), xmlConfiguration);
-            DefaultLogger.LOGGER.info(String.format("Name Node Agent environment initialized. [source=%s]",
+            DefaultLogger.info(String.format("Name Node Agent environment initialized. [source=%s]",
                     NameNodeEnv.get(name).source()));
             assertNotNull(NameNodeEnv.get(name).hdfsConnection());
             assertNotNull(NameNodeEnv.get(name).stateManager().connection());
@@ -86,7 +86,7 @@ class NameNodeEnvTest {
                                 lock.lock();
                                 try {
                                     lock.lock(); // Checking re-entrance
-                                    DefaultLogger.LOGGER.info(String.format("LOCK COUNTER=%d", lockCounter++));
+                                    DefaultLogger.info(String.format("LOCK COUNTER=%d", lockCounter++));
                                 } finally {
                                     lock.unlock();
                                 }

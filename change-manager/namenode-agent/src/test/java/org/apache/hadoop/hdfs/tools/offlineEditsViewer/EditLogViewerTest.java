@@ -1,6 +1,6 @@
 package org.apache.hadoop.hdfs.tools.offlineEditsViewer;
 
-import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.DFSEditsFileFinder;
@@ -53,7 +53,7 @@ class EditLogViewerTest {
                 if (lastTxId > 0) {
                     assertEquals((lastTxId + 1), tnx.id());
                 }
-                DefaultLogger.LOGGER.info(tnx.toString());
+                DefaultLogger.info(tnx.toString());
                 lastTxId = tnx.id();
             }
         } catch (Throwable t) {
@@ -71,13 +71,13 @@ class EditLogViewerTest {
                 List<DFSTransactionType<?>> transactions = batch.transactions();
                 assertNotNull(transactions);
                 if (transactions.size() > 0) {
-                    DefaultLogger.LOGGER.info(
+                    DefaultLogger.info(
                             String.format("Transactions found in edits file. [file=%s]", batch.filename()));
                     for (DFSTransactionType<?> tnx : transactions) {
-                        DefaultLogger.LOGGER.info(tnx.toString());
+                        DefaultLogger.info(tnx.toString());
                     }
                 } else {
-                    DefaultLogger.LOGGER.warn(
+                    DefaultLogger.warn(
                             String.format("No Transactions found in edits file. [file=%s]", batch.filename()));
                 }
             }

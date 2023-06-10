@@ -1,10 +1,11 @@
 package ai.sapper.hcdc.agents.main;
 
-import ai.sapper.cdc.common.ConfigReader;
+import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.Service;
+import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.namenode.EditsChangeDeltaProcessor;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -24,7 +25,7 @@ public class EditsChangeConsumer implements Service<NameNodeEnv.ENameNodeEnvStat
     private EConfigFileType fileSource = EConfigFileType.File;
     private HierarchicalConfiguration<ImmutableNode> config;
     private Thread runner;
-    private EditsChangeDeltaProcessor processor;
+    private EditsChangeDeltaProcessor<?> processor;
     private NameNodeEnv env;
 
     @Override
@@ -39,6 +40,7 @@ public class EditsChangeConsumer implements Service<NameNodeEnv.ENameNodeEnvStat
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     public Service<NameNodeEnv.ENameNodeEnvState> init() throws Exception {
         try {
             Preconditions.checkState(!Strings.isNullOrEmpty(configFile));
@@ -48,18 +50,19 @@ public class EditsChangeConsumer implements Service<NameNodeEnv.ENameNodeEnvStat
             Preconditions.checkNotNull(fileSource);
             config = ConfigReader.read(configFile, fileSource);
             env = NameNodeEnv.setup(name(), getClass(), config);
+            Class<? extends EditsChangeDeltaProcessor<?>> type
+                    = (Class<? extends EditsChangeDeltaProcessor<?>>) ChangeDeltaProcessor.readProcessorType(env.baseConfig());
+            if (type == null) {
+                throw new Exception("EditsChangeDeltaProcessor implementation not specified...");
+            }
 
-            processor = new EditsChangeDeltaProcessor(NameNodeEnv
-                    .get(name())
-                    .stateManager(), name());
-            processor.init(NameNodeEnv.get(name())
-                            .configNode(),
-                    NameNodeEnv.get(name())
-                            .connectionManager());
+            processor = type.getDeclaredConstructor(NameNodeEnv.class, String.class)
+                            .newInstance(env, name());
+            processor.init(env.baseConfig());
             return this;
         } catch (Throwable t) {
             DefaultLogger.stacktrace(t);
-            DefaultLogger.LOGGER.error(t.getLocalizedMessage());
+            DefaultLogger.error(t.getLocalizedMessage());
             NameNodeEnv.get(name()).error(t);
             throw t;
         }

@@ -18,7 +18,7 @@ class CSVDataReaderTest {
             assertNotNull(records);
             assertTrue(records.size() > 0);
             for (List<String> record : records) {
-                DefaultLogger.LOGGER.info(record.toString());
+                DefaultLogger.info(record.toString());
             }
         } catch (Exception ex) {
             DefaultLogger.stacktrace(ex);

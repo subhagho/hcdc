@@ -42,7 +42,7 @@ class HDFSBlockReaderTest {
 
     @Test
     void read() {
-        DefaultLogger.LOGGER.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "close"));
+        DefaultLogger.debug(String.format("Running [%s].%s()", getClass().getCanonicalName(), "close"));
         try {
             HdfsHAConnection connection = manager.getConnection(__CONNECTION_NAME, HdfsHAConnection.class);
             connection.connect();
