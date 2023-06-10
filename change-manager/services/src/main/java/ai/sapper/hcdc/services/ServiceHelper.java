@@ -9,7 +9,7 @@ public class ServiceHelper {
             throw new Exception("Service not initialized...");
         } else if (!NameNodeEnv.get(name).state().isAvailable()) {
             throw new Exception(String.format("Service environment not available. [state=%s]",
-                    NameNodeEnv.get(name).state().state().name()));
+                    NameNodeEnv.get(name).state().getState().name()));
         }
     }
 }

@@ -190,43 +190,4 @@ public class SnapshotService {
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-    @RequestMapping(value = "/schema/expand/domain/{domain}", method = RequestMethod.GET)
-    public ResponseEntity<List<PathOrSchema>> expandDomain(@PathVariable("domain") String domain) {
-        try {
-            ServiceHelper.checkService(processor.name(), processor);
-            HCdcSchemaManager schemaManager = NameNodeEnv.get(processor.name())
-                    .schemaManager();
-            if (schemaManager == null) {
-                throw new Exception("SchemaManager not initialized...");
-            }
-            if (Strings.isNullOrEmpty(domain)
-                    || domain.compareToIgnoreCase("null") == 0) {
-                domain = null;
-            }
-            List<PathOrSchema> paths = schemaManager.domainNodes(domain);
-            return new ResponseEntity<>(paths, HttpStatus.OK);
-        } catch (Throwable t) {
-            return new ResponseEntity<>((List<PathOrSchema>) null,
-                    HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @RequestMapping(value = "/schema/expand/path/{domain}", method = RequestMethod.GET)
-    public ResponseEntity<List<PathOrSchema>> expandPath(@PathVariable("domain") String domain,
-                                                         @RequestBody String path) {
-        try {
-            ServiceHelper.checkService(processor.name(), processor);
-            HCdcSchemaManager schemaManager = NameNodeEnv.get(processor.name())
-                    .schemaManager();
-            if (schemaManager == null) {
-                throw new Exception("SchemaManager not initialized...");
-            }
-            List<PathOrSchema> paths = schemaManager.pathNodes(domain, path);
-            return new ResponseEntity<>(paths, HttpStatus.OK);
-        } catch (Throwable t) {
-            return new ResponseEntity<>((List<PathOrSchema>) null,
-                    HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 }
