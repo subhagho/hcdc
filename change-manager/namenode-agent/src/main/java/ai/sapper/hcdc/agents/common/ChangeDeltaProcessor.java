@@ -130,7 +130,7 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
             if (message.mode() == MessageObject.MessageMode.New ||
                     message.mode() == MessageObject.MessageMode.Snapshot) {
                 boolean snapshot = (message.mode() == MessageObject.MessageMode.Snapshot);
-                if (pState.getReceivedTx().compare(txId, snapshot) < 0) {
+                if (pState.getReceivedTx().compare(txId) < 0) {
                     pState.setProcessedOffset(txId);
                 }
             }
@@ -145,7 +145,7 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
             if (message.mode() == MessageObject.MessageMode.New ||
                     message.mode() == MessageObject.MessageMode.Snapshot) {
                 boolean snapshot = (message.mode() == MessageObject.MessageMode.Snapshot);
-                if (pState.getProcessedOffset().compare(txId, snapshot) < 0) {
+                if (pState.getProcessedOffset().compare(txId) < 0) {
                     pState.updateProcessedTxId(txId.getId());
                 }
                 if (snapshot) {

@@ -73,30 +73,31 @@ public class ParquetConverter extends AvroBasedConverter {
         Preconditions.checkNotNull(schemaManager());
         Configuration conf = new Configuration();
         conf.set(AvroReadSupport.READ_INT96_AS_FIXED, "true");
-        ParquetReader<GenericRecord> reader = new AvroParquetReader(conf, new Path(source.toURI()));
-        long count = 0;
-        try {
-            AvroEntitySchema schema = parseSchema(source, schemaEntity);
+        try (ParquetReader<GenericRecord> reader = new AvroParquetReader(conf, new Path(source.toURI()))) {
+            long count = 0;
+            try {
+                AvroEntitySchema schema = parseSchema(source, schemaEntity);
 
-            try (FileOutputStream fos = new FileOutputStream(output)) {
-                while (true) {
-                    GenericRecord record = reader.read();
-                    if (record == null) break;
-                    HCdcTxId tid = new HCdcTxId(txId);
-                    tid.setRecordId(count);
-                    ChangeEvent event = convert(schema,
-                            record,
-                            fileState.getFileInfo().getHdfsPath(),
-                            op,
-                            tid,
-                            snapshot);
-                    event.writeDelimitedTo(fos);
-                    count++;
+                try (FileOutputStream fos = new FileOutputStream(output)) {
+                    while (true) {
+                        GenericRecord record = reader.read();
+                        if (record == null) break;
+                        HCdcTxId tid = new HCdcTxId(txId);
+                        tid.setRecordId(count);
+                        ChangeEvent event = convert(schema,
+                                record,
+                                fileState.getFileInfo().getHdfsPath(),
+                                op,
+                                tid,
+                                snapshot);
+                        event.writeDelimitedTo(fos);
+                        count++;
+                    }
                 }
+                return new Response(output, count);
+            } catch (Exception ex) {
+                throw new IOException(ex);
             }
-            return new Response(output, count);
-        } catch (Exception ex) {
-            throw new IOException(ex);
         }
     }
 

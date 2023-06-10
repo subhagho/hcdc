@@ -214,7 +214,7 @@ public abstract class TransactionProcessor {
                                     offset + 1, txId.getId()));
                 }
             }
-            if (txId.compare(txState.getProcessedOffset(), false) <= 0) {
+            if (txId.compare(txState.getProcessedOffset()) <= 0) {
                 if (retry) {
                     return txId;
                 }

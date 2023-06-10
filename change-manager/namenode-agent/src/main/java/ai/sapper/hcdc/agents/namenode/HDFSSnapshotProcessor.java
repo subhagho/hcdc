@@ -222,6 +222,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
             if (txId.getId() < fileState.getLastTnxId()) {
                 txId.setId(fileState.getLastTnxId());
             }
+            txId.setSnapshot(true);
             DFSFileReplicaState rState = stateManager
                     .replicaStateHelper()
                     .get(entity, fileState.getFileInfo().getInodeId());
