@@ -15,9 +15,9 @@
                 <connection>zk-state-connection</connection>
             </state>
         </managers>
-        <audit>
+        <!--audit>
             <class>ai.sapper.cdc.common.audit.DefaultAuditLogger</class>
-        </audit>
+        </audit-->
         <agent>
             <hadoop>
                 <namespace>ha-cluster</namespace>
@@ -28,7 +28,6 @@
                 <hdfs-admin>source-hdfs-ha</hdfs-admin>
             </hadoop>
             <needHadoop>true</needHadoop>
-
             <useSSL>false</useSSL>
         </agent>
         <replicator>
@@ -38,7 +37,7 @@
         </replicator>
         <locks>
             <connection>zk-state-connection</connection>
-            <path>/ai/sapper/cdc/registry</path>
+            <path>/ai/sapper/cdc/__locks</path>
         </locks>
         <config>
             <connections>
@@ -47,7 +46,7 @@
                     <path>/ai/sapper/cdc/registry</path>
                 </shared>
                 <connection>
-                    <type>ai.sapper.cdc.core.connections.ZookeeperConnection</type>
+                    <class>ai.sapper.cdc.core.connections.ZookeeperConnection</class>
                     <zookeeper>
                         <name>zk-state-connection</name>
                         <!--connectionString>192.168.0.5:2181,192.168.0.4:2181</connectionString -->

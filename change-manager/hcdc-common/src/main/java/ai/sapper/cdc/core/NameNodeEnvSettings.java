@@ -17,18 +17,18 @@ public class NameNodeEnvSettings extends BaseEnvSettings {
         public static final String __CONFIG_PATH = "agent";
 
         public static final String CONFIG_SOURCE = "source";
-        public static final String CONFIG_CONNECTION_HDFS = "hadoop.hdfs-admin";
-        public static final String CONFIG_HADOOP_HOME = "hadoop.home";
-        public static final String CONFIG_HADOOP_INSTANCE = "hadoop.instance";
-        public static final String CONFIG_HADOOP_NAMESPACE = "hadoop.namespace";
-        public static final String CONFIG_HADOOP_VERSION = "hadoop.version";
-        public static final String CONFIG_HADOOP_ADMIN_URL = "hadoop.adminUrl";
-        public static final String CONFIG_HADOOP_TMP_DIR = "hadoop.tmpDir";
+        public static final String CONFIG_CONNECTION_HDFS = "agent.hadoop.hdfs-admin";
+        public static final String CONFIG_HADOOP_HOME = "agent.hadoop.home";
+        public static final String CONFIG_HADOOP_INSTANCE = "agent.hadoop.instance";
+        public static final String CONFIG_HADOOP_NAMESPACE = "agent.hadoop.namespace";
+        public static final String CONFIG_HADOOP_VERSION = "agent.hadoop.version";
+        public static final String CONFIG_HADOOP_ADMIN_URL = "agent.hadoop.adminUrl";
+        public static final String CONFIG_HADOOP_TMP_DIR = "agent.hadoop.tmpDir";
 
-        public static final String CONFIG_HADOOP_CONFIG = "hadoop.config";
+        public static final String CONFIG_HADOOP_CONFIG = "agent.hadoop.config";
 
-        public static final String HDFS_NN_USE_HTTPS = "useSSL";
-        public static final String CONFIG_LOAD_HADOOP = "needHadoop";
+        public static final String HDFS_NN_USE_HTTPS = "agent.useSSL";
+        public static final String CONFIG_LOAD_HADOOP = "agent.needHadoop";
     }
 
     @Config(name = Constants.CONFIG_SOURCE)

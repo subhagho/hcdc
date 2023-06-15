@@ -61,6 +61,8 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
                             .name(name())
                             .env(this)));
             nEnvConfig = new NameNodeEnvConfig(xmlConfig);
+            nEnvConfig.read();
+
             super.init(xmlConfig, nEnvConfig, new NameNodeEnvState());
             NameNodeEnvSettings settings = (NameNodeEnvSettings) settings();
             source = settings.getSource();
@@ -109,6 +111,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
             return this;
         } catch (Throwable t) {
             state().error(t);
+            DefaultLogger.stacktrace(t);
             throw new NameNodeError(t);
         }
     }
@@ -128,6 +131,9 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
             if (agentState.getState() == BaseAgentState.EAgentState.Active
                     || agentState.getState() == BaseAgentState.EAgentState.StandBy) {
                 agentState.setState(BaseAgentState.EAgentState.Stopped);
+            }
+            if (state() == null) {
+                return null;
             }
             if (state().isAvailable()) {
                 try {
@@ -302,29 +308,29 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
         public void read() throws ConfigurationException {
             super.read();
             NameNodeEnvSettings settings = (NameNodeEnvSettings) settings();
-            if (Strings.isNullOrEmpty(settings.getHadoopHome())) {
-                settings.setHadoopHome(System.getProperty("HADOOP_HOME"));
-                checkStringValue(settings.getHadoopHome(), getClass(), NameNodeEnvSettings.Constants.CONFIG_HADOOP_HOME);
-            }
-            settings.setHadoopConfig(new File(settings.getHadoopConfFile()));
-            if (!settings.getHadoopConfig().exists()) {
-                throw new ConfigurationException(
-                        String.format("NameNode Agent Configuration Error: configuration file not found. [%s]",
-                                settings.getHadoopConfig().getAbsolutePath()));
-            }
             if (settings.isReadHadoopConfig()) {
-                checkStringValue(settings.getHadoopHome(),
-                        getClass(), NameNodeEnvSettings.Constants.CONFIG_HADOOP_HOME);
-                checkStringValue(settings.getHadoopAdminUrl(),
-                        getClass(), NameNodeEnvSettings.Constants.CONFIG_HADOOP_ADMIN_URL);
-                checkStringValue(settings.getHdfsAdminConnection(),
-                        getClass(), NameNodeEnvSettings.Constants.CONFIG_CONNECTION_HDFS);
-                checkStringValue(settings.getHadoopNamespace(),
-                        getClass(), NameNodeEnvSettings.Constants.CONFIG_HADOOP_NAMESPACE);
-                checkStringValue(settings.getHadoopInstanceName(),
-                        getClass(), NameNodeEnvSettings.Constants.CONFIG_HADOOP_INSTANCE);
-                checkStringValue(settings.getHadoopConfFile(),
-                        getClass(), NameNodeEnvSettings.Constants.CONFIG_HADOOP_CONFIG);
+                if (Strings.isNullOrEmpty(settings.getHadoopHome())) {
+                    settings.setHadoopHome(System.getProperty("HADOOP_HOME"));
+                    checkStringValue(settings.getHadoopHome(), getClass(), NameNodeEnvSettings.Constants.CONFIG_HADOOP_HOME);
+                }
+                settings.setHadoopConfig(new File(settings.getHadoopConfFile()));
+                if (!settings.getHadoopConfig().exists()) {
+                    throw new ConfigurationException(
+                            String.format("NameNode Agent Configuration Error: configuration file not found. [%s]",
+                                    settings.getHadoopConfig().getAbsolutePath()));
+                }
+                if (settings.isReadHadoopConfig()) {
+                    checkStringValue(settings.getHadoopHome(),
+                            getClass(), NameNodeEnvSettings.Constants.CONFIG_HADOOP_HOME);
+                    checkStringValue(settings.getHdfsAdminConnection(),
+                            getClass(), NameNodeEnvSettings.Constants.CONFIG_CONNECTION_HDFS);
+                    checkStringValue(settings.getHadoopNamespace(),
+                            getClass(), NameNodeEnvSettings.Constants.CONFIG_HADOOP_NAMESPACE);
+                    checkStringValue(settings.getHadoopInstanceName(),
+                            getClass(), NameNodeEnvSettings.Constants.CONFIG_HADOOP_INSTANCE);
+                    checkStringValue(settings.getHadoopConfFile(),
+                            getClass(), NameNodeEnvSettings.Constants.CONFIG_HADOOP_CONFIG);
+                }
             }
         }
     }

@@ -48,8 +48,7 @@ public abstract class AvroBasedConverter extends FormatConverter {
                 .setSource(source())
                 .setTnx(tnx)
                 .setEntity(change.getEntity())
-                .setChangeRecord(change)
-                .setSnapshot(snapshot);
+                .setChangeRecord(change);
         return builder.build();
     }
 

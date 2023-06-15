@@ -110,7 +110,7 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNodeEnvState
             Preconditions.checkNotNull(fileSource);
             config = ConfigReader.read(configFile, fileSource);
             env = NameNodeEnv.setup(name(), getClass(), config);
-            replicatorConfig = new ReplicatorConfig(env.rootConfig());
+            replicatorConfig = new ReplicatorConfig(env.baseConfig());
             replicatorConfig.read();
 
             hdfsConnection = NameNodeEnv.get(name()).connectionManager()

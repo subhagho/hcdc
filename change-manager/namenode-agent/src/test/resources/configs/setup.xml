@@ -9,15 +9,16 @@
         <enableHeartbeat>false</enableHeartbeat>
         <paths>
             <connections>config</connections>
+            <registry>/ai/sapper/cdc/registry</registry>
         </paths>
-        <!--managers>
+        <managers>
             <state>
                 <stateManagerClass>ai.sapper.cdc.core.state.HCdcStateManager</stateManagerClass>
                 <basePath>/ai/sapper/cdc/utils</basePath>
                 <connection>zk-state-connection</connection>
             </state>
-        </managers -->
-        <managers>
+        </managers>
+        <!-- managers>
             <state>
                 <stateManagerClass>ai.sapper.hcdc.agents.common.ProcessorStateManager</stateManagerClass>
                 <basePath>/ai/sapper/cdc/edits</basePath>
@@ -28,7 +29,7 @@
                 <connection>zk-state-connection</connection>
                 <module>hdfs</module>
             </domain>
-        </managers>
+        </managers -->
         <agent>
             <needHadoop>false</needHadoop>
         </agent>
@@ -51,23 +52,21 @@
                     <path>/ai/sapper/cdc/registry</path>
                 </shared>
                 <connection>
-                    <type>ai.sapper.cdc.core.connections.WebServiceConnection</type>
+                    <class>ai.sapper.cdc.core.connections.WebServiceConnection</class>
                     <rest>
                         <name>snapshot</name>
                         <endpoint>http://localhost:8080/snapshot</endpoint>
                     </rest>
                 </connection>
                 <connection>
-                    <type>ai.sapper.cdc.core.connections.hadoop.HdfsConnection</type>
+                    <class>ai.sapper.cdc.core.connections.hadoop.HdfsConnection</class>
                     <hdfs>
                         <name>source-hdfs</name>
                         <namenode>
-                            <primary>
-                                <URI>hdfs://192.168.2.2:9820</URI>
-                            </primary>
-                            <secondary>
-                                <URI>hdfs://192.168.2.3:9820</URI>
-                            </secondary>
+                            <URI>
+                                <primary>hdfs://192.168.2.2:9820</primary>
+                                <secondary>hdfs://192.168.2.3:9820</secondary>
+                            </URI>
                         </namenode>
                         <security>
                             <enabled>false</enabled>
@@ -76,8 +75,8 @@
                     </hdfs>
                 </connection>
                 <connection>
-                    <type>ai.sapper.cdc.core.connections.hadoop.HdfsHAConnection</type>
-                    <hdfs_ha>
+                    <class>ai.sapper.cdc.core.connections.hadoop.HdfsHAConnection</class>
+                    <hdfs-ha>
                         <name>source-hdfs-ha</name>
                         <nameservice>ha-cluster</nameservice>
                         <failoverProvider>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider
@@ -87,10 +86,10 @@
                             <enabled>false</enabled>
                         </security>
                         <enableAdmin>true</enableAdmin>
-                    </hdfs_ha>
+                    </hdfs-ha>
                 </connection>
                 <connection>
-                    <type>ai.sapper.cdc.core.connections.ZookeeperConnection</type>
+                    <class>ai.sapper.cdc.core.connections.ZookeeperConnection</class>
                     <zookeeper>
                         <name>zk-state-connection</name>
                         <!--connectionString>192.168.0.5:2181,192.168.0.4:2181</connectionString -->
@@ -104,129 +103,129 @@
                 </connection>
                 <!-- Kafka Producer connections-->
                 <connection>
-                    <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer</type>
+                    <class>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducerConnection</class>
                     <kafka>
                         <name>producer-edits-queue</name>
                         <mode>Producer</mode>
-                        <producer>
-                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-editlog.properties</config>
-                        </producer>
+                        <config>
+                            https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-editlog.properties
+                        </config>
                         <topic>ha-cluster.edits</topic>
                     </kafka>
                 </connection>
                 <connection>
-                    <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer</type>
+                    <class>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducerConnection</class>
                     <kafka>
                         <name>producer-cdc-queue</name>
                         <mode>Producer</mode>
-                        <producer>
-                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-hcdc-out.properties</config>
-                        </producer>
+                        <config>
+                            https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-hcdc-out.properties
+                        </config>
                         <topic>ha-cluster.cdc</topic>
                     </kafka>
                 </connection>
                 <connection>
-                    <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer</type>
+                    <class>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducerConnection</class>
                     <kafka>
                         <name>producer-delta-queue</name>
                         <mode>Producer</mode>
-                        <producer>
-                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-files-out.properties</config>
-                        </producer>
+                        <config>
+                            https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-files-out.properties
+                        </config>
                         <topic>ha-cluster.delta</topic>
                     </kafka>
                 </connection>
                 <connection>
-                    <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer</type>
+                    <class>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducerConnection</class>
                     <kafka>
                         <name>producer-delta-files-queue</name>
                         <mode>Producer</mode>
-                        <producer>
-                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-files-out.properties</config>
-                        </producer>
+                        <config>
+                            https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-files-out.properties
+                        </config>
                         <topic>ha-cluster.delta.files</topic>
                     </kafka>
                 </connection>
                 <!-- Kafka Producer Connections - Error Queues-->
                 <connection>
-                    <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer</type>
+                    <class>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducerConnection</class>
                     <kafka>
                         <name>producer-errors-queue</name>
                         <mode>Producer</mode>
-                        <producer>
-                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-files-errors.properties</config>
-                        </producer>
+                        <config>
+                            https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-files-errors.properties
+                        </config>
                         <topic>ha-cluster.errors</topic>
                     </kafka>
                 </connection>
                 <connection>
-                    <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer</type>
+                    <class>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducerConnection</class>
                     <kafka>
                         <name>producer-errors-files-queue</name>
                         <mode>Producer</mode>
-                        <producer>
-                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-files-errors.properties</config>
-                        </producer>
+                        <config>
+                            https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-files-errors.properties
+                        </config>
                         <topic>ha-cluster.errors.files</topic>
                     </kafka>
                 </connection>
                 <connection>
-                    <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducer</type>
+                    <class>ai.sapper.cdc.core.connections.kafka.BasicKafkaProducerConnection</class>
                     <kafka>
                         <name>producer-errors-loader-queue</name>
                         <mode>Producer</mode>
-                        <producer>
-                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-files-errors.properties</config>
-                        </producer>
+                        <config>
+                            https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/configs/kafka/producer-files-errors.properties
+                        </config>
                         <topic>ha-cluster.errors.loader</topic>
                     </kafka>
                 </connection>
                 <!-- Kafka Consumer connections-->
                 <connection>
-                    <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaConsumer</type>
+                    <class>ai.sapper.cdc.core.connections.kafka.BasicKafkaConsumerConnection</class>
                     <kafka>
                         <name>consumer-edits-queue</name>
                         <mode>Consumer</mode>
+                        <config>
+                            https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/consumer.properties
+                        </config>
                         <consumer>
-                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/consumer.properties</config>
                             <partitions>0</partitions>
                         </consumer>
                         <topic>ha-cluster.edits</topic>
                     </kafka>
                 </connection>
                 <connection>
-                    <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaConsumer</type>
+                    <class>ai.sapper.cdc.core.connections.kafka.BasicKafkaConsumerConnection</class>
                     <kafka>
                         <name>consumer-cdc-queue</name>
                         <mode>Consumer</mode>
-                        <consumer>
-                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/consumer.properties</config>
-                            <!--partitions>1</partitions-->
-                        </consumer>
+                        <config>
+                            https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/consumer.properties
+                        </config>
                         <topic>ha-cluster.cdc</topic>
                     </kafka>
                 </connection>
                 <connection>
-                    <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaConsumer</type>
+                    <class>ai.sapper.cdc.core.connections.kafka.BasicKafkaConsumerConnection</class>
                     <kafka>
                         <name>consumer-delta-queue</name>
                         <mode>Consumer</mode>
-                        <consumer>
-                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/consumer.properties</config>
-                            <!--partitions>1</partitions-->
-                        </consumer>
+                        <config>
+                            https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/consumer.properties
+                        </config>
                         <topic>ha-cluster.delta</topic>
                     </kafka>
                 </connection>
                 <connection>
-                    <type>ai.sapper.cdc.core.connections.kafka.BasicKafkaConsumer</type>
+                    <class>ai.sapper.cdc.core.connections.kafka.BasicKafkaConsumerConnection</class>
                     <kafka>
                         <name>consumer-delta-files-queue</name>
                         <mode>Consumer</mode>
-                        <consumer>
-                            <config>https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/consumer.properties</config>
-                            <!--partitions>1</partitions-->
-                        </consumer>
+                        <config>
+                            https://raw.githubusercontent.com/subhagho/hcdc/1.4-SNAPSHOT/change-manager/namenode-agent/src/test/resources/consumer.properties
+                        </config>
+                        <!--partitions>1</partitions-->
                         <topic>ha-cluster.delta.files</topic>
                     </kafka>
                 </connection>
