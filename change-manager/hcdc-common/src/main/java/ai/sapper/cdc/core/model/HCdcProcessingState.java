@@ -77,6 +77,7 @@ public class HCdcProcessingState extends ProcessingState<EHCdcProcessorState, HC
                             snapshotOffset.getSnapshotTxId(), snapshotTxId));
         }
         snapshotOffset.setSnapshotTxId(snapshotTxId);
+        snapshotOffset.setUpdatedTimestamp(System.currentTimeMillis());
         return this;
     }
 
@@ -88,12 +89,14 @@ public class HCdcProcessingState extends ProcessingState<EHCdcProcessorState, HC
                     String.format("Invalid Snapshot transaction: [current=%d][specified=%s]",
                             snapshotOffset.getSnapshotTxId(), snapshotTxId));
         }
-        if (snapshotOffset.getSnapshotSeq() < sequence) {
+        if (snapshotOffset.getSnapshotSeq()  >= 0
+                && snapshotOffset.getSnapshotSeq() < sequence) {
             throw new Exception(
                     String.format("Invalid Snapshot sequence: [current=%d][specified=%s]",
                             snapshotOffset.getSnapshotSeq(), sequence));
         }
         snapshotOffset.setSnapshotSeq(sequence);
+        snapshotOffset.setUpdatedTimestamp(System.currentTimeMillis());
         return this;
     }
 }

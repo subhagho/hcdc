@@ -95,13 +95,13 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
                 stateManager = (HCdcStateManager) super.stateManager();
                 stateManager.checkAgentState(HCdcProcessingState.class);
             }
-            HierarchicalConfiguration<ImmutableNode> mConfig
-                    = baseConfig().configurationAt(BaseEnvSettings.Constants.__CONFIG_PATH_MANAGERS);
-            if (ConfigReader.checkIfNodeExists(mConfig,
-                    SchemaManagerSettings.__CONFIG_PATH)) {
-                schemaManager = new HCdcSchemaManager();
-                schemaManager.init(mConfig,
-                        this);
+            if (managersConfig() != null) {
+                if (ConfigReader.checkIfNodeExists(managersConfig(),
+                        SchemaManagerSettings.__CONFIG_PATH)) {
+                    schemaManager = new HCdcSchemaManager();
+                    schemaManager.init(managersConfig(),
+                            this);
+                }
             }
 
             dbSource = ProtoUtils.build(instance(), moduleInstance().getIp(), "HDFS", 50070);

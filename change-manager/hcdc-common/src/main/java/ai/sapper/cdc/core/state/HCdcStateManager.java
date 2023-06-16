@@ -1,10 +1,7 @@
 package ai.sapper.cdc.core.state;
 
 import ai.sapper.cdc.common.utils.PathUtils;
-import ai.sapper.cdc.core.BaseEnv;
-import ai.sapper.cdc.core.FileStateHelper;
-import ai.sapper.cdc.core.NameNodeEnv;
-import ai.sapper.cdc.core.ReplicationStateHelper;
+import ai.sapper.cdc.core.*;
 import ai.sapper.cdc.core.model.EHCdcProcessorState;
 import ai.sapper.cdc.core.model.HCdcProcessingState;
 import ai.sapper.cdc.core.model.HCdcTxId;
@@ -51,8 +48,8 @@ public class HCdcStateManager extends ProcessStateManager<EHCdcProcessorState, H
                     BaseStateManagerSettings.__CONFIG_PATH,
                     env,
                     HCdcStateManagerSettings.class);
-            HCdcStateManagerSettings settings = (HCdcStateManagerSettings) super.settings();
-            this.source = settings.getSource();
+            NameNodeEnvSettings envSettings = (NameNodeEnvSettings) env.settings();
+            this.source = envSettings.getSource();
             CuratorFramework client = connection().client();
             String zkFSPath = new PathUtils.ZkPathBuilder(zkModulePath())
                     .withPath(Constants.ZK_PATH_FILES)
@@ -80,6 +77,8 @@ public class HCdcStateManager extends ProcessStateManager<EHCdcProcessorState, H
             replicaStateHelper
                     .withZkConnection(connection())
                     .withZkPath(zkPathReplication);
+            processingState().setState(EHCdcProcessorState.Running);
+            update(processingState());
             return this;
         } catch (Exception ex) {
             throw new StateManagerError(ex);
