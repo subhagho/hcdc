@@ -27,6 +27,7 @@ import ai.sapper.cdc.core.model.HCdcProcessingState;
 import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.processing.MessageProcessor;
 import ai.sapper.cdc.core.processing.MessageProcessorState;
+import ai.sapper.cdc.core.processing.ProcessingState;
 import ai.sapper.cdc.core.state.HCdcStateManager;
 import ai.sapper.hcdc.agents.settings.ChangeDeltaProcessorSettings;
 import ai.sapper.hcdc.agents.settings.HDFSSnapshotProcessorSettings;
@@ -199,6 +200,12 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
                                  boolean retry) throws Exception;
 
     public abstract ChangeDeltaProcessor<MO> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException;
+
+    @Override
+    protected ProcessingState<EHCdcProcessorState, HCdcTxId> finished(@NonNull ProcessingState<EHCdcProcessorState, HCdcTxId> processingState) {
+        processingState.setState(EHCdcProcessorState.Stopped);
+        return processingState;
+    }
 
     @Override
     public void close() throws IOException {

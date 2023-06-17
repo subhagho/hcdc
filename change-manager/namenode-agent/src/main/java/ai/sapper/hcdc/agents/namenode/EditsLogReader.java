@@ -26,6 +26,7 @@ import ai.sapper.cdc.core.model.HCdcProcessingState;
 import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.model.dfs.DFSEditLogBatch;
 import ai.sapper.cdc.core.model.dfs.DFSTransactionType;
+import ai.sapper.cdc.core.processing.ProcessingState;
 import ai.sapper.cdc.core.processing.Processor;
 import ai.sapper.hcdc.agents.settings.HDFSEditsReaderSettings;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
@@ -86,6 +87,12 @@ public class EditsLogReader extends HDFSEditsReader {
             }
             throw new ConfigurationException(ex);
         }
+    }
+
+    @Override
+    protected ProcessingState<EHCdcProcessorState, HCdcTxId> finished(@NonNull ProcessingState<EHCdcProcessorState, HCdcTxId> processingState) {
+        processingState.setState(EHCdcProcessorState.Stopped);
+        return processingState;
     }
 
     @Override

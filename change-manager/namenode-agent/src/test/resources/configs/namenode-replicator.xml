@@ -23,11 +23,13 @@
         <source>ha-cluster</source>
         <paths>
             <connections>config</connections>
+            <registry>/ai/sapper/cdc/registry</registry>
+            <root>/ai/sapper/cdc</root>
         </paths>
         <managers>
             <state>
                 <stateManagerClass>ai.sapper.cdc.core.state.HCdcStateManager</stateManagerClass>
-                <basePath>/ai/sapper/cdc/ha-cluster</basePath>
+                <basePath>ha-cluster</basePath>
                 <connection>zk-state-connection</connection>
             </state>
         </managers>
@@ -53,13 +55,11 @@
         </replicator>
         <locks>
             <connection>zk-state-connection</connection>
-            <path>/ai/sapper/cdc/__locks</path>
         </locks>
         <config>
             <connections>
                 <shared>
                     <connection>zk-state-connection</connection>
-                    <path>/ai/sapper/cdc/registry</path>
                 </shared>
                 <connection>
                     <class>ai.sapper.cdc.core.connections.ZookeeperConnection</class>

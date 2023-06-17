@@ -25,10 +25,7 @@ import ai.sapper.cdc.core.NameNodeError;
 import ai.sapper.cdc.core.Service;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
-import ai.sapper.cdc.core.model.EFileState;
-import ai.sapper.cdc.core.model.EHCdcProcessorState;
-import ai.sapper.cdc.core.model.HCdcProcessingState;
-import ai.sapper.cdc.core.model.HCdcTxId;
+import ai.sapper.cdc.core.model.*;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import ai.sapper.cdc.core.model.dfs.EBlockState;
 import ai.sapper.cdc.core.model.dfs.NameNode;
@@ -211,6 +208,10 @@ public class NameNodeReplicator implements Service<NameNodeEnv.ENameNodeEnvState
                             .updateSnapshotSequence(txnId.getId(), txnId.getRecordId());
                     processingState.setState(EHCdcProcessorState.Stopped);
                     processingState = (HCdcProcessingState) stateManager.update(processingState);
+                    SnapshotOffset so = stateManager.getSnapshotOffset();
+                    so.setSnapshotTxId(txnId.getId());
+                    so.setSnapshotSeq(0);
+                    stateManager.updateSnapshotOffset(so);
                     DefaultLogger.info(env.LOG,
                             String.format("NameNode replication done. [state=%s]", processingState));
 

@@ -30,7 +30,6 @@ import lombok.Setter;
 public class SnapshotOffset extends Offset {
     private long snapshotTxId = -1;
     private long snapshotSeq = -1;
-    private long updatedTimestamp = -1;
 
     @Override
     public String asString() {

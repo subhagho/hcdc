@@ -26,11 +26,12 @@
         <paths>
             <connections>config</connections>
             <registry>/ai/sapper/cdc/registry</registry>
+            <root>/ai/sapper/cdc</root>
         </paths>
         <managers>
             <state>
                 <stateManagerClass>ai.sapper.cdc.core.state.HCdcStateManager</stateManagerClass>
-                <basePath>/ai/sapper/cdc/utils</basePath>
+                <basePath>utils</basePath>
                 <connection>zk-state-connection</connection>
             </state>
             <schema>
@@ -40,45 +41,22 @@
                         <class>ai.sapper.cdc.entity.manager.zk.ZKSchemaDataHandler</class>
                         <settings>ai.sapper.cdc.entity.manager.zk.ZKSchemaDataHandlerSettings</settings>
                     </handler>
-                    <basePath>/ai/sapper/cdc/registry</basePath>
                     <connection>zk-state-connection</connection>
                     <schema>hdfs</schema>
                 </persistence>
                 <hdfs>source-hdfs-ha</hdfs>
             </schema>
         </managers>
-        <!-- managers>
-            <state>
-                <stateManagerClass>ai.sapper.hcdc.agents.common.ProcessorStateManager</stateManagerClass>
-                <basePath>/ai/sapper/cdc/edits</basePath>
-                <connection>zk-state-connection</connection>
-            </state>
-            <domain>
-                <basePath>/ai/sapper/cdc/registry</basePath>
-                <connection>zk-state-connection</connection>
-                <module>hdfs</module>
-            </domain>
-        </managers -->
         <agent>
             <needHadoop>false</needHadoop>
         </agent>
         <locks>
             <connection>zk-state-connection</connection>
-            <path>/ai/sapper/test/registry</path>
-            <lock>
-                <name>global</name>
-                <lock-node>NN-GLOBAL-LOCK</lock-node>
-            </lock>
-            <lock>
-                <name>LOCK_REPLICATION</name>
-                <lock-node>NN-REPLICATION-LOCK</lock-node>
-            </lock>
         </locks>
         <config>
             <connections>
                 <shared>
                     <connection>zk-state-connection</connection>
-                    <path>/ai/sapper/cdc/registry</path>
                 </shared>
                 <connection>
                     <class>ai.sapper.cdc.core.connections.WebServiceConnection</class>

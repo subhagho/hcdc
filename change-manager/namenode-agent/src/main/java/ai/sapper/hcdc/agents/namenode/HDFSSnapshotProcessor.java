@@ -31,6 +31,7 @@ import ai.sapper.cdc.core.model.dfs.DFSBlockState;
 import ai.sapper.cdc.core.model.dfs.DFSFileReplicaState;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import ai.sapper.cdc.core.model.dfs.DFSReplicationOffset;
+import ai.sapper.cdc.core.processing.ProcessingState;
 import ai.sapper.cdc.core.processing.Processor;
 import ai.sapper.cdc.core.processing.ProcessorState;
 import ai.sapper.cdc.core.state.HCdcStateManager;
@@ -111,6 +112,12 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
     }
 
     @Override
+    protected ProcessingState<EHCdcProcessorState, HCdcTxId> finished(@NonNull ProcessingState<EHCdcProcessorState, HCdcTxId> processingState) {
+        processingState.setState(EHCdcProcessorState.Stopped);
+        return processingState;
+    }
+
+    @Override
     protected void doRun(boolean runOnce) throws Throwable {
         Preconditions.checkArgument(runOnce);
         checkState();
@@ -118,7 +125,8 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
         HCdcStateManager stateManager = (HCdcStateManager) stateManager();
         __lock().lock();
         try {
-            HCdcTxId txId = stateManager.processingState().getOffset();
+            SnapshotOffset offset = stateManager.getSnapshotOffset();
+            HCdcTxId txId = new HCdcTxId(offset.getSnapshotTxId());
             int count = 0;
             for (String domain : schemaManager.matchers().keySet()) {
                 DefaultLogger.info(LOG, String.format("Running snapshot for domain. [domain=%s]", domain));
@@ -132,6 +140,11 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
                     }
                 }
             }
+            offset = stateManager.getSnapshotOffset();
+            HCdcProcessingState pState = (HCdcProcessingState) stateManager.processingState();
+            pState.setOffset(txId);
+            pState.setSnapshotOffset(offset);
+            stateManager.update(pState);
         } finally {
             __lock().unlock();
         }
@@ -254,8 +267,11 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
             rState = stateManager
                     .replicaStateHelper()
                     .create(fileState.getFileInfo(), entity, true);
+            rState.setState(EFileReplicationState.New);
+            rState.setName(hdfsPath);
+            rState.setType(DFSFileReplicaState.class.getCanonicalName());
 
-            long seq = ((HCdcStateManager) stateManager()).nextSequence(1);
+            long seq = stateManager.nextSequence(1);
             txId.setSequence(seq);
             txId.setType(EngineType.HDFS);
 
@@ -275,6 +291,10 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
             stateManager
                     .replicaStateHelper()
                     .update(rState);
+            SnapshotOffset so = stateManager.getSnapshotOffset();
+            so.setSnapshotTxId(offset.getSnapshotTxId());
+            so.setSnapshotSeq(seq);
+            stateManager.updateSnapshotOffset(so);
             DefaultLogger.info(LOG, String.format("Snapshot generated for path. [path=%s][inode=%d]",
                     fileState.getFileInfo().getHdfsPath(), fileState.getFileInfo().getInodeId()));
         } catch (Exception ex) {

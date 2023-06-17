@@ -18,10 +18,7 @@ package ai.sapper.cdc.core.state;
 
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.*;
-import ai.sapper.cdc.core.model.EHCdcProcessorState;
-import ai.sapper.cdc.core.model.HCdcProcessingState;
-import ai.sapper.cdc.core.model.HCdcTxId;
-import ai.sapper.cdc.core.model.Heartbeat;
+import ai.sapper.cdc.core.model.*;
 import ai.sapper.cdc.core.processing.ProcessStateManager;
 import ai.sapper.cdc.core.processing.ProcessingState;
 import com.google.common.base.Preconditions;
@@ -48,6 +45,7 @@ public class HCdcStateManager extends ProcessStateManager<EHCdcProcessorState, H
     public static class Constants {
         public static final String ZK_PATH_FILES = "/files";
         public static final String ZK_PATH_REPLICATION = "/replication";
+        public static final String OFFSET_SHARED_SNAPSHOT = "snapshot";
     }
 
     private String source;
@@ -77,6 +75,7 @@ public class HCdcStateManager extends ProcessStateManager<EHCdcProcessorState, H
                     throw new StateManagerError(String.format("Error creating ZK base path. [path=%s]", basePath()));
                 }
             }
+            SnapshotOffset so = checkAndCreateOffset(Constants.OFFSET_SHARED_SNAPSHOT, SnapshotOffset.class);
             fileStateHelper
                     .withZkPath(zkFSPath)
                     .withZkConnection(connection());
@@ -116,6 +115,13 @@ public class HCdcStateManager extends ProcessStateManager<EHCdcProcessorState, H
         }
     }
 
+    public SnapshotOffset getSnapshotOffset() throws StateManagerError {
+        return readOffset(Constants.OFFSET_SHARED_SNAPSHOT, SnapshotOffset.class);
+    }
+
+    public SnapshotOffset updateSnapshotOffset(@NonNull SnapshotOffset offset) throws StateManagerError {
+        return updateOffset(Constants.OFFSET_SHARED_SNAPSHOT, offset);
+    }
 
     public String basePath() {
         return settings().getBasePath();

@@ -24,11 +24,13 @@
         <enableHeartbeat>true</enableHeartbeat>
         <paths>
             <connections>config</connections>
+            <registry>/ai/sapper/cdc/registry</registry>
+            <root>/ai/sapper/cdc</root>
         </paths>
         <managers>
             <state>
                 <stateManagerClass>ai.sapper.cdc.core.state.HCdcStateManager</stateManagerClass>
-                <basePath>/ai/sapper/cdc/edits</basePath>
+                <basePath>ha-cluster</basePath>
                 <connection>zk-state-connection</connection>
             </state>
             <schema>
@@ -38,7 +40,6 @@
                         <class>ai.sapper.cdc.entity.manager.zk.ZKSchemaDataHandler</class>
                         <settings>ai.sapper.cdc.entity.manager.zk.ZKSchemaDataHandlerSettings</settings>
                     </handler>
-                    <basePath>/ai/sapper/cdc/registry</basePath>
                     <connection>zk-state-connection</connection>
                     <schema>hdfs</schema>
                 </persistence>

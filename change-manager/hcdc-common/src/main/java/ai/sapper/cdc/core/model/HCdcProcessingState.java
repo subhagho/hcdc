@@ -93,7 +93,7 @@ public class HCdcProcessingState extends ProcessingState<EHCdcProcessorState, HC
                             snapshotOffset.getSnapshotTxId(), snapshotTxId));
         }
         snapshotOffset.setSnapshotTxId(snapshotTxId);
-        snapshotOffset.setUpdatedTimestamp(System.currentTimeMillis());
+        snapshotOffset.setTimeUpdated(System.currentTimeMillis());
         return this;
     }
 
@@ -112,7 +112,7 @@ public class HCdcProcessingState extends ProcessingState<EHCdcProcessorState, HC
                             snapshotOffset.getSnapshotSeq(), sequence));
         }
         snapshotOffset.setSnapshotSeq(sequence);
-        snapshotOffset.setUpdatedTimestamp(System.currentTimeMillis());
+        snapshotOffset.setTimeUpdated(System.currentTimeMillis());
         return this;
     }
 }

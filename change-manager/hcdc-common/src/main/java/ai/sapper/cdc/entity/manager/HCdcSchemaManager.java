@@ -92,6 +92,9 @@ public class HCdcSchemaManager extends SchemaManager {
                         String.format("HDFS Connection not found. [name=%s]",
                                 ((HCdcSchemaManagerSettings) settings).getHdfsConnection()));
             }
+            if (!hdfsConnection.isConnected()) {
+                hdfsConnection.connect();
+            }
             if (!Strings.isNullOrEmpty(((HCdcSchemaManagerSettings) settings).getIgnoreRegEx())) {
                 ignorePattern = Pattern.compile(((HCdcSchemaManagerSettings) settings).getIgnoreRegEx());
             }
