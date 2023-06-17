@@ -12,6 +12,7 @@ import ai.sapper.cdc.core.model.DomainFilterAddRequest;
 import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.model.SnapshotDoneRequest;
 import ai.sapper.cdc.core.model.dfs.DFSFileReplicaState;
+import ai.sapper.cdc.core.processing.ProcessorState;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.hcdc.agents.main.SnapshotRunner;
 import ai.sapper.hcdc.services.ServiceHelper;
@@ -105,11 +106,23 @@ public class SnapshotService {
     }
 
     @RequestMapping(value = "/snapshot/run", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<String>> run() {
+    public synchronized ResponseEntity<BasicResponse<String>> run() {
         try {
             DefaultLogger.info("Snapshot run called...");
             ServiceHelper.checkService(processor.name(), processor);
-            processor.getProcessor().run();
+            if (!processor.getProcessor().state().isInitialized()) {
+                throw new Exception(String.format("[%s] Processor not initialized. [state=%s]",
+                        processor.getProcessor().name(),
+                        processor.getProcessor().state().getState().name()));
+            }
+            if (processor.getProcessor().state().isRunning()) {
+                throw new Exception(String.format("[%s] Processor is running. [state=%s]",
+                        processor.getProcessor().name(),
+                        processor.getProcessor().state().getState().name()));
+            }
+            processor.getProcessor().state().setState(ProcessorState.EProcessorState.Running);
+            processor.getProcessor().runOnce();
+            processor.getProcessor().state().setState(ProcessorState.EProcessorState.Initialized);
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
                     "Snapshot run successful..."),
                     HttpStatus.OK);
@@ -153,8 +166,15 @@ public class SnapshotService {
     }
 
     @RequestMapping(value = "/admin/snapshot/start", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<NameNodeEnv.NameNodeEnvState>> start(@RequestBody ConfigSource config) {
+    public synchronized ResponseEntity<BasicResponse<NameNodeEnv.NameNodeEnvState>> start(@RequestBody ConfigSource config) {
         try {
+            if (processor != null) {
+                if (processor.getProcessor().state().isInitialized()) {
+                    return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
+                            processor.status()),
+                            HttpStatus.OK);
+                }
+            }
             processor = new SnapshotRunner();
             processor.setConfigFile(config.getPath())
                     .setConfigSource(config.getType().name());

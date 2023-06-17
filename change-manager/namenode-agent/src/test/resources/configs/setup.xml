@@ -2,7 +2,7 @@
 <configuration>
     <env>
         <name>DEV</name>
-        <module>CDC-PROCESSORS</module>
+        <module>hadoop</module>
         <!--module>EDITS-LOG-PROCESSORS</module-->
         <instance>setup</instance>
         <source>ha-cluster</source>

@@ -102,7 +102,7 @@ public class EditsLogProcessor implements Service<NameNodeEnv.ENameNodeEnvState>
         try (DistributedLock lock = NameNodeEnv.get(name()).globalLock()) {
             lock.lock();
             try {
-                processor.doRun();
+                processor.doRun(true);
                 return processor.txId().getId();
             } finally {
                 lock.unlock();

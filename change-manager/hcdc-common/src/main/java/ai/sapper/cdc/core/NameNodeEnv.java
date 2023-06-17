@@ -43,6 +43,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
     private HadoopEnvConfig hadoopConfig;
     private NameNodeAdminClient adminClient;
     private DbSource dbSource;
+    private HierarchicalConfiguration<ImmutableNode> agentConfig;
 
     private final BaseAgentState.AgentState agentState = new BaseAgentState.AgentState();
 
@@ -102,6 +103,10 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
                     schemaManager.init(managersConfig(),
                             this);
                 }
+            }
+
+            if (ConfigReader.checkIfNodeExists(baseConfig(), NameNodeEnvSettings.Constants.__CONFIG_PATH)) {
+                agentConfig = baseConfig().configurationAt(NameNodeEnvSettings.Constants.__CONFIG_PATH);
             }
 
             dbSource = ProtoUtils.build(instance(), moduleInstance().getIp(), "HDFS", 50070);

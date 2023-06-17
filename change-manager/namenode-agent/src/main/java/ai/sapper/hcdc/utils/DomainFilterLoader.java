@@ -7,7 +7,6 @@ import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.state.HCdcStateManager;
 import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
 import ai.sapper.cdc.entity.schema.Domain;
-import ai.sapper.cdc.entity.schema.HCdcDomain;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import lombok.Getter;

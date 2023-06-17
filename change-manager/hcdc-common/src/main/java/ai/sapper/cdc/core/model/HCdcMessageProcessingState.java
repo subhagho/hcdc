@@ -38,28 +38,28 @@ public class HCdcMessageProcessingState<M extends ReceiverOffset> extends Messag
     }
 
     public HCdcMessageProcessingState<M> updateProcessedTxId(long processedTxId) throws Exception {
-        if (getProcessedOffset().getId() > processedTxId) {
+        if (getOffset().getId() > processedTxId) {
             throw new Exception(
                     String.format("Invalid transaction: [current=%d][specified=%s]",
-                            getProcessedOffset().getId(), processedTxId));
+                            getOffset().getId(), processedTxId));
         }
-        getProcessedOffset().setId(processedTxId);
+        getOffset().setId(processedTxId);
         return this;
     }
 
     public HCdcMessageProcessingState<M> updateProcessedRecordId(long processedTxId,
                                                                  long recordId) throws Exception {
-        if (getProcessedOffset().getId() != processedTxId) {
+        if (getOffset().getId() != processedTxId) {
             throw new Exception(
                     String.format("Invalid transaction: [current=%d][specified=%s]",
-                            getProcessedOffset().getId(), processedTxId));
+                            getOffset().getId(), processedTxId));
         }
-        if (getProcessedOffset().getRecordId() > recordId) {
+        if (getOffset().getRecordId() > recordId) {
             throw new Exception(
                     String.format("Invalid record: [current=%d][specified=%s]",
-                            getProcessedOffset().getRecordId(), recordId));
+                            getOffset().getRecordId(), recordId));
         }
-        getProcessedOffset().setRecordId(recordId);
+        getOffset().setRecordId(recordId);
         return this;
     }
 
@@ -70,7 +70,7 @@ public class HCdcMessageProcessingState<M extends ReceiverOffset> extends Messag
         if (receivedTx.getId() > processedTxId) {
             throw new Exception(
                     String.format("Invalid transaction: [current=%d][specified=%s]",
-                            getProcessedOffset().getId(), processedTxId));
+                            getOffset().getId(), processedTxId));
         }
         receivedTx.setId(processedTxId);
         return this;
@@ -81,12 +81,12 @@ public class HCdcMessageProcessingState<M extends ReceiverOffset> extends Messag
         if (receivedTx.getId() != processedTxId) {
             throw new Exception(
                     String.format("Invalid transaction: [current=%d][specified=%s]",
-                            getProcessedOffset().getId(), processedTxId));
+                            getOffset().getId(), processedTxId));
         }
         if (receivedTx.getRecordId() > recordId) {
             throw new Exception(
                     String.format("Invalid record: [current=%d][specified=%s]",
-                            getProcessedOffset().getRecordId(), recordId));
+                            getOffset().getRecordId(), recordId));
         }
         receivedTx.setRecordId(recordId);
         return this;

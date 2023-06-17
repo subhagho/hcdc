@@ -2,7 +2,7 @@
 <configuration>
     <env>
         <name>DEV</name>
-        <module>EDITS-LOG-PROCESSORS</module>
+        <module>hadoop</module>
         <instance>NameNodeReplicator</instance>
         <source>ha-cluster</source>
         <paths>
@@ -11,7 +11,7 @@
         <managers>
             <state>
                 <stateManagerClass>ai.sapper.cdc.core.state.HCdcStateManager</stateManagerClass>
-                <basePath>/ai/sapper/cdc/edits</basePath>
+                <basePath>/ai/sapper/cdc/ha-cluster</basePath>
                 <connection>zk-state-connection</connection>
             </state>
         </managers>

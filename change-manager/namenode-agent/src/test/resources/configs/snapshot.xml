@@ -2,7 +2,7 @@
 <configuration>
     <env>
         <name>DEV</name>
-        <module>EDITS-LOG-PROCESSORS</module>
+        <module>hadoop</module>
         <instance>SnapshotService</instance>
         <source>ha-cluster</source>
         <enableHeartbeat>true</enableHeartbeat>
@@ -37,16 +37,26 @@
             <useSSL>false</useSSL>
             <processor>
                 <snapshot>
+                    <name>SnapshotRunner</name>
+                    <type>ai.sapper.hcdc.agents.namenode.HDFSSnapshotProcessor</type>
                     <sender>
-                        <connectionType>kafka</connectionType>
+                        <builder>
+                            <type>ai.sapper.cdc.core.messaging.HCDCSenderBuilder</type>
+                            <settingsType>ai.sapper.cdc.core.messaging.kafka.builders.KafkaProducerSettings</settingsType>
+                        </builder>
+                        <type>kafka</type>
                         <connection>producer-cdc-queue</connection>
                         <!--partitioner></partitioner-->
                     </sender>
-                    <tnxSender>
-                        <connectionType>kafka</connectionType>
+                    <admin>
+                        <builder>
+                            <type>ai.sapper.cdc.core.messaging.HCDCSenderBuilder</type>
+                            <settingsType>ai.sapper.cdc.core.messaging.kafka.builders.KafkaProducerSettings</settingsType>
+                        </builder>
+                        <type>kafka</type>
                         <connection>producer-edits-queue</connection>
                         <!--partitioner></partitioner-->
-                    </tnxSender>
+                    </admin>
                     <readBatchTimeout>5000</readBatchTimeout>
                 </snapshot>
             </processor>

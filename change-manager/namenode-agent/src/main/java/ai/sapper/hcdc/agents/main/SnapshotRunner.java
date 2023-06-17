@@ -47,8 +47,9 @@ public class SnapshotRunner implements Service<NameNodeEnv.ENameNodeEnvState> {
             Preconditions.checkNotNull(fileSource);
             config = ConfigReader.read(configFile, fileSource);
             env = NameNodeEnv.setup(name(), getClass(), config);
+            Preconditions.checkNotNull(env.agentConfig());
             processor = new HDFSSnapshotProcessor(env);
-            processor.init(env.baseConfig(), null);
+            processor.init(env.agentConfig(), null);
             return this;
         } catch (Throwable t) {
             DefaultLogger.stacktrace(env.LOG, t);

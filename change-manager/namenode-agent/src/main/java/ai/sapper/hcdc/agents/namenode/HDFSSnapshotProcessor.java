@@ -95,7 +95,8 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
     }
 
     @Override
-    protected void doRun() throws Throwable {
+    protected void doRun(boolean runOnce) throws Throwable {
+        Preconditions.checkArgument(runOnce);
         checkState();
         schemaManager.refresh();
         HCdcStateManager stateManager = (HCdcStateManager) stateManager();
@@ -426,8 +427,8 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
             HDFSSnapshotProcessorSettings settings = (HDFSSnapshotProcessorSettings) settings();
             MessageSenderBuilder<String, DFSChangeDelta> builder
                     = (MessageSenderBuilder<String, DFSChangeDelta>) settings.getBuilderType()
-                    .getDeclaredConstructor(BaseEnv.class, Class.class)
-                    .newInstance(env, settings.getBuilderSettingsType());
+                    .getDeclaredConstructor()
+                    .newInstance();
             HierarchicalConfiguration<ImmutableNode> eConfig
                     = config().configurationAt(HDFSSnapshotProcessorSettings.__CONFIG_PATH_SENDER);
             if (eConfig == null) {
@@ -435,7 +436,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
                         String.format("Sender queue configuration not found. [path=%s]",
                                 HDFSSnapshotProcessorSettings.__CONFIG_PATH_SENDER));
             }
-            return builder.build(eConfig);
+            return builder.withEnv(env).build(eConfig);
         }
 
         @SuppressWarnings("unchecked")
@@ -443,8 +444,8 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
             HDFSSnapshotProcessorSettings settings = (HDFSSnapshotProcessorSettings) settings();
             MessageSenderBuilder<String, DFSChangeDelta> builder
                     = (MessageSenderBuilder<String, DFSChangeDelta>) settings.getAdminBuilderType()
-                    .getDeclaredConstructor(BaseEnv.class, Class.class)
-                    .newInstance(env, settings.getAdminBuilderSettingsType());
+                    .getDeclaredConstructor()
+                    .newInstance();
             HierarchicalConfiguration<ImmutableNode> eConfig
                     = config().configurationAt(HDFSSnapshotProcessorSettings.__CONFIG_PATH_ADMIN);
             if (eConfig == null) {
@@ -452,7 +453,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
                         String.format("Admin Sender queue configuration not found. [path=%s]",
                                 HDFSSnapshotProcessorSettings.__CONFIG_PATH_ADMIN));
             }
-            return builder.build(eConfig);
+            return builder.withEnv(env).build(eConfig);
         }
     }
 

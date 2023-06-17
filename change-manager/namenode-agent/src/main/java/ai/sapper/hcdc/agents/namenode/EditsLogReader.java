@@ -73,13 +73,13 @@ public class EditsLogReader extends HDFSEditsReader {
     }
 
     @Override
-    public void doRun() throws Exception {
+    public void doRun(boolean runOnce) throws Exception {
         __lock().lock();
         try {
             NameNodeEnv env = (NameNodeEnv) this.env;
             HCdcProcessingState pState = (HCdcProcessingState) processingState();
             EditsLogFileReader reader = new EditsLogFileReader();
-            txId = pState.getProcessedOffset();
+            txId = pState.getOffset();
             if (txId.getId() < 0) {
                 LOGGER.warn(String.format("Name Node replication not initialized. [source=%s]",
                         env.source()));

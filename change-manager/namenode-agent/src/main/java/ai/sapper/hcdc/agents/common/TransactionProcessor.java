@@ -203,7 +203,7 @@ public abstract class TransactionProcessor {
         HCdcTxId txId = ProtoUtils.fromTx(message.value().getTx());
         if (message.mode() == MessageObject.MessageMode.New) {
             HCdcProcessingState txState = (HCdcProcessingState) stateManager().processingState();
-            long offset = txState.getProcessedOffset().getId();
+            long offset = txState.getOffset().getId();
             if (offset < 0) {
                 return txId;
             }
@@ -214,7 +214,7 @@ public abstract class TransactionProcessor {
                                     offset + 1, txId.getId()));
                 }
             }
-            if (txId.compare(txState.getProcessedOffset()) <= 0) {
+            if (txId.compare(txState.getOffset()) <= 0) {
                 if (retry) {
                     return txId;
                 }

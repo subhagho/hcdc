@@ -27,7 +27,7 @@ public class HCdcProcessingState extends ProcessingState<EHCdcProcessorState, HC
 
     public HCdcProcessingState(@NonNull ReceiverOffset messageOffset) {
         super(EHCdcProcessorState.Error, EHCdcProcessorState.Unknown);
-        setProcessedOffset(new HCdcTxId());
+        setOffset(new HCdcTxId());
     }
 
     public HCdcProcessingState(@NonNull HCdcProcessingState state) {
@@ -44,28 +44,28 @@ public class HCdcProcessingState extends ProcessingState<EHCdcProcessorState, HC
     }
 
     public HCdcProcessingState updateProcessedTxId(long processedTxId) throws Exception {
-        if (getProcessedOffset().getId() > processedTxId) {
+        if (getOffset().getId() > processedTxId) {
             throw new Exception(
                     String.format("Invalid transaction: [current=%d][specified=%s]",
-                            getProcessedOffset().getId(), processedTxId));
+                            getOffset().getId(), processedTxId));
         }
-        getProcessedOffset().setId(processedTxId);
+        getOffset().setId(processedTxId);
         return this;
     }
 
     public HCdcProcessingState updateProcessedRecordId(long processedTxId,
                                                        long recordId) throws Exception {
-        if (getProcessedOffset().getId() != processedTxId) {
+        if (getOffset().getId() != processedTxId) {
             throw new Exception(
                     String.format("Invalid transaction: [current=%d][specified=%s]",
-                            getProcessedOffset().getId(), processedTxId));
+                            getOffset().getId(), processedTxId));
         }
-        if (getProcessedOffset().getRecordId() > recordId) {
+        if (getOffset().getRecordId() > recordId) {
             throw new Exception(
                     String.format("Invalid record: [current=%d][specified=%s]",
-                            getProcessedOffset().getRecordId(), recordId));
+                            getOffset().getRecordId(), recordId));
         }
-        getProcessedOffset().setRecordId(recordId);
+        getOffset().setRecordId(recordId);
         return this;
     }
 
