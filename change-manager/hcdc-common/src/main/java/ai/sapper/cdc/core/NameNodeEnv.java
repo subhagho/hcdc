@@ -110,8 +110,8 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
 
             return this;
         } catch (Throwable t) {
-            state().error(t);
             DefaultLogger.stacktrace(t);
+            state().error(t);
             throw new NameNodeError(t);
         }
     }

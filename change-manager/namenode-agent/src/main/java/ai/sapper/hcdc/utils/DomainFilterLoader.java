@@ -6,6 +6,8 @@ import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.state.HCdcStateManager;
 import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
+import ai.sapper.cdc.entity.schema.Domain;
+import ai.sapper.cdc.entity.schema.HCdcDomain;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import lombok.Getter;
@@ -54,6 +56,10 @@ public class DomainFilterLoader {
                         if (!Strings.isNullOrEmpty(d) &&
                                 !Strings.isNullOrEmpty(p) &&
                                 !Strings.isNullOrEmpty(r)) {
+                            Domain domain = domainManager.getDomain(d);
+                            if (domain == null) {
+                                domain = domainManager.createDomain(d);
+                            }
                             domainManager.add(d, e, p, r, g);
                             DefaultLogger.info(String.format("Registered Filter: [DOMAIN=%s][PATH=%s][REGEX=%s]", d, p, r));
                         }

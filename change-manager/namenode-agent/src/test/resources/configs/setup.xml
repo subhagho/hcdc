@@ -17,6 +17,19 @@
                 <basePath>/ai/sapper/cdc/utils</basePath>
                 <connection>zk-state-connection</connection>
             </state>
+            <schema>
+                <name>HDFSSchemaManager</name>
+                <persistence>
+                    <handler>
+                        <class>ai.sapper.cdc.entity.manager.zk.ZKSchemaDataHandler</class>
+                        <settings>ai.sapper.cdc.entity.manager.zk.ZKSchemaDataHandlerSettings</settings>
+                    </handler>
+                    <basePath>/ai/sapper/cdc/registry</basePath>
+                    <connection>zk-state-connection</connection>
+                    <schema>hdfs</schema>
+                </persistence>
+                <hdfs>source-hdfs-ha</hdfs>
+            </schema>
         </managers>
         <!-- managers>
             <state>

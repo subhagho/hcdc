@@ -39,9 +39,7 @@ public class HCdcSchemaManager extends SchemaManager {
 
     @Override
     public Domain createDomain(@NonNull String name) throws Exception {
-        HCdcDomain domain = new HCdcDomain();
-        domain.setName(name);
-        return domain;
+        return  super.createDomain(name, HCdcDomain.class);
     }
 
     @Override
@@ -81,8 +79,8 @@ public class HCdcSchemaManager extends SchemaManager {
             if (!Strings.isNullOrEmpty(((HCdcSchemaManagerSettings) settings).getIgnoreRegEx())) {
                 ignorePattern = Pattern.compile(((HCdcSchemaManagerSettings) settings).getIgnoreRegEx());
             }
-            initFilters(true);
             state().setState(ProcessorState.EProcessorState.Running);
+            initFilters(true);
         } catch (Exception ex) {
             state().error(ex);
             throw new ConfigurationException(ex);
