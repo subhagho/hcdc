@@ -29,6 +29,7 @@ import ai.sapper.cdc.core.model.dfs.DFSFileReplicaState;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import ai.sapper.cdc.core.model.dfs.DFSTransactionType;
 import ai.sapper.cdc.core.processing.MessageProcessorState;
+import ai.sapper.cdc.core.processing.ProcessingState;
 import ai.sapper.cdc.core.state.HCdcStateManager;
 import ai.sapper.cdc.core.utils.ProtoUtils;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
@@ -111,6 +112,11 @@ public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends Change
         return withProcessor(processor);
     }
 
+    @Override
+    protected void initState(@NonNull ProcessingState<EHCdcProcessorState, HCdcTxId> processingState) throws Exception {
+
+    }
+
     private void processBacklogMessage(MessageObject<String, DFSChangeDelta> message, HCdcTxId txId) throws Exception {
         HCdcStateManager stateManager = (HCdcStateManager) stateManager();
         EditsChangeTransactionProcessor processor
@@ -159,11 +165,12 @@ public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends Change
                                     DFSFileState fileState,
                                     DFSFileReplicaState rState,
                                     long txId) throws Exception {
+        DFSChangeDelta delta = message.value();
         DFSTransactionType.DFSCloseFileType tnx = buildBacklogTransactions(fileState, rState, txId + 1);
         if (tnx != null) {
             SchemaEntity schemaEntity = SchemaEntityHelper.parse(message.value().getEntity());
 
-            DFSFileClose closeFile = tnx.convertToProto();
+            DFSFileClose closeFile = tnx.convertToProto(delta.getTx().getSnapshot());
             MessageObject<String, DFSChangeDelta> mesg = ChangeDeltaSerDe.create(closeFile,
                     DFSFileClose.class,
                     schemaEntity,

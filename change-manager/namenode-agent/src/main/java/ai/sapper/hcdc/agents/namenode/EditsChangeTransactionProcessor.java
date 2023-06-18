@@ -741,7 +741,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
         SchemaEntity schemaEntity = SchemaEntityHelper.parse(message.value().getEntity());
 
         // Add new file section
-        DFSTransaction tx = ProtoUtils.buildTx(txId, DFSTransaction.Operation.CLOSE);
+        DFSTransaction tx = ProtoUtils.buildTx(txId, DFSTransaction.Operation.CLOSE, false);
         DFSFile fa = DFSFile.newBuilder()
                 .setEntity(data.getDestFile().getEntity())
                 .setInodeId(fileState.getFileInfo().getInodeId())

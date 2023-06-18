@@ -26,12 +26,14 @@ import lombok.NonNull;
 
 public class ProtoUtils {
     public static DFSTransaction buildTx(@NonNull HCdcTxId txId,
-                                         @NonNull DFSTransaction.Operation op) {
+                                         @NonNull DFSTransaction.Operation op,
+                                         boolean snapshot) {
         return DFSTransaction.newBuilder()
                 .setId(txId.getId())
                 .setSequence(txId.getSequence())
                 .setRecordId(txId.getRecordId())
                 .setOp(op)
+                .setSnapshot(snapshot)
                 .setTimestamp(System.currentTimeMillis())
                 .build();
     }
@@ -42,6 +44,7 @@ public class ProtoUtils {
         id.setId(tx.getId());
         id.setSequence(tx.getSequence());
         id.setRecordId(tx.getRecordId());
+        id.setSnapshot(tx.getSnapshot());
         return id;
     }
 

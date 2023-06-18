@@ -21,7 +21,6 @@ import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.ReflectionUtils;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
-import ai.sapper.cdc.core.model.BaseAgentState;
 import ai.sapper.cdc.core.model.HCdcProcessingState;
 import ai.sapper.cdc.core.model.NameNodeStatus;
 import ai.sapper.cdc.core.state.HCdcStateManager;
@@ -61,7 +60,6 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
     private DbSource dbSource;
     private HierarchicalConfiguration<ImmutableNode> agentConfig;
 
-    private final BaseAgentState.AgentState agentState = new BaseAgentState.AgentState();
 
     public NameNodeEnv(@NonNull String name, @NonNull Class<?> caller) {
         super(name);
@@ -83,6 +81,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
             super.init(xmlConfig, nEnvConfig, new NameNodeEnvState());
             NameNodeEnvSettings settings = (NameNodeEnvSettings) settings();
             source = settings.getSource();
+            NameNodeStatus status = null;
             if (settings.isReadHadoopConfig()) {
                 hdfsConnection = connectionManager()
                         .getConnection(settings.getHdfsAdminConnection(),
@@ -100,10 +99,8 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
                         .withNameNodeAdminUrl(settings.getHadoopAdminUrl());
                 hadoopConfig.read();
                 adminClient = new NameNodeAdminClient(hadoopConfig.nameNodeAdminUrl(), settings.isHadoopUseSSL());
-                NameNodeStatus status = adminClient().status();
-                if (status != null) {
-                    agentState.parseState(status.getState());
-                } else {
+                status = adminClient().status();
+                if (status == null) {
                     throw new NameNodeError(String.format("Error fetching NameNode status. [url=%s]", adminClient.url()));
                 }
             }
@@ -111,6 +108,9 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
             if (super.stateManager() != null) {
                 stateManager = (HCdcStateManager) super.stateManager();
                 stateManager.checkAgentState(HCdcProcessingState.class);
+                if (status != null) {
+                    stateManager.parseState(status.getState());
+                }
             }
             if (managersConfig() != null) {
                 if (ConfigReader.checkIfNodeExists(managersConfig(),
@@ -149,16 +149,14 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
 
     public synchronized ENameNodeEnvState stop() {
         try {
-            if (agentState.getState() == BaseAgentState.EAgentState.Active
-                    || agentState.getState() == BaseAgentState.EAgentState.StandBy) {
-                agentState.setState(BaseAgentState.EAgentState.Stopped);
-            }
             if (state() == null) {
                 return null;
             }
             if (state().isAvailable()) {
                 try {
-                    stateManager.heartbeat(moduleInstance().getInstanceId(), agentState);
+                    stateManager.heartbeat(moduleInstance().getInstanceId(),
+                            stateManager.getClass(),
+                            stateManager.processingState());
                 } catch (Exception ex) {
                     LOG.error(ex.getLocalizedMessage());
                     DefaultLogger.stacktrace(ex);
@@ -166,7 +164,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
                 state().setState(ENameNodeEnvState.Disposed);
             }
             close();
-
+            state().setState(ENameNodeEnvState.Disposed);
         } catch (Exception ex) {
             LOG.error("Error disposing NameNodeEnv...", ex);
         }

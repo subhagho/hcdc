@@ -115,6 +115,21 @@ public class HCdcStateManager extends ProcessStateManager<EHCdcProcessorState, H
         }
     }
 
+    public EHCdcProcessorState parseState(@NonNull String value) {
+        EHCdcProcessorState s = null;
+        for (EHCdcProcessorState e : EHCdcProcessorState.values()) {
+            if (e.name().compareToIgnoreCase(value) == 0) {
+                s = e;
+                break;
+            }
+        }
+        if (s == null) {
+            s = processingState().getInitState();
+        }
+        processingState().setState(s);
+        return processingState().getState();
+    }
+
     public SnapshotOffset getSnapshotOffset() throws StateManagerError {
         return readOffset(Constants.OFFSET_SHARED_SNAPSHOT, SnapshotOffset.class);
     }
@@ -130,7 +145,7 @@ public class HCdcStateManager extends ProcessStateManager<EHCdcProcessorState, H
     @Override
     public Heartbeat heartbeat(@NonNull String instance) throws StateManagerError {
         try {
-            return heartbeat(instance, NameNodeEnv.get(name()).agentState());
+            return heartbeat(instance, getClass(), processingState());
         } catch (Exception ex) {
             throw new StateManagerError(ex);
         }

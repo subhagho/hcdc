@@ -25,6 +25,7 @@ message DFSTransaction {
   required int64 recordId = 4;
   required Operation op = 5;
   required uint64 timestamp = 6;
+  required bool snapshot = 7;
 }
 
 message DFSSchemaEntity {

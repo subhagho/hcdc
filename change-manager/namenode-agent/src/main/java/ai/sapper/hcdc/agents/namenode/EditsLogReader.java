@@ -24,10 +24,12 @@ import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.model.EHCdcProcessorState;
 import ai.sapper.cdc.core.model.HCdcProcessingState;
 import ai.sapper.cdc.core.model.HCdcTxId;
+import ai.sapper.cdc.core.model.SnapshotOffset;
 import ai.sapper.cdc.core.model.dfs.DFSEditLogBatch;
 import ai.sapper.cdc.core.model.dfs.DFSTransactionType;
 import ai.sapper.cdc.core.processing.ProcessingState;
 import ai.sapper.cdc.core.processing.Processor;
+import ai.sapper.cdc.core.state.HCdcStateManager;
 import ai.sapper.hcdc.agents.settings.HDFSEditsReaderSettings;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import com.google.common.base.Preconditions;
@@ -90,6 +92,21 @@ public class EditsLogReader extends HDFSEditsReader {
     }
 
     @Override
+    protected void initState(@NonNull ProcessingState<EHCdcProcessorState, HCdcTxId> processingState) throws Exception {
+        HCdcStateManager stateManager = (HCdcStateManager) stateManager();
+        if (processingState.getOffset() == null) {
+            SnapshotOffset offset = stateManager.getSnapshotOffset();
+            if (offset == null) {
+                processingState.setOffset(new HCdcTxId(-1));
+            } else {
+                HCdcTxId txId = new HCdcTxId(offset.getSnapshotTxId());
+                txId.setSequence(offset.getSnapshotSeq());
+                processingState.setOffset(txId);
+            }
+        }
+    }
+
+    @Override
     protected ProcessingState<EHCdcProcessorState, HCdcTxId> finished(@NonNull ProcessingState<EHCdcProcessorState, HCdcTxId> processingState) {
         processingState.setState(EHCdcProcessorState.Stopped);
         return processingState;
@@ -123,7 +140,7 @@ public class EditsLogReader extends HDFSEditsReader {
                     DFSEditLogBatch batch = reader.batch();
                     if (batch.transactions() != null && !batch.transactions().isEmpty()) {
                         processBatch(batch, txId, env.source());
-                        updateState(txId);
+                        pState = (HCdcProcessingState) updateState(txId);
                     }
                 }
             }
@@ -135,7 +152,7 @@ public class EditsLogReader extends HDFSEditsReader {
             long ltx = DFSEditsFileFinder.findSeenTxID(getPathNnCurrentDir(editsDir.getAbsolutePath()));
             LOGGER.info(getClass(), ltx,
                     String.format("Current Edits File: %s, Last Seen TXID=%d", cf, ltx));
-
+            updateState();
         } finally {
             __lock().unlock();
         }
@@ -146,7 +163,7 @@ public class EditsLogReader extends HDFSEditsReader {
             long txid = txId.getId();
             for (DFSTransactionType<?> tnx : batch.transactions()) {
                 if (tnx.id() <= txid) continue;
-                Object proto = tnx.convertToProto();
+                Object proto = tnx.convertToProto(false);
                 MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(proto,
                         proto.getClass(),
                         tnx.entity(source),

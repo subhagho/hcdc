@@ -29,6 +29,7 @@ import ai.sapper.cdc.core.model.EHCdcProcessorState;
 import ai.sapper.cdc.core.model.HCdcMessageProcessingState;
 import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.processing.MessageProcessorState;
+import ai.sapper.cdc.core.processing.ProcessingState;
 import ai.sapper.cdc.core.utils.ProtoUtils;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.settings.EntityChangeDeltaReaderSettings;
@@ -123,6 +124,11 @@ public class EntityChangeDeltaReader<MO extends ReceiverOffset> extends ChangeDe
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
         }
+    }
+
+    @Override
+    protected void initState(@NonNull ProcessingState<EHCdcProcessorState, HCdcTxId> processingState) throws Exception {
+
     }
 
     public boolean isValidMessage(@NonNull MessageObject<String, DFSChangeDelta> message) {

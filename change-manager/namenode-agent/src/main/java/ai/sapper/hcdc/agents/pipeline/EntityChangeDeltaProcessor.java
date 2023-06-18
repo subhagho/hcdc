@@ -25,6 +25,7 @@ import ai.sapper.cdc.core.model.HCdcMessageProcessingState;
 import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import ai.sapper.cdc.core.processing.MessageProcessorState;
+import ai.sapper.cdc.core.processing.ProcessingState;
 import ai.sapper.cdc.core.state.HCdcStateManager;
 import ai.sapper.cdc.core.utils.ProtoUtils;
 import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
@@ -112,6 +113,11 @@ public class EntityChangeDeltaProcessor<MO extends ReceiverOffset> extends Chang
                 .withSenderQueue(sender())
                 .withErrorQueue(errorLogger);
         return withProcessor(processor);
+    }
+
+    @Override
+    protected void initState(@NonNull ProcessingState<EHCdcProcessorState, HCdcTxId> processingState) throws Exception {
+
     }
 
     @Override

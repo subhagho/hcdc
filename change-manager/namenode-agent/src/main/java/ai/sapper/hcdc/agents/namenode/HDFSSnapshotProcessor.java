@@ -112,6 +112,19 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
     }
 
     @Override
+    protected void initState(@NonNull ProcessingState<EHCdcProcessorState, HCdcTxId> processingState) throws Exception {
+        if (processingState.getOffset() == null) {
+            processingState.setOffset(new HCdcTxId(-1));
+        }
+        HCdcStateManager stateManager = (HCdcStateManager) stateManager();
+        SnapshotOffset offset = stateManager.getSnapshotOffset();
+        if (offset == null) {
+            offset = new SnapshotOffset();
+            stateManager.updateSnapshotOffset(offset);
+        }
+    }
+
+    @Override
     protected ProcessingState<EHCdcProcessorState, HCdcTxId> finished(@NonNull ProcessingState<EHCdcProcessorState, HCdcTxId> processingState) {
         processingState.setState(EHCdcProcessorState.Stopped);
         return processingState;
@@ -141,10 +154,10 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
                 }
             }
             offset = stateManager.getSnapshotOffset();
-            HCdcProcessingState pState = (HCdcProcessingState) stateManager.processingState();
+            HCdcProcessingState pState = (HCdcProcessingState) processingState();
             pState.setOffset(txId);
             pState.setSnapshotOffset(offset);
-            stateManager.update(pState);
+            updateState();
         } finally {
             __lock().unlock();
         }
@@ -252,7 +265,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
             if (txId.getId() < fileState.getLastTnxId()) {
                 txId.setId(fileState.getLastTnxId());
             }
-            txId.setSnapshot(true);
+
             DFSFileReplicaState rState = stateManager
                     .replicaStateHelper()
                     .get(entity, fileState.getFileInfo().getInodeId());
@@ -274,6 +287,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
             long seq = stateManager.nextSequence(1);
             txId.setSequence(seq);
             txId.setType(EngineType.HDFS);
+            txId.setSnapshot(true);
 
             rState.copyBlocks(fileState);
 
@@ -372,7 +386,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
     public static DFSFileClose generateSnapshot(@NonNull DFSFileState state,
                                                 @NonNull DFSFile file,
                                                 @NonNull HCdcTxId txId) throws Exception {
-        DFSTransaction tx = ProtoUtils.buildTx(txId, DFSTransaction.Operation.CLOSE);
+        DFSTransaction tx = ProtoUtils.buildTx(txId, DFSTransaction.Operation.CLOSE, true);
 
         DFSFileClose.Builder builder = DFSFileClose.newBuilder();
         builder.setOverwrite(false)
@@ -392,7 +406,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
     public static DFSFileClose generateSnapshot(@NonNull DFSFileState state,
                                                 boolean addBlocks,
                                                 @NonNull HCdcTxId txId) throws Exception {
-        DFSTransaction tx = ProtoUtils.buildTx(txId, DFSTransaction.Operation.CLOSE);
+        DFSTransaction tx = ProtoUtils.buildTx(txId, DFSTransaction.Operation.CLOSE, true);
 
         DFSFile file = state.getFileInfo().proto();
         DFSFileClose.Builder builder = DFSFileClose.newBuilder();
