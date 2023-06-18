@@ -16,11 +16,13 @@
 
 package ai.sapper.hcdc.agents.main;
 
+import ai.sapper.cdc.common.AbstractState;
 import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.Service;
+import ai.sapper.cdc.core.model.EHCdcProcessorState;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.pipeline.EntityChangeDeltaReader;
 import com.beust.jcommander.JCommander;
@@ -33,7 +35,7 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.parquet.Strings;
 
 @Getter
-public class EntityChangeDeltaRunner implements Service<NameNodeEnv.ENameNodeEnvState> {
+public class EntityChangeDeltaRunner implements Service<EHCdcProcessorState> {
     @Parameter(names = {"--config", "-c"}, required = true, description = "Path to the configuration file.")
     private String configFile;
     @Parameter(names = {"--type", "-t"}, description = "Configuration file type. (File, Resource, Remote)")
@@ -45,19 +47,19 @@ public class EntityChangeDeltaRunner implements Service<NameNodeEnv.ENameNodeEnv
     private NameNodeEnv env;
 
     @Override
-    public Service<NameNodeEnv.ENameNodeEnvState> setConfigFile(@NonNull String path) {
+    public Service<EHCdcProcessorState> setConfigFile(@NonNull String path) {
         configFile = path;
         return this;
     }
 
     @Override
-    public Service<NameNodeEnv.ENameNodeEnvState> setConfigSource(@NonNull String type) {
+    public Service<EHCdcProcessorState> setConfigSource(@NonNull String type) {
         configSource = type;
         return this;
     }
 
     @SuppressWarnings("unchecked")
-    public Service<NameNodeEnv.ENameNodeEnvState> init() throws Exception {
+    public Service<EHCdcProcessorState> init() throws Exception {
         try {
             Preconditions.checkState(!Strings.isNullOrEmpty(configFile));
             if (!Strings.isNullOrEmpty(configSource)) {
@@ -86,7 +88,7 @@ public class EntityChangeDeltaRunner implements Service<NameNodeEnv.ENameNodeEnv
     }
 
     @Override
-    public Service<NameNodeEnv.ENameNodeEnvState> start() throws Exception {
+    public Service<EHCdcProcessorState> start() throws Exception {
         try {
             runner = new Thread(processor);
             runner.start();
@@ -100,24 +102,26 @@ public class EntityChangeDeltaRunner implements Service<NameNodeEnv.ENameNodeEnv
     }
 
     @Override
-    public Service<NameNodeEnv.ENameNodeEnvState> stop() throws Exception {
-        NameNodeEnv.dispose(name());
+    public Service<EHCdcProcessorState> stop() throws Exception {
+        processor.stop();
         runner.join();
+
         return this;
     }
 
     @Override
-    public NameNodeEnv.NameNodeEnvState status() {
-        try {
-            return NameNodeEnv.status(name());
-        } catch (Exception ex) {
-            return null;
-        }
+    public AbstractState<EHCdcProcessorState> status() {
+        return processor.processingState();
     }
 
     @Override
     public String name() {
         return getClass().getSimpleName();
+    }
+
+    @Override
+    public void checkState() throws Exception {
+
     }
 
 

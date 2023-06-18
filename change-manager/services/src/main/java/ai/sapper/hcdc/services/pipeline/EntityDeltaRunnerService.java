@@ -22,7 +22,6 @@ import ai.sapper.cdc.common.model.services.EResponseState;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.hcdc.agents.main.EntityChangeDeltaRunner;
-import ai.sapper.hcdc.services.ServiceHelper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -57,7 +56,7 @@ public class EntityDeltaRunnerService {
     @RequestMapping(value = "/entity/runner/status", method = RequestMethod.GET)
     public ResponseEntity<BasicResponse<NameNodeEnv.NameNodeEnvState>> state() {
         try {
-            ServiceHelper.checkService(processor.name(), processor);
+            processor.checkState();
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
                     processor.status()),
                     HttpStatus.OK);
@@ -71,7 +70,7 @@ public class EntityDeltaRunnerService {
     @RequestMapping(value = "/entity/runner/stop", method = RequestMethod.POST)
     public ResponseEntity<BasicResponse<NameNodeEnv.NameNodeEnvState>> stop() {
         try {
-            ServiceHelper.checkService(processor.name(), processor);
+            processor.checkState();
             processor.stop();
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
                     processor.status()),
