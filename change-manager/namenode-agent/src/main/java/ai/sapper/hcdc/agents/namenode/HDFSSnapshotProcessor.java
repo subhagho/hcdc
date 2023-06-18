@@ -97,7 +97,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
                 throw new Exception(String.format("[%s] Schema Manager not initialized...", name()));
             }
             LOG = LoggerFactory.getLogger(getClass());
-            state.setState(ProcessorState.EProcessorState.Initialized);
+            state.setState(ProcessorState.EProcessorState.Running);
             return this;
         } catch (Throwable ex) {
             state.error(ex);

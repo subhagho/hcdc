@@ -80,13 +80,10 @@ public class SnapshotRunner implements Service<ProcessorState.EProcessorState> {
     @Override
     public SnapshotRunner start() throws Exception {
         try {
-            if (processor == null || status().getState() != ProcessorState.EProcessorState.Initialized) {
+            if (processor == null || status().getState() != ProcessorState.EProcessorState.Running) {
                 throw new Exception(
                         String.format("[%s] Processor not initialized. [state=%s]",
                                 name(), status().getState().name()));
-            }
-            if (processor.state().isRunning()) {
-                return this;
             }
             processor.state().setState(ProcessorState.EProcessorState.Running);
             processor.run();

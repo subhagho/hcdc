@@ -39,19 +39,18 @@ import java.util.List;
 
 @RestController
 public class SnapshotService {
-    private static SnapshotRunner processor;
+    private static SnapshotRunner handler;
 
     @RequestMapping(value = "/snapshot/filters/add/{domain}", method = RequestMethod.PUT)
     public ResponseEntity<List<DomainFilters>> addFilter(@PathVariable("domain") String domain,
                                                          @RequestBody DomainFilterAddRequest request) {
         try {
-            processor.checkState();
             if (request.getFilters() == null || request.getFilters().isEmpty()) {
                 throw new Exception("No filters specified...");
             }
             List<DomainFilters> filters = new ArrayList<>();
             for (int ii = 0; ii < request.getFilters().size(); ii++) {
-                DomainFilters dfs = processor.getProcessor().addFilter(domain,
+                DomainFilters dfs = handler.getProcessor().addFilter(domain,
                         request.getFilters().get(ii),
                         request.getGroup());
                 filters.add(dfs);
@@ -69,8 +68,7 @@ public class SnapshotService {
                                                     @PathVariable("domain") String entity,
                                                     @PathVariable("domain") String group) {
         try {
-            processor.checkState();
-            DomainFilter filter = processor.getProcessor().updateGroup(domain, entity, group);
+            DomainFilter filter = handler.getProcessor().updateGroup(domain, entity, group);
             return new ResponseEntity<>(filter,
                     HttpStatus.OK);
         } catch (Throwable t) {
@@ -83,8 +81,7 @@ public class SnapshotService {
     public ResponseEntity<Filter> removeFilter(@PathVariable("domain") String domain,
                                                @RequestBody Filter filter) {
         try {
-            processor.checkState();
-            Filter f = processor.getProcessor().removeFilter(domain, filter);
+            Filter f = handler.getProcessor().removeFilter(domain, filter);
             return new ResponseEntity<>(f, HttpStatus.OK);
         } catch (Throwable t) {
             return new ResponseEntity<>((Filter) null,
@@ -96,8 +93,7 @@ public class SnapshotService {
     public ResponseEntity<DomainFilter> removeFilter(@PathVariable("domain") String domain,
                                                      @PathVariable("entity") String entity) {
         try {
-            processor.checkState();
-            DomainFilter f = processor.getProcessor().removeFilter(domain, entity);
+            DomainFilter f = handler.getProcessor().removeFilter(domain, entity);
             return new ResponseEntity<>(f, HttpStatus.OK);
         } catch (Throwable t) {
             return new ResponseEntity<>((DomainFilter) null,
@@ -110,8 +106,7 @@ public class SnapshotService {
                                                      @PathVariable("entity") String entity,
                                                      @PathVariable("path") String path) {
         try {
-            processor.checkState();
-            List<Filter> f = processor.getProcessor().removeFilter(domain, entity, path);
+            List<Filter> f = handler.getProcessor().removeFilter(domain, entity, path);
             return new ResponseEntity<>(f, HttpStatus.OK);
         } catch (Throwable t) {
             return new ResponseEntity<>((List<Filter>) null,
@@ -123,20 +118,7 @@ public class SnapshotService {
     public synchronized ResponseEntity<BasicResponse<String>> run() {
         try {
             DefaultLogger.info("Snapshot run called...");
-            processor.checkState();
-            if (!processor.getProcessor().state().isInitialized()) {
-                throw new Exception(String.format("[%s] Processor not initialized. [state=%s]",
-                        processor.getProcessor().name(),
-                        processor.getProcessor().state().getState().name()));
-            }
-            if (processor.getProcessor().state().isRunning()) {
-                throw new Exception(String.format("[%s] Processor is running. [state=%s]",
-                        processor.getProcessor().name(),
-                        processor.getProcessor().state().getState().name()));
-            }
-            processor.getProcessor().state().setState(ProcessorState.EProcessorState.Running);
-            processor.getProcessor().runOnce();
-            processor.getProcessor().state().setState(ProcessorState.EProcessorState.Initialized);
+            handler.getProcessor().runOnce();
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
                     "Snapshot run successful..."),
                     HttpStatus.OK);
@@ -150,11 +132,10 @@ public class SnapshotService {
     @RequestMapping(value = "/snapshot/done", method = RequestMethod.POST)
     public ResponseEntity<DFSFileReplicaState> snapshotDone(@RequestBody SnapshotDoneRequest request) {
         try {
-            processor.checkState();
             SchemaEntity entity = new SchemaEntity(request.getDomain(), request.getEntity());
             HCdcTxId tid = new HCdcTxId(request.getTransactionId());
 
-            DFSFileReplicaState rState = processor.getProcessor()
+            DFSFileReplicaState rState = handler.getProcessor()
                     .snapshotDone(request.getHdfsPath(),
                             entity,
                             tid);
@@ -168,13 +149,12 @@ public class SnapshotService {
     @RequestMapping(value = "/snapshot/status", method = RequestMethod.GET)
     public ResponseEntity<BasicResponse<ProcessorState.EProcessorState>> state() {
         try {
-            processor.checkState();
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
-                    processor.status().getState()),
+                    handler.status().getState()),
                     HttpStatus.OK);
         } catch (Throwable t) {
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
-                    processor.status().getState()).withError(t),
+                    handler.status().getState()).withError(t),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -182,28 +162,28 @@ public class SnapshotService {
     @RequestMapping(value = "/admin/snapshot/start", method = RequestMethod.POST)
     public synchronized ResponseEntity<BasicResponse<ProcessorState.EProcessorState>> start(@RequestBody ConfigSource config) {
         try {
-            if (processor != null) {
-                if (processor.getProcessor().state().isInitialized()) {
+            if (handler != null) {
+                if (handler.getProcessor().state().isInitialized()) {
                     return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
-                            processor.status().getState()),
+                            handler.status().getState()),
                             HttpStatus.OK);
                 }
             }
-            processor = new SnapshotRunner();
-            processor.setConfigFile(config.getPath())
+            handler = new SnapshotRunner();
+            handler.setConfigFile(config.getPath())
                     .setConfigSource(config.getType().name());
-            processor.init();
+            handler.init();
 
-            DefaultLogger.info(processor.getEnv().LOG,
+            DefaultLogger.info(handler.getEnv().LOG,
                     String.format("EditsLog processor started. [config=%s]", config.toString()));
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
-                    processor.status().getState()),
+                    handler.status().getState()),
                     HttpStatus.OK);
         } catch (Throwable t) {
-            DefaultLogger.error(processor.getEnv().LOG, "Error starting service.", t);
-            DefaultLogger.stacktrace(processor.getEnv().LOG, t);
+            DefaultLogger.error(handler.getEnv().LOG, "Error starting service.", t);
+            DefaultLogger.stacktrace(handler.getEnv().LOG, t);
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
-                    processor.status().getState()).withError(t),
+                    handler.status().getState()).withError(t),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -211,14 +191,13 @@ public class SnapshotService {
     @RequestMapping(value = "/admin/snapshot/stop", method = RequestMethod.POST)
     public ResponseEntity<BasicResponse<ProcessorState.EProcessorState>> stop() {
         try {
-            processor.checkState();
-            processor.stop();
+            handler.stop();
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
-                    processor.status().getState()),
+                    handler.status().getState()),
                     HttpStatus.OK);
         } catch (Throwable t) {
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
-                    processor.status().getState()).withError(t),
+                    handler.status().getState()).withError(t),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

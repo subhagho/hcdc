@@ -31,25 +31,25 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class EntityDeltaRunnerService {
-    private EntityChangeDeltaRunner processor;
+    private EntityChangeDeltaRunner handler;
 
     @RequestMapping(value = "/entity/runner/start", method = RequestMethod.POST)
     public ResponseEntity<BasicResponse<ProcessorState.EProcessorState>> start(@RequestBody ConfigSource config) {
         try {
-            processor = new EntityChangeDeltaRunner();
-            processor.setConfigFile(config.getPath())
+            handler = new EntityChangeDeltaRunner();
+            handler.setConfigFile(config.getPath())
                     .setConfigSource(config.getType().name());
 
-            processor.init();
-            processor.start();
-            DefaultLogger.info(processor.getEnv().LOG,
+            handler.init();
+            handler.start();
+            DefaultLogger.info(handler.getEnv().LOG,
                     String.format("Edits Delta processor started. [config=%s]", config.toString()));
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
-                    processor.status().getState()),
+                    handler.status().getState()),
                     HttpStatus.OK);
         } catch (Throwable t) {
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
-                    processor.status().getState()).withError(t),
+                    handler.status().getState()).withError(t),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -57,13 +57,13 @@ public class EntityDeltaRunnerService {
     @RequestMapping(value = "/entity/runner/status", method = RequestMethod.GET)
     public ResponseEntity<BasicResponse<ProcessorState.EProcessorState>> state() {
         try {
-            processor.checkState();
+            handler.checkState();
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
-                    processor.status().getState()),
+                    handler.status().getState()),
                     HttpStatus.OK);
         } catch (Throwable t) {
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
-                    processor.status().getState()).withError(t),
+                    handler.status().getState()).withError(t),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -71,14 +71,14 @@ public class EntityDeltaRunnerService {
     @RequestMapping(value = "/entity/runner/stop", method = RequestMethod.POST)
     public ResponseEntity<BasicResponse<ProcessorState.EProcessorState>> stop() {
         try {
-            processor.checkState();
-            processor.stop();
+            handler.checkState();
+            handler.stop();
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
-                    processor.status().getState()),
+                    handler.status().getState()),
                     HttpStatus.OK);
         } catch (Throwable t) {
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
-                    processor.status().getState()).withError(t),
+                    handler.status().getState()).withError(t),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

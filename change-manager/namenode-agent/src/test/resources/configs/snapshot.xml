@@ -46,9 +46,9 @@
                 <hdfs>source-hdfs-ha</hdfs>
             </schema>
         </managers>
-        <audit>
+        <!--audit>
             <class>ai.sapper.cdc.common.audit.DefaultAuditLogger</class>
-        </audit>
+        </audit -->
         <agent>
             <needHadoop>false</needHadoop>
             <useSSL>false</useSSL>
