@@ -20,9 +20,8 @@ import ai.sapper.cdc.common.model.services.BasicResponse;
 import ai.sapper.cdc.common.model.services.ConfigSource;
 import ai.sapper.cdc.common.model.services.EResponseState;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.cdc.core.NameNodeEnv;
+import ai.sapper.cdc.core.processing.ProcessorState;
 import ai.sapper.hcdc.agents.main.EntityChangeDeltaConsumer;
-import ai.sapper.hcdc.services.ServiceHelper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -35,7 +34,7 @@ public class EntityDeltaConsumerService {
     private EntityChangeDeltaConsumer processor;
 
     @RequestMapping(value = "/entity/consumer/start", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<NameNodeEnv.NameNodeEnvState>> start(@RequestBody ConfigSource config) {
+    public ResponseEntity<BasicResponse<ProcessorState.EProcessorState>> start(@RequestBody ConfigSource config) {
         try {
             processor = new EntityChangeDeltaConsumer();
             processor.setConfigFile(config.getPath())
@@ -46,39 +45,38 @@ public class EntityDeltaConsumerService {
             DefaultLogger.info(processor.getEnv().LOG,
                     String.format("Edits Delta processor started. [config=%s]", config.toString()));
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
-                    processor.status()),
+                    processor.status().getState()),
                     HttpStatus.OK);
         } catch (Throwable t) {
-            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error, processor.status()).withError(t),
+            return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
+                    processor.status().getState()).withError(t),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @RequestMapping(value = "/entity/consumer/status", method = RequestMethod.GET)
-    public ResponseEntity<BasicResponse<NameNodeEnv.NameNodeEnvState>> state() {
+    public ResponseEntity<BasicResponse<ProcessorState.EProcessorState>> state() {
         try {
-            ServiceHelper.checkService(processor.name(), processor);
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
-                    processor.status()),
+                    processor.status().getState()),
                     HttpStatus.OK);
         } catch (Throwable t) {
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
-                    processor.status()).withError(t),
+                    processor.status().getState()).withError(t),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @RequestMapping(value = "/entity/consumer/stop", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<NameNodeEnv.NameNodeEnvState>> stop() {
+    public ResponseEntity<BasicResponse<ProcessorState.EProcessorState>> stop() {
         try {
-            ServiceHelper.checkService(processor.name(), processor);
             processor.stop();
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
-                    processor.status()),
+                    processor.status().getState()),
                     HttpStatus.OK);
         } catch (Throwable t) {
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Error,
-                    processor.status()).withError(t),
+                    processor.status().getState()).withError(t),
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

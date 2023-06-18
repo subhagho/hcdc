@@ -22,7 +22,6 @@ import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.Service;
-import ai.sapper.cdc.core.model.EHCdcProcessorState;
 import ai.sapper.cdc.core.processing.ProcessorState;
 import ai.sapper.hcdc.agents.namenode.HDFSSnapshotProcessor;
 import com.beust.jcommander.JCommander;
@@ -35,7 +34,7 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.parquet.Strings;
 
 @Getter
-public class SnapshotRunner implements Service<EHCdcProcessorState> {
+public class SnapshotRunner implements Service<ProcessorState.EProcessorState> {
     @Parameter(names = {"--config", "-c"}, required = true, description = "Path to the configuration file.")
     private String configFile;
     @Parameter(names = {"--type", "-t"}, description = "Configuration file type. (File, Resource, Remote)")
@@ -46,18 +45,18 @@ public class SnapshotRunner implements Service<EHCdcProcessorState> {
     private NameNodeEnv env;
 
     @Override
-    public Service<EHCdcProcessorState> setConfigFile(@NonNull String path) {
+    public SnapshotRunner setConfigFile(@NonNull String path) {
         configFile = path;
         return this;
     }
 
     @Override
-    public Service<EHCdcProcessorState> setConfigSource(@NonNull String type) {
+    public SnapshotRunner setConfigSource(@NonNull String type) {
         configSource = type;
         return this;
     }
 
-    public Service<EHCdcProcessorState> init() throws Exception {
+    public SnapshotRunner init() throws Exception {
         try {
             Preconditions.checkState(!Strings.isNullOrEmpty(configFile));
             if (!Strings.isNullOrEmpty(configSource)) {
@@ -79,9 +78,9 @@ public class SnapshotRunner implements Service<EHCdcProcessorState> {
     }
 
     @Override
-    public Service<EHCdcProcessorState> start() throws Exception {
+    public SnapshotRunner start() throws Exception {
         try {
-            if (processor == null || status().getState() != EHCdcProcessorState.Initialized) {
+            if (processor == null || status().getState() != ProcessorState.EProcessorState.Initialized) {
                 throw new Exception(
                         String.format("[%s] Processor not initialized. [state=%s]",
                                 name(), status().getState().name()));
@@ -100,16 +99,16 @@ public class SnapshotRunner implements Service<EHCdcProcessorState> {
     }
 
     @Override
-    public Service<EHCdcProcessorState> stop() throws Exception {
+    public SnapshotRunner stop() throws Exception {
         if (processor != null)
             processor.stop();
         return this;
     }
 
     @Override
-    public AbstractState<EHCdcProcessorState> status() {
+    public AbstractState<ProcessorState.EProcessorState> status() {
         Preconditions.checkNotNull(processor);
-        return processor.processingState();
+        return processor.state();
     }
 
 

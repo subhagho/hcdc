@@ -23,8 +23,7 @@ import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.NameNodeError;
 import ai.sapper.cdc.core.Service;
-import ai.sapper.cdc.core.model.EHCdcProcessorState;
-import ai.sapper.cdc.core.model.HCdcProcessingState;
+import ai.sapper.cdc.core.processing.ProcessorState;
 import ai.sapper.hcdc.agents.pipeline.NameNodeSchemaScanner;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -38,7 +37,7 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.parquet.Strings;
 
 @Getter
-public class SchemaScanner implements Service<EHCdcProcessorState> {
+public class SchemaScanner implements Service<ProcessorState.EProcessorState> {
     @Parameter(names = {"--config", "-c"}, required = true, description = "Path to the configuration file.")
     private String configFile;
     @Parameter(names = {"--type", "-t"}, description = "Configuration file type. (File, Resource, Remote)")
@@ -51,21 +50,21 @@ public class SchemaScanner implements Service<EHCdcProcessorState> {
     private NameNodeSchemaScanner scanner;
     @Setter(AccessLevel.NONE)
     private NameNodeEnv env;
-    private final HCdcProcessingState state = new HCdcProcessingState();
+    private final ProcessorState state = new ProcessorState();
 
     @Override
-    public Service<EHCdcProcessorState> setConfigFile(@NonNull String path) {
+    public SchemaScanner setConfigFile(@NonNull String path) {
         configFile = path;
         return this;
     }
 
     @Override
-    public Service<EHCdcProcessorState> setConfigSource(@NonNull String type) {
+    public SchemaScanner setConfigSource(@NonNull String type) {
         configSource = type;
         return this;
     }
 
-    public Service<EHCdcProcessorState> init() throws Exception {
+    public SchemaScanner init() throws Exception {
         try {
             Preconditions.checkState(!Strings.isNullOrEmpty(configFile));
             if (!Strings.isNullOrEmpty(configSource)) {
@@ -78,7 +77,7 @@ public class SchemaScanner implements Service<EHCdcProcessorState> {
             scanner
                     .withSchemaManager(env.schemaManager())
                     .init(env.baseConfig(), env.connectionManager());
-            state.setState(EHCdcProcessorState.Initialized);
+            state.setState(ProcessorState.EProcessorState.Initialized);
             return this;
         } catch (Throwable t) {
             DefaultLogger.error(env.LOG, t.getLocalizedMessage());
@@ -89,13 +88,13 @@ public class SchemaScanner implements Service<EHCdcProcessorState> {
     }
 
     @Override
-    public Service<EHCdcProcessorState> start() throws Exception {
+    public SchemaScanner start() throws Exception {
         try {
             Preconditions.checkNotNull(scanner);
-            Preconditions.checkState(state.getState() == EHCdcProcessorState.Initialized);
-            state.setState(EHCdcProcessorState.Running);
+            Preconditions.checkState(state.getState() == ProcessorState.EProcessorState.Initialized);
+            state.setState(ProcessorState.EProcessorState.Running);
             scanner.run();
-            state.setState(EHCdcProcessorState.Initialized);
+            state.setState(ProcessorState.EProcessorState.Initialized);
             return this;
         } catch (Throwable t) {
             DefaultLogger.stacktrace(env.LOG, t);
@@ -106,15 +105,15 @@ public class SchemaScanner implements Service<EHCdcProcessorState> {
     }
 
     @Override
-    public Service<EHCdcProcessorState> stop() throws Exception {
+    public SchemaScanner stop() throws Exception {
         if (!state.hasError()) {
-            state.setState(EHCdcProcessorState.Stopped);
+            state.setState(ProcessorState.EProcessorState.Stopped);
         }
         return this;
     }
 
     @Override
-    public AbstractState<EHCdcProcessorState> status() {
+    public AbstractState<ProcessorState.EProcessorState> status() {
         return state;
     }
 
@@ -134,7 +133,7 @@ public class SchemaScanner implements Service<EHCdcProcessorState> {
                     String.format("[%s] Environment state is not valid. [state=%s]",
                             name(), env.state().getState().name()));
         }
-        if (state.getState() != EHCdcProcessorState.Initialized) {
+        if (state.getState() != ProcessorState.EProcessorState.Initialized) {
             throw new Exception(
                     String.format("[%s] Replicator not available. [state=%s]",
                             name(), state.getState().name()));

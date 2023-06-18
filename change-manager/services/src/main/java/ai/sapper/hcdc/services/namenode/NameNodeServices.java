@@ -21,8 +21,7 @@ import ai.sapper.cdc.common.model.services.ConfigSource;
 import ai.sapper.cdc.common.model.services.EResponseState;
 import ai.sapper.cdc.common.model.services.ReplicatorConfigSource;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.cdc.core.NameNodeEnv;
-import ai.sapper.cdc.core.model.EHCdcProcessorState;
+import ai.sapper.cdc.core.processing.ProcessorState;
 import ai.sapper.hcdc.agents.main.NameNodeReplicator;
 import ai.sapper.hcdc.agents.main.SchemaScanner;
 import com.google.common.base.Strings;
@@ -37,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class NameNodeServices {
 
     @RequestMapping(value = "/namenode/replicator/run", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<EHCdcProcessorState>> replicator(@RequestBody ReplicatorConfigSource config) {
+    public ResponseEntity<BasicResponse<ProcessorState.EProcessorState>> replicator(@RequestBody ReplicatorConfigSource config) {
         NameNodeReplicator replicator = new NameNodeReplicator();
         try {
 
@@ -64,7 +63,7 @@ public class NameNodeServices {
     }
 
     @RequestMapping(value = "/namenode/scanner/run", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<EHCdcProcessorState>> scanner(@RequestBody ConfigSource config) {
+    public ResponseEntity<BasicResponse<ProcessorState.EProcessorState>> scanner(@RequestBody ConfigSource config) {
         SchemaScanner scanner = new SchemaScanner();
         try {
             scanner.setConfigFile(config.getPath())

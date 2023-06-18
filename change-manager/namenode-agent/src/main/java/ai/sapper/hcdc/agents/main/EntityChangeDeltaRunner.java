@@ -22,7 +22,7 @@ import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.Service;
-import ai.sapper.cdc.core.model.EHCdcProcessorState;
+import ai.sapper.cdc.core.processing.ProcessorState;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.pipeline.EntityChangeDeltaReader;
 import com.beust.jcommander.JCommander;
@@ -35,7 +35,7 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.parquet.Strings;
 
 @Getter
-public class EntityChangeDeltaRunner implements Service<EHCdcProcessorState> {
+public class EntityChangeDeltaRunner implements Service<ProcessorState.EProcessorState> {
     @Parameter(names = {"--config", "-c"}, required = true, description = "Path to the configuration file.")
     private String configFile;
     @Parameter(names = {"--type", "-t"}, description = "Configuration file type. (File, Resource, Remote)")
@@ -47,19 +47,19 @@ public class EntityChangeDeltaRunner implements Service<EHCdcProcessorState> {
     private NameNodeEnv env;
 
     @Override
-    public Service<EHCdcProcessorState> setConfigFile(@NonNull String path) {
+    public EntityChangeDeltaRunner setConfigFile(@NonNull String path) {
         configFile = path;
         return this;
     }
 
     @Override
-    public Service<EHCdcProcessorState> setConfigSource(@NonNull String type) {
+    public EntityChangeDeltaRunner setConfigSource(@NonNull String type) {
         configSource = type;
         return this;
     }
 
     @SuppressWarnings("unchecked")
-    public Service<EHCdcProcessorState> init() throws Exception {
+    public EntityChangeDeltaRunner init() throws Exception {
         try {
             Preconditions.checkState(!Strings.isNullOrEmpty(configFile));
             if (!Strings.isNullOrEmpty(configSource)) {
@@ -78,40 +78,52 @@ public class EntityChangeDeltaRunner implements Service<EHCdcProcessorState> {
             processor = type.getDeclaredConstructor(NameNodeEnv.class, String.class)
                     .newInstance(env, name());
             processor.init(env.baseConfig());
+            env.withProcessor(processor);
+
             return this;
         } catch (Throwable t) {
             DefaultLogger.stacktrace(t);
             DefaultLogger.error(t.getLocalizedMessage());
-            NameNodeEnv.get(name()).error(t);
             throw t;
         }
     }
 
     @Override
-    public Service<EHCdcProcessorState> start() throws Exception {
+    public EntityChangeDeltaRunner start() throws Exception {
         try {
+            if (processor == null || status().getState() != ProcessorState.EProcessorState.Initialized) {
+                throw new Exception(
+                        String.format("[%s] Processor not initialized. [state=%s]",
+                                name(), status().getState().name()));
+            }
+            if (processor.state().isRunning()) {
+                return this;
+            }
+            processor.state().setState(ProcessorState.EProcessorState.Running);
             runner = new Thread(processor);
             runner.start();
             return this;
         } catch (Throwable t) {
             DefaultLogger.stacktrace(env.LOG, t);
             DefaultLogger.error(env.LOG, t.getLocalizedMessage());
-            NameNodeEnv.get(name()).error(t);
             throw t;
         }
     }
 
     @Override
-    public Service<EHCdcProcessorState> stop() throws Exception {
-        processor.stop();
-        runner.join();
-
+    public EntityChangeDeltaRunner stop() throws Exception {
+        if (processor != null) {
+            processor.stop();
+            if (runner != null)
+                runner.join();
+        }
         return this;
     }
 
     @Override
-    public AbstractState<EHCdcProcessorState> status() {
-        return processor.processingState();
+    public AbstractState<ProcessorState.EProcessorState> status() {
+        Preconditions.checkNotNull(processor);
+        return processor.state();
     }
 
     @Override
@@ -121,7 +133,19 @@ public class EntityChangeDeltaRunner implements Service<EHCdcProcessorState> {
 
     @Override
     public void checkState() throws Exception {
-
+        if (env == null) {
+            throw new Exception(String.format("[%s] Environment is not available...", name()));
+        }
+        if (!env.state().isAvailable()) {
+            throw new Exception(
+                    String.format("[%s] Environment state is not valid. [state=%s]",
+                            name(), env.state().getState().name()));
+        }
+        if (!processor.state().isRunning()) {
+            throw new Exception(
+                    String.format("[%s] Processor is not running. [state=%s]",
+                            name(), processor.state().getState().name()));
+        }
     }
 
 

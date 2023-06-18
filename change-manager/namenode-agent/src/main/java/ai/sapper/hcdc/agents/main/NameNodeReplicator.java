@@ -30,6 +30,7 @@ import ai.sapper.cdc.core.model.*;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import ai.sapper.cdc.core.model.dfs.EBlockState;
 import ai.sapper.cdc.core.model.dfs.NameNode;
+import ai.sapper.cdc.core.processing.ProcessorState;
 import ai.sapper.cdc.core.state.HCdcStateManager;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -61,7 +62,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Getter
-public class NameNodeReplicator implements Service<EHCdcProcessorState> {
+public class NameNodeReplicator implements Service<ProcessorState.EProcessorState> {
     private static final String FS_IMAGE_REGEX = "fsimage_(\\d+)$";
 
     private static class Constants {
@@ -78,7 +79,7 @@ public class NameNodeReplicator implements Service<EHCdcProcessorState> {
     private ReplicatorConfig replicatorConfig;
     private HCdcStateManager stateManager;
     private NameNodeEnv env;
-    private final HCdcProcessingState state = new HCdcProcessingState();
+    private final ProcessorState state = new ProcessorState();
 
     @Parameter(names = {"--imageDir", "-d"}, required = true, description = "Path to the directory containing FS Image file.")
     private String fsImageDir;
@@ -105,19 +106,19 @@ public class NameNodeReplicator implements Service<EHCdcProcessorState> {
     }
 
     @Override
-    public Service<EHCdcProcessorState> setConfigFile(@NonNull String path) {
+    public NameNodeReplicator setConfigFile(@NonNull String path) {
         configFile = path;
         return this;
     }
 
     @Override
-    public Service<EHCdcProcessorState> setConfigSource(@NonNull String type) {
+    public NameNodeReplicator setConfigSource(@NonNull String type) {
         configSource = type;
         return this;
     }
 
     @Override
-    public Service<EHCdcProcessorState> init() throws NameNodeError {
+    public NameNodeReplicator init() throws NameNodeError {
         try {
             Preconditions.checkState(!Strings.isNullOrEmpty(configFile));
             if (!org.apache.parquet.Strings.isNullOrEmpty(configSource)) {
@@ -148,7 +149,7 @@ public class NameNodeReplicator implements Service<EHCdcProcessorState> {
                     throw new Exception(String.format("Failed to create temp directory. [%s]", tempDir));
                 }
             }
-            state.setState(EHCdcProcessorState.Initialized);
+            state.setState(ProcessorState.EProcessorState.Initialized);
             return this;
         } catch (Throwable t) {
             DefaultLogger.stacktrace(t);
@@ -158,12 +159,12 @@ public class NameNodeReplicator implements Service<EHCdcProcessorState> {
     }
 
     @Override
-    public Service<EHCdcProcessorState> start() throws Exception {
+    public NameNodeReplicator start() throws Exception {
         try {
-            Preconditions.checkState(state.getState() == EHCdcProcessorState.Initialized);
-            state.setState(EHCdcProcessorState.Running);
+            Preconditions.checkState(state.getState() == ProcessorState.EProcessorState.Initialized);
+            state.setState(ProcessorState.EProcessorState.Running);
             run();
-            state.setState(EHCdcProcessorState.Initialized);
+            state.setState(ProcessorState.EProcessorState.Initialized);
             return this;
         } catch (Throwable t) {
             DefaultLogger.stacktrace(env.LOG, t);
@@ -174,14 +175,14 @@ public class NameNodeReplicator implements Service<EHCdcProcessorState> {
     }
 
     @Override
-    public Service<EHCdcProcessorState> stop() throws Exception {
+    public NameNodeReplicator stop() throws Exception {
         if (!state.hasError())
-            state.setState(EHCdcProcessorState.Stopped);
+            state.setState(ProcessorState.EProcessorState.Stopped);
         return this;
     }
 
     @Override
-    public AbstractState<EHCdcProcessorState> status() {
+    public AbstractState<ProcessorState.EProcessorState> status() {
         return state;
     }
 
@@ -200,7 +201,7 @@ public class NameNodeReplicator implements Service<EHCdcProcessorState> {
                     String.format("[%s] Environment state is not valid. [state=%s]",
                             name(), env.state().getState().name()));
         }
-        if (state.getState() != EHCdcProcessorState.Initialized) {
+        if (state.getState() != ProcessorState.EProcessorState.Initialized) {
             throw new Exception(
                     String.format("[%s] Replicator not available. [state=%s]",
                             name(), state.getState().name()));

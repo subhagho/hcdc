@@ -20,8 +20,7 @@ import ai.sapper.cdc.common.model.services.BasicResponse;
 import ai.sapper.cdc.common.model.services.ConfigSource;
 import ai.sapper.cdc.common.model.services.EResponseState;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.cdc.core.NameNodeEnv;
-import ai.sapper.cdc.core.model.EHCdcProcessorState;
+import ai.sapper.cdc.core.processing.ProcessorState;
 import ai.sapper.hcdc.agents.main.EditsLogProcessor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +34,7 @@ public class EditsLogService {
     private static EditsLogProcessor processor;
 
     @RequestMapping(value = "/edits/log/start", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<EHCdcProcessorState>> start(@RequestBody ConfigSource config) {
+    public ResponseEntity<BasicResponse<ProcessorState.EProcessorState>> start(@RequestBody ConfigSource config) {
         try {
             processor = new EditsLogProcessor();
             processor.setConfigFile(config.getPath())
@@ -55,7 +54,7 @@ public class EditsLogService {
     }
 
     @RequestMapping(value = "/edits/log/status", method = RequestMethod.GET)
-    public ResponseEntity<BasicResponse<EHCdcProcessorState>> state() {
+    public ResponseEntity<BasicResponse<ProcessorState.EProcessorState>> state() {
         try {
             processor.checkState();
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
@@ -69,7 +68,7 @@ public class EditsLogService {
     }
 
     @RequestMapping(value = "/edits/log/stop", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<EHCdcProcessorState>> stop() {
+    public ResponseEntity<BasicResponse<ProcessorState.EProcessorState>> stop() {
         try {
             processor.checkState();
             processor.stop();

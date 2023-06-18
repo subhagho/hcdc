@@ -16,11 +16,13 @@
 
 package ai.sapper.hcdc.agents.main;
 
+import ai.sapper.cdc.common.AbstractState;
 import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.model.services.EConfigFileType;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.Service;
+import ai.sapper.cdc.core.processing.ProcessorState;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.pipeline.EntityChangeDeltaProcessor;
 import com.beust.jcommander.JCommander;
@@ -33,7 +35,7 @@ import org.apache.commons.configuration2.tree.ImmutableNode;
 import org.apache.parquet.Strings;
 
 @Getter
-public class EntityChangeDeltaConsumer implements Service<NameNodeEnv.ENameNodeEnvState> {
+public class EntityChangeDeltaConsumer implements Service<ProcessorState.EProcessorState> {
     @Parameter(names = {"--config", "-c"}, required = true, description = "Path to the configuration file.")
     private String configFile;
     @Parameter(names = {"--type", "-t"}, description = "Configuration file type. (File, Resource, Remote)")
@@ -45,19 +47,19 @@ public class EntityChangeDeltaConsumer implements Service<NameNodeEnv.ENameNodeE
     private NameNodeEnv env;
 
     @Override
-    public Service<NameNodeEnv.ENameNodeEnvState> setConfigFile(@NonNull String path) {
+    public EntityChangeDeltaConsumer setConfigFile(@NonNull String path) {
         configFile = path;
         return this;
     }
 
     @Override
-    public Service<NameNodeEnv.ENameNodeEnvState> setConfigSource(@NonNull String type) {
+    public EntityChangeDeltaConsumer setConfigSource(@NonNull String type) {
         configSource = type;
         return this;
     }
 
     @SuppressWarnings("unchecked")
-    public Service<NameNodeEnv.ENameNodeEnvState> init() throws Exception {
+    public EntityChangeDeltaConsumer init() throws Exception {
         try {
             Preconditions.checkState(!Strings.isNullOrEmpty(configFile));
             if (!Strings.isNullOrEmpty(configSource)) {
@@ -80,44 +82,69 @@ public class EntityChangeDeltaConsumer implements Service<NameNodeEnv.ENameNodeE
         } catch (Throwable t) {
             DefaultLogger.stacktrace(t);
             DefaultLogger.error(t.getLocalizedMessage());
-            NameNodeEnv.get(name()).error(t);
             throw t;
         }
     }
 
     @Override
-    public Service<NameNodeEnv.ENameNodeEnvState> start() throws Exception {
+    public EntityChangeDeltaConsumer start() throws Exception {
         try {
+            if (processor == null || status().getState() != ProcessorState.EProcessorState.Initialized) {
+                throw new Exception(
+                        String.format("[%s] Processor not initialized. [state=%s]",
+                                name(), status().getState().name()));
+            }
+            if (processor.state().isRunning()) {
+                return this;
+            }
+            processor.state().setState(ProcessorState.EProcessorState.Running);
             runner = new Thread(processor);
             runner.start();
             return this;
         } catch (Throwable t) {
             DefaultLogger.stacktrace(env.LOG, t);
             DefaultLogger.error(env.LOG, t.getLocalizedMessage());
-            NameNodeEnv.get(name()).error(t);
             throw t;
         }
     }
 
     @Override
-    public Service<NameNodeEnv.ENameNodeEnvState> stop() throws Exception {
-        NameNodeEnv.dispose(name());
-        runner.join();
+    public EntityChangeDeltaConsumer stop() throws Exception {
+        if (processor != null) {
+            processor.stop();
+            if (runner != null)
+                runner.join();
+        }
         return this;
     }
 
     @Override
-    public NameNodeEnv.NameNodeEnvState status() {
-        try {
-            return NameNodeEnv.status(name());
-        } catch (Exception ex) {
-            return null;
-        }
+    public AbstractState<ProcessorState.EProcessorState> status() {
+        Preconditions.checkNotNull(processor);
+        return processor.state();
     }
+
 
     @Override
     public String name() {
         return getClass().getSimpleName();
+    }
+
+    @Override
+    public void checkState() throws Exception {
+        if (env == null) {
+            throw new Exception(String.format("[%s] Environment is not available...", name()));
+        }
+        if (!env.state().isAvailable()) {
+            throw new Exception(
+                    String.format("[%s] Environment state is not valid. [state=%s]",
+                            name(), env.state().getState().name()));
+        }
+        if (!processor.state().isRunning()) {
+            throw new Exception(
+                    String.format("[%s] Processor is not running. [state=%s]",
+                            name(), processor.state().getState().name()));
+        }
     }
 
     public static void main(String[] args) {

@@ -20,12 +20,10 @@ import ai.sapper.cdc.common.model.services.BasicResponse;
 import ai.sapper.cdc.common.model.services.ConfigSource;
 import ai.sapper.cdc.common.model.services.EResponseState;
 import ai.sapper.cdc.common.utils.DefaultLogger;
-import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.filters.DomainFilter;
 import ai.sapper.cdc.core.filters.DomainFilters;
 import ai.sapper.cdc.core.filters.Filter;
 import ai.sapper.cdc.core.model.DomainFilterAddRequest;
-import ai.sapper.cdc.core.model.EHCdcProcessorState;
 import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.model.SnapshotDoneRequest;
 import ai.sapper.cdc.core.model.dfs.DFSFileReplicaState;
@@ -168,7 +166,7 @@ public class SnapshotService {
     }
 
     @RequestMapping(value = "/snapshot/status", method = RequestMethod.GET)
-    public ResponseEntity<BasicResponse<EHCdcProcessorState>> state() {
+    public ResponseEntity<BasicResponse<ProcessorState.EProcessorState>> state() {
         try {
             processor.checkState();
             return new ResponseEntity<>(new BasicResponse<>(EResponseState.Success,
@@ -182,7 +180,7 @@ public class SnapshotService {
     }
 
     @RequestMapping(value = "/admin/snapshot/start", method = RequestMethod.POST)
-    public synchronized ResponseEntity<BasicResponse<EHCdcProcessorState>> start(@RequestBody ConfigSource config) {
+    public synchronized ResponseEntity<BasicResponse<ProcessorState.EProcessorState>> start(@RequestBody ConfigSource config) {
         try {
             if (processor != null) {
                 if (processor.getProcessor().state().isInitialized()) {
@@ -211,7 +209,7 @@ public class SnapshotService {
     }
 
     @RequestMapping(value = "/admin/snapshot/stop", method = RequestMethod.POST)
-    public ResponseEntity<BasicResponse<EHCdcProcessorState>> stop() {
+    public ResponseEntity<BasicResponse<ProcessorState.EProcessorState>> stop() {
         try {
             processor.checkState();
             processor.stop();
