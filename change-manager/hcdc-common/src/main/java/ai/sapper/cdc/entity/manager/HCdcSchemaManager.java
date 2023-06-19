@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
 @Getter
 @Accessors(fluent = true)
 public class HCdcSchemaManager extends SchemaManager {
-    public static final String DEFAULT_DOMAIN = "HadoopCDC";
+    public static final String DEFAULT_DOMAIN = "hadoop";
 
     private static final String IGNORE_REGEX = "(.*)\\.(_*)COPYING(_*)|/tmp/(.*)|(.*)\\.hive-staging(.*)";
     private HdfsConnection hdfsConnection;
@@ -55,7 +55,7 @@ public class HCdcSchemaManager extends SchemaManager {
 
     @Override
     public Domain createDomain(@NonNull String name) throws Exception {
-        return  super.createDomain(name, HCdcDomain.class);
+        return super.createDomain(name, HCdcDomain.class);
     }
 
     @Override
@@ -239,6 +239,14 @@ public class HCdcSchemaManager extends SchemaManager {
             return fs;
         }
         return null;
+    }
+
+    public SchemaEntity getEntityForFile(@NonNull String hdfsPath) throws Exception {
+        SchemaEntity se = matches(hdfsPath);
+        if (se == null) {
+            se = new SchemaEntity(DEFAULT_DOMAIN, hdfsPath);
+        }
+        return se;
     }
 
     private void updateDomainFilters(String domain, DomainFilters filters) throws Exception {

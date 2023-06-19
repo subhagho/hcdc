@@ -174,8 +174,7 @@ public class NameNodeSchemaScanner {
                     if (encryptionHandler != null) {
                         converter.withEncryptionHandler(encryptionHandler);
                     }
-                    SchemaEntity schemaEntity = new SchemaEntity(HCdcSchemaManager.DEFAULT_DOMAIN,
-                            fileState.getFileInfo().getHdfsPath());
+                    SchemaEntity schemaEntity = schemaManager.getEntityForFile(fileState.getFileInfo().getHdfsPath());
                     CDCDataConverter.ExtractSchemaResponse response = converter.extractSchema(fileState, schemaEntity);
                     if (response != null) {
                         if (response.schema() != null) {
