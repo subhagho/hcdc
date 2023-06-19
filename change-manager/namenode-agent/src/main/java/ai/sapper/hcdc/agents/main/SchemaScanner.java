@@ -73,10 +73,10 @@ public class SchemaScanner implements Service<ProcessorState.EProcessorState> {
             Preconditions.checkNotNull(fileSource);
             config = ConfigReader.read(configFile, fileSource);
             env = NameNodeEnv.setup(name(), getClass(), config);
-            scanner = new NameNodeSchemaScanner(env.stateManager(), name());
+            scanner = new NameNodeSchemaScanner(env, name());
             scanner
                     .withSchemaManager(env.schemaManager())
-                    .init(env.baseConfig(), env.connectionManager());
+                    .init(env.agentConfig(), env.connectionManager());
             state.setState(ProcessorState.EProcessorState.Initialized);
             return this;
         } catch (Throwable t) {

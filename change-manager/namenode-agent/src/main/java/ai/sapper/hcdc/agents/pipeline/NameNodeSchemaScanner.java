@@ -55,11 +55,12 @@ public class NameNodeSchemaScanner {
     private HCdcSchemaManager schemaManager;
 
     private ThreadPoolExecutor executorService;
-    private NameNodeEnv env;
+    private final NameNodeEnv env;
     private EncryptionHandler<ByteBuffer, ByteBuffer> encryptionHandler;
 
-    public NameNodeSchemaScanner(@NonNull HCdcStateManager stateManager, @NonNull String name) {
-        this.stateManager = stateManager;
+    public NameNodeSchemaScanner(@NonNull NameNodeEnv env, @NonNull String name) {
+        this.env = env;
+        this.stateManager = env.stateManager();
         this.name = name;
     }
 
@@ -69,8 +70,6 @@ public class NameNodeSchemaScanner {
             config = new NameNodeFileScannerConfig(xmlConfig);
             config.read();
 
-            env = NameNodeEnv.get(name);
-            Preconditions.checkNotNull(env);
             NameNodeFileScannerSettings settings = (NameNodeFileScannerSettings) config.settings();
             connection = manger.getConnection(settings.getHdfsConnection(), HdfsConnection.class);
             if (connection == null) {
