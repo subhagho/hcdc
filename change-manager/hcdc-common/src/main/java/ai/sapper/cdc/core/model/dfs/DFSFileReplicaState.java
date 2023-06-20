@@ -36,13 +36,17 @@ import java.util.Map;
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
         property = "@class")
 public class DFSFileReplicaState extends OffsetState<EFileReplicationState, DFSReplicationOffset> {
+    private String hdfsPath;
+    @JsonIgnore
     private DFSFileInfo fileInfo;
+    @JsonIgnore
     private SchemaEntity entity;
+    private String schemaDomain;
+    private String schemaEntity;
     private String zkPath;
     private boolean snapshotReady = false;
     private long snapshotTime;
     private long lastReplicationTime;
-    private long updateTime = 0;
     private long recordCount = 0;
 
     private EFileState fileState = EFileState.Unknown;

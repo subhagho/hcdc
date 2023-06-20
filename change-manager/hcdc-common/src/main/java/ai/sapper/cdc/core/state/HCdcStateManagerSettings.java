@@ -16,14 +16,35 @@
 
 package ai.sapper.cdc.core.state;
 
+import ai.sapper.cdc.common.config.Config;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * <pre>
+ *      <state>
+ *          <stateManagerClass>[State Manager class]</stateManagerClass>
+ *          <connection>[ZooKeeper connection name]</connection>
+ *          <locking> -- Optional
+ *              <retry>[Lock retry count, default = 4]</retry>
+ *              <timeout>[Lock timeout, default = 15sec</timeout>
+ *          </locking>
+ *          <offsets>
+ *              <offsetManager>
+ *                  ...
+ *              </offsetManager>
+ *              ...
+ *          </offsets>
+ *          <fileState>[true|false, default = false</fileState>
+ *      </state>
+ * </pre>
+ */
 @Getter
 @Setter
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
         property = "@class")
 public class HCdcStateManagerSettings extends BaseStateManagerSettings {
-
+    @Config(name = "fileState", required = false, type = Boolean.class)
+    private boolean requireFileState = false;
 }

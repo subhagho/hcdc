@@ -38,7 +38,7 @@ class NameNodeSchemaScannerTest {
             NameNodeEnv.setup(name, getClass(), config);
 
             Preconditions.checkNotNull(NameNodeEnv.get(name).schemaManager());
-            NameNodeSchemaScanner scanner = new NameNodeSchemaScanner(NameNodeEnv.get(name).stateManager(), name);
+            NameNodeSchemaScanner scanner = new NameNodeSchemaScanner(NameNodeEnv.get(name), name);
             scanner
                     .withSchemaManager(NameNodeEnv.get(name).schemaManager())
                     .init(NameNodeEnv.get(name).baseConfig(), NameNodeEnv.get(name).connectionManager());

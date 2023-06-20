@@ -169,8 +169,7 @@ public class JsonConverter extends AvroBasedConverter {
         if (schema != null) {
             AvroEntitySchema avs = (AvroEntitySchema) schemaManager().createSchema(schemaEntity);
             avs.withSchema(schema, true);
-
-            return schemaManager().updateSchema(avs);
+            return schemaManager().checkAndSave(avs, schemaEntity);
         }
         return null;
     }

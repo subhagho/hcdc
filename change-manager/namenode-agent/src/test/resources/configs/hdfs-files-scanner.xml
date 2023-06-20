@@ -32,6 +32,7 @@
                 <stateManagerClass>ai.sapper.cdc.core.state.HCdcStateManager</stateManagerClass>
                 <basePath>ha-cluster</basePath>
                 <connection>zk-state-connection</connection>
+                <fileState>true</fileState>
             </state>
             <schema>
                 <name>HDFSSchemaManager</name>

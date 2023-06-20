@@ -16,20 +16,20 @@
 
 package ai.sapper.cdc.entity.manager;
 
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.filters.*;
 import ai.sapper.cdc.core.processing.ProcessorState;
 import ai.sapper.cdc.entity.avro.AvroEntitySchema;
-import ai.sapper.cdc.entity.schema.Domain;
-import ai.sapper.cdc.entity.schema.EntitySchema;
-import ai.sapper.cdc.entity.schema.HCdcDomain;
-import ai.sapper.cdc.entity.schema.SchemaEntity;
+import ai.sapper.cdc.entity.schema.*;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.curator.framework.CuratorFramework;
+import org.slf4j.event.Level;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -76,6 +76,73 @@ public class HCdcSchemaManager extends SchemaManager {
         }
         return createSchema(schemaEntity, AvroEntitySchema.class);
     }
+
+    public AvroEntitySchema checkAndSave(@NonNull AvroEntitySchema schema,
+                                         @NonNull SchemaEntity schemaEntity) throws Exception {
+        HCdcZkSchemaHandler handler = (HCdcZkSchemaHandler) handler();
+        SchemaVersion version = handler.currentVersion(schemaEntity);
+        AvroEntitySchema current = getSchema(schemaEntity, AvroEntitySchema.class);
+        if (current == null) {
+            version = new SchemaVersion(1, 0);
+            schema.setVersion(version);
+            return createSchema(schema, schemaEntity);
+        } else {
+            SchemaVersion next = nextVersion(schemaEntity, schema, current, version);
+            if (!next.equals(version)) {
+                schema.setVersion(next);
+                return updateSchema(schema);
+            } else {
+                return updateSchema(schema);
+            }
+        }
+    }
+
+    private SchemaVersion nextVersion(SchemaEntity entity,
+                                      AvroEntitySchema schema,
+                                      AvroEntitySchema current,
+                                      SchemaVersion version) throws Exception {
+        HCdcZkSchemaHandler handler = (HCdcZkSchemaHandler) handler();
+        SchemaVersion next = new SchemaVersion(version);
+        if (current != null) {
+            if (current.getVersion() == null) {
+                throw new Exception(
+                        String.format("Invalid Schema object: version is null. [path=%s]",
+                                current.getZkPath()));
+            }
+            EntityDiff diff = schema.diff(current);
+            if (diff == null) return next;
+            List<AvroEntitySchema> schemas = handler.findSchemas(entity);
+            if (schemas != null && !schemas.isEmpty()) {
+                for (AvroEntitySchema avs : schemas) {
+                    diff = schema.diff(avs);
+                    if (diff == null) {
+                        return avs.getVersion();
+                    }
+                }
+            }
+            List<SchemaEvolutionValidator.Message> messages
+                    = SchemaEvolutionValidator
+                    .checkBackwardCompatibility(current.getSchema(),
+                            schema.getSchema(),
+                            current.getSchema().getName());
+            Level maxLevel = Level.DEBUG;
+            for (SchemaEvolutionValidator.Message message : messages) {
+                if (DefaultLogger.isGreaterOrEqual(message.getLevel(), maxLevel)) {
+                    maxLevel = message.getLevel();
+                }
+            }
+
+            if (DefaultLogger.isGreaterOrEqual(maxLevel, Level.ERROR) ||
+                    DefaultLogger.isGreaterOrEqual(maxLevel, Level.WARN)) {
+                next.setMajorVersion(version.getMajorVersion() + 1);
+                next.setMinorVersion(0);
+            } else if (DefaultLogger.isGreaterOrEqual(maxLevel, Level.INFO)) {
+                next.setMinorVersion(version.getMinorVersion() + 1);
+            }
+        }
+        return next;
+    }
+
 
     public void addFilterCallback(@NonNull FilterAddCallback callback) {
         callbacks.add(callback);
@@ -170,7 +237,10 @@ public class HCdcSchemaManager extends SchemaManager {
                              @NonNull String regex,
                              String group) throws Exception {
         Preconditions.checkState(state().isRunning());
-
+        SchemaEntity se = getEntity(domain, entity);
+        if (se == null) {
+            se = createEntity(domain, entity, SchemaEntity.class);
+        }
         DomainFilterMatcher matcher = null;
         DomainFilterMatcher.PathFilter filter = null;
         if (!matchers.containsKey(domain)) {

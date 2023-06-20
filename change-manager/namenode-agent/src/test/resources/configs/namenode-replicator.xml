@@ -31,7 +31,20 @@
                 <stateManagerClass>ai.sapper.cdc.core.state.HCdcStateManager</stateManagerClass>
                 <basePath>ha-cluster</basePath>
                 <connection>zk-state-connection</connection>
+                <fileState>true</fileState>
             </state>
+            <schema>
+                <name>HDFSSchemaManager</name>
+                <persistence>
+                    <handler>
+                        <class>ai.sapper.cdc.entity.manager.zk.ZKSchemaDataHandler</class>
+                        <settings>ai.sapper.cdc.entity.manager.zk.ZKSchemaDataHandlerSettings</settings>
+                    </handler>
+                    <connection>zk-state-connection</connection>
+                    <schema>hdfs</schema>
+                </persistence>
+                <hdfs>source-hdfs-ha</hdfs>
+            </schema>
         </managers>
         <!--audit>
             <class>ai.sapper.cdc.common.audit.DefaultAuditLogger</class>

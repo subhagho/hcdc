@@ -19,10 +19,13 @@ package ai.sapper.cdc.core;
 import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.connections.ZookeeperConnection;
+import ai.sapper.cdc.core.model.EFileState;
 import ai.sapper.cdc.core.model.dfs.DFSFileInfo;
 import ai.sapper.cdc.core.model.dfs.DFSFileReplicaState;
+import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import ai.sapper.cdc.core.model.dfs.DFSReplicationOffset;
 import ai.sapper.cdc.core.state.StateManagerError;
+import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
 import ai.sapper.cdc.entity.model.StaleDataException;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
 import com.google.common.base.Preconditions;
@@ -38,6 +41,16 @@ import java.nio.charset.StandardCharsets;
 public class ReplicationStateHelper {
     private ZookeeperConnection connection;
     private String zkReplicationPath;
+    private final HCdcSchemaManager schemaManager;
+    private final FileStateHelper fileStateHelper;
+    private final NameNodeEnv env;
+
+    public ReplicationStateHelper(@NonNull NameNodeEnv env,
+                                  @NonNull FileStateHelper fileStateHelper) {
+        this.env = env;
+        this.schemaManager = env.schemaManager();
+        this.fileStateHelper = fileStateHelper;
+    }
 
     public ReplicationStateHelper withZkConnection(@NonNull ZookeeperConnection connection) {
         this.connection = connection;
@@ -64,11 +77,21 @@ public class ReplicationStateHelper {
             CuratorFramework client = connection().client();
             String path = getReplicationPath(schemaEntity, inodeId);
             if (client.checkExists().forPath(path) != null) {
-                byte[] data = client.getData().forPath(path);
-                if (data != null && data.length > 0) {
-                    String json = new String(data, StandardCharsets.UTF_8);
-                    return JSONUtils.read(json, DFSFileReplicaState.class);
+                DFSFileReplicaState state = JSONUtils.read(client, path, DFSFileReplicaState.class);
+                if (state != null) {
+                    DFSFileState fs = fileStateHelper.get(state.getHdfsPath());
+                    if (fs == null) {
+                        throw new StateManagerError(
+                                String.format("File state not found. [path=%s]", state.getHdfsPath()));
+                    }
+                    state.setFileInfo(fs.getFileInfo());
+                    SchemaEntity entity = schemaManager.getEntity(state.getSchemaDomain(), state.getSchemaEntity());
+                    if (entity == null) {
+                        throw new StateManagerError(String.format("Schema entity not found. [entity=%s.%s]",
+                                state.getSchemaDomain(), state.getSchemaEntity() ));
+                    }
                 }
+                return state;
             }
             return null;
         } catch (Exception ex) {
@@ -90,11 +113,16 @@ public class ReplicationStateHelper {
                 }
                 state = new DFSFileReplicaState();
                 state.setFileInfo(new DFSFileInfo(file));
+                state.setHdfsPath(file.getHdfsPath());
                 state.setEntity(schemaEntity);
+                state.setSchemaDomain(schemaEntity.getDomain());
+                state.setSchemaEntity(schemaEntity.getEntity());
                 state.setZkPath(path);
                 state.setOffset(new DFSReplicationOffset());
-                state.setUpdateTime(System.currentTimeMillis());
-
+                state.setTimeCreated(System.currentTimeMillis());
+                state.setTimeUpdated(System.currentTimeMillis());
+                state.setFileState(EFileState.New);
+                state.setLastUpdatedBy(env.moduleInstance());
                 String json = JSONUtils.asString(state, DFSFileReplicaState.class);
                 client.setData().forPath(path, json.getBytes(StandardCharsets.UTF_8));
             }
@@ -109,13 +137,14 @@ public class ReplicationStateHelper {
         try {
             CuratorFramework client = connection().client();
             DFSFileReplicaState nstate = get(state.getEntity(), state.getFileInfo().getInodeId());
-            if (nstate.getUpdateTime() > 0 && nstate.getUpdateTime() != state.getUpdateTime()) {
+            if (nstate.getTimeUpdated() > 0 && nstate.getTimeUpdated() != state.getTimeUpdated()) {
                 throw new StaleDataException(String.format("Replication state changed. [path=%s]",
                         state.getFileInfo().getHdfsPath()));
             }
             String path = getReplicationPath(state.getEntity(), state.getFileInfo().getInodeId());
 
-            state.setUpdateTime(System.currentTimeMillis());
+            state.setLastUpdatedBy(env.moduleInstance());
+            state.setTimeUpdated(System.currentTimeMillis());
             String json = JSONUtils.asString(state, DFSFileReplicaState.class);
             client.setData().forPath(path, json.getBytes(StandardCharsets.UTF_8));
 

@@ -128,7 +128,7 @@ public class ParquetConverter extends AvroBasedConverter {
             Schema schema = new AvroSchemaConverter(conf).convert(pschema);
             AvroEntitySchema avs = (AvroEntitySchema) schemaManager().createSchema(schemaEntity);
             avs.withSchema(schema, true);
-            return schemaManager().updateSchema(avs);
+            return schemaManager().checkAndSave(avs, schemaEntity);
         }
     }
 

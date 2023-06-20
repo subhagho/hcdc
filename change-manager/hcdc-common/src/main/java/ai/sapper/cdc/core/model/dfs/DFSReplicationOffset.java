@@ -29,7 +29,7 @@ import lombok.Setter;
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
         property = "@class")
 public class DFSReplicationOffset extends SnapshotOffset {
-    private long lastReplicatedTxId = 1;
+    private long lastReplicatedTxId = 0;
 
     @Override
     public String asString() {

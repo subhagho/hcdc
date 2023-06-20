@@ -127,6 +127,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
 
             dbSource = ProtoUtils.build(instance(), moduleInstance().getIp(), "HDFS", 50070);
             state().setState(ENameNodeEnvState.Initialized);
+            stateManager.postInit();
             postInit();
 
             return this;

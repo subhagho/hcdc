@@ -17,10 +17,7 @@
 package ai.sapper.cdc.core.state;
 
 import ai.sapper.cdc.common.utils.PathUtils;
-import ai.sapper.cdc.core.BaseEnv;
-import ai.sapper.cdc.core.FileStateHelper;
-import ai.sapper.cdc.core.NameNodeEnvSettings;
-import ai.sapper.cdc.core.ReplicationStateHelper;
+import ai.sapper.cdc.core.*;
 import ai.sapper.cdc.core.model.*;
 import ai.sapper.cdc.core.processing.ProcessStateManager;
 import ai.sapper.cdc.core.processing.ProcessingState;
@@ -53,8 +50,9 @@ public class HCdcStateManager extends ProcessStateManager<EHCdcProcessorState, H
 
     private String source;
 
-    private final ReplicationStateHelper replicaStateHelper = new ReplicationStateHelper();
+    private ReplicationStateHelper replicaStateHelper;
     private final FileStateHelper fileStateHelper = new FileStateHelper();
+    private NameNodeEnv env;
 
 
     public HCdcStateManager init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
@@ -65,6 +63,7 @@ public class HCdcStateManager extends ProcessStateManager<EHCdcProcessorState, H
                     BaseStateManagerSettings.__CONFIG_PATH,
                     env,
                     HCdcStateManagerSettings.class);
+            this.env = (NameNodeEnv) env;
             NameNodeEnvSettings envSettings = (NameNodeEnvSettings) env.settings();
             this.source = envSettings.getSource();
             CuratorFramework client = connection().client();
@@ -82,6 +81,26 @@ public class HCdcStateManager extends ProcessStateManager<EHCdcProcessorState, H
             fileStateHelper
                     .withZkPath(zkFSPath)
                     .withZkConnection(connection());
+
+
+            processingState().setState(EHCdcProcessorState.Running);
+            update(processingState());
+            return this;
+        } catch (Exception ex) {
+            throw new StateManagerError(ex);
+        }
+    }
+
+    public void postInit() throws Exception {
+        HCdcStateManagerSettings settings = (HCdcStateManagerSettings) settings();
+        if (!settings.isRequireFileState()) {
+            return;
+        }
+        if (env.schemaManager() == null) {
+            throw new Exception(String.format("[env=%s] Schema manager not configured...", env.name()));
+        }
+        CuratorFramework client = connection().client();
+        if (this.env.schemaManager() != null) {
             String zkPathReplication = new PathUtils.ZkPathBuilder(zkModulePath())
                     .withPath(Constants.ZK_PATH_REPLICATION)
                     .withPath(source)
@@ -92,14 +111,9 @@ public class HCdcStateManager extends ProcessStateManager<EHCdcProcessorState, H
                     throw new StateManagerError(String.format("Error creating ZK replication path. [path=%s]", basePath()));
                 }
             }
-            replicaStateHelper
+            replicaStateHelper = new ReplicationStateHelper(this.env, fileStateHelper)
                     .withZkConnection(connection())
                     .withZkPath(zkPathReplication);
-            processingState().setState(EHCdcProcessorState.Running);
-            update(processingState());
-            return this;
-        } catch (Exception ex) {
-            throw new StateManagerError(ex);
         }
     }
 
