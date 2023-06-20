@@ -24,6 +24,7 @@ import ai.sapper.cdc.core.messaging.ReceiverOffset;
 import ai.sapper.cdc.core.model.EHCdcProcessorState;
 import ai.sapper.cdc.core.model.HCdcMessageProcessingState;
 import ai.sapper.cdc.core.model.HCdcTxId;
+import ai.sapper.cdc.core.model.Params;
 import ai.sapper.cdc.core.model.dfs.DFSBlockState;
 import ai.sapper.cdc.core.model.dfs.DFSFileReplicaState;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
@@ -40,7 +41,6 @@ import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.settings.ChangeDeltaProcessorSettings;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSFileClose;
-import ai.sapper.hcdc.common.model.DFSTransaction;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -85,20 +85,20 @@ public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends Change
     public void process(@NonNull MessageObject<String, DFSChangeDelta> message,
                         @NonNull Object data,
                         @NonNull HCdcMessageProcessingState<MO> pState,
-                        DFSTransaction tnx,
-                        boolean retry) throws Exception {
+                        @NonNull Params params) throws Exception {
         HCdcTxId txId = null;
-        if (tnx != null) {
-            txId = ProtoUtils.fromTx(tnx);
+        if (params.dfsTx() != null) {
+            txId = ProtoUtils.fromTx(params.dfsTx());
         } else {
             txId = new HCdcTxId(-1);
         }
+        params.txId(txId);
         EditsChangeTransactionProcessor processor
                 = (EditsChangeTransactionProcessor) processor();
         if (message.mode() == MessageObject.MessageMode.Backlog) {
             processBacklogMessage(message, txId);
         } else {
-            processor.processTxMessage(message, data, txId, retry);
+            processor.processTxMessage(message, data, params);
         }
     }
 

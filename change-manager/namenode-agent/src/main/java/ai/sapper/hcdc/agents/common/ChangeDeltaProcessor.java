@@ -21,10 +21,7 @@ import ai.sapper.cdc.core.InvalidTransactionError;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.messaging.*;
 import ai.sapper.cdc.core.messaging.builders.MessageSenderBuilder;
-import ai.sapper.cdc.core.model.EHCdcProcessorState;
-import ai.sapper.cdc.core.model.HCdcMessageProcessingState;
-import ai.sapper.cdc.core.model.HCdcProcessingState;
-import ai.sapper.cdc.core.model.HCdcTxId;
+import ai.sapper.cdc.core.model.*;
 import ai.sapper.cdc.core.processing.MessageProcessor;
 import ai.sapper.cdc.core.processing.MessageProcessorState;
 import ai.sapper.cdc.core.processing.ProcessingState;
@@ -126,7 +123,10 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
                                     txId.getId(), tnx.getId()));
                 }
             }
-            process(message, data, pState, tnx, retry);
+            Params params = new Params();
+            params.dfsTx(tnx);
+            params.retry(retry);
+            process(message, data, pState, params);
             NameNodeEnv.audit(name(), getClass(), (MessageOrBuilder) data);
             if (mode == EProcessorMode.Reader) {
                 commitReceived(message, txId, pState);
@@ -196,8 +196,7 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
     public abstract void process(@NonNull MessageObject<String, DFSChangeDelta> message,
                                  @NonNull Object data,
                                  @NonNull HCdcMessageProcessingState<MO> pState,
-                                 DFSTransaction tnx,
-                                 boolean retry) throws Exception;
+                                 @NonNull Params params) throws Exception;
 
     public abstract ChangeDeltaProcessor<MO> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException;
 

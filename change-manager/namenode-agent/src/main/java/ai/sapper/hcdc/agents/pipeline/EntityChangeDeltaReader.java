@@ -28,13 +28,13 @@ import ai.sapper.cdc.core.messaging.ReceiverOffset;
 import ai.sapper.cdc.core.model.EHCdcProcessorState;
 import ai.sapper.cdc.core.model.HCdcMessageProcessingState;
 import ai.sapper.cdc.core.model.HCdcTxId;
+import ai.sapper.cdc.core.model.Params;
 import ai.sapper.cdc.core.processing.MessageProcessorState;
 import ai.sapper.cdc.core.processing.ProcessingState;
 import ai.sapper.cdc.core.utils.ProtoUtils;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.settings.EntityChangeDeltaReaderSettings;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
-import ai.sapper.hcdc.common.model.DFSTransaction;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -150,17 +150,17 @@ public class EntityChangeDeltaReader<MO extends ReceiverOffset> extends ChangeDe
     public void process(@NonNull MessageObject<String, DFSChangeDelta> message,
                         @NonNull Object data,
                         @NonNull HCdcMessageProcessingState<MO> pState,
-                        DFSTransaction tnx,
-                        boolean retry) throws Exception {
+                        @NonNull Params params) throws Exception {
         HCdcTxId txId = null;
-        if (tnx != null) {
-            txId = ProtoUtils.fromTx(tnx);
+        if (params.dfsTx() != null) {
+            txId = ProtoUtils.fromTx(params.dfsTx());
         } else {
             txId = new HCdcTxId(-1);
         }
+        params.txId(txId);
         EntityChangeTransactionReader processor
                 = (EntityChangeTransactionReader) processor();
-        processor.processTxMessage(message, data, txId, retry);
+        processor.processTxMessage(message, data, params);
     }
 
     @Override

@@ -24,6 +24,7 @@ import ai.sapper.cdc.core.messaging.MessageSender;
 import ai.sapper.cdc.core.model.EFileState;
 import ai.sapper.cdc.core.model.HCdcProcessingState;
 import ai.sapper.cdc.core.model.HCdcTxId;
+import ai.sapper.cdc.core.model.Params;
 import ai.sapper.cdc.core.model.dfs.DFSBlockState;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import ai.sapper.cdc.core.model.dfs.EBlockState;
@@ -48,6 +49,8 @@ import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 public abstract class TransactionProcessor {
     public static final Logger LOG = LoggerFactory.getLogger(TransactionProcessor.class);
 
+
+
     private final String name;
     private HCdcStateManager stateManager;
     private HCdcSchemaManager schemaManager;
@@ -70,8 +73,7 @@ public abstract class TransactionProcessor {
 
     public abstract void processAddFileTxMessage(@NonNull DFSFileAdd data,
                                                  @NonNull MessageObject<String, DFSChangeDelta> message,
-                                                 @NonNull HCdcTxId txId,
-                                                 boolean retry) throws Exception;
+                                                 @NonNull Params params) throws Exception;
 
     public SchemaEntity isRegistered(String hdfsPath) throws Exception {
         Preconditions.checkNotNull(schemaManager);
@@ -80,46 +82,39 @@ public abstract class TransactionProcessor {
 
     public abstract void processAppendFileTxMessage(@NonNull DFSFileAppend data,
                                                     @NonNull MessageObject<String, DFSChangeDelta> message,
-                                                    @NonNull HCdcTxId txId,
-                                                    boolean retry) throws Exception;
+                                                    @NonNull Params params) throws Exception;
 
     public abstract void processDeleteFileTxMessage(@NonNull DFSFileDelete data,
                                                     @NonNull MessageObject<String, DFSChangeDelta> message,
-                                                    @NonNull HCdcTxId txId,
-                                                    boolean retry) throws Exception;
+                                                    @NonNull Params params) throws Exception;
 
     public abstract void processAddBlockTxMessage(@NonNull DFSBlockAdd data,
                                                   @NonNull MessageObject<String, DFSChangeDelta> message,
-                                                  @NonNull HCdcTxId txId,
-                                                  boolean retry) throws Exception;
+                                                  @NonNull Params params) throws Exception;
 
     public abstract void processUpdateBlocksTxMessage(@NonNull DFSBlockUpdate data,
                                                       @NonNull MessageObject<String, DFSChangeDelta> message,
-                                                      @NonNull HCdcTxId txId,
-                                                      boolean retry) throws Exception;
+                                                      @NonNull Params params) throws Exception;
 
     public abstract void processTruncateBlockTxMessage(@NonNull DFSBlockTruncate data,
                                                        @NonNull MessageObject<String, DFSChangeDelta> message,
-                                                       @NonNull HCdcTxId txId,
-                                                       boolean retry) throws Exception;
+                                                       @NonNull Params params) throws Exception;
 
     public abstract void processCloseFileTxMessage(@NonNull DFSFileClose data,
                                                    @NonNull MessageObject<String, DFSChangeDelta> message,
-                                                   @NonNull HCdcTxId txId,
-                                                   boolean retry) throws Exception;
+                                                   @NonNull Params params) throws Exception;
 
     public abstract void processRenameFileTxMessage(@NonNull DFSFileRename data,
                                                     @NonNull MessageObject<String, DFSChangeDelta> message,
-                                                    @NonNull HCdcTxId txId,
-                                                    boolean retry) throws Exception;
+                                                    @NonNull Params params) throws Exception;
 
     public abstract void processIgnoreTxMessage(@NonNull DFSIgnoreTx data,
                                                 @NonNull MessageObject<String, DFSChangeDelta> message,
-                                                @NonNull HCdcTxId txId) throws Exception;
+                                                @NonNull Params params) throws Exception;
 
     public abstract void processErrorTxMessage(@NonNull DFSError data,
                                                @NonNull MessageObject<String, DFSChangeDelta> message,
-                                               @NonNull HCdcTxId txId) throws Exception;
+                                               @NonNull Params params) throws Exception;
 
     public abstract void handleError(@NonNull MessageObject<String, DFSChangeDelta> message,
                                      @NonNull Object data,
@@ -139,9 +134,9 @@ public abstract class TransactionProcessor {
     public boolean checkTransactionState(DFSFileState fileState,
                                          @NonNull DFSFile file,
                                          @NonNull MessageObject<String, DFSChangeDelta> message,
-                                         long txId, boolean retry) throws InvalidTransactionError {
+                                         @NonNull Params params) throws InvalidTransactionError {
         if (fileState == null || fileState.checkDeleted()) {
-            throw new InvalidTransactionError(txId,
+            throw new InvalidTransactionError(params.txId().getId(),
                     DFSError.ErrorCode.SYNC_STOPPED,
                     file.getEntity().getEntity(),
                     new Exception(String.format("NameNode Replica out of sync, missing file state. [path=%s]",
@@ -149,8 +144,8 @@ public abstract class TransactionProcessor {
                     .withFile(file);
         }
         if (message.mode() == MessageObject.MessageMode.New) {
-            if (fileState.getLastTnxId() >= txId && !retry) {
-                LOGGER.warn(getClass(), txId,
+            if (fileState.getLastTnxId() >= params.txId().getId() && !params.retry()) {
+                LOGGER.warn(getClass(), params.txId().getId(),
                         String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
                                 message.id(), message.mode().name()));
                 return false;
@@ -186,28 +181,27 @@ public abstract class TransactionProcessor {
 
     public void processTxMessage(@NonNull MessageObject<String, DFSChangeDelta> message,
                                  @NonNull Object data,
-                                 @NonNull HCdcTxId txId,
-                                 boolean retry) throws Exception {
+                                 @NonNull Params params) throws Exception {
         if (data instanceof DFSFileAdd) {
-            processAddFileTxMessage((DFSFileAdd) data, message, txId, retry);
+            processAddFileTxMessage((DFSFileAdd) data, message, params);
         } else if (data instanceof DFSFileAppend) {
-            processAppendFileTxMessage((DFSFileAppend) data, message, txId, retry);
+            processAppendFileTxMessage((DFSFileAppend) data, message, params);
         } else if (data instanceof DFSFileDelete) {
-            processDeleteFileTxMessage((DFSFileDelete) data, message, txId, retry);
+            processDeleteFileTxMessage((DFSFileDelete) data, message, params);
         } else if (data instanceof DFSBlockAdd) {
-            processAddBlockTxMessage((DFSBlockAdd) data, message, txId, retry);
+            processAddBlockTxMessage((DFSBlockAdd) data, message, params);
         } else if (data instanceof DFSBlockUpdate) {
-            processUpdateBlocksTxMessage((DFSBlockUpdate) data, message, txId, retry);
+            processUpdateBlocksTxMessage((DFSBlockUpdate) data, message, params);
         } else if (data instanceof DFSBlockTruncate) {
-            processTruncateBlockTxMessage((DFSBlockTruncate) data, message, txId, retry);
+            processTruncateBlockTxMessage((DFSBlockTruncate) data, message, params);
         } else if (data instanceof DFSFileClose) {
-            processCloseFileTxMessage((DFSFileClose) data, message, txId, retry);
+            processCloseFileTxMessage((DFSFileClose) data, message, params);
         } else if (data instanceof DFSFileRename) {
-            processRenameFileTxMessage((DFSFileRename) data, message, txId, retry);
+            processRenameFileTxMessage((DFSFileRename) data, message, params);
         } else if (data instanceof DFSIgnoreTx) {
-            processIgnoreTxMessage((DFSIgnoreTx) data, message, txId);
+            processIgnoreTxMessage((DFSIgnoreTx) data, message, params);
         } else if (data instanceof DFSError) {
-            processErrorTxMessage((DFSError) data, message, txId);
+            processErrorTxMessage((DFSError) data, message, params);
         } else {
             throw new InvalidMessageError(message.id(), String.format("Message Body type not supported. [type=%s]", data.getClass().getCanonicalName()));
         }
@@ -245,40 +239,39 @@ public abstract class TransactionProcessor {
 
     public DFSFileState createFileState(@NonNull DFSFile file,
                                         @NonNull MessageObject<String, DFSChangeDelta> message,
-                                        long txId,
+                                        @NonNull Params params,
                                         long updateTime,
                                         long blockSize,
                                         List<DFSBlock> blocks,
                                         @NonNull EFileState fState,
-                                        @NonNull EBlockState bState,
-                                        boolean retry) throws Exception {
+                                        @NonNull EBlockState bState) throws Exception {
         String path = file.getEntity().getEntity();
         DFSFileState fileState = stateManager()
                 .fileStateHelper()
                 .get(path);
         if (fileState != null) {
-            if (!retry) {
-                if (fileState.getLastTnxId() >= txId &&
+            if (!params.retry()) {
+                if (fileState.getLastTnxId() >= params.txId().getId() &&
                         message.mode() == MessageObject.MessageMode.New) {
-                    LOGGER.warn(getClass(), txId,
+                    LOGGER.warn(getClass(), params.txId().getId(),
                             String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
                                     message.id(), message.mode().name()));
                     return null;
                 } else if (!fileState.checkDeleted()) {
-                    throw new InvalidTransactionError(txId,
+                    throw new InvalidTransactionError(params.txId().getId(),
                             DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getFileInfo().getHdfsPath(),
                             new Exception(String.format("Valid File already exists. [path=%s]",
                                     fileState.getFileInfo().getHdfsPath())))
                             .withFile(file);
                 }
-            } else if (fileState.getLastTnxId() != txId) {
-                throw new InvalidTransactionError(txId,
+            } else if (fileState.getLastTnxId() != params.txId().getId()) {
+                throw new InvalidTransactionError(params.txId().getId(),
                         DFSError.ErrorCode.SYNC_STOPPED,
                         fileState.getFileInfo().getHdfsPath(),
                         new Exception(
                                 String.format("Invalid processed transaction. [path=%s][expected tx=%d][processed tx=%d]",
-                                        fileState.getFileInfo().getHdfsPath(), txId, fileState.getLastTnxId())))
+                                        fileState.getFileInfo().getHdfsPath(), params.txId().getId(), fileState.getLastTnxId())))
                         .withFile(file);
             }
         }
@@ -294,7 +287,7 @@ public abstract class TransactionProcessor {
                         updateTime,
                         blockSize,
                         EFileState.New,
-                        txId);
+                        params.txId().getId());
         if (ProtoBufUtils.update(fileState, file)) {
             fileState = stateManager()
                     .fileStateHelper()
@@ -304,7 +297,7 @@ public abstract class TransactionProcessor {
             long prevBlockId = -1;
             for (DFSBlock block : blocks) {
                 DFSBlockState bs = null;
-                if (retry) {
+                if (params.retry()) {
                     bs = fileState.get(block.getBlockId());
                 }
                 if (bs == null)
@@ -317,7 +310,7 @@ public abstract class TransactionProcessor {
                                     block.getSize(),
                                     block.getGenerationStamp(),
                                     bState,
-                                    txId);
+                                    params.txId().getId());
                 prevBlockId = block.getBlockId();
             }
         }

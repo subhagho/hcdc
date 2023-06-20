@@ -19,10 +19,7 @@ package ai.sapper.hcdc.agents.pipeline;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.ReceiverOffset;
-import ai.sapper.cdc.core.model.EFileState;
-import ai.sapper.cdc.core.model.EHCdcProcessorState;
-import ai.sapper.cdc.core.model.HCdcMessageProcessingState;
-import ai.sapper.cdc.core.model.HCdcTxId;
+import ai.sapper.cdc.core.model.*;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import ai.sapper.cdc.core.processing.MessageProcessorState;
 import ai.sapper.cdc.core.processing.ProcessingState;
@@ -32,7 +29,6 @@ import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.settings.EntityChangeDeltaProcessorSettings;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
-import ai.sapper.hcdc.common.model.DFSTransaction;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
@@ -92,17 +88,17 @@ public class EntityChangeDeltaProcessor<MO extends ReceiverOffset> extends Chang
     public void process(@NonNull MessageObject<String, DFSChangeDelta> message,
                         @NonNull Object data,
                         @NonNull HCdcMessageProcessingState<MO> pState,
-                        DFSTransaction tnx,
-                        boolean retry) throws Exception {
+                        @NonNull Params params) throws Exception {
         HCdcTxId txId = null;
-        if (tnx != null) {
-            txId = ProtoUtils.fromTx(tnx);
+        if (params.dfsTx() != null) {
+            txId = ProtoUtils.fromTx(params.dfsTx());
         } else {
             txId = new HCdcTxId(-1);
         }
+        params.txId(txId);
         EntityChangeTransactionProcessor processor
                 = (EntityChangeTransactionProcessor) processor();
-        processor.processTxMessage(message, data, txId, retry);
+        processor.processTxMessage(message, data, params);
     }
 
     @Override
