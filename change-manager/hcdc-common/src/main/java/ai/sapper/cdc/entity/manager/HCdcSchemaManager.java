@@ -17,6 +17,7 @@
 package ai.sapper.cdc.entity.manager;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.core.DistributedLock;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.filters.*;
 import ai.sapper.cdc.core.processing.ProcessorState;
@@ -80,20 +81,30 @@ public class HCdcSchemaManager extends SchemaManager {
     public AvroEntitySchema checkAndSave(@NonNull AvroEntitySchema schema,
                                          @NonNull SchemaEntity schemaEntity) throws Exception {
         HCdcZkSchemaHandler handler = (HCdcZkSchemaHandler) handler();
-        SchemaVersion version = handler.currentVersion(schemaEntity);
-        AvroEntitySchema current = getSchema(schemaEntity, AvroEntitySchema.class);
-        if (current == null) {
-            version = new SchemaVersion(1, 0);
-            schema.setVersion(version);
-            return createSchema(schema, schemaEntity);
-        } else {
-            SchemaVersion next = nextVersion(schemaEntity, schema, current, version);
-            if (!next.equals(version)) {
-                schema.setVersion(next);
-                return updateSchema(schema);
+        DistributedLock lock = handler.schemaLock(schemaEntity);
+        lock.lock();
+        try {
+            SchemaVersion version = handler.currentVersion(schemaEntity);
+            AvroEntitySchema current = getSchema(schemaEntity, AvroEntitySchema.class);
+            if (current == null
+                    || current.getFields() == null
+                    || current.getFields().isEmpty()) {
+                if (version == null) {
+                    version = new SchemaVersion(0, 1);
+                }
+                schema.setVersion(version);
+                return createSchema(schema, schemaEntity);
             } else {
-                return updateSchema(schema);
+                SchemaVersion next = nextVersion(schemaEntity, schema, current, version);
+                if (!next.equals(version)) {
+                    schema.setVersion(next);
+                    return updateSchema(schema);
+                } else {
+                    return schema;
+                }
             }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -110,7 +121,7 @@ public class HCdcSchemaManager extends SchemaManager {
                                 current.getZkPath()));
             }
             EntityDiff diff = schema.diff(current);
-            if (diff == null) return next;
+            if (diff == null) return current.getVersion();
             List<AvroEntitySchema> schemas = handler.findSchemas(entity);
             if (schemas != null && !schemas.isEmpty()) {
                 for (AvroEntitySchema avs : schemas) {

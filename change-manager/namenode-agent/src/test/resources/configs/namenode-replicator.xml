@@ -37,7 +37,7 @@
                 <name>HDFSSchemaManager</name>
                 <persistence>
                     <handler>
-                        <class>ai.sapper.cdc.entity.manager.zk.ZKSchemaDataHandler</class>
+                        <class>ai.sapper.cdc.entity.manager.HCdcZkSchemaHandler</class>
                         <settings>ai.sapper.cdc.entity.manager.zk.ZKSchemaDataHandlerSettings</settings>
                     </handler>
                     <connection>zk-state-connection</connection>

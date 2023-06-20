@@ -126,7 +126,10 @@ public class ParquetConverter extends AvroBasedConverter {
                      ParquetFileReader.open(HadoopInputFile.fromPath(new Path(file.toURI()), conf))) {
             MessageType pschema = reader.getFooter().getFileMetaData().getSchema();
             Schema schema = new AvroSchemaConverter(conf).convert(pschema);
-            AvroEntitySchema avs = (AvroEntitySchema) schemaManager().createSchema(schemaEntity);
+            AvroEntitySchema avs = new AvroEntitySchema();
+            avs.setSchemaEntity(schemaEntity);
+            avs.setNamespace(schemaEntity.getDomain());
+            avs.setName(schemaEntity.getEntity());
             avs.withSchema(schema, true);
             return schemaManager().checkAndSave(avs, schemaEntity);
         }

@@ -167,7 +167,10 @@ public class JsonConverter extends AvroBasedConverter {
             }
         }
         if (schema != null) {
-            AvroEntitySchema avs = (AvroEntitySchema) schemaManager().createSchema(schemaEntity);
+            AvroEntitySchema avs = new AvroEntitySchema();
+            avs.setSchemaEntity(schemaEntity);
+            avs.setNamespace(schemaEntity.getDomain());
+            avs.setName(schemaEntity.getEntity());
             avs.withSchema(schema, true);
             return schemaManager().checkAndSave(avs, schemaEntity);
         }
