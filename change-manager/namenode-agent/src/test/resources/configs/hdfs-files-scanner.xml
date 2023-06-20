@@ -52,7 +52,7 @@
             <scanner>
                 <files>
                     <hdfs>source-hdfs-ha</hdfs>
-                    <threads>4</threads>
+                    <threads>1</threads>
                 </files>
             </scanner>
             <useSSL>false</useSSL>
