@@ -126,6 +126,9 @@ public class ParquetConverter extends AvroBasedConverter {
                      ParquetFileReader.open(HadoopInputFile.fromPath(new Path(file.toURI()), conf))) {
             MessageType pschema = reader.getFooter().getFileMetaData().getSchema();
             Schema schema = new AvroSchemaConverter(conf).convert(pschema);
+            if (schema == null) {
+                throw new Exception(String.format("Avro Schema is null. [entity=%s]", schemaEntity.toString()));
+            }
             AvroEntitySchema avs = new AvroEntitySchema();
             avs.setSchemaEntity(schemaEntity);
             avs.setNamespace(schemaEntity.getDomain());
@@ -170,10 +173,6 @@ public class ParquetConverter extends AvroBasedConverter {
                                           @NonNull SchemaEntity schemaEntity) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
-            AvroEntitySchema schema = hasSchema(fileState, schemaEntity);
-            if (schema != null) {
-                return schema;
-            }
             DFSBlockState lastBlock = fileState.findLastBlock();
             if (lastBlock != null) {
                 HDFSBlockData data = reader.read(lastBlock.getBlockId(),

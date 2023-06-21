@@ -359,10 +359,10 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             DFSFile dfile = data.getFile();
             AvroEntitySchema schema = schemaManager().getSchema(rState.getEntity(), AvroEntitySchema.class);
             if (schema != null) {
-                if (!Strings.isNullOrEmpty(schema.getZkPath())) {
-                    rState.getFileInfo().setSchemaURI(schema.getZkPath());
+                if (!Strings.isNullOrEmpty(schema.getUri())) {
+                    rState.getFileInfo().setSchemaURI(schema.getUri());
                 }
-                dfile = ProtoBufUtils.update(dfile, schema.getZkPath());
+                dfile = ProtoBufUtils.update(dfile, schema.getUri());
             } else {
                 throw new InvalidTransactionError(params.txId().getId(),
                         DFSError.ErrorCode.SYNC_STOPPED,
@@ -758,8 +758,8 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                     DFSFile dfile = data.getFile();
                     AvroEntitySchema schema = schemaManager().getSchema(rState.getEntity(), AvroEntitySchema.class);
                     if (schema != null) {
-                        if (!Strings.isNullOrEmpty(schema.getZkPath())) {
-                            rState.getFileInfo().setSchemaURI(schema.getZkPath());
+                        if (!Strings.isNullOrEmpty(schema.getUri())) {
+                            rState.getFileInfo().setSchemaURI(schema.getUri());
                         }
                         if (schema.getVersion() != null) {
                             if (prevSchema != null) {
@@ -868,7 +868,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                             replicaState.getEntity().toString(),
                             updated.toString()));
         }
-        String updatedPath = ned.getZkPath();
+        String updatedPath = ned.getUri();
         if (changed) {
             String currentPath = null;
             if (current != null) {
@@ -880,7 +880,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                                     replicaState.getEntity().toString(),
                                     current.toString()));
                 }
-                currentPath = ed.getZkPath();
+                currentPath = ed.getUri();
             }
 
             MessageObject<String, DFSChangeDelta> m = HCDCChangeDeltaSerDe

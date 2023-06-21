@@ -82,7 +82,6 @@ public class AvroConverter extends AvroBasedConverter {
         try {
             long count = 0;
             AvroEntitySchema schema = parseSchema(source, schemaEntity);
-
             try (FileOutputStream fos = new FileOutputStream(output)) {
                 GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema.getSchema());
                 try (DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(source, reader)) {
@@ -138,6 +137,9 @@ public class AvroConverter extends AvroBasedConverter {
         DatumReader<GenericRecord> datumReader = new GenericDatumReader<>();
         try (DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(file, datumReader)) {
             Schema schema = dataFileReader.getSchema();
+            if (schema == null) {
+                throw new Exception(String.format("Avro Schema is null. [entity=%s]", schemaEntity.toString()));
+            }
             AvroEntitySchema avs = new AvroEntitySchema();
             avs.setSchemaEntity(schemaEntity);
             avs.setNamespace(schemaEntity.getDomain());
@@ -158,10 +160,6 @@ public class AvroConverter extends AvroBasedConverter {
                                           @NonNull SchemaEntity schemaEntity) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
-            AvroEntitySchema schema = hasSchema(fileState, schemaEntity);
-            if (schema != null) {
-                return schema;
-            }
             DFSBlockState firstBlock = fileState.findFirstBlock();
             if (firstBlock != null) {
                 HDFSBlockData data = reader.read(firstBlock.getBlockId(),

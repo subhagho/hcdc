@@ -189,10 +189,6 @@ public class JsonConverter extends AvroBasedConverter {
                                           @NonNull SchemaEntity schemaEntity) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
-            AvroEntitySchema schema = hasSchema(fileState, schemaEntity);
-            if (schema != null) {
-                return schema;
-            }
             DFSBlockState firstBlock = fileState.findFirstBlock();
             if (firstBlock != null) {
                 HDFSBlockData data = reader.read(firstBlock.getBlockId(),

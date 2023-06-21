@@ -40,6 +40,11 @@ import java.util.regex.Pattern;
 @Getter
 @Accessors(fluent = true)
 public class HCdcSchemaManager extends SchemaManager {
+    private static class SchemaCompareResult {
+        private SchemaVersion version;
+        private long timestamp = -1;
+    }
+
     public static final String DEFAULT_DOMAIN = "hadoop";
 
     private static final String IGNORE_REGEX = "(.*)\\.(_*)COPYING(_*)|/tmp/(.*)|(.*)\\.hive-staging(.*)";
@@ -92,11 +97,16 @@ public class HCdcSchemaManager extends SchemaManager {
                     version = new SchemaVersion(0, 1);
                 }
                 schema.setVersion(version);
+                if (current != null) {
+                    schema.setUpdatedTime(current.getUpdatedTime());
+                }
                 return createSchema(schema, schemaEntity);
             } else {
-                SchemaVersion next = nextVersion(schemaEntity, schema, current, version);
-                if (!next.equals(version)) {
-                    schema.setVersion(next);
+                SchemaCompareResult next = nextVersion(schemaEntity, schema, current, version);
+                if (!next.version.equals(version)) {
+                    schema.setVersion(next.version);
+                    if (next.timestamp > 0)
+                        schema.setUpdatedTime(next.timestamp);
                     return updateSchema(schema);
                 } else {
                     return schema;
@@ -107,41 +117,46 @@ public class HCdcSchemaManager extends SchemaManager {
         }
     }
 
-    private SchemaVersion nextVersion(SchemaEntity entity,
-                                      AvroEntitySchema schema,
-                                      AvroEntitySchema current,
-                                      SchemaVersion version) throws Exception {
+    private SchemaCompareResult nextVersion(SchemaEntity entity,
+                                            AvroEntitySchema schema,
+                                            AvroEntitySchema current,
+                                            SchemaVersion version) throws Exception {
         HCdcZkSchemaHandler handler = (HCdcZkSchemaHandler) handler();
+        SchemaCompareResult result = new SchemaCompareResult();
         SchemaVersion next = new SchemaVersion(version);
+        result.version = next;
         if (current != null) {
             if (current.getVersion() == null) {
                 throw new Exception(
-                        String.format("Invalid Schema object: version is null. [path=%s]",
-                                current.getZkPath()));
+                        String.format("Invalid Schema object: version is null. [entity=%s]",
+                                entity.toString()));
             }
             EntityDiff diff = schema.diff(current);
-            if (diff == null) return current.getVersion();
+            if (diff == null) {
+                result.version = current.getVersion();
+                result.timestamp = current.getUpdatedTime();
+                return result;
+            }
             List<AvroEntitySchema> schemas = handler.findSchemas(entity);
             if (schemas != null && !schemas.isEmpty()) {
                 for (AvroEntitySchema avs : schemas) {
                     diff = schema.diff(avs);
                     if (diff == null) {
-                        return avs.getVersion();
+                        result.version = avs.getVersion();
+                        result.timestamp = avs.getUpdatedTime();
+                        return result;
+                    } else {
+                        Level maxLevel = compareSchemas(schema, avs);
+                        if (maxLevel == Level.DEBUG) {
+                            result.version = avs.getVersion();
+                            result.timestamp = avs.getUpdatedTime();
+                            return result;
+                        }
                     }
                 }
             }
-            List<SchemaEvolutionValidator.Message> messages
-                    = SchemaEvolutionValidator
-                    .checkBackwardCompatibility(current.getSchema(),
-                            schema.getSchema(),
-                            current.getSchema().getName());
-            Level maxLevel = Level.DEBUG;
-            for (SchemaEvolutionValidator.Message message : messages) {
-                if (DefaultLogger.isGreaterOrEqual(message.getLevel(), maxLevel)) {
-                    maxLevel = message.getLevel();
-                }
-            }
 
+            Level maxLevel = compareSchemas(schema, current);
             if (DefaultLogger.isGreaterOrEqual(maxLevel, Level.ERROR) ||
                     DefaultLogger.isGreaterOrEqual(maxLevel, Level.WARN)) {
                 next.setMajorVersion(version.getMajorVersion() + 1);
@@ -149,10 +164,26 @@ public class HCdcSchemaManager extends SchemaManager {
             } else if (DefaultLogger.isGreaterOrEqual(maxLevel, Level.INFO)) {
                 next.setMinorVersion(version.getMinorVersion() + 1);
             }
+            result.version = next;
         }
-        return next;
+        return result;
     }
 
+    private Level compareSchemas(AvroEntitySchema schema,
+                                 AvroEntitySchema current) {
+        List<SchemaEvolutionValidator.Message> messages
+                = SchemaEvolutionValidator
+                .checkBackwardCompatibility(current.getSchema(),
+                        schema.getSchema(),
+                        current.getSchema().getName());
+        Level maxLevel = Level.DEBUG;
+        for (SchemaEvolutionValidator.Message message : messages) {
+            if (DefaultLogger.isGreaterOrEqual(message.getLevel(), maxLevel)) {
+                maxLevel = message.getLevel();
+            }
+        }
+        return maxLevel;
+    }
 
     public void addFilterCallback(@NonNull FilterAddCallback callback) {
         callbacks.add(callback);
