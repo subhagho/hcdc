@@ -69,14 +69,14 @@ public class EditsChangeConsumer implements Service<ProcessorState.EProcessorSta
             config = ConfigReader.read(configFile, fileSource);
             env = NameNodeEnv.setup(name(), getClass(), config);
             Class<? extends EditsChangeDeltaProcessor<?>> type
-                    = (Class<? extends EditsChangeDeltaProcessor<?>>) ChangeDeltaProcessor.readProcessorType(env.baseConfig());
+                    = (Class<? extends EditsChangeDeltaProcessor<?>>) ChangeDeltaProcessor.readProcessorType(env.agentConfig());
             if (type == null) {
                 throw new Exception("EditsChangeDeltaProcessor implementation not specified...");
             }
 
             processor = type.getDeclaredConstructor(NameNodeEnv.class, String.class)
                             .newInstance(env, name());
-            processor.init(env.baseConfig());
+            processor.init(env.agentConfig());
             return this;
         } catch (Throwable t) {
             DefaultLogger.stacktrace(t);

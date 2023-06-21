@@ -56,6 +56,8 @@ import java.io.IOException;
 @Accessors(fluent = true)
 public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends ChangeDeltaProcessor<MO> {
     private static final Logger LOG = LoggerFactory.getLogger(EditsChangeDeltaProcessor.class.getCanonicalName());
+    public static final String __CONFIG_PATH = "processor.edits";
+
     private final HCdcSchemaManager schemaManager;
 
     public EditsChangeDeltaProcessor(@NonNull NameNodeEnv env,
@@ -104,7 +106,7 @@ public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends Change
 
     @Override
     public ChangeDeltaProcessor<MO> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
-        super.init(xmlConfig, null);
+        super.init(xmlConfig, __CONFIG_PATH);
         EditsChangeTransactionProcessor processor
                 = (EditsChangeTransactionProcessor) new EditsChangeTransactionProcessor(name(), env())
                 .withSenderQueue(sender())

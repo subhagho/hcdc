@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.fail;
 
 class NameNodeSchemaScannerTest {
-    private static final String CONFIG_FILE = "src/test/resources/configs/hdfs-files-scanner.xml";
+    private static final String CONFIG_FILE = "src/test/resources/configs/schema-scanner.xml";
 
     @Test
     void run() {

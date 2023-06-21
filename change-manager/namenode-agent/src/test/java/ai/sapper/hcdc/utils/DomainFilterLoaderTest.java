@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
 class DomainFilterLoaderTest {
-    private static final String __CONFIG_PATH = "src/test/resources/configs/hcdc-agent.xml";
+    private static final String __CONFIG_PATH = "src/test/resources/configs/edits-change-delta.xml";
     private static final String TEST_DOMAIN_FILE = "src/test/resources/test-domain-loader.csv";
 
     private static XMLConfiguration xmlConfiguration = null;

@@ -19,19 +19,31 @@
     <env>
         <name>DEV</name>
         <module>hadoop-edits</module>
-        <instance>EditsLogProcessor</instance>
+        <instance>EditsChangeConsumer</instance>
         <source>ha-cluster</source>
+        <enableHeartbeat>true</enableHeartbeat>
         <paths>
             <connections>config</connections>
             <registry>/ai/sapper/cdc/registry</registry>
             <root>/ai/sapper/cdc</root>
         </paths>
+        <!--audit>
+            <class>ai.sapper.cdc.common.audit.DefaultAuditLogger</class>
+        </audit -->
         <managers>
             <state>
-                <stateManagerClass>ai.sapper.cdc.core.state.HCdcStateManager</stateManagerClass>
+                <stateManagerClass>ai.sapper.cdc.core.state.KafkaProcessingStateManager</stateManagerClass>
                 <basePath>ha-cluster</basePath>
                 <connection>zk-state-connection</connection>
                 <fileState>true</fileState>
+                <offsets>
+                    <offsetManager>
+                        <name>EditsDeltaQueueOffset</name>
+                        <type>ai.sapper.cdc.core.messaging.kafka.KafkaStateManager</type>
+                        <connection>zk-state-connection</connection>
+                        <basePath>kafka</basePath>
+                    </offsetManager>
+                </offsets>
             </state>
             <schema>
                 <name>HDFSSchemaManager</name>
@@ -47,32 +59,48 @@
             </schema>
         </managers>
         <agent>
-            <hadoop>
-                <namespace>ha-cluster</namespace>
-                <instance>nn1</instance>
-                <home>/opt/hadoop/hadoop</home>
-                <!--adminUrl>localhost:9870</adminUrl-->
-                <config>src/test/resources/configs/hdfs-site.xml</config>
-                <hdfs-admin>source-hdfs-ha</hdfs-admin>
-            </hadoop>
-            <needHadoop>true</needHadoop>
-            <useSSL>false</useSSL>
+            <needHadoop>false</needHadoop>
             <processor>
+                <name>EditsChangeDeltaProcessor</name>
+                <class>ai.sapper.hcdc.agents.namenode.impl.KafkaEditsChangeDeltaProcessor</class>
                 <edits>
-                    <name>EditsLogService</name>
-                    <class>ai.sapper.hcdc.agents.namenode.EditsLogReader</class>
                     <sender>
                         <builder>
                             <type>ai.sapper.cdc.core.messaging.HCDCSenderBuilder</type>
-                            <settingsType>ai.sapper.cdc.core.messaging.kafka.builders.KafkaProducerSettings</settingsType>
+                            <settingsType>ai.sapper.cdc.core.messaging.kafka.builders.KafkaProducerSettings
+                            </settingsType>
                         </builder>
                         <type>kafka</type>
-                        <connection>producer-edits-queue</connection>
+                        <connection>producer-cdc-queue</connection>
                         <!--partitioner></partitioner-->
                     </sender>
-                    <pollingInterval>120000</pollingInterval>
+                    <queue>
+                        <builder>
+                            <type>ai.sapper.cdc.core.messaging.HCDCReceiverBuilder</type>
+                            <settingsType>ai.sapper.cdc.core.messaging.builders.MessageReceiverSettings</settingsType>
+                            <type>kafka</type>
+                            <connection>consumer-edits-queue</connection>
+                            <offset>
+                                <manager>EditsDeltaQueueOffset</manager>
+                            </offset>
+                        </builder>
+                        <type>kafka</type>
+                        <connection>consumer-edits-queue</connection>
+                    </queue>
+                    <errors>
+                        <builder>
+                            <type>ai.sapper.cdc.core.messaging.HCDCSenderBuilder</type>
+                            <settingsType>ai.sapper.cdc.core.messaging.kafka.builders.KafkaProducerSettings
+                            </settingsType>
+                        </builder>
+                        <type>kafka</type>
+                        <connection>producer-errors-queue</connection>
+                        <!--partitioner></partitioner-->
+                    </errors>
+                    <readBatchTimeout>5000</readBatchTimeout>
                 </edits>
             </processor>
+            <useSSL>false</useSSL>
         </agent>
         <locks>
             <connection>zk-state-connection</connection>
