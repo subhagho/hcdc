@@ -18,7 +18,7 @@
 <configuration>
     <env>
         <name>DEV</name>
-        <module>hadoop</module>
+        <module>hadoop-edits</module>
         <instance>SnapshotService</instance>
         <source>ha-cluster</source>
         <enableHeartbeat>true</enableHeartbeat>
@@ -55,7 +55,7 @@
             <useSSL>false</useSSL>
             <processor>
                 <snapshot>
-                    <name>SnapshotRunner</name>
+                    <name>SnapshotService</name>
                     <type>ai.sapper.hcdc.agents.namenode.HDFSSnapshotProcessor</type>
                     <sender>
                         <builder>

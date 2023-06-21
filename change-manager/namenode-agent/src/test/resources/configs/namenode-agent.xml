@@ -18,18 +18,33 @@
 <configuration>
     <env>
         <name>DEV</name>
-        <module>EDITS-LOG-PROCESSORS</module>
+        <module>hadoop-edits</module>
         <instance>EditsLogProcessor</instance>
         <source>ha-cluster</source>
         <paths>
             <connections>config</connections>
+            <registry>/ai/sapper/cdc/registry</registry>
+            <root>/ai/sapper/cdc</root>
         </paths>
         <managers>
             <state>
                 <stateManagerClass>ai.sapper.cdc.core.state.HCdcStateManager</stateManagerClass>
-                <basePath>/ai/sapper/cdc/edits</basePath>
+                <basePath>ha-cluster</basePath>
                 <connection>zk-state-connection</connection>
+                <fileState>true</fileState>
             </state>
+            <schema>
+                <name>HDFSSchemaManager</name>
+                <persistence>
+                    <handler>
+                        <class>ai.sapper.cdc.entity.manager.HCdcZkSchemaHandler</class>
+                        <settings>ai.sapper.cdc.entity.manager.zk.ZKSchemaDataHandlerSettings</settings>
+                    </handler>
+                    <connection>zk-state-connection</connection>
+                    <schema>hdfs</schema>
+                </persistence>
+                <hdfs>source-hdfs-ha</hdfs>
+            </schema>
         </managers>
         <agent>
             <hadoop>
@@ -44,10 +59,15 @@
             <useSSL>false</useSSL>
             <processor>
                 <edits>
+                    <name>EditsLogService</name>
+                    <type>ai.sapper.hcdc.agents.namenode.EditsLogReader</type>
                     <sender>
-                        <connectionType>kafka</connectionType>
+                        <builder>
+                            <type>ai.sapper.cdc.core.messaging.HCDCSenderBuilder</type>
+                            <settingsType>ai.sapper.cdc.core.messaging.kafka.builders.KafkaProducerSettings</settingsType>
+                        </builder>
+                        <type>kafka</type>
                         <connection>producer-edits-queue</connection>
-                        <topic>ha-cluster-edits</topic>
                         <!--partitioner></partitioner-->
                     </sender>
                     <pollingInterval>120000</pollingInterval>
@@ -65,7 +85,7 @@
                     <path>/ai/sapper/cdc/registry</path>
                 </shared>
                 <connection>
-                    <type>ai.sapper.cdc.core.connections.ZookeeperConnection</type>
+                    <class>ai.sapper.cdc.core.connections.ZookeeperConnection</class>
                     <zookeeper>
                         <name>zk-state-connection</name>
                         <!--connectionString>192.168.0.5:2181,192.168.0.4:2181</connectionString -->

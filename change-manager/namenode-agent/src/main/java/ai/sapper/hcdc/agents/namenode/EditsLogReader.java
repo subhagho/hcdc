@@ -29,6 +29,7 @@ import ai.sapper.cdc.core.model.dfs.DFSEditLogBatch;
 import ai.sapper.cdc.core.model.dfs.DFSTransactionType;
 import ai.sapper.cdc.core.processing.ProcessingState;
 import ai.sapper.cdc.core.processing.Processor;
+import ai.sapper.cdc.core.processing.ProcessorState;
 import ai.sapper.cdc.core.state.HCdcStateManager;
 import ai.sapper.hcdc.agents.settings.HDFSEditsReaderSettings;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
@@ -78,7 +79,8 @@ public class EditsLogReader extends HDFSEditsReader {
                         String.format("Invalid Hadoop Configuration: Edits directory not found. [path=%s]",
                                 editsDir.getAbsolutePath()));
             }
-            setup(config, HDFSEditsReaderSettings.class);
+            setup(config, HDFSEditsReaderSettings.class, env);
+            state.setState(ProcessorState.EProcessorState.Initialized);
             return this;
         } catch (Throwable ex) {
             try {
@@ -87,6 +89,7 @@ public class EditsLogReader extends HDFSEditsReader {
                 DefaultLogger.stacktrace(t);
                 DefaultLogger.error(LOG, "Failed to save state...", t);
             }
+            state.error(ex);
             throw new ConfigurationException(ex);
         }
     }

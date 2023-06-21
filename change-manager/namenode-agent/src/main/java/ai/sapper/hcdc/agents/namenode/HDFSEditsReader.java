@@ -46,7 +46,8 @@ public abstract class HDFSEditsReader extends Processor<EHCdcProcessorState, HCd
 
     @SuppressWarnings("unchecked")
     public void setup(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                      @NonNull Class<? extends HDFSEditsReaderSettings> settingsType) throws Exception {
+                      @NonNull Class<? extends HDFSEditsReaderSettings> settingsType,
+                      @NonNull BaseEnv<?> env) throws Exception {
         ConfigReader reader = new ConfigReader(xmlConfig, settingsType);
         reader.read();
         settings = (HDFSEditsReaderSettings) reader.settings();
@@ -54,8 +55,8 @@ public abstract class HDFSEditsReader extends Processor<EHCdcProcessorState, HCd
 
         MessageSenderBuilder<String, DFSChangeDelta> builder
                 = (MessageSenderBuilder<String, DFSChangeDelta>) settings.getBuilderType()
-                .getDeclaredConstructor(BaseEnv.class, Class.class)
-                .newInstance(env, settings.getBuilderSettingsType());
+                .getDeclaredConstructor()
+                .newInstance();
         HierarchicalConfiguration<ImmutableNode> eConfig
                 = reader.config().configurationAt(HDFSEditsReaderSettings.__CONFIG_PATH_SENDER);
         if (eConfig == null) {
@@ -63,6 +64,6 @@ public abstract class HDFSEditsReader extends Processor<EHCdcProcessorState, HCd
                     String.format("Sender queue configuration not found. [path=%s]",
                             HDFSEditsReaderSettings.__CONFIG_PATH_SENDER));
         }
-        sender = builder.build(eConfig);
+        sender = builder.withEnv(env).build(eConfig);
     }
 }

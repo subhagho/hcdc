@@ -18,7 +18,7 @@
 <configuration>
     <env>
         <name>DEV</name>
-        <module>hadoop</module>
+        <module>hadoop-edits</module>
         <instance>NameNodeReplicator</instance>
         <source>ha-cluster</source>
         <paths>
