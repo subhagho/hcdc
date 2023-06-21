@@ -96,6 +96,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
             if (schemaManager == null) {
                 throw new Exception(String.format("[%s] Schema Manager not initialized...", name()));
             }
+            schemaManager.addFilterCallback(new SnapshotCallBack(this, settings.getExecutorPoolSize()));
             LOG = LoggerFactory.getLogger(getClass());
             state.setState(ProcessorState.EProcessorState.Running);
             return this;
