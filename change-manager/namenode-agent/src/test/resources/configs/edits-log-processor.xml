@@ -19,9 +19,8 @@
     <env>
         <name>DEV</name>
         <module>hadoop-edits</module>
-        <instance>HDFSSchemaScanner</instance>
+        <instance>EditsLogProcessor</instance>
         <source>ha-cluster</source>
-        <enableHeartbeat>false</enableHeartbeat>
         <paths>
             <connections>config</connections>
             <registry>/ai/sapper/cdc/registry</registry>
@@ -48,14 +47,32 @@
             </schema>
         </managers>
         <agent>
-            <needHadoop>false</needHadoop>
-            <scanner>
-                <files>
-                    <hdfs>source-hdfs-ha</hdfs>
-                    <threads>1</threads>
-                </files>
-            </scanner>
+            <hadoop>
+                <namespace>ha-cluster</namespace>
+                <instance>nn1</instance>
+                <home>/opt/hadoop/hadoop</home>
+                <!--adminUrl>localhost:9870</adminUrl-->
+                <config>src/test/resources/configs/hdfs-site.xml</config>
+                <hdfs-admin>source-hdfs-ha</hdfs-admin>
+            </hadoop>
+            <needHadoop>true</needHadoop>
             <useSSL>false</useSSL>
+            <processor>
+                <edits>
+                    <name>EditsLogService</name>
+                    <type>ai.sapper.hcdc.agents.namenode.EditsLogReader</type>
+                    <sender>
+                        <builder>
+                            <type>ai.sapper.cdc.core.messaging.HCDCSenderBuilder</type>
+                            <settingsType>ai.sapper.cdc.core.messaging.kafka.builders.KafkaProducerSettings</settingsType>
+                        </builder>
+                        <type>kafka</type>
+                        <connection>producer-edits-queue</connection>
+                        <!--partitioner></partitioner-->
+                    </sender>
+                    <pollingInterval>120000</pollingInterval>
+                </edits>
+            </processor>
         </agent>
         <locks>
             <connection>zk-state-connection</connection>

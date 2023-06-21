@@ -107,7 +107,7 @@ public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
 
             if (super.stateManager() != null) {
                 stateManager = (HCdcStateManager) super.stateManager();
-                stateManager.checkAgentState(HCdcProcessingState.class);
+                stateManager.checkAgentState(stateManager.processingStateType());
                 if (status != null) {
                     stateManager.parseState(status.getState());
                 }
