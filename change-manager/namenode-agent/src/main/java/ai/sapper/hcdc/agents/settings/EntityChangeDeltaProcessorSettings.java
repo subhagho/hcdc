@@ -25,4 +25,5 @@ import lombok.Setter;
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
         property = "@class")
 public class EntityChangeDeltaProcessorSettings extends ChangeDeltaProcessorSettings {
+    public static final String __CONFIG_PATH = "processor.cdc";
 }

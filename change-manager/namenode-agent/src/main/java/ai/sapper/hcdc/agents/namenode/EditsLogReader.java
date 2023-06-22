@@ -118,47 +118,58 @@ public class EditsLogReader extends HDFSEditsReader {
 
     @Override
     public void doRun(boolean runOnce) throws Exception {
-        __lock().lock();
-        try {
-            NameNodeEnv env = (NameNodeEnv) this.env;
-            HCdcProcessingState pState = (HCdcProcessingState) processingState();
-            EditsLogFileReader reader = new EditsLogFileReader();
-            txId = pState.getOffset();
-            if (txId.getId() < 0) {
-                LOGGER.warn(String.format("Name Node replication not initialized. [source=%s]",
-                        env.source()));
-            }
-            List<DFSEditsFileFinder.EditsLogFile> files = DFSEditsFileFinder
-                    .findEditsFiles(getPathNnCurrentDir(editsDir.getAbsolutePath()),
-                            txId.getId() + 1, -1);
-            if (files != null && !files.isEmpty()) {
-                for (DFSEditsFileFinder.EditsLogFile file : files) {
-                    LOGGER.debug(getClass(), txId,
-                            String.format("Reading edits file [path=%s][startTx=%d]",
-                                    file, txId.getId()));
+        while (state.isRunning()) {
+            __lock().lock();
+            try {
+                NameNodeEnv env = (NameNodeEnv) this.env;
+                HCdcProcessingState pState = (HCdcProcessingState) processingState();
+                EditsLogFileReader reader = new EditsLogFileReader();
+                txId = pState.getOffset();
+                if (txId.getId() < 0) {
+                    LOGGER.warn(String.format("Name Node replication not initialized. [source=%s]",
+                            env.source()));
+                }
+                List<DFSEditsFileFinder.EditsLogFile> files = DFSEditsFileFinder
+                        .findEditsFiles(getPathNnCurrentDir(editsDir.getAbsolutePath()),
+                                txId.getId() + 1, -1);
+                if (files != null && !files.isEmpty()) {
+                    for (DFSEditsFileFinder.EditsLogFile file : files) {
+                        LOGGER.debug(getClass(), txId,
+                                String.format("Reading edits file [path=%s][startTx=%d]",
+                                        file, txId.getId()));
 
-                    reader.run(file,
-                            txId.getId(),
-                            file.endTxId(),
-                            env);
-                    DFSEditLogBatch batch = reader.batch();
-                    if (batch.transactions() != null && !batch.transactions().isEmpty()) {
-                        processBatch(batch, txId, env.source());
-                        pState = (HCdcProcessingState) updateState(txId);
+                        reader.run(file,
+                                txId.getId(),
+                                file.endTxId(),
+                                env);
+                        DFSEditLogBatch batch = reader.batch();
+                        if (batch.transactions() != null && !batch.transactions().isEmpty()) {
+                            processBatch(batch, txId, env.source());
+                            pState = (HCdcProcessingState) updateState(txId);
+                        }
                     }
                 }
+                String cf = DFSEditsFileFinder.getCurrentEditsFile(getPathNnCurrentDir(editsDir.getAbsolutePath()));
+                if (cf == null) {
+                    throw new Exception(String.format("Current Edits file not found. [dir=%s]",
+                            editsDir.getAbsolutePath()));
+                }
+                long ltx = DFSEditsFileFinder.findSeenTxID(getPathNnCurrentDir(editsDir.getAbsolutePath()));
+                LOGGER.info(getClass(), ltx,
+                        String.format("Current Edits File: %s, Last Seen TXID=%d", cf, ltx));
+                updateState();
+            } finally {
+                __lock().unlock();
             }
-            String cf = DFSEditsFileFinder.getCurrentEditsFile(getPathNnCurrentDir(editsDir.getAbsolutePath()));
-            if (cf == null) {
-                throw new Exception(String.format("Current Edits file not found. [dir=%s]",
-                        editsDir.getAbsolutePath()));
+            if (runOnce) break;
+            else {
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException ie) {
+                    DefaultLogger.warn(
+                            String.format("[%s] Thread interrupted. [error=%s]", name(), ie.getLocalizedMessage()));
+                }
             }
-            long ltx = DFSEditsFileFinder.findSeenTxID(getPathNnCurrentDir(editsDir.getAbsolutePath()));
-            LOGGER.info(getClass(), ltx,
-                    String.format("Current Edits File: %s, Last Seen TXID=%d", cf, ltx));
-            updateState();
-        } finally {
-            __lock().unlock();
         }
     }
 

@@ -18,8 +18,8 @@
 <configuration>
     <env>
         <name>DEV</name>
-        <module>hadoop-edits</module>
-        <instance>EditsChangeConsumer</instance>
+        <module>hadoop-cdc</module>
+        <instance>EntityChangeDeltaConsumer</instance>
         <source>ha-cluster</source>
         <enableHeartbeat>true</enableHeartbeat>
         <paths>
@@ -27,9 +27,6 @@
             <registry>/ai/sapper/cdc/registry</registry>
             <root>/ai/sapper/cdc</root>
         </paths>
-        <!--audit>
-            <class>ai.sapper.cdc.common.audit.DefaultAuditLogger</class>
-        </audit -->
         <managers>
             <state>
                 <stateManagerClass>ai.sapper.cdc.core.state.KafkaProcessingStateManager</stateManagerClass>
@@ -58,12 +55,15 @@
                 <hdfs>source-hdfs-ha</hdfs>
             </schema>
         </managers>
+        <!--audit>
+            <class>ai.sapper.cdc.common.audit.DefaultAuditLogger</class>
+        </audit -->
         <agent>
             <needHadoop>false</needHadoop>
             <processor>
-                <name>EditsChangeDeltaProcessor</name>
-                <class>ai.sapper.hcdc.agents.namenode.impl.KafkaEditsChangeDeltaProcessor</class>
-                <edits>
+                <name>EntityChangeDeltaConsumer</name>
+                <class>ai.sapper.hcdc.agents.pipeline.impl.KafkaEntityChangeDeltaProcessor</class>
+                <cdc>
                     <sender>
                         <builder>
                             <type>ai.sapper.cdc.core.messaging.HCDCSenderBuilder</type>
@@ -71,7 +71,7 @@
                             </settingsType>
                         </builder>
                         <type>kafka</type>
-                        <connection>producer-cdc-queue</connection>
+                        <connection>producer-delta-queue</connection>
                         <!--partitioner></partitioner-->
                     </sender>
                     <queue>
@@ -80,7 +80,7 @@
                             <settingsType>ai.sapper.cdc.core.messaging.builders.MessageReceiverSettings</settingsType>
                         </builder>
                         <type>kafka</type>
-                        <connection>consumer-edits-queue</connection>
+                        <connection>consumer-cdc-queue</connection>
                         <offset>
                             <manager>EditsDeltaQueueOffset</manager>
                         </offset>
@@ -96,13 +96,12 @@
                         <!--partitioner></partitioner-->
                     </errors>
                     <readBatchTimeout>5000</readBatchTimeout>
-                </edits>
+                </cdc>
             </processor>
             <useSSL>false</useSSL>
         </agent>
         <locks>
             <connection>zk-state-connection</connection>
-            <path>/ai/sapper/cdc/registry</path>
         </locks>
         <config>
             <connections>
