@@ -32,6 +32,7 @@ public class ChangeDeltaProcessorSettings extends MessagingProcessorSettings {
     public static final String __CONFIG_PATH = "processor";
     public static final String __CONFIG_PATH_SENDER = "sender";
     public static final String __CONFIG_PROCESSOR_TYPE = "class";
+    public static final String __CONFIG_PROCESSOR_NAME = "name";
 
     public static class Constants {
         public static final String CONFIG_RECEIVE_TIMEOUT = "readBatchTimeout";

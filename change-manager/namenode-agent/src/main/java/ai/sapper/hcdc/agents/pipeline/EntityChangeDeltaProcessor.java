@@ -102,8 +102,9 @@ public class EntityChangeDeltaProcessor<MO extends ReceiverOffset> extends Chang
     }
 
     @Override
-    public ChangeDeltaProcessor<MO> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
-        super.init(xmlConfig, null);
+    public ChangeDeltaProcessor<MO> init(@NonNull String name,
+                                         @NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
+        super.init(name, xmlConfig, null);
         EntityChangeTransactionProcessor processor
                 = (EntityChangeTransactionProcessor) new EntityChangeTransactionProcessor(name(), env())
                 .withSenderQueue(sender())

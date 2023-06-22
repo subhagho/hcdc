@@ -57,8 +57,7 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
 
     private MessageSender<String, DFSChangeDelta> sender;
     private long receiveBatchTimeout = 1000;
-    private NameNodeEnv env;
-    private String processedMessageId = null;
+    private final NameNodeEnv env;
     private TransactionProcessor processor;
     private final EProcessorMode mode;
     private final boolean ignoreMissing;
@@ -75,6 +74,7 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
         this.mode = mode;
         this.ignoreMissing = ignoreMissing;
         this.settingsType = settingsType;
+        this.env = env;
     }
 
     public ChangeDeltaProcessor<MO> withProcessor(@NonNull TransactionProcessor processor) {
@@ -83,19 +83,23 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
     }
 
     @Override
-    public ChangeDeltaProcessor<MO> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+    public ChangeDeltaProcessor<MO> init(@NonNull String name,
+                                         @NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                                          String path) throws ConfigurationException {
         if (Strings.isNullOrEmpty(path)) {
             path = ChangeDeltaProcessorSettings.__CONFIG_PATH;
         }
         receiverConfig = new ChangeDeltaProcessorConfig(xmlConfig, path, settingsType);
-        return (ChangeDeltaProcessor<MO>) super.init(xmlConfig, path);
+        return (ChangeDeltaProcessor<MO>) super.init(name, xmlConfig, path);
     }
 
     @Override
     protected void postInit(@NonNull MessagingProcessorSettings settings) throws Exception {
         sender = ((ChangeDeltaProcessorConfig) receiverConfig).readSender(env);
-        receiveBatchTimeout = ((ChangeDeltaProcessorSettings) settings).getReceiveBatchTimeout();
+        receiveBatchTimeout = settings.getReceiveBatchTimeout();
+        if (processingState().getOffset() == null) {
+            processingState().setOffset(new HCdcTxId(-1));
+        }
     }
 
     @Override
@@ -107,7 +111,7 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
                     String.format("Invalid Message mode. [id=%s][mode=%s]", message.id(), message.mode().name()));
         }
         HCdcMessageProcessingState<MO> pState = (HCdcMessageProcessingState<MO>) processorState;
-        boolean retry = pState.isLastProcessedMessage(processedMessageId);
+        boolean retry = pState.isLastProcessedMessage(message.id());
         txId = processor.checkMessageSequence(message, ignoreMissing, retry);
         Object data = ChangeDeltaSerDe.parse(message.value(),
                 Class.forName(message.value().getType()));
@@ -134,6 +138,8 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
                 commit(message, txId, pState);
         } catch (Exception ex) {
             error(message, data, ex, txId);
+        } finally {
+            pState.setLastMessageId(message.id());
         }
     }
 
@@ -198,7 +204,8 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
                                  @NonNull HCdcMessageProcessingState<MO> pState,
                                  @NonNull Params params) throws Exception;
 
-    public abstract ChangeDeltaProcessor<MO> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException;
+    public abstract ChangeDeltaProcessor<MO> init(@NonNull String name,
+                                                  @NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException;
 
     @Override
     protected ProcessingState<EHCdcProcessorState, HCdcTxId> finished(@NonNull ProcessingState<EHCdcProcessorState, HCdcTxId> processingState) {
@@ -215,15 +222,26 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
         super.close();
     }
 
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    public static class ProcessorDef {
+        private Class<? extends ChangeDeltaProcessor<?>> type;
+        private String name;
+    }
+
     @SuppressWarnings("unchecked")
-    public static Class<? extends ChangeDeltaProcessor<?>> readProcessorType(
+    public static ProcessorDef readProcessorType(
             @NonNull HierarchicalConfiguration<ImmutableNode> config) throws Exception {
         HierarchicalConfiguration<ImmutableNode> node = config.configurationAt(ChangeDeltaProcessorSettings.__CONFIG_PATH);
         if (node != null) {
+            ProcessorDef def = new ProcessorDef();
             String cname = node.getString(ChangeDeltaProcessorSettings.__CONFIG_PROCESSOR_TYPE);
             if (!Strings.isNullOrEmpty(cname)) {
-                return (Class<? extends ChangeDeltaProcessor<?>>) Class.forName(cname);
+                def.type = (Class<? extends ChangeDeltaProcessor<?>>) Class.forName(cname);
             }
+            def.name = node.getString(ChangeDeltaProcessorSettings.__CONFIG_PROCESSOR_NAME);
+            return def;
         }
         return null;
     }
@@ -253,16 +271,16 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
             ChangeDeltaProcessorSettings settings = (ChangeDeltaProcessorSettings) settings();
             MessageSenderBuilder<String, DFSChangeDelta> builder
                     = (MessageSenderBuilder<String, DFSChangeDelta>) settings.getSendBuilderType()
-                    .getDeclaredConstructor(BaseEnv.class, Class.class)
-                    .newInstance(env, settings.getSendBuilderSettingsType());
+                    .getDeclaredConstructor()
+                    .newInstance();
             HierarchicalConfiguration<ImmutableNode> eConfig
-                    = config().configurationAt(HDFSSnapshotProcessorSettings.__CONFIG_PATH_SENDER);
+                    = config().configurationAt(ChangeDeltaProcessorSettings.__CONFIG_PATH_SENDER);
             if (eConfig == null) {
                 throw new ConfigurationException(
                         String.format("Sender queue configuration not found. [path=%s]",
-                                HDFSSnapshotProcessorSettings.__CONFIG_PATH_SENDER));
+                                ChangeDeltaProcessorSettings.__CONFIG_PATH_SENDER));
             }
-            return builder.build(eConfig);
+            return builder.withEnv(env).build(eConfig);
         }
     }
 }

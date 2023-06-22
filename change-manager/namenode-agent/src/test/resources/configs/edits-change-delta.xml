@@ -80,12 +80,12 @@
                             <settingsType>ai.sapper.cdc.core.messaging.builders.MessageReceiverSettings</settingsType>
                             <type>kafka</type>
                             <connection>consumer-edits-queue</connection>
-                            <offset>
-                                <manager>EditsDeltaQueueOffset</manager>
-                            </offset>
                         </builder>
                         <type>kafka</type>
                         <connection>consumer-edits-queue</connection>
+                        <offset>
+                            <manager>EditsDeltaQueueOffset</manager>
+                        </offset>
                     </queue>
                     <errors>
                         <builder>

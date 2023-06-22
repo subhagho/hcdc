@@ -31,6 +31,7 @@ import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import ai.sapper.cdc.core.model.dfs.DFSTransactionType;
 import ai.sapper.cdc.core.processing.MessageProcessorState;
 import ai.sapper.cdc.core.processing.ProcessingState;
+import ai.sapper.cdc.core.processing.ProcessorState;
 import ai.sapper.cdc.core.state.HCdcStateManager;
 import ai.sapper.cdc.core.utils.ProtoUtils;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
@@ -105,14 +106,17 @@ public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends Change
     }
 
     @Override
-    public ChangeDeltaProcessor<MO> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
-        super.init(xmlConfig, __CONFIG_PATH);
+    public ChangeDeltaProcessor<MO> init(@NonNull String name,
+                                         @NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
+        super.init(name, xmlConfig, __CONFIG_PATH);
         EditsChangeTransactionProcessor processor
                 = (EditsChangeTransactionProcessor) new EditsChangeTransactionProcessor(name(), env())
                 .withSenderQueue(sender())
                 .withErrorQueue(errorLogger);
+        state.setState(ProcessorState.EProcessorState.Initialized);
         return withProcessor(processor);
     }
+
 
     @Override
     protected void initState(@NonNull ProcessingState<EHCdcProcessorState, HCdcTxId> processingState) throws Exception {

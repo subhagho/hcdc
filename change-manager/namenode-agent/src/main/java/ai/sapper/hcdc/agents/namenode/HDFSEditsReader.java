@@ -45,13 +45,14 @@ public abstract class HDFSEditsReader extends Processor<EHCdcProcessorState, HCd
     }
 
     @SuppressWarnings("unchecked")
-    public void setup(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+    public void setup(@NonNull String name,
+                      @NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                       @NonNull Class<? extends HDFSEditsReaderSettings> settingsType,
                       @NonNull BaseEnv<?> env) throws Exception {
         ConfigReader reader = new ConfigReader(xmlConfig, settingsType);
         reader.read();
         settings = (HDFSEditsReaderSettings) reader.settings();
-        super.init(settings);
+        super.init(settings, name);
 
         MessageSenderBuilder<String, DFSChangeDelta> builder
                 = (MessageSenderBuilder<String, DFSChangeDelta>) settings.getBuilderType()

@@ -23,6 +23,7 @@ import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.io.FileSystem;
 import ai.sapper.cdc.core.io.impl.s3.S3FileSystem;
+import ai.sapper.cdc.core.messaging.kafka.KafkaOffset;
 import com.adobe.testing.s3mock.junit5.S3MockExtension;
 import lombok.NonNull;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
@@ -57,10 +58,10 @@ class EntityChangeDeltaReaderTest {
             HierarchicalConfiguration<ImmutableNode> config = ConfigReader.read(CONFIG_FILE, EConfigFileType.File);
             NameNodeEnv.setup(name, getClass(), config);
 
-            EntityChangeDeltaReader processor
-                    = new EntityChangeDeltaReader(NameNodeEnv.get(name))
+            EntityChangeDeltaReader<KafkaOffset> processor
+                    = new EntityChangeDeltaReader<KafkaOffset>(NameNodeEnv.get(name))
                     .withMockFileSystem(new S3Mocker(s3Client));
-            processor.init(NameNodeEnv.get(name).baseConfig());
+            processor.init("EntityChangeDeltaReader", NameNodeEnv.get(name).agentConfig());
             processor.run();
         } catch (Throwable t) {
             DefaultLogger.stacktrace(t);

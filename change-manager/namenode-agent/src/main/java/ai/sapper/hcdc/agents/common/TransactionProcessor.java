@@ -21,13 +21,11 @@ import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.MessageSender;
-import ai.sapper.cdc.core.model.EFileState;
-import ai.sapper.cdc.core.model.HCdcProcessingState;
-import ai.sapper.cdc.core.model.HCdcTxId;
-import ai.sapper.cdc.core.model.Params;
+import ai.sapper.cdc.core.model.*;
 import ai.sapper.cdc.core.model.dfs.DFSBlockState;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import ai.sapper.cdc.core.model.dfs.EBlockState;
+import ai.sapper.cdc.core.processing.ProcessingState;
 import ai.sapper.cdc.core.state.HCdcStateManager;
 import ai.sapper.cdc.core.utils.ProtoUtils;
 import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
@@ -212,7 +210,7 @@ public abstract class TransactionProcessor {
                                          boolean retry) throws Exception {
         HCdcTxId txId = ProtoUtils.fromTx(message.value().getTx());
         if (message.mode() == MessageObject.MessageMode.New) {
-            HCdcProcessingState txState = (HCdcProcessingState) stateManager().processingState();
+            ProcessingState<EHCdcProcessorState, HCdcTxId> txState = stateManager().processingState();
             long offset = txState.getOffset().getId();
             if (offset < 0) {
                 return txId;

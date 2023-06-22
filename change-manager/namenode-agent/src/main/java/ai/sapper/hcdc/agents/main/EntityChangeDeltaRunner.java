@@ -69,15 +69,15 @@ public class EntityChangeDeltaRunner implements Service<ProcessorState.EProcesso
             config = ConfigReader.read(configFile, fileSource);
             env = NameNodeEnv.setup(name(), getClass(), config);
 
-            Class<? extends EntityChangeDeltaReader<?>> type
-                    = (Class<? extends EntityChangeDeltaReader<?>>) ChangeDeltaProcessor.readProcessorType(env.baseConfig());
-            if (type == null) {
+            ChangeDeltaProcessor.ProcessorDef def = ChangeDeltaProcessor.readProcessorType(env.agentConfig());
+            Preconditions.checkNotNull(def);
+            if (def.type() == null) {
                 throw new Exception("EditsChangeDeltaProcessor implementation not specified...");
             }
 
-            processor = type.getDeclaredConstructor(NameNodeEnv.class, String.class)
+            processor = (EntityChangeDeltaReader<?>) def.type().getDeclaredConstructor(NameNodeEnv.class, String.class)
                     .newInstance(env, name());
-            processor.init(env.baseConfig());
+            processor.init(def.name(), env.baseConfig());
             env.withProcessor(processor);
 
             return this;

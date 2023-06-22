@@ -69,7 +69,7 @@ public class EditsLogProcessor implements Service<ProcessorState.EProcessorState
             env = NameNodeEnv.setup(name(), getClass(), config);
 
             processor = new EditsLogReader(env);
-            processor.init(env.agentConfig(), null);
+            processor.init("HDFSLogReader", env.agentConfig(), null);
             env.withProcessor(processor);
             return this;
         } catch (Throwable t) {

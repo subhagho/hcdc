@@ -80,8 +80,8 @@ public class SchemaScanner implements Service<ProcessorState.EProcessorState> {
             state.setState(ProcessorState.EProcessorState.Initialized);
             return this;
         } catch (Throwable t) {
-            DefaultLogger.error(env.LOG, t.getLocalizedMessage());
-            DefaultLogger.stacktrace(env.LOG, t);
+            DefaultLogger.error(t.getLocalizedMessage());
+            DefaultLogger.stacktrace(t);
             state.error(t);
             throw new NameNodeError(t);
         }

@@ -79,7 +79,8 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
     }
 
     @Override
-    public Processor<EHCdcProcessorState, HCdcTxId> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+    public Processor<EHCdcProcessorState, HCdcTxId> init(@NonNull String name,
+                                                         @NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                                                          String path) throws ConfigurationException {
         Preconditions.checkState(env instanceof NameNodeEnv);
         if (Strings.isNullOrEmpty(path)) {
@@ -89,7 +90,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
             processorConfig = new HDFSSnapshotProcessorConfig(xmlConfig, path);
             processorConfig.read();
             settings = (HDFSSnapshotProcessorSettings) processorConfig.settings();
-            super.init(settings);
+            super.init(settings, name);
             sender = processorConfig.readSender(env);
             adminSender = processorConfig.readAdminSender(env);
             schemaManager = ((NameNodeEnv) env).schemaManager();

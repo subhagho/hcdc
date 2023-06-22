@@ -75,9 +75,10 @@ public class EntityChangeDeltaReader<MO extends ReceiverOffset> extends ChangeDe
      * @throws ConfigurationException
      */
     @Override
-    public ChangeDeltaProcessor<MO> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
+    public ChangeDeltaProcessor<MO> init(@NonNull String name,
+                                         @NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
         try {
-            super.init(xmlConfig, null);
+            super.init(name, xmlConfig, null);
             ConnectionManager manger = env().connectionManager();
             EntityChangeTransactionReader processor = new EntityChangeTransactionReader(name(), env());
             EntityChangeDeltaReaderSettings settings = (EntityChangeDeltaReaderSettings) receiverConfig.settings();

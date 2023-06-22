@@ -63,7 +63,8 @@ public class EditsLogReader extends HDFSEditsReader {
     }
 
     @Override
-    public Processor<EHCdcProcessorState, HCdcTxId> init(@NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
+    public Processor<EHCdcProcessorState, HCdcTxId> init(@NonNull String name,
+                                                         @NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                                                          String path) throws ConfigurationException {
         if (Strings.isNullOrEmpty(path)) {
             path = HDFSEditsReaderSettings.__CONFIG_PATH;
@@ -79,7 +80,7 @@ public class EditsLogReader extends HDFSEditsReader {
                         String.format("Invalid Hadoop Configuration: Edits directory not found. [path=%s]",
                                 editsDir.getAbsolutePath()));
             }
-            setup(config, HDFSEditsReaderSettings.class, env);
+            setup(name, config, HDFSEditsReaderSettings.class, env);
             state.setState(ProcessorState.EProcessorState.Initialized);
             return this;
         } catch (Throwable ex) {
