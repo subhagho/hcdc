@@ -32,6 +32,7 @@ import java.nio.ByteBuffer;
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY,
         property = "@class")
 public class EntityChangeDeltaReaderSettings extends ChangeDeltaProcessorSettings {
+    public static final String __CONFIG_PATH = "processor.cdc";
     public static class Constants {
         public static final String CONFIG_HDFS_CONN = "hdfs";
         public static final String CONFIG_WS_PATH = "snapshot";

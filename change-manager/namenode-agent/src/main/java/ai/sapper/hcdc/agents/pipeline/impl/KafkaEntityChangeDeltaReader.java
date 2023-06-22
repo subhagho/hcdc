@@ -22,7 +22,8 @@ import ai.sapper.hcdc.agents.pipeline.EntityChangeDeltaReader;
 import lombok.NonNull;
 
 public class KafkaEntityChangeDeltaReader extends EntityChangeDeltaReader<KafkaOffset> {
-    public KafkaEntityChangeDeltaReader(@NonNull NameNodeEnv env) {
-        super(env);
+    public KafkaEntityChangeDeltaReader(@NonNull NameNodeEnv env,
+                                        @NonNull String name) {
+        super(env, name);
     }
 }

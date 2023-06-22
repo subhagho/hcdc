@@ -31,6 +31,7 @@ import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.model.Params;
 import ai.sapper.cdc.core.processing.MessageProcessorState;
 import ai.sapper.cdc.core.processing.ProcessingState;
+import ai.sapper.cdc.core.processing.ProcessorState;
 import ai.sapper.cdc.core.utils.ProtoUtils;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.settings.EntityChangeDeltaReaderSettings;
@@ -59,8 +60,10 @@ public class EntityChangeDeltaReader<MO extends ReceiverOffset> extends ChangeDe
     private WebServiceClient client;
     private EncryptionHandler<ByteBuffer, ByteBuffer> encryptionHandler;
 
-    public EntityChangeDeltaReader(@NonNull NameNodeEnv env) {
+    public EntityChangeDeltaReader(@NonNull NameNodeEnv env,
+                                   @NonNull String name) {
         super(env, EntityChangeDeltaReaderSettings.class, EProcessorMode.Committer, true);
+        this.name = name;
     }
 
     public EntityChangeDeltaReader<MO> withMockFileSystem(@NonNull FileSystem.FileSystemMocker fileSystemMocker) {
@@ -78,7 +81,7 @@ public class EntityChangeDeltaReader<MO extends ReceiverOffset> extends ChangeDe
     public ChangeDeltaProcessor<MO> init(@NonNull String name,
                                          @NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
         try {
-            super.init(name, xmlConfig, null);
+            super.init(name, xmlConfig, EntityChangeDeltaReaderSettings.__CONFIG_PATH);
             ConnectionManager manger = env().connectionManager();
             EntityChangeTransactionReader processor = new EntityChangeTransactionReader(name(), env());
             EntityChangeDeltaReaderSettings settings = (EntityChangeDeltaReaderSettings) receiverConfig.settings();
@@ -121,6 +124,7 @@ public class EntityChangeDeltaReader<MO extends ReceiverOffset> extends ChangeDe
                 encryptionHandler.init(receiverConfig.config());
                 processor.withEncryptionHandler(encryptionHandler);
             }
+            state.setState(ProcessorState.EProcessorState.Initialized);
             return withProcessor(processor);
         } catch (Exception ex) {
             throw new ConfigurationException(ex);

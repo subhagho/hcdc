@@ -77,7 +77,7 @@ public class EntityChangeDeltaRunner implements Service<ProcessorState.EProcesso
 
             processor = (EntityChangeDeltaReader<?>) def.type().getDeclaredConstructor(NameNodeEnv.class, String.class)
                     .newInstance(env, name());
-            processor.init(def.name(), env.baseConfig());
+            processor.init(def.name(), env.agentConfig());
             env.withProcessor(processor);
 
             return this;

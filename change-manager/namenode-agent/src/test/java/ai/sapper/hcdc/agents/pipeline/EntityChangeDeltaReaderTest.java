@@ -36,7 +36,7 @@ import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import static org.junit.jupiter.api.Assertions.fail;
 
 class EntityChangeDeltaReaderTest {
-    private static final String CONFIG_FILE = "src/test/resources/configs/file-delta-agent-0.xml";
+    private static final String CONFIG_FILE = "src/test/resources/configs/entity-change-runner-0.xml";
     private static final String DEFAULT_BUCKET_NAME = "hcdc";
 
     @RegisterExtension
