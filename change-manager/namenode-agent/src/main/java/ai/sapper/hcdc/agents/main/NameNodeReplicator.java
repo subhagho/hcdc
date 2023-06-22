@@ -220,7 +220,7 @@ public class NameNodeReplicator implements Service<ProcessorState.EProcessorStat
                             String.format("WARNING: Will delete existing file structure, if present. [path=%s]",
                                     stateManager.fileStateHelper().getFilePath(null)));
                     stateManager.deleteAll();
-                    HCdcProcessingState processingState = (HCdcProcessingState) stateManager.initState(txnId);
+                    HCdcProcessingState processingState = (HCdcProcessingState) stateManager.initState(HCdcProcessingState.class, txnId);
 
                     copy();
                     processingState.updateProcessedTxId(txnId.getId())

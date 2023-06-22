@@ -93,7 +93,10 @@ public class EntityChangeDeltaReader<MO extends ReceiverOffset> extends ChangeDe
             if (!connection.isConnected()) connection.connect();
 
             if (fileSystemMocker == null) {
-                fs = env().fileSystemManager().read(receiverConfig.config());
+                fs = env().fileSystemManager().get(settings.getFs());
+                if (fs == null) {
+                    throw new Exception(String.format("FileSystem not found. [name=%s]", settings.getFs()));
+                }
             } else {
                 fs = fileSystemMocker.create(receiverConfig.config(), env());
             }

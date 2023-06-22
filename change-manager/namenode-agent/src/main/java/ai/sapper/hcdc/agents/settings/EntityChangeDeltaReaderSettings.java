@@ -38,10 +38,13 @@ public class EntityChangeDeltaReaderSettings extends ChangeDeltaProcessorSetting
         public static final String CONFIG_WS_PATH = "snapshot";
         public static final String CONFIG_ARCHIVER_CLASS = "archiver.class";
         public static final String CONFIG_ENCRYPTOR_CLASS = "encryption.class";
+        public static final String CONFIG_FILE_SYSTEM = "fileSystem";
     }
 
     @Config(name = Constants.CONFIG_HDFS_CONN)
     private String hdfsConnection;
+    @Config(name = Constants.CONFIG_FILE_SYSTEM)
+    private String fs;
     @Config(name = Constants.CONFIG_ARCHIVER_CLASS, required = false, type = Class.class)
     private Class<? extends Archiver> archiverClass;
     private HierarchicalConfiguration<ImmutableNode> fsConfig;

@@ -27,7 +27,6 @@ import ai.sapper.cdc.core.processing.MessageProcessorState;
 import ai.sapper.cdc.core.processing.ProcessingState;
 import ai.sapper.cdc.core.state.HCdcStateManager;
 import ai.sapper.hcdc.agents.settings.ChangeDeltaProcessorSettings;
-import ai.sapper.hcdc.agents.settings.HDFSSnapshotProcessorSettings;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSTransaction;
 import com.google.common.base.Preconditions;

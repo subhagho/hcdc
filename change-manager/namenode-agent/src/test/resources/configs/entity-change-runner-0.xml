@@ -56,7 +56,7 @@
             </schema>
         </managers>
         <fs>
-            <zkPath>/test/filesystem/admin</zkPath>
+            <zkPath>/ai/sapper/cdc/registry/filesystem/admin</zkPath>
             <zkConnection>zk-state-connection</zkConnection>
             <autoSave>true</autoSave>
             <overwrite>true</overwrite>
@@ -75,10 +75,18 @@
                     </zk>
                     <containers>
                         <container>
-                            <domain>ha-cluster</domain>
-                            <path>/home/subhagho/temp/data/hadoop-cdc/fs/ha-cluster</path>
+                            <domain>test-domain-1</domain>
+                            <path>/home/subhagho/temp/data/hadoop-cdc/fs/ha-cluster/test-domain-1</path>
                         </container>
-                        <default>ha-cluster</default>
+                        <container>
+                            <domain>test-domain-2</domain>
+                            <path>/home/subhagho/temp/data/hadoop-cdc/fs/ha-cluster/test-domain-2</path>
+                        </container>
+                        <container>
+                            <domain>test</domain>
+                            <path>/home/subhagho/temp/data/hadoop-cdc/fs/ha-cluster/test</path>
+                        </container>
+                        <default>test</default>
                     </containers>
                 </fileSystem>
             </fileSystems>

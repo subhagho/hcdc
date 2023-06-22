@@ -21,7 +21,6 @@ import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.ReflectionUtils;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
-import ai.sapper.cdc.core.model.HCdcProcessingState;
 import ai.sapper.cdc.core.model.NameNodeStatus;
 import ai.sapper.cdc.core.state.HCdcStateManager;
 import ai.sapper.cdc.core.utils.ProtoUtils;
