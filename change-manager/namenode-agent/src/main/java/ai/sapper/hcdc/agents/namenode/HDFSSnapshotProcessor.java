@@ -291,7 +291,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
             txId.setType(EngineType.HDFS);
             txId.setSnapshot(true);
 
-            rState.copyBlocks(fileState);
+            rState = rState.copyBlocks(fileState);
 
             DFSFileClose closeFile = generateSnapshot(fileState, false, txId);
             MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(closeFile,

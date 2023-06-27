@@ -160,7 +160,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
             rState.setSnapshotTime(System.currentTimeMillis());
             rState.setSnapshotReady(message.mode() != MessageObject.MessageMode.Snapshot);
             rState.setState(EFileReplicationState.New);
-            rState.copyBlocks(fileState);
+            rState = rState.copyBlocks(fileState);
             rState.setStoragePath(fsf.directory().getPath());
             rState.getOffset().setLastReplicatedTxId(params.txId().getId());
             rState.setLastReplicationTime(System.currentTimeMillis());

@@ -126,7 +126,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                                 schemaEntity);
             rState.getOffset().setSnapshotTxId(fileState.getLastTnxId());
             rState.setSnapshotTime(System.currentTimeMillis());
-            rState.copyBlocks(fileState);
+            rState = rState.copyBlocks(fileState);
 
             MessageObject<String, DFSChangeDelta> m = ChangeDeltaSerDe.update(message, schemaEntity, message.mode());
             sender.send(m);
