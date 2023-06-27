@@ -16,7 +16,9 @@
 
 package ai.sapper.hcdc.agents.common.converter;
 
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.io.Writer;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.model.HDFSBlockData;
@@ -72,38 +74,40 @@ public class AvroConverter extends AvroBasedConverter {
      */
     @Override
     public Response convert(@NonNull File source,
-                            @NonNull File output,
+                            @NonNull Writer writer,
                             @NonNull DFSFileState fileState,
                             @NonNull SchemaEntity schemaEntity,
                             @NonNull AvroChangeType.EChangeType op,
-                            @NonNull HCdcTxId txId,
-                            boolean snapshot) throws IOException {
+                            @NonNull HCdcTxId txId) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
             long count = 0;
+            long size = 0;
             AvroEntitySchema schema = parseSchema(source, schemaEntity);
-            try (FileOutputStream fos = new FileOutputStream(output)) {
-                GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema.getSchema());
-                try (DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(source, reader)) {
-                    while (dataFileReader.hasNext()) {
-                        GenericRecord record = dataFileReader.next();
-                        if (record == null) break;
-                        HCdcTxId tid = new HCdcTxId(txId);
-                        tid.setRecordId(count);
-                        ChangeEvent event = convert(schema,
-                                record,
-                                fileState.getFileInfo().getHdfsPath(),
-                                op,
-                                tid,
-                                snapshot);
-                        event.writeDelimitedTo(fos);
-                        count++;
-                    }
+            FileOutputStream fos = (FileOutputStream) writer.getOutputStream();
+            GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema.getSchema());
+            try (DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(source, reader)) {
+                while (dataFileReader.hasNext()) {
+                    GenericRecord record = dataFileReader.next();
+                    if (record == null) break;
+                    HCdcTxId tid = new HCdcTxId(txId);
+                    tid.setRecordId(count);
+                    ChangeEvent event = convert(schema,
+                            record,
+                            fileState.getFileInfo().getHdfsPath(),
+                            op,
+                            tid);
+                    size += event.getSerializedSize();
+                    event.writeDelimitedTo(fos);
+                    count++;
                 }
-                fos.flush();
             }
-            return new Response(output, count);
+            writer.flush();
+            writer.commit(true);
+            DefaultLogger.info(String.format("[%s] Data size = %d", writer.inode().getPathInfo(), size));
+            return new Response(writer.inode().getPathInfo(), count);
         } catch (Exception ex) {
+            DefaultLogger.stacktrace(ex);
             throw new IOException(ex);
         }
     }

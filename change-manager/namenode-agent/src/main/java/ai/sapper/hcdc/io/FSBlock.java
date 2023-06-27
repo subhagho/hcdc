@@ -16,6 +16,7 @@
 
 package ai.sapper.hcdc.io;
 
+import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.io.FileSystem;
 import ai.sapper.cdc.core.io.Reader;
 import ai.sapper.cdc.core.io.Writer;
@@ -81,17 +82,18 @@ public class FSBlock implements Closeable {
         return String.format("%d-%s.%s", blockId, p, EXT_BLOCK_FILE);
     }
 
-    private void setup(String path,
+    private void setup(String filename,
                        long blockId,
                        boolean create) throws IOException {
-        this.path = (FileInode) fs.getInode(directory().getDomain(), path);
+        String p = PathUtils.formatPath(String.format("%s/%s", directory.getFsPath(), filename));
+        this.path = (FileInode) fs.getInode(directory().getDomain(), p);
         if (this.path == null) {
             if (!create) {
                 throw new IOException(String.format("Block File not found. [block ID=%d][path=%s]",
                         blockId,
                         path));
             }
-            this.path = fs.create(directory, path);
+            this.path = fs.create(directory, filename);
             write(new byte[0]);
             close();
         }
@@ -202,6 +204,7 @@ public class FSBlock implements Closeable {
             }
             if (writer != null) {
                 writer.flush();
+                writer.commit(true);
                 writer.close();
                 writer = null;
             }

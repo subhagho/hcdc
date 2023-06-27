@@ -49,11 +49,12 @@ public class ProtoUtils {
     }
 
     public static String toString(@NonNull DFSTransaction tx) {
-        return String.format("%s-%d-%d-%d",
+        return String.format("%s-%d-%d-%d-%s",
                 tx.getOp().name(),
                 tx.getId(),
                 tx.getSequence(),
-                tx.getRecordId());
+                tx.getRecordId(),
+                tx.getSnapshot());
     }
 
     public static Transaction build(@NonNull HCdcTxId txId) {
@@ -66,6 +67,7 @@ public class ProtoUtils {
                 .setTimestamp(System.currentTimeMillis())
                 .setClass_(txId.getClass().getCanonicalName())
                 .setSequence(sequence)
+                .setSnapshot(txId.isSnapshot())
                 .build();
     }
 

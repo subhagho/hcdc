@@ -57,6 +57,7 @@ public class DFSFileReplicaState extends OffsetState<EFileReplicationState, DFSR
 
     public DFSFileReplicaState() {
         super(EFileReplicationState.Error, EFileReplicationState.Unknown);
+        setType(getClass().getCanonicalName());
     }
 
     public void addDelta(@NonNull DFSReplicationDelta delta) {

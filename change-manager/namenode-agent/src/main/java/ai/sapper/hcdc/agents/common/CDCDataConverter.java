@@ -20,6 +20,7 @@ import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.core.connections.hadoop.HdfsConnection;
 import ai.sapper.cdc.core.io.EncryptionHandler;
 import ai.sapper.cdc.core.io.FileSystem;
+import ai.sapper.cdc.core.io.Writer;
 import ai.sapper.cdc.core.io.model.DirectoryInode;
 import ai.sapper.cdc.core.io.model.FileInode;
 import ai.sapper.cdc.core.io.model.PathInfo;
@@ -111,9 +112,8 @@ public class CDCDataConverter {
                 if (converter.canParse(fileState.getFileInfo().getHdfsPath(),
                         replicaState.getFileInfo().getFileType())) {
                     FormatConverter.Response response = convert(converter, fileState, replicaState, startTxId, currentTxId, op);
-                    PathInfo uploaded = upload(response.file(), fileState, replicaState, currentTxId);
                     ConversionResponse cr = new ConversionResponse();
-                    cr.path = uploaded;
+                    cr.path = response.path();
                     cr.recordCount = response.recordCount();
                     cr.overwrite = !converter.supportsPartial();
                     return cr;
@@ -172,28 +172,6 @@ public class CDCDataConverter {
         return null;
     }
 
-    private PathInfo upload(File source,
-                            DFSFileState fileState,
-                            DFSFileReplicaState replicaState,
-                            HCdcTxId txId) throws Exception {
-        Preconditions.checkNotNull(fs);
-
-        String uploadPath = String.format("%s/%s/%d/%d/%d",
-                replicaState.getEntity().getDomain(),
-                replicaState.getEntity().getEntity(),
-                replicaState.getFileInfo().getInodeId(),
-                txId.getId(),
-                txId.getSequence());
-        DirectoryInode dnode = fs.mkdirs(replicaState.getEntity().getDomain(), uploadPath);
-        FileInode fnode = fs.create(dnode, source.getName());
-        fnode = fs.upload(source, fnode);
-        if (fnode.getPathInfo() == null) {
-            PathInfo pi = fs.parsePathInfo(fnode.getPath());
-            fnode.setPathInfo(pi);
-        }
-        return fnode.getPathInfo();
-    }
-
     private FormatConverter.Response convert(FormatConverter converter,
                                              DFSFileState fileState,
                                              DFSFileReplicaState replicaState,
@@ -215,15 +193,23 @@ public class CDCDataConverter {
                 fname,
                 currentTxId.getId(),
                 currentTxId.getSequence()));
-        File file = fs.createTmpFile(fname);
-        return converter.convert(source,
-                file,
-                fileState,
-                replicaState.getEntity(),
-                op,
-                currentTxId,
-                !replicaState.isSnapshotReady());
-
+        String uploadPath = String.format("%s/%s/%d/%d/%d",
+                replicaState.getEntity().getDomain(),
+                replicaState.getEntity().getEntity(),
+                replicaState.getFileInfo().getInodeId(),
+                currentTxId.getId(),
+                currentTxId.getSequence());
+        DirectoryInode dnode = fs.mkdirs(replicaState.getEntity().getDomain(), uploadPath);
+        FileInode fnode = fs.create(dnode, fname);
+        try (Writer writer = fs.writer(fnode)) {
+            writer.open();
+            return converter.convert(source,
+                    writer,
+                    fileState,
+                    replicaState.getEntity(),
+                    op,
+                    currentTxId);
+        }
     }
 
     private File createSourceFile(DFSFileState fileState,

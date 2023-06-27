@@ -16,6 +16,8 @@
 
 package ai.sapper.hcdc.agents.common;
 
+import ai.sapper.cdc.core.io.Writer;
+import ai.sapper.cdc.core.io.model.PathInfo;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
@@ -74,12 +76,11 @@ public abstract class FormatConverter extends ValueParser {
     public abstract boolean canParse(@NonNull String path, EFileType fileType) throws IOException;
 
     public abstract Response convert(@NonNull File source,
-                                     @NonNull File output,
+                                     @NonNull Writer writer,
                                      @NonNull DFSFileState fileState,
                                      @NonNull SchemaEntity schemaEntity,
                                      @NonNull AvroChangeType.EChangeType op,
-                                     @NonNull HCdcTxId txId,
-                                     boolean snapshot) throws IOException;
+                                     @NonNull HCdcTxId txId) throws IOException;
 
     public abstract boolean supportsPartial();
 
@@ -97,11 +98,11 @@ public abstract class FormatConverter extends ValueParser {
     @Setter
     @Accessors(fluent = true)
     public static class Response {
-        private File file;
+        private PathInfo path;
         private long recordCount;
 
-        public Response(@NonNull File file, long recordCount) {
-            this.file = file;
+        public Response(@NonNull PathInfo path, long recordCount) {
+            this.path = path;
             this.recordCount = recordCount;
         }
     }

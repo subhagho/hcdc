@@ -18,6 +18,7 @@ package ai.sapper.hcdc.agents.common.converter;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.common.utils.PathUtils;
+import ai.sapper.cdc.core.io.Writer;
 import ai.sapper.cdc.core.model.EFileType;
 import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.model.HDFSBlockData;
@@ -68,12 +69,11 @@ public class JsonConverter extends AvroBasedConverter {
 
     @Override
     public Response convert(@NonNull File source,
-                            @NonNull File output,
+                            @NonNull Writer writer,
                             @NonNull DFSFileState fileState,
                             @NonNull SchemaEntity schemaEntity,
                             AvroChangeType.@NonNull EChangeType op,
-                            @NonNull HCdcTxId txId,
-                            boolean snapshot) throws IOException {
+                            @NonNull HCdcTxId txId) throws IOException {
         Preconditions.checkNotNull(schemaManager());
         try {
             AvroEntitySchema schema = hasSchema(fileState, schemaEntity);
@@ -85,27 +85,30 @@ public class JsonConverter extends AvroBasedConverter {
                         String.format("Error generating Avro Schema. [entity=%s]", schemaEntity.toString()));
             }
             long count = 0;
-            try (FileOutputStream fos = new FileOutputStream(output)) {
-                try (BufferedReader br = new BufferedReader(new FileReader(source))) {
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        line = line.trim();
-                        if (Strings.isNullOrEmpty(line)) continue;
-                        GenericRecord record = AvroUtils.jsonToAvroRecord(line, schema.getSchema());
-                        HCdcTxId tid = new HCdcTxId(txId);
-                        tid.setRecordId(count);
-                        ChangeEvent event = convert(schema,
-                                record,
-                                fileState.getFileInfo().getHdfsPath(),
-                                op,
-                                tid,
-                                snapshot);
-                        event.writeDelimitedTo(fos);
-                        count++;
-                    }
+            long size = 0;
+            FileOutputStream fos = (FileOutputStream) writer.getOutputStream();
+            try (BufferedReader br = new BufferedReader(new FileReader(source))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    line = line.trim();
+                    if (Strings.isNullOrEmpty(line)) continue;
+                    GenericRecord record = AvroUtils.jsonToAvroRecord(line, schema.getSchema());
+                    HCdcTxId tid = new HCdcTxId(txId);
+                    tid.setRecordId(count);
+                    ChangeEvent event = convert(schema,
+                            record,
+                            fileState.getFileInfo().getHdfsPath(),
+                            op,
+                            tid);
+                    size += event.getSerializedSize();
+                    event.writeDelimitedTo(fos);
+                    count++;
                 }
             }
-            return new Response(output, count);
+            writer.flush();
+            writer.commit(true);
+            DefaultLogger.info(String.format("[%s] Data size = %d", writer.inode().getPathInfo(), size));
+            return new Response(writer.inode().getPathInfo(), count);
         } catch (Exception ex) {
             throw new IOException(ex);
         }

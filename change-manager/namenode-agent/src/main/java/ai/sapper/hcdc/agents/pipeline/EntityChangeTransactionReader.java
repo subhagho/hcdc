@@ -155,8 +155,7 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 rState = stateManager()
                         .replicaStateHelper()
                         .create(fileState.getFileInfo(),
-                                schemaEntity,
-                                true);
+                                schemaEntity);
             rState.getOffset().setSnapshotTxId(fileState.getLastTnxId());
             rState.setSnapshotTime(System.currentTimeMillis());
             rState.setSnapshotReady(message.mode() != MessageObject.MessageMode.Snapshot);

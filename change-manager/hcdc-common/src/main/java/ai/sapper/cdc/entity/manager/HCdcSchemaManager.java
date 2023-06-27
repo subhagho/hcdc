@@ -41,6 +41,7 @@ import java.util.regex.Pattern;
 @Accessors(fluent = true)
 public class HCdcSchemaManager extends SchemaManager {
     private static class SchemaCompareResult {
+        AvroEntitySchema schema;
         private SchemaVersion version;
         private long timestamp = -1;
     }
@@ -109,7 +110,8 @@ public class HCdcSchemaManager extends SchemaManager {
                         schema.setUpdatedTime(next.timestamp);
                     return updateSchema(schema);
                 } else {
-                    return schema;
+                    Preconditions.checkNotNull(next.schema);
+                    return next.schema;
                 }
             }
         } finally {
@@ -135,6 +137,7 @@ public class HCdcSchemaManager extends SchemaManager {
             if (diff == null) {
                 result.version = current.getVersion();
                 result.timestamp = current.getUpdatedTime();
+                result.schema = current;
                 return result;
             }
             List<AvroEntitySchema> schemas = handler.findSchemas(entity);
@@ -144,12 +147,14 @@ public class HCdcSchemaManager extends SchemaManager {
                     if (diff == null) {
                         result.version = avs.getVersion();
                         result.timestamp = avs.getUpdatedTime();
+                        result.schema = avs;
                         return result;
                     } else {
                         Level maxLevel = compareSchemas(schema, avs);
                         if (maxLevel == Level.DEBUG) {
                             result.version = avs.getVersion();
                             result.timestamp = avs.getUpdatedTime();
+                            result.schema = avs;
                             return result;
                         }
                     }

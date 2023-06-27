@@ -281,7 +281,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
             }
             rState = stateManager
                     .replicaStateHelper()
-                    .create(fileState.getFileInfo(), entity, true);
+                    .create(fileState.getFileInfo(), entity);
             rState.setState(EFileReplicationState.New);
             rState.setName(hdfsPath);
             rState.setType(DFSFileReplicaState.class.getCanonicalName());

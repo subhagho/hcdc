@@ -51,8 +51,7 @@ public abstract class AvroBasedConverter extends FormatConverter {
                                @NonNull GenericRecord record,
                                @NonNull String sourcePath,
                                @NonNull AvroChangeType.EChangeType op,
-                               @NonNull HCdcTxId txId,
-                               boolean snapshot) throws Exception {
+                               @NonNull HCdcTxId txId) throws Exception {
         Transaction tnx = ProtoUtils.build(txId);
         DbChangeRecord change = buildChangeRecord(schema.getSchemaEntity(),
                 schema,
@@ -87,6 +86,10 @@ public abstract class AvroBasedConverter extends FormatConverter {
             builder.setAfter(buildRecord(schema, record));
         } else {
             builder.setAfter(buildRecord(schema, record));
+        }
+        if (schema.getVersion() == null) {
+            throw new Exception(
+                    String.format("Schema version not specified. [entity=%s]", schema.getSchemaEntity().toString()));
         }
         Version v = ProtoUtils.build(schema.getVersion());
         builder.setVersion(v);

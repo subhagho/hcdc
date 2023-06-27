@@ -90,6 +90,7 @@ public class ReplicationStateHelper {
                         throw new StateManagerError(String.format("Schema entity not found. [entity=%s.%s]",
                                 state.getSchemaDomain(), state.getSchemaEntity() ));
                     }
+                    state.setEntity(entity);
                 }
                 return state;
             }
@@ -100,8 +101,7 @@ public class ReplicationStateHelper {
     }
 
     public DFSFileReplicaState create(@NonNull DFSFileInfo file,
-                                      @NonNull SchemaEntity schemaEntity,
-                                      boolean enable) throws StateManagerError {
+                                      @NonNull SchemaEntity schemaEntity) throws StateManagerError {
         checkState();
         try {
             CuratorFramework client = connection().client();
@@ -112,6 +112,7 @@ public class ReplicationStateHelper {
                     client.create().creatingParentContainersIfNeeded().forPath(path);
                 }
                 state = new DFSFileReplicaState();
+                state.setName(String.format("[inode=%d]", file.getInodeId()));
                 state.setFileInfo(new DFSFileInfo(file));
                 state.setHdfsPath(file.getHdfsPath());
                 state.setEntity(schemaEntity);
