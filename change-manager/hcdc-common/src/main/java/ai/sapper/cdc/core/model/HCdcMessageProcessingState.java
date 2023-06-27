@@ -38,7 +38,15 @@ public class HCdcMessageProcessingState<M extends ReceiverOffset> extends Messag
     private HCdcTxId receivedTx;
 
     public HCdcMessageProcessingState() {
-        super(EHCdcProcessorState.Error, EHCdcProcessorState.Unknown);
+        super(EHCdcProcessorState.Error,
+                EHCdcProcessorState.Unknown,
+                HCdcMessageProcessingState.class.getSimpleName());
+    }
+
+    public HCdcMessageProcessingState(@NonNull String type) {
+        super(EHCdcProcessorState.Error,
+                EHCdcProcessorState.Unknown,
+                type);
     }
 
     public HCdcMessageProcessingState(@NonNull MessageProcessorState<EHCdcProcessorState, HCdcTxId, M> state) {

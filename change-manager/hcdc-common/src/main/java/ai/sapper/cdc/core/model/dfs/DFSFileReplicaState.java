@@ -56,8 +56,9 @@ public class DFSFileReplicaState extends OffsetState<EFileReplicationState, DFSR
     private List<DFSBlockReplicaState> blocks = new ArrayList<>();
 
     public DFSFileReplicaState() {
-        super(EFileReplicationState.Error, EFileReplicationState.Unknown);
-        setType(getClass().getCanonicalName());
+        super(EFileReplicationState.Error,
+                EFileReplicationState.Unknown,
+                DFSFileReplicaState.class.getSimpleName());
     }
 
     public void addDelta(@NonNull DFSReplicationDelta delta) {

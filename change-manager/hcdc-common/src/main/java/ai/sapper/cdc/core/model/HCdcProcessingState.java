@@ -37,12 +37,16 @@ public class HCdcProcessingState extends ProcessingState<EHCdcProcessorState, HC
     private SnapshotOffset snapshotOffset;
 
     public HCdcProcessingState() {
-        super(EHCdcProcessorState.Error, EHCdcProcessorState.Unknown);
+        super(EHCdcProcessorState.Error,
+                EHCdcProcessorState.Unknown,
+                HCdcProcessingState.class.getSimpleName());
         snapshotOffset = new SnapshotOffset();
     }
 
     public HCdcProcessingState(@NonNull ReceiverOffset messageOffset) {
-        super(EHCdcProcessorState.Error, EHCdcProcessorState.Unknown);
+        super(EHCdcProcessorState.Error,
+                EHCdcProcessorState.Unknown,
+                HCdcProcessingState.class.getSimpleName());
         setOffset(new HCdcTxId());
     }
 

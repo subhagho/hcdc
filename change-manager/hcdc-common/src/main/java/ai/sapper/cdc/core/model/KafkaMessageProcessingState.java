@@ -29,4 +29,9 @@ import lombok.Setter;
         property = "@class"
 )
 public class KafkaMessageProcessingState extends HCdcMessageProcessingState<KafkaOffset> {
+    public static final String OFFSET_TYPE = "kafka/processor";
+
+    public KafkaMessageProcessingState() {
+        super(OFFSET_TYPE);
+    }
 }

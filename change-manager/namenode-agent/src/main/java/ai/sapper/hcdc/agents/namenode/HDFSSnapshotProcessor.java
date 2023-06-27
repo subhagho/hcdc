@@ -293,7 +293,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
 
             rState.copyBlocks(fileState);
 
-            DFSFileClose closeFile = generateSnapshot(fileState, true, txId);
+            DFSFileClose closeFile = generateSnapshot(fileState, false, txId);
             MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(closeFile,
                     DFSFileClose.class,
                     entity,
@@ -406,7 +406,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
     }
 
     public static DFSFileClose generateSnapshot(@NonNull DFSFileState state,
-                                                boolean addBlocks,
+                                                boolean updatedBlocksOnly,
                                                 @NonNull HCdcTxId txId) throws Exception {
         DFSTransaction tx = ProtoUtils.buildTx(txId, DFSTransaction.Operation.CLOSE, true);
 
@@ -419,12 +419,18 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
                 .setTransaction(tx)
                 .setLength(state.getDataSize())
                 .setAccessedTime(state.getUpdatedTime());
-        if (addBlocks) {
-            for (DFSBlockState block : state.sortedBlocks()) {
-                DFSBlock b = generateBlockSnapshot(block);
-                builder.addBlocks(b);
+
+        for (DFSBlockState block : state.sortedBlocks()) {
+            if (updatedBlocksOnly) {
+                if (block.getLastTnxId() <= txId.getId()) {
+                    continue;
+                }
             }
+            DFSBlock b = generateBlockSnapshot(block);
+            builder.addBlocks(b);
+
         }
+
         return builder.build();
     }
 
