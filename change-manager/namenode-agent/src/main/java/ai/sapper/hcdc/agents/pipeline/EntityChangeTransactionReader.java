@@ -16,6 +16,7 @@
 
 package ai.sapper.hcdc.agents.pipeline;
 
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.InvalidTransactionError;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.WebServiceClient;
@@ -674,6 +675,9 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                 FSFile file = HCdcFsUtils.get(fileState, schemaEntity, fs);
 
                 AvroEntitySchema prevSchema = schemaManager().getSchema(rState.getEntity(), AvroEntitySchema.class);
+                if (prevSchema == null) {
+                    schemaEntity = schemaManager().setupEntity(schemaEntity.getDomain(), schemaEntity.getEntity());
+                }
                 CDCDataConverter converter = new CDCDataConverter(NameNodeEnv.get(name()).dbSource())
                         .withFileSystem(fs)
                         .withSchemaManager(schemaManager());
@@ -806,13 +810,20 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
                             .withFile(data.getFile());
                 }
                 if (message.mode() == MessageObject.MessageMode.Snapshot) {
-                    DFSFileReplicaState nState = snapshotDone(fileState, rState);
-                    if (!nState.isSnapshotReady()) {
+                    SnapshotDoneResponse nState = snapshotDone(fileState, rState);
+                    if (!nState.isDone()) {
                         throw new InvalidTransactionError(params.txId().getId(),
                                 DFSError.ErrorCode.SYNC_STOPPED,
                                 fileState.getFileInfo().getHdfsPath(),
                                 new Exception(String.format("Error marking Snapshot Done. [TXID=%d]", params.txId().getId())))
                                 .withFile(data.getFile());
+                    } else if (params.txId().getId() != nState.getTransactionId()) {
+                        DefaultLogger.warn(
+                                String.format("[%s.%s] Snapshot done: transaction ignored. [txId=%d][snapshot tx=%d]",
+                                        nState.getDomain(),
+                                        nState.getEntity(),
+                                        params.txId().getId(),
+                                        nState.getTransactionId()));
                     }
                 }
 
@@ -899,15 +910,15 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
         return ProtoBufUtils.update(file, updatedPath);
     }
 
-    private DFSFileReplicaState snapshotDone(DFSFileState fileState,
-                                             DFSFileReplicaState replicaState) throws Exception {
+    private SnapshotDoneResponse snapshotDone(DFSFileState fileState,
+                                              DFSFileReplicaState replicaState) throws Exception {
         SnapshotDoneRequest request
                 = new SnapshotDoneRequest(
                 replicaState.getEntity(),
                 replicaState.getOffset().getSnapshotTxId(),
                 fileState.getFileInfo().getHdfsPath());
         return client.post(SERVICE_SNAPSHOT_DONE,
-                DFSFileReplicaState.class,
+                SnapshotDoneResponse.class,
                 request,
                 null,
                 MediaType.APPLICATION_JSON);

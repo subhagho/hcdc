@@ -124,6 +124,7 @@ public class HCdcMessageProcessingState<M extends ReceiverOffset> extends Messag
                             snapshotOffset.getSnapshotTxId(), snapshotTxId));
         }
         snapshotOffset.setSnapshotTxId(snapshotTxId);
+        snapshotOffset.setTimeUpdated(System.currentTimeMillis());
         return this;
     }
 
@@ -135,12 +136,13 @@ public class HCdcMessageProcessingState<M extends ReceiverOffset> extends Messag
                     String.format("Invalid Snapshot transaction: [current=%d][specified=%s]",
                             snapshotOffset.getSnapshotTxId(), snapshotTxId));
         }
-        if (snapshotOffset.getSnapshotSeq() < sequence) {
+        if (snapshotOffset.getSnapshotSeq() >= sequence) {
             throw new Exception(
                     String.format("Invalid Snapshot sequence: [current=%d][specified=%s]",
                             snapshotOffset.getSnapshotSeq(), sequence));
         }
         snapshotOffset.setSnapshotSeq(sequence);
+        snapshotOffset.setTimeUpdated(System.currentTimeMillis());
         return this;
     }
 }

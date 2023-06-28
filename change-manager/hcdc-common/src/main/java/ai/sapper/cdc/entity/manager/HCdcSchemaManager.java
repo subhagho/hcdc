@@ -74,6 +74,19 @@ public class HCdcSchemaManager extends SchemaManager {
         return new SchemaEntity(domain, name);
     }
 
+    public SchemaEntity setupEntity(@NonNull String domain,
+                                    @NonNull String entity) throws Exception {
+        Domain d = getDomain(domain);
+        if (d == null) {
+            d = createDomain(domain);
+        }
+        SchemaEntity se = getEntity(domain, entity);
+        if (se == null) {
+            se = createEntity(domain, entity, SchemaEntity.class);
+        }
+        return se;
+    }
+
     @Override
     public EntitySchema createSchema(@NonNull SchemaEntity schemaEntity) throws Exception {
         AvroEntitySchema schema = getSchema(schemaEntity, AvroEntitySchema.class);

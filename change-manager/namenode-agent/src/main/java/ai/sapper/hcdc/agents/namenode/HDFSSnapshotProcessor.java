@@ -283,8 +283,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
                     .replicaStateHelper()
                     .create(fileState.getFileInfo(), entity);
             rState.setState(EFileReplicationState.New);
-            rState.setName(hdfsPath);
-            rState.setType(DFSFileReplicaState.class.getCanonicalName());
+            rState.setName(String.format("[inode=%d]", fileState.getFileInfo().getInodeId()));
 
             long seq = stateManager.nextSequence(1);
             txId.setSequence(seq);
@@ -318,9 +317,9 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
         }
     }
 
-    public DFSFileReplicaState snapshotDone(@NonNull String hdfsPath,
-                                            @NonNull SchemaEntity entity,
-                                            @NonNull HCdcTxId txId) throws SnapshotError {
+    public SnapshotDoneResponse snapshotDone(@NonNull String hdfsPath,
+                                             @NonNull SchemaEntity entity,
+                                             @NonNull HCdcTxId txId) throws SnapshotError {
         try {
             checkState();
             __lock().lock();
@@ -336,9 +335,9 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
         }
     }
 
-    private DFSFileReplicaState processDone(@NonNull String hdfsPath,
-                                            @NonNull SchemaEntity entity,
-                                            @NonNull HCdcTxId tnxId) throws Exception {
+    private SnapshotDoneResponse processDone(@NonNull String hdfsPath,
+                                             @NonNull SchemaEntity entity,
+                                             @NonNull HCdcTxId tnxId) throws Exception {
         HCdcStateManager stateManager = (HCdcStateManager) stateManager();
         DFSFileState fileState = stateManager
                 .fileStateHelper()
@@ -361,28 +360,28 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
         }
         if (rState.isSnapshotReady()) {
             DefaultLogger.warn(LOG, String.format("Duplicate Call: Snapshot Done: [path=%s]", rState.getFileInfo().getHdfsPath()));
-            return rState;
+        } else {
+            long lastTxId = tnxId.getId();
+            if (fileState.getLastTnxId() > offset.getSnapshotTxId()) {
+                DFSFileClose closeFile = generateSnapshot(fileState, true, tnxId);
+                MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(closeFile,
+                        DFSFileClose.class,
+                        entity,
+                        MessageObject.MessageMode.Backlog);
+                adminSender.send(message);
+                lastTxId = fileState.getLastTnxId();
+            }
+            rState.setSnapshotReady(true);
+            rState.setSnapshotTime(System.currentTimeMillis());
+            rState.setLastReplicationTime(System.currentTimeMillis());
+            offset.setLastReplicatedTxId(lastTxId);
+            rState.setFileState(EFileState.Finalized);
+            ProtoBufUtils.update(fileState, rState);
+            rState = stateManager
+                    .replicaStateHelper()
+                    .update(rState);
         }
-        long lastTxId = tnxId.getId();
-        if (fileState.getLastTnxId() > offset.getSnapshotTxId()) {
-            DFSFileClose closeFile = generateSnapshot(fileState, true, tnxId);
-            MessageObject<String, DFSChangeDelta> message = ChangeDeltaSerDe.create(closeFile,
-                    DFSFileClose.class,
-                    entity,
-                    MessageObject.MessageMode.Backlog);
-            adminSender.send(message);
-            lastTxId = fileState.getLastTnxId();
-        }
-        rState.setSnapshotReady(true);
-        rState.setSnapshotTime(System.currentTimeMillis());
-        rState.setLastReplicationTime(System.currentTimeMillis());
-        offset.setLastReplicatedTxId(lastTxId);
-        rState.setFileState(EFileState.Finalized);
-        ProtoBufUtils.update(fileState, rState);
-        stateManager
-                .replicaStateHelper()
-                .update(rState);
-        return rState;
+        return new SnapshotDoneResponse(rState);
     }
 
     public static DFSFileClose generateSnapshot(@NonNull DFSFileState state,

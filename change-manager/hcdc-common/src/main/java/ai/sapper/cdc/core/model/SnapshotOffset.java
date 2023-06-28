@@ -29,7 +29,7 @@ import lombok.Setter;
         property = "@class")
 public class SnapshotOffset extends Offset {
     private long snapshotTxId = -1;
-    private long snapshotSeq = -1;
+    private long snapshotSeq = 0;
 
     @Override
     public String asString() {

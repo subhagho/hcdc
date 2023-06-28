@@ -34,6 +34,13 @@ public class SnapshotDoneRequest {
     public SnapshotDoneRequest() {
     }
 
+    public SnapshotDoneRequest(@NonNull SnapshotDoneRequest request) {
+        this.domain = request.domain;
+        this.entity = request.entity;
+        this.transactionId = request.transactionId;
+        this.hdfsPath = request.hdfsPath;
+    }
+
     public SnapshotDoneRequest(@NonNull SchemaEntity entity,
                                long transactionId,
                                @NonNull String hdfsPath) {

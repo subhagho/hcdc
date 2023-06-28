@@ -52,6 +52,9 @@ public abstract class AvroBasedConverter extends FormatConverter {
                                @NonNull String sourcePath,
                                @NonNull AvroChangeType.EChangeType op,
                                @NonNull HCdcTxId txId) throws Exception {
+        if (schema.getSchemaEntity() == null) {
+            throw new Exception(String.format("Schema Entity is null. [path=%s]", schema.getUri()));
+        }
         Transaction tnx = ProtoUtils.build(txId);
         DbChangeRecord change = buildChangeRecord(schema.getSchemaEntity(),
                 schema,

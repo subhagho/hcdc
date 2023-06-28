@@ -26,6 +26,7 @@ import ai.sapper.cdc.core.filters.Filter;
 import ai.sapper.cdc.core.model.DomainFilterAddRequest;
 import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.model.SnapshotDoneRequest;
+import ai.sapper.cdc.core.model.SnapshotDoneResponse;
 import ai.sapper.cdc.core.model.dfs.DFSFileReplicaState;
 import ai.sapper.cdc.core.processing.ProcessorState;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
@@ -130,18 +131,18 @@ public class SnapshotService {
     }
 
     @RequestMapping(value = "/snapshot/done", method = RequestMethod.POST)
-    public ResponseEntity<DFSFileReplicaState> snapshotDone(@RequestBody SnapshotDoneRequest request) {
+    public ResponseEntity<SnapshotDoneResponse> snapshotDone(@RequestBody SnapshotDoneRequest request) {
         try {
             SchemaEntity entity = new SchemaEntity(request.getDomain(), request.getEntity());
             HCdcTxId tid = new HCdcTxId(request.getTransactionId());
 
-            DFSFileReplicaState rState = handler.getProcessor()
+            SnapshotDoneResponse response = handler.getProcessor()
                     .snapshotDone(request.getHdfsPath(),
                             entity,
                             tid);
-            return new ResponseEntity<>(rState, HttpStatus.OK);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Throwable t) {
-            return new ResponseEntity<>((DFSFileReplicaState) null,
+            return new ResponseEntity<>((SnapshotDoneResponse) null,
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

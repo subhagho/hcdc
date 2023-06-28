@@ -109,6 +109,7 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
             throw new InvalidMessageError(message.id(),
                     String.format("Invalid Message mode. [id=%s][mode=%s]", message.id(), message.mode().name()));
         }
+        HCdcStateManager stateManager = (HCdcStateManager) stateManager();
         HCdcMessageProcessingState<MO> pState = (HCdcMessageProcessingState<MO>) processorState;
         boolean retry = pState.isLastProcessedMessage(message.id());
         txId = processor.checkMessageSequence(message, ignoreMissing, retry);
@@ -139,6 +140,8 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
             error(message, data, ex, txId);
         } finally {
             pState.setLastMessageId(message.id());
+            if (pState.getSnapshotOffset() != null)
+                stateManager.updateSnapshotOffset(pState.getSnapshotOffset());
         }
     }
 
@@ -173,8 +176,15 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
                     pState.updateProcessedTxId(txId.getId());
                 }
                 if (snapshot) {
-                    if (pState.getSnapshotOffset().getSnapshotTxId() < txId.getId()) {
+                    SnapshotOffset offset = pState.getSnapshotOffset();
+                    if (offset == null) {
+                        offset = new SnapshotOffset();
+                        pState.setSnapshotOffset(offset);
+                    }
+                    if (offset.getSnapshotTxId() < txId.getId()) {
                         pState.updateSnapshotTxId(txId.getId());
+                    } else if (offset.getSnapshotSeq() < txId.getSequence()) {
+                        pState.updateSnapshotSequence(txId.getId(), txId.getSequence());
                     }
                 }
             }
