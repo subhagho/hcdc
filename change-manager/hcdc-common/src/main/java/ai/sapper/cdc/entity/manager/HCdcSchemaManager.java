@@ -373,7 +373,7 @@ public class HCdcSchemaManager extends SchemaManager {
     public SchemaEntity getEntityForFile(@NonNull String hdfsPath) throws Exception {
         SchemaEntity se = matches(hdfsPath);
         if (se == null) {
-            se = new SchemaEntity(DEFAULT_DOMAIN, hdfsPath);
+            se = setupEntity(DEFAULT_DOMAIN, hdfsPath);
         }
         return se;
     }
