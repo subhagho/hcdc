@@ -21,6 +21,7 @@ import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.entity.avro.AvroEntitySchema;
 import ai.sapper.cdc.entity.manager.zk.ZKSchemaDataHandler;
 import ai.sapper.cdc.entity.manager.zk.model.ZkEntitySchema;
+import ai.sapper.cdc.entity.schema.EntitySchema;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.cdc.entity.schema.SchemaVersion;
 import com.google.common.base.Preconditions;
@@ -78,17 +79,15 @@ public class HCdcZkSchemaHandler extends ZKSchemaDataHandler {
                                     .withPath(mn)
                                     .build();
                             SchemaVersion v = new SchemaVersion(mjv, mnv);
-                            byte[] data = client.getData().forPath(p);
-                            if (data != null && data.length > 0) {
-                                ZkEntitySchema zks = JSONUtils.read(data, ZkEntitySchema.class);
-                                if (!(zks.getSchema() instanceof AvroEntitySchema schema)) {
-                                    throw new Exception(String.format("Invalid Schema type: [expected=%s][type=%s]",
-                                            AvroEntitySchema.class.getCanonicalName(),
-                                            zks.getSchema().getClass().getCanonicalName()));
-                                }
+                            EntitySchema schema = fetchSchema(entity, p);
+                            if (schema instanceof AvroEntitySchema) {
                                 Preconditions.checkState(schema.getVersion().equals(v));
                                 schema.load();
-                                schemas.add(schema);
+                                schemas.add((AvroEntitySchema) schema);
+                            } else {
+                                throw new Exception(
+                                        String.format("Invalid Schema type. [type=%s][path=%s]",
+                                                (schema == null ? "NULL" : schema.getClass().getCanonicalName()), p));
                             }
                         }
                     }
