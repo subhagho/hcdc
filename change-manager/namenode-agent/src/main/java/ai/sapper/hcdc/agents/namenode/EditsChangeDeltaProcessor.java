@@ -16,19 +16,18 @@
 
 package ai.sapper.hcdc.agents.namenode;
 
+import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.ReceiverOffset;
-import ai.sapper.cdc.core.model.EHCdcProcessorState;
-import ai.sapper.cdc.core.model.HCdcMessageProcessingState;
-import ai.sapper.cdc.core.model.HCdcTxId;
-import ai.sapper.cdc.core.model.Params;
+import ai.sapper.cdc.core.model.*;
 import ai.sapper.cdc.core.model.dfs.DFSBlockState;
 import ai.sapper.cdc.core.model.dfs.DFSFileReplicaState;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import ai.sapper.cdc.core.model.dfs.DFSTransactionType;
+import ai.sapper.cdc.core.processing.EventProcessorMetrics;
 import ai.sapper.cdc.core.processing.MessageProcessorState;
 import ai.sapper.cdc.core.processing.ProcessingState;
 import ai.sapper.cdc.core.processing.ProcessorState;
@@ -66,6 +65,9 @@ public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends Change
         super(env,
                 ChangeDeltaProcessorSettings.class,
                 EProcessorMode.Committer,
+                new EditsChangeDeltaMetrics(env.name(),
+                        NameNodeEnv.Constants.DB_TYPE,
+                        env),
                 false);
         schemaManager = env.schemaManager();
         this.name = name;
@@ -88,7 +90,8 @@ public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends Change
     public void process(@NonNull MessageObject<String, DFSChangeDelta> message,
                         @NonNull Object data,
                         @NonNull HCdcMessageProcessingState<MO> pState,
-                        @NonNull Params params) throws Exception {
+                        @NonNull Params params,
+                        @NonNull HCdcTaskResponse response) throws Exception {
         HCdcTxId txId = null;
         if (params.dfsTx() != null) {
             txId = ProtoUtils.fromTx(params.dfsTx());
@@ -96,6 +99,7 @@ public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends Change
             txId = new HCdcTxId(-1);
         }
         params.txId(txId);
+
         EditsChangeTransactionProcessor processor
                 = (EditsChangeTransactionProcessor) processor();
         if (message.mode() == MessageObject.MessageMode.Backlog) {
@@ -103,6 +107,7 @@ public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends Change
         } else {
             processor.processTxMessage(message, data, params);
         }
+        response.result(txId);
     }
 
     @Override
@@ -235,5 +240,15 @@ public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends Change
     @Override
     protected void batchEnd(@NonNull MessageProcessorState<EHCdcProcessorState, HCdcTxId, MO> state) throws Exception {
 
+    }
+
+    public static class EditsChangeDeltaMetrics extends HCdcBaseMetrics {
+        public static final String PREFIX = "edits_change_delta_%s";
+
+        public EditsChangeDeltaMetrics(@NonNull String name,
+                                       @NonNull String sourceType,
+                                       @NonNull BaseEnv<?> env) {
+            super(NameNodeEnv.Constants.ENGINE_TYPE, name, sourceType, env, PREFIX);
+        }
     }
 }

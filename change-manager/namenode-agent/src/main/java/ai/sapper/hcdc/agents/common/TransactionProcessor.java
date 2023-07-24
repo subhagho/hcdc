@@ -21,13 +21,11 @@ import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.MessageSender;
-import ai.sapper.cdc.core.model.EFileState;
-import ai.sapper.cdc.core.model.EHCdcProcessorState;
-import ai.sapper.cdc.core.model.HCdcTxId;
-import ai.sapper.cdc.core.model.Params;
+import ai.sapper.cdc.core.model.*;
 import ai.sapper.cdc.core.model.dfs.DFSBlockState;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import ai.sapper.cdc.core.model.dfs.EBlockState;
+import ai.sapper.cdc.core.processing.EventProcessorMetrics;
 import ai.sapper.cdc.core.processing.ProcessingState;
 import ai.sapper.cdc.core.state.HCdcStateManager;
 import ai.sapper.cdc.core.utils.ProtoUtils;
@@ -51,19 +49,21 @@ public abstract class TransactionProcessor {
     public static final Logger LOG = LoggerFactory.getLogger(TransactionProcessor.class);
 
 
-
     private final String name;
-    private HCdcStateManager stateManager;
-    private HCdcSchemaManager schemaManager;
+    private final HCdcStateManager stateManager;
+    private final HCdcSchemaManager schemaManager;
     private MessageSender<String, DFSChangeDelta> errorSender;
     private final NameNodeEnv env;
+    private final HCdcBaseMetrics metrics;
 
     public TransactionProcessor(@NonNull String name,
-                                @NonNull NameNodeEnv env) {
+                                @NonNull NameNodeEnv env,
+                                @NonNull HCdcBaseMetrics metrics) {
         this.name = name;
         this.env = env;
         this.stateManager = env.stateManager();
         this.schemaManager = env.schemaManager();
+        this.metrics = metrics;
     }
 
     public TransactionProcessor withErrorQueue(@NonNull MessageSender<String, DFSChangeDelta> errorSender) {
@@ -184,24 +184,34 @@ public abstract class TransactionProcessor {
                                  @NonNull Object data,
                                  @NonNull Params params) throws Exception {
         if (data instanceof DFSFileAdd) {
+            metrics.metricsEventAddFile().increment();
             processAddFileTxMessage((DFSFileAdd) data, message, params);
         } else if (data instanceof DFSFileAppend) {
+            metrics.metricsEventAppendFile().increment();
             processAppendFileTxMessage((DFSFileAppend) data, message, params);
         } else if (data instanceof DFSFileDelete) {
+            metrics.metricsEventDeleteFile().increment();
             processDeleteFileTxMessage((DFSFileDelete) data, message, params);
         } else if (data instanceof DFSBlockAdd) {
+            metrics.metricsEventAddBlock().increment();
             processAddBlockTxMessage((DFSBlockAdd) data, message, params);
         } else if (data instanceof DFSBlockUpdate) {
+            metrics.metricsEventUpdateBlock().increment();
             processUpdateBlocksTxMessage((DFSBlockUpdate) data, message, params);
         } else if (data instanceof DFSBlockTruncate) {
+            metrics.metricsEventTruncateBlock().increment();
             processTruncateBlockTxMessage((DFSBlockTruncate) data, message, params);
         } else if (data instanceof DFSFileClose) {
+            metrics.metricsEventCloseFile().increment();
             processCloseFileTxMessage((DFSFileClose) data, message, params);
         } else if (data instanceof DFSFileRename) {
+            metrics.metricsEventRenameFile().increment();
             processRenameFileTxMessage((DFSFileRename) data, message, params);
         } else if (data instanceof DFSIgnoreTx) {
+            metrics.metricsEventIgnore().increment();
             processIgnoreTxMessage((DFSIgnoreTx) data, message, params);
         } else if (data instanceof DFSError) {
+            metrics.metricsEventError().increment();
             processErrorTxMessage((DFSError) data, message, params);
         } else {
             throw new InvalidMessageError(message.id(), String.format("Message Body type not supported. [type=%s]", data.getClass().getCanonicalName()));

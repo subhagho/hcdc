@@ -19,13 +19,15 @@ package ai.sapper.hcdc.agents.common;
 import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.InvalidTransactionError;
 import ai.sapper.cdc.core.NameNodeEnv;
+import ai.sapper.cdc.core.executor.ETaskState;
+import ai.sapper.cdc.core.executor.FatalError;
+import ai.sapper.cdc.core.executor.TaskResponse;
 import ai.sapper.cdc.core.messaging.*;
 import ai.sapper.cdc.core.messaging.builders.MessageSenderBuilder;
 import ai.sapper.cdc.core.model.*;
-import ai.sapper.cdc.core.processing.MessageProcessor;
-import ai.sapper.cdc.core.processing.MessageProcessorState;
-import ai.sapper.cdc.core.processing.ProcessingState;
+import ai.sapper.cdc.core.processing.*;
 import ai.sapper.cdc.core.state.HCdcStateManager;
+import ai.sapper.cdc.core.utils.Timer;
 import ai.sapper.hcdc.agents.settings.ChangeDeltaProcessorSettings;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import ai.sapper.hcdc.common.model.DFSTransaction;
@@ -41,13 +43,14 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.tree.ImmutableNode;
 
 import java.io.IOException;
+import java.util.List;
 
 import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 
 @Getter
 @Accessors(fluent = true)
 public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
-        extends MessageProcessor<String, DFSChangeDelta, EHCdcProcessorState, HCdcTxId, MO> {
+        extends BatchMessageProcessor<HCdcTxId, String, DFSChangeDelta, EHCdcProcessorState, HCdcTxId, MO> {
     public enum EProcessorMode {
         Reader, Committer
     }
@@ -66,8 +69,9 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
     public ChangeDeltaProcessor(@NonNull NameNodeEnv env,
                                 @NonNull Class<? extends ChangeDeltaProcessorSettings> settingsType,
                                 @NonNull EProcessorMode mode,
+                                @NonNull EventProcessorMetrics metrics,
                                 boolean ignoreMissing) {
-        super(env, HCdcProcessingState.class);
+        super(env, metrics, HCdcProcessingState.class);
         Preconditions.checkState(super.stateManager() instanceof HCdcStateManager);
         Preconditions.checkState(super.stateManager().processingState() instanceof HCdcMessageProcessingState);
         this.mode = mode;
@@ -102,8 +106,40 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
     }
 
     @Override
-    protected void process(@NonNull MessageObject<String, DFSChangeDelta> message,
-                           @NonNull MessageProcessorState<EHCdcProcessorState, HCdcTxId, MO> processorState) throws Exception {
+    protected void process(@NonNull List<MessageObject<String, DFSChangeDelta>> messages,
+                           @NonNull MessageProcessorState<EHCdcProcessorState, HCdcTxId, MO> processorState,
+                           @NonNull List<TaskResponse<HCdcTxId>> responses) throws Exception {
+        int ii = 0;
+        for (MessageObject<String, DFSChangeDelta> message : messages) {
+            TaskResponse<HCdcTxId> response = responses.get(ii);
+            Preconditions.checkState(response instanceof HCdcTaskResponse);
+            Preconditions.checkState(((HCdcTaskResponse) response).message().id().equals(message.id()));
+            response.state(ETaskState.RUNNING);
+            try (Timer t = new Timer(metrics.getTimer(EventProcessorMetrics.METRIC_EVENTS_TIME))) {
+                handle(message, processorState, (HCdcTaskResponse) response);
+                response.state(ETaskState.DONE);
+                metrics.getCounter(EventProcessorMetrics.METRIC_EVENTS_PROCESSED).increment();
+            } catch (Exception ex) {
+                metrics.getCounter(EventProcessorMetrics.METRIC_EVENTS_ERROR).increment();
+                response.markError(ex);
+                throw ex;
+            }
+        }
+    }
+
+    @Override
+    protected MessageTaskResponse<HCdcTxId, String, DFSChangeDelta> initResponse(@NonNull MessageProcessorState<EHCdcProcessorState, HCdcTxId, MO> processorState,
+                                                                                 @NonNull MessageObject<String, DFSChangeDelta> message) {
+        HCdcTaskResponse response = new HCdcTaskResponse();
+        response.message(message);
+        response.error(null);
+        response.state(ETaskState.INITIALIZED);
+        return response;
+    }
+
+    private void handle(@NonNull MessageObject<String, DFSChangeDelta> message,
+                        @NonNull MessageProcessorState<EHCdcProcessorState, HCdcTxId, MO> processorState,
+                        @NonNull HCdcTaskResponse response) throws Exception {
         HCdcTxId txId = null;
         if (!isValidMessage(message)) {
             throw new InvalidMessageError(message.id(),
@@ -115,6 +151,7 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
         txId = processor.checkMessageSequence(message, ignoreMissing, retry);
         Object data = ChangeDeltaSerDe.parse(message.value(),
                 Class.forName(message.value().getType()));
+        response.data(data);
         try {
             DFSTransaction tnx = processor.extractTransaction(data);
             if (tnx != null) {
@@ -130,14 +167,18 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
             Params params = new Params();
             params.dfsTx(tnx);
             params.retry(retry);
-            process(message, data, pState, params);
+            process(message, data, pState, params, response);
             NameNodeEnv.audit(name(), getClass(), (MessageOrBuilder) data);
             if (mode == EProcessorMode.Reader) {
                 commitReceived(message, txId, pState);
             } else
                 commit(message, txId, pState);
         } catch (Exception ex) {
-            error(message, data, ex, txId);
+            try {
+                error(message, data, ex, response, txId);
+            } catch (Throwable t) {
+                throw new FatalError(t);
+            }
         } finally {
             pState.setLastMessageId(message.id());
             if (pState.getSnapshotOffset() != null)
@@ -192,19 +233,38 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
         receiver.ack(message.id());
     }
 
+    @Override
+    protected void checkError(TaskResponse<HCdcTxId> taskResponse) throws Exception {
+        Preconditions.checkArgument(taskResponse instanceof HCdcTaskResponse);
+        HCdcTaskResponse response
+                = (HCdcTaskResponse) taskResponse;
+        if (response.hasError()) {
+            if (response.error() instanceof InvalidTransactionError ||
+                    response.error() instanceof InvalidTransactionError) {
+                return;
+            } else {
+                throw new FatalError(response.error());
+            }
+        }
+    }
+
     public void error(@NonNull MessageObject<String, DFSChangeDelta> message,
                       @NonNull Object data,
-                      @NonNull Exception error,
-                      HCdcTxId txId) throws Exception {
+                      @NonNull Throwable error,
+                      @NonNull HCdcTaskResponse response,
+                      HCdcTxId txId) throws Throwable {
         if (error instanceof InvalidTransactionError) {
             LOGGER.error(getClass(), ((InvalidTransactionError) error).getTxId(), error);
             processor.handleError(message, data, (InvalidTransactionError) error);
             processor.updateTransaction(txId, message);
+            response.markError(error);
         } else if (error instanceof InvalidMessageError) {
             LOG.error(
                     String.format("Invalid Message: [ID=%s] [error=%s]",
                             message.id(), error.getLocalizedMessage()));
+            response.markError(error);
         } else {
+            response.markError(error);
             throw error;
         }
         errorLogger.send(message);
@@ -214,7 +274,8 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
     public abstract void process(@NonNull MessageObject<String, DFSChangeDelta> message,
                                  @NonNull Object data,
                                  @NonNull HCdcMessageProcessingState<MO> pState,
-                                 @NonNull Params params) throws Exception;
+                                 @NonNull Params params,
+                                 @NonNull HCdcTaskResponse response) throws Exception;
 
     public abstract ChangeDeltaProcessor<MO> init(@NonNull String name,
                                                   @NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException;

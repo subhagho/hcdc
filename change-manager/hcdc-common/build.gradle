@@ -65,4 +65,13 @@ dependencies {
     implementation 'org.apache.kafka:kafka-clients:3.4.0'
     // https://mvnrepository.com/artifact/org.apache.parquet/parquet-avro
     implementation 'org.apache.parquet:parquet-avro:1.12.3'
+
+
+    implementation 'io.prometheus:simpleclient:0.16.0'
+    implementation 'io.prometheus:simpleclient_log4j2:0.16.0'
+    implementation 'io.prometheus:simpleclient_hotspot:0.16.0'
+    implementation 'io.prometheus:simpleclient_httpserver:0.16.0'
+    implementation 'io.prometheus:simpleclient_pushgateway:0.16.0'
+
+    implementation 'io.micrometer:micrometer-registry-prometheus:1.10.4'
 }

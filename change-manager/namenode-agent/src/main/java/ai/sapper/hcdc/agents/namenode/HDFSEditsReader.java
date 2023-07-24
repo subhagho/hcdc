@@ -25,6 +25,7 @@ import ai.sapper.cdc.core.model.EHCdcProcessorState;
 import ai.sapper.cdc.core.model.HCdcProcessingState;
 import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.processing.Processor;
+import ai.sapper.cdc.core.utils.MetricsBase;
 import ai.sapper.hcdc.agents.settings.HDFSEditsReaderSettings;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import lombok.Getter;
@@ -40,8 +41,9 @@ public abstract class HDFSEditsReader extends Processor<EHCdcProcessorState, HCd
     protected MessageSender<String, DFSChangeDelta> sender;
     protected HDFSEditsReaderSettings settings;
 
-    public HDFSEditsReader(@NonNull NameNodeEnv env) {
-        super(env, HCdcProcessingState.class);
+    public HDFSEditsReader(@NonNull NameNodeEnv env,
+                           @NonNull MetricsBase metrics) {
+        super(env, metrics, HCdcProcessingState.class);
     }
 
     @SuppressWarnings("unchecked")

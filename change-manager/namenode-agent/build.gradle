@@ -52,6 +52,14 @@ dependencies {
     // https://mvnrepository.com/artifact/org.apache.parquet/parquet-avro
     implementation 'org.apache.parquet:parquet-avro:1.12.3'
 
+    implementation 'io.prometheus:simpleclient:0.16.0'
+    implementation 'io.prometheus:simpleclient_log4j2:0.16.0'
+    implementation 'io.prometheus:simpleclient_hotspot:0.16.0'
+    implementation 'io.prometheus:simpleclient_httpserver:0.16.0'
+    implementation 'io.prometheus:simpleclient_pushgateway:0.16.0'
+
+    implementation 'io.micrometer:micrometer-registry-prometheus:1.10.4'
+
     // https://mvnrepository.com/artifact/com.adobe.testing/s3mock-junit5
     testImplementation 'com.adobe.testing:s3mock-junit5:2.4.13'
     // https://mvnrepository.com/artifact/com.google.code.gson/gson

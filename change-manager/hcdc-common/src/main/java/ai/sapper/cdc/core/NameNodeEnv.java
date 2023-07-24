@@ -46,6 +46,11 @@ import java.io.File;
 @Getter
 @Accessors(fluent = true)
 public class NameNodeEnv extends BaseEnv<NameNodeEnv.ENameNodeEnvState> {
+    public static class Constants {
+        public static final String ENGINE_TYPE = "Hadoop";
+        public static final String DB_TYPE = "HDFS";
+    }
+
     public final Logger LOG;
 
     public static final String NN_IGNORE_TNX = "%s.IGNORE";
