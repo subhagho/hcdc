@@ -117,21 +117,21 @@ public abstract class BatchChangeDeltaProcessor<MO extends ReceiverOffset> exten
                                     txId.getId(), tnx.getId()));
                 }
             }
-            Params params = new Params();
+            SchemaEntity entity = processor.extract(message, data);
+            TaskParams<MO> params = new TaskParams<>();
             params.dfsTx(tnx);
             params.retry(retry);
-            SchemaEntity entity = processor.extract(message, data);
+            params.response(response);
+            params.state(pState);
+            params.entity(entity);
+            params.message(message);
+            params.data(data);
+
             ChangeDeltaTask<MO> task = new ChangeDeltaTask<>(stateManager(),
                     env().schemaManager(),
                     getClass().getSimpleName(),
-                    entity,
                     this,
-                    message,
-                    data,
-                    params,
-                    pState,
-                    txId,
-                    response);
+                    params);
             executor.submit(task);
         } catch (Exception ex) {
             DefaultLogger.error(ex.getLocalizedMessage());
@@ -141,7 +141,7 @@ public abstract class BatchChangeDeltaProcessor<MO extends ReceiverOffset> exten
         }
     }
 
-    protected HCdcTxId handle(@NonNull MessageObject<String, DFSChangeDelta> message,
+    protected void handle(@NonNull MessageObject<String, DFSChangeDelta> message,
                               @NonNull Object data,
                               @NonNull Params params,
                               @NonNull HCdcMessageProcessingState<MO> pState,
@@ -157,13 +157,11 @@ public abstract class BatchChangeDeltaProcessor<MO extends ReceiverOffset> exten
                 commit(message, txId, pState);
             response.state(ETaskState.DONE);
             metrics.getCounter(EventProcessorMetrics.METRIC_EVENTS_PROCESSED).increment();
-            return txId;
         } catch (Exception ex) {
             metrics.getCounter(EventProcessorMetrics.METRIC_EVENTS_ERROR).increment();
             response.markError(ex);
             try {
                 error(message, data, ex, response, txId);
-                return txId;
             } catch (Throwable t) {
                 throw new FatalError(t);
             }
@@ -179,7 +177,6 @@ public abstract class BatchChangeDeltaProcessor<MO extends ReceiverOffset> exten
     public static class ChangeDeltaTask<MO extends ReceiverOffset> extends EntityTask<HCdcTxId> {
         private final BatchChangeDeltaProcessor<MO> processor;
         private final MessageObject<String, DFSChangeDelta> message;
-        private final HCdcTaskResponse response;
         private final Object data;
         private final Params params;
         private final HCdcMessageProcessingState<MO> pState;
@@ -188,42 +185,30 @@ public abstract class BatchChangeDeltaProcessor<MO extends ReceiverOffset> exten
         public ChangeDeltaTask(@NonNull BaseStateManager stateManager,
                                @NonNull SchemaManager schemaManager,
                                @NonNull String type,
-                               @NonNull SchemaEntity entity,
                                @NonNull BatchChangeDeltaProcessor<MO> processor,
-                               @NonNull MessageObject<String, DFSChangeDelta> message,
-                               @NonNull Object data,
-                               @NonNull Params params,
-                               @NonNull HCdcMessageProcessingState<MO> pState,
-                               @NonNull HCdcTxId txId,
-                               @NonNull HCdcTaskResponse response) {
-            super(stateManager, schemaManager, type, entity);
+                               @NonNull TaskParams<MO> params) {
+            super(stateManager, schemaManager, type, params.entity());
             this.processor = processor;
-            this.message = message;
-            this.response = response;
-            this.data = data;
+            this.message = params.message();
+            this.data = params.data();
             this.params = params;
-            this.pState = pState;
-            this.txId = txId;
+            this.pState = params.state();
+            this.txId = params.txId();
+            withResponse(params.response());
         }
 
         public ChangeDeltaTask(@NonNull BaseStateManager stateManager,
                                @NonNull SchemaManager schemaManager,
-                               @NonNull SchemaEntity entity,
                                @NonNull BatchChangeDeltaProcessor<MO> processor,
-                               @NonNull MessageObject<String, DFSChangeDelta> message,
-                               @NonNull Object data,
-                               @NonNull Params params,
-                               @NonNull HCdcMessageProcessingState<MO> pState,
-                               @NonNull HCdcTxId txId,
-                               @NonNull HCdcTaskResponse response) {
-            super(stateManager, schemaManager, entity);
+                               @NonNull TaskParams<MO> params) {
+            super(stateManager, schemaManager, params.entity());
             this.processor = processor;
-            this.message = message;
-            this.response = response;
-            this.data = data;
+            this.message = params.message();
+            this.data = params.data();
             this.params = params;
-            this.pState = pState;
-            this.txId = txId;
+            this.pState = params.state();
+            this.txId = params.txId();
+            withResponse(params.response());
         }
 
         @Override
@@ -236,14 +221,14 @@ public abstract class BatchChangeDeltaProcessor<MO extends ReceiverOffset> exten
         @Override
         public HCdcTxId execute() throws Exception {
             try {
-                processor.handle(message, data, params, pState, txId, response);
-                response.state(ETaskState.DONE);
-                response.result(txId);
+                processor.handle(message, data, params, pState, txId, (HCdcTaskResponse) response());
+                response().state(ETaskState.DONE);
+                response().result(txId);
                 return txId;
             } catch (Throwable t) {
                 DefaultLogger.error(t.getLocalizedMessage());
                 DefaultLogger.stacktrace(t);
-                response.markError(t);
+                response().markError(t);
                 throw new Exception(t);
             }
         }

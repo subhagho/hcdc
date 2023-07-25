@@ -16,6 +16,7 @@
 
 package ai.sapper.hcdc.agents.pipeline;
 
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.messaging.MessageObject;
@@ -97,16 +98,22 @@ public class EntityChangeDeltaProcessor<MO extends ReceiverOffset> extends Batch
                         @NonNull HCdcMessageProcessingState<MO> pState,
                         @NonNull Params params,
                         @NonNull HCdcTaskResponse response) throws Exception {
-        HCdcTxId txId = null;
-        if (params.dfsTx() != null) {
-            txId = ProtoUtils.fromTx(params.dfsTx());
-        } else {
-            txId = new HCdcTxId(-1);
+        try {
+            HCdcTxId txId = null;
+            if (params.dfsTx() != null) {
+                txId = ProtoUtils.fromTx(params.dfsTx());
+            } else {
+                txId = new HCdcTxId(-1);
+            }
+            params.txId(txId);
+            EntityChangeTransactionProcessor processor
+                    = (EntityChangeTransactionProcessor) processor();
+            processor.processTxMessage(message, data, params);
+        } catch (Exception ex) {
+            DefaultLogger.stacktrace(ex);
+            response.markError(ex);
+            throw ex;
         }
-        params.txId(txId);
-        EntityChangeTransactionProcessor processor
-                = (EntityChangeTransactionProcessor) processor();
-        processor.processTxMessage(message, data, params);
     }
 
     @Override

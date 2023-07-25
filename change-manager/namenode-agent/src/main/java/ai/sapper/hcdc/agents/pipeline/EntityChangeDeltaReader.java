@@ -16,6 +16,8 @@
 
 package ai.sapper.hcdc.agents.pipeline;
 
+import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.WebServiceClient;
 import ai.sapper.cdc.core.connections.ConnectionManager;
@@ -25,14 +27,12 @@ import ai.sapper.cdc.core.io.EncryptionHandler;
 import ai.sapper.cdc.core.io.FileSystem;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.ReceiverOffset;
-import ai.sapper.cdc.core.model.EHCdcProcessorState;
-import ai.sapper.cdc.core.model.HCdcMessageProcessingState;
-import ai.sapper.cdc.core.model.HCdcTxId;
-import ai.sapper.cdc.core.model.Params;
+import ai.sapper.cdc.core.model.*;
 import ai.sapper.cdc.core.processing.MessageProcessorState;
 import ai.sapper.cdc.core.processing.ProcessingState;
 import ai.sapper.cdc.core.processing.ProcessorState;
 import ai.sapper.cdc.core.utils.ProtoUtils;
+import ai.sapper.hcdc.agents.common.BatchChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.settings.EntityChangeDeltaReaderSettings;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
@@ -49,7 +49,7 @@ import java.nio.ByteBuffer;
 
 @Getter
 @Accessors(fluent = true)
-public class EntityChangeDeltaReader<MO extends ReceiverOffset> extends ChangeDeltaProcessor<MO> {
+public class EntityChangeDeltaReader<MO extends ReceiverOffset> extends BatchChangeDeltaProcessor<MO> {
     private static Logger LOG = LoggerFactory.getLogger(EntityChangeDeltaReader.class);
 
     private FileSystem fs;
@@ -62,7 +62,11 @@ public class EntityChangeDeltaReader<MO extends ReceiverOffset> extends ChangeDe
 
     public EntityChangeDeltaReader(@NonNull NameNodeEnv env,
                                    @NonNull String name) {
-        super(env, EntityChangeDeltaReaderSettings.class, EProcessorMode.Committer, true);
+        super(env,
+                EntityChangeDeltaReaderSettings.class,
+                EProcessorMode.Committer,
+                new EntityChangeReaderMetrics(env.name(), env),
+                true);
         this.name = name;
     }
 
@@ -83,7 +87,7 @@ public class EntityChangeDeltaReader<MO extends ReceiverOffset> extends ChangeDe
         try {
             super.init(name, xmlConfig, EntityChangeDeltaReaderSettings.__CONFIG_PATH);
             ConnectionManager manger = env().connectionManager();
-            EntityChangeTransactionReader processor = new EntityChangeTransactionReader(name(), env());
+            EntityChangeTransactionReader processor = new EntityChangeTransactionReader(name(), env(), (HCdcBaseMetrics) metrics);
             EntityChangeDeltaReaderSettings settings = (EntityChangeDeltaReaderSettings) receiverConfig.settings();
             connection = manger.getConnection(settings.getHdfsConnection(), HdfsConnection.class);
             if (connection == null) {
@@ -127,8 +131,9 @@ public class EntityChangeDeltaReader<MO extends ReceiverOffset> extends ChangeDe
                 encryptionHandler.init(receiverConfig.config());
                 processor.withEncryptionHandler(encryptionHandler);
             }
+            this.processor = processor;
             state.setState(ProcessorState.EProcessorState.Initialized);
-            return withProcessor(processor);
+            return this;
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
         }
@@ -158,17 +163,24 @@ public class EntityChangeDeltaReader<MO extends ReceiverOffset> extends ChangeDe
     public void process(@NonNull MessageObject<String, DFSChangeDelta> message,
                         @NonNull Object data,
                         @NonNull HCdcMessageProcessingState<MO> pState,
-                        @NonNull Params params) throws Exception {
-        HCdcTxId txId = null;
-        if (params.dfsTx() != null) {
-            txId = ProtoUtils.fromTx(params.dfsTx());
-        } else {
-            txId = new HCdcTxId(-1);
+                        @NonNull Params params,
+                        @NonNull HCdcTaskResponse response) throws Exception {
+        try {
+            HCdcTxId txId = null;
+            if (params.dfsTx() != null) {
+                txId = ProtoUtils.fromTx(params.dfsTx());
+            } else {
+                txId = new HCdcTxId(-1);
+            }
+            params.txId(txId);
+            EntityChangeTransactionReader processor
+                    = (EntityChangeTransactionReader) processor();
+            processor.processTxMessage(message, data, params);
+        } catch (Exception ex) {
+            DefaultLogger.stacktrace(ex);
+            response.markError(ex);
+            throw ex;
         }
-        params.txId(txId);
-        EntityChangeTransactionReader processor
-                = (EntityChangeTransactionReader) processor();
-        processor.processTxMessage(message, data, params);
     }
 
     @Override
@@ -179,5 +191,13 @@ public class EntityChangeDeltaReader<MO extends ReceiverOffset> extends ChangeDe
     @Override
     protected void batchEnd(@NonNull MessageProcessorState<EHCdcProcessorState, HCdcTxId, MO> messageProcessorState) throws Exception {
 
+    }
+
+
+    public static class EntityChangeReaderMetrics extends HCdcBaseMetrics {
+        public EntityChangeReaderMetrics(@NonNull String name,
+                                         @NonNull BaseEnv<?> env) {
+            super(name, env, EntityChangeDeltaReader.class.getSimpleName());
+        }
     }
 }

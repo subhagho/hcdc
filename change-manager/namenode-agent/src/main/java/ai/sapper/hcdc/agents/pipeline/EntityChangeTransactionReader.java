@@ -65,8 +65,10 @@ public class EntityChangeTransactionReader extends TransactionProcessor {
     private Archiver archiver;
     private EncryptionHandler<ByteBuffer, ByteBuffer> encryptionHandler;
 
-    public EntityChangeTransactionReader(@NonNull String name, @NonNull NameNodeEnv env) {
-        super(name, env);
+    public EntityChangeTransactionReader(@NonNull String name,
+                                         @NonNull NameNodeEnv env,
+                                         @NonNull HCdcBaseMetrics metrics) {
+        super(name, env, metrics);
     }
 
     public EntityChangeTransactionReader withHdfsConnection(@NonNull HdfsConnection connection) {
