@@ -16,6 +16,7 @@
 
 package ai.sapper.hcdc.agents.pipeline;
 
+import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.ReceiverOffset;
@@ -27,6 +28,7 @@ import ai.sapper.cdc.core.processing.ProcessorState;
 import ai.sapper.cdc.core.state.HCdcStateManager;
 import ai.sapper.cdc.core.utils.ProtoUtils;
 import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
+import ai.sapper.hcdc.agents.common.BatchChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.common.ChangeDeltaProcessor;
 import ai.sapper.hcdc.agents.settings.EntityChangeDeltaProcessorSettings;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
@@ -43,14 +45,18 @@ import java.util.List;
 
 @Getter
 @Accessors(fluent = true)
-public class EntityChangeDeltaProcessor<MO extends ReceiverOffset> extends ChangeDeltaProcessor<MO> {
+public class EntityChangeDeltaProcessor<MO extends ReceiverOffset> extends BatchChangeDeltaProcessor<MO> {
     private static Logger LOG = LoggerFactory.getLogger(EntityChangeDeltaProcessor.class.getCanonicalName());
     private final HCdcSchemaManager schemaManager;
 
 
     public EntityChangeDeltaProcessor(@NonNull NameNodeEnv env,
                                       @NonNull String name) {
-        super(env, EntityChangeDeltaProcessorSettings.class, EProcessorMode.Reader, true);
+        super(env,
+                EntityChangeDeltaProcessorSettings.class,
+                EProcessorMode.Reader,
+                new EntityChangeDeltaMetrics(env.name(), env),
+                true);
         schemaManager = env.schemaManager();
         this.name = name;
     }
@@ -89,7 +95,8 @@ public class EntityChangeDeltaProcessor<MO extends ReceiverOffset> extends Chang
     public void process(@NonNull MessageObject<String, DFSChangeDelta> message,
                         @NonNull Object data,
                         @NonNull HCdcMessageProcessingState<MO> pState,
-                        @NonNull Params params) throws Exception {
+                        @NonNull Params params,
+                        @NonNull HCdcTaskResponse response) throws Exception {
         HCdcTxId txId = null;
         if (params.dfsTx() != null) {
             txId = ProtoUtils.fromTx(params.dfsTx());
@@ -106,12 +113,12 @@ public class EntityChangeDeltaProcessor<MO extends ReceiverOffset> extends Chang
     public ChangeDeltaProcessor<MO> init(@NonNull String name,
                                          @NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
         super.init(name, xmlConfig, EntityChangeDeltaProcessorSettings.__CONFIG_PATH);
-        EntityChangeTransactionProcessor processor
-                = (EntityChangeTransactionProcessor) new EntityChangeTransactionProcessor(name(), env())
+        processor
+                = new EntityChangeTransactionProcessor(name(), env(), (HCdcBaseMetrics) metrics)
                 .withSenderQueue(sender())
                 .withErrorQueue(errorLogger);
         state.setState(ProcessorState.EProcessorState.Initialized);
-        return withProcessor(processor);
+        return this;
     }
 
     @Override
@@ -127,5 +134,12 @@ public class EntityChangeDeltaProcessor<MO extends ReceiverOffset> extends Chang
     @Override
     protected void batchEnd(@NonNull MessageProcessorState<EHCdcProcessorState, HCdcTxId, MO> messageProcessorState) throws Exception {
 
+    }
+
+    public static class EntityChangeDeltaMetrics extends HCdcBaseMetrics {
+        public EntityChangeDeltaMetrics(@NonNull String name,
+                                        @NonNull BaseEnv<?> env) {
+            super(name, env, EntityChangeDeltaProcessor.class.getSimpleName());
+        }
     }
 }

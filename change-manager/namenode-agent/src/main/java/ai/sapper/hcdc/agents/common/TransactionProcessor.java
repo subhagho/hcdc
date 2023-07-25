@@ -25,10 +25,10 @@ import ai.sapper.cdc.core.model.*;
 import ai.sapper.cdc.core.model.dfs.DFSBlockState;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import ai.sapper.cdc.core.model.dfs.EBlockState;
-import ai.sapper.cdc.core.processing.EventProcessorMetrics;
 import ai.sapper.cdc.core.processing.ProcessingState;
 import ai.sapper.cdc.core.state.HCdcStateManager;
 import ai.sapper.cdc.core.utils.ProtoUtils;
+import ai.sapper.cdc.core.utils.SchemaEntityHelper;
 import ai.sapper.cdc.entity.manager.HCdcSchemaManager;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.hcdc.common.model.*;
@@ -120,6 +120,11 @@ public abstract class TransactionProcessor {
     public abstract void handleError(@NonNull MessageObject<String, DFSChangeDelta> message,
                                      @NonNull Object data,
                                      @NonNull InvalidTransactionError te) throws Exception;
+
+    public SchemaEntity extract(@NonNull MessageObject<String, DFSChangeDelta> message,
+                                @NonNull Object data) throws Exception {
+        return SchemaEntityHelper.parse(message.value().getEntity());
+    }
 
     public void updateTransaction(@NonNull HCdcTxId txId,
                                   @NonNull MessageObject<String, DFSChangeDelta> message) throws Exception {

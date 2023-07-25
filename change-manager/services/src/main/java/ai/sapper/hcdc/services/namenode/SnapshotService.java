@@ -27,7 +27,6 @@ import ai.sapper.cdc.core.model.DomainFilterAddRequest;
 import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.model.SnapshotDoneRequest;
 import ai.sapper.cdc.core.model.SnapshotDoneResponse;
-import ai.sapper.cdc.core.model.dfs.DFSFileReplicaState;
 import ai.sapper.cdc.core.processing.ProcessorState;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.hcdc.agents.main.SnapshotRunner;

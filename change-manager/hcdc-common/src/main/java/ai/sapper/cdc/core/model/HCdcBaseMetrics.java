@@ -17,29 +17,32 @@
 package ai.sapper.cdc.core.model;
 
 import ai.sapper.cdc.core.BaseEnv;
+import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.processing.EventProcessorMetrics;
 import io.micrometer.core.instrument.Counter;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 
+import java.util.Map;
+
 @Getter
 @Accessors(fluent = true)
 public class HCdcBaseMetrics extends EventProcessorMetrics {
-    public static final String PREFIX = "%s_%s";
+    public static final String METRIC_TAG_NAME = "process_name";
 
-    public static String METRICS_BACKLOG_EVENT;
-    public static String METRICS_EVENT_FILE_ADD;
-    public static String METRICS_EVENT_FILE_CLOSE;
-    public static String METRICS_EVENT_FILE_APPEND;
-    public static String METRICS_EVENT_FILE_DELETE;
-    public static String METRICS_EVENT_FILE_RENAME;
-    public static String METRICS_EVENT_BLOCK_ADD;
-    public static String METRICS_EVENT_BLOCK_UPDATE;
-    public static String METRICS_EVENT_BLOCK_DELETE;
-    public static String METRICS_EVENT_BLOCK_TRUNCATE;
-    public static String METRICS_EVENT_IGNORE;
-    public static String METRICS_EVENT_ERROR;
+    public static final String METRICS_BACKLOG_EVENT = "hdfs_backlog";
+    public static final String METRICS_EVENT_FILE_ADD = "hdfs_file_add";
+    public static final String METRICS_EVENT_FILE_CLOSE = "hdfs_file_close";
+    public static final String METRICS_EVENT_FILE_APPEND = "hdfs_file_append";
+    public static final String METRICS_EVENT_FILE_DELETE = "hdfs_file_delete";
+    public static final String METRICS_EVENT_FILE_RENAME = "hdfs_file_rename";
+    public static final String METRICS_EVENT_BLOCK_ADD = "hdfs_block_add";
+    public static final String METRICS_EVENT_BLOCK_UPDATE = "hdfs_block_update";
+    public static final String METRICS_EVENT_BLOCK_DELETE = "hdfs_block_delete";
+    public static final String METRICS_EVENT_BLOCK_TRUNCATE = "hdfs_block_truncate";
+    public static final String METRICS_EVENT_IGNORE = "hdfs_ignore";
+    public static final String METRICS_EVENT_ERROR = "hdfs_error";
 
     private final Counter metricsBacklog;
     private final Counter metricsEventAddFile;
@@ -54,36 +57,25 @@ public class HCdcBaseMetrics extends EventProcessorMetrics {
     private final Counter metricsEventIgnore;
     private final Counter metricsEventError;
 
-    public HCdcBaseMetrics(@NonNull String engine,
-                           @NonNull String name,
-                           @NonNull String sourceType,
+    public HCdcBaseMetrics(@NonNull String name,
                            @NonNull BaseEnv<?> env,
-                           @NonNull String prefix) {
-        super(engine, name, sourceType, env);
-        METRICS_BACKLOG_EVENT = String.format(PREFIX, prefix, "backlog");
-        METRICS_EVENT_FILE_ADD = String.format(PREFIX, prefix, "file_add");
-        METRICS_EVENT_FILE_CLOSE = String.format(PREFIX, prefix, "file_close");
-        METRICS_EVENT_FILE_APPEND = String.format(PREFIX, prefix, "file_append");
-        METRICS_EVENT_FILE_DELETE = String.format(PREFIX, prefix, "file_delete");
-        METRICS_EVENT_FILE_RENAME = String.format(PREFIX, prefix, "file_rename");
-        METRICS_EVENT_BLOCK_ADD = String.format(PREFIX, prefix, "block_add");
-        METRICS_EVENT_BLOCK_UPDATE = String.format(PREFIX, prefix, "block_update");
-        METRICS_EVENT_BLOCK_DELETE = String.format(PREFIX, prefix, "block_delete");
-        METRICS_EVENT_BLOCK_TRUNCATE = String.format(PREFIX, prefix, "block_truncate");
-        METRICS_EVENT_IGNORE = String.format(PREFIX, prefix, "ignore");
-        METRICS_EVENT_ERROR = String.format(PREFIX, prefix, "error");
+                           @NonNull String process) {
+        super(NameNodeEnv.Constants.ENGINE_TYPE,
+                name,
+                NameNodeEnv.Constants.DB_TYPE,
+                env);
 
-        metricsBacklog = addCounter(METRICS_BACKLOG_EVENT, null);
-        metricsEventAddFile = addCounter(METRICS_EVENT_FILE_ADD, null);
-        metricsEventCloseFile = addCounter(METRICS_EVENT_FILE_CLOSE, null);
-        metricsEventAppendFile = addCounter(METRICS_EVENT_FILE_APPEND, null);
-        metricsEventDeleteFile = addCounter(METRICS_EVENT_FILE_DELETE, null);
-        metricsEventRenameFile = addCounter(METRICS_EVENT_FILE_RENAME, null);
-        metricsEventAddBlock = addCounter(METRICS_EVENT_BLOCK_ADD, null);
-        metricsEventUpdateBlock = addCounter(METRICS_EVENT_BLOCK_UPDATE, null);
-        metricsEventDeleteBlock = addCounter(METRICS_EVENT_BLOCK_DELETE, null);
-        metricsEventTruncateBlock = addCounter(METRICS_EVENT_BLOCK_TRUNCATE, null);
-        metricsEventIgnore = addCounter(METRICS_EVENT_IGNORE, null);
-        metricsEventError = addCounter(METRICS_EVENT_ERROR, null);
+        metricsBacklog = addCounter(METRICS_BACKLOG_EVENT, Map.of(METRIC_TAG_NAME, process));
+        metricsEventAddFile = addCounter(METRICS_EVENT_FILE_ADD, Map.of(METRIC_TAG_NAME, process));
+        metricsEventCloseFile = addCounter(METRICS_EVENT_FILE_CLOSE, Map.of(METRIC_TAG_NAME, process));
+        metricsEventAppendFile = addCounter(METRICS_EVENT_FILE_APPEND, Map.of(METRIC_TAG_NAME, process));
+        metricsEventDeleteFile = addCounter(METRICS_EVENT_FILE_DELETE, Map.of(METRIC_TAG_NAME, process));
+        metricsEventRenameFile = addCounter(METRICS_EVENT_FILE_RENAME, Map.of(METRIC_TAG_NAME, process));
+        metricsEventAddBlock = addCounter(METRICS_EVENT_BLOCK_ADD, Map.of(METRIC_TAG_NAME, process));
+        metricsEventUpdateBlock = addCounter(METRICS_EVENT_BLOCK_UPDATE, Map.of(METRIC_TAG_NAME, process));
+        metricsEventDeleteBlock = addCounter(METRICS_EVENT_BLOCK_DELETE, Map.of(METRIC_TAG_NAME, process));
+        metricsEventTruncateBlock = addCounter(METRICS_EVENT_BLOCK_TRUNCATE, Map.of(METRIC_TAG_NAME, process));
+        metricsEventIgnore = addCounter(METRICS_EVENT_IGNORE, Map.of(METRIC_TAG_NAME, process));
+        metricsEventError = addCounter(METRICS_EVENT_ERROR, Map.of(METRIC_TAG_NAME, process));
     }
 }

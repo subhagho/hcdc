@@ -27,7 +27,6 @@ import ai.sapper.cdc.core.model.dfs.DFSBlockState;
 import ai.sapper.cdc.core.model.dfs.DFSFileReplicaState;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
 import ai.sapper.cdc.core.model.dfs.DFSTransactionType;
-import ai.sapper.cdc.core.processing.EventProcessorMetrics;
 import ai.sapper.cdc.core.processing.MessageProcessorState;
 import ai.sapper.cdc.core.processing.ProcessingState;
 import ai.sapper.cdc.core.processing.ProcessorState;
@@ -66,7 +65,6 @@ public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends Change
                 ChangeDeltaProcessorSettings.class,
                 EProcessorMode.Committer,
                 new EditsChangeDeltaMetrics(env.name(),
-                        NameNodeEnv.Constants.DB_TYPE,
                         env),
                 false);
         schemaManager = env.schemaManager();
@@ -114,12 +112,14 @@ public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends Change
     public ChangeDeltaProcessor<MO> init(@NonNull String name,
                                          @NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
         super.init(name, xmlConfig, __CONFIG_PATH);
-        EditsChangeTransactionProcessor processor
-                = (EditsChangeTransactionProcessor) new EditsChangeTransactionProcessor(name(), env())
+        processor
+                = new EditsChangeTransactionProcessor(name(),
+                env(),
+                (HCdcBaseMetrics) metrics)
                 .withSenderQueue(sender())
                 .withErrorQueue(errorLogger);
         state.setState(ProcessorState.EProcessorState.Initialized);
-        return withProcessor(processor);
+        return this;
     }
 
 
@@ -243,12 +243,10 @@ public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends Change
     }
 
     public static class EditsChangeDeltaMetrics extends HCdcBaseMetrics {
-        public static final String PREFIX = "edits_change_delta_%s";
 
         public EditsChangeDeltaMetrics(@NonNull String name,
-                                       @NonNull String sourceType,
                                        @NonNull BaseEnv<?> env) {
-            super(NameNodeEnv.Constants.ENGINE_TYPE, name, sourceType, env, PREFIX);
+            super(name, env, EditsChangeDeltaProcessor.class.getSimpleName());
         }
     }
 }

@@ -60,16 +60,18 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
     private MessageSender<String, DFSChangeDelta> sender;
     private long receiveBatchTimeout = 1000;
     private final NameNodeEnv env;
-    private TransactionProcessor processor;
-    private final EProcessorMode mode;
-    private final boolean ignoreMissing;
+    protected TransactionProcessor processor;
+    protected final EProcessorMode mode;
+    protected final boolean ignoreMissing;
     private final Class<? extends ChangeDeltaProcessorSettings> settingsType;
     protected String name;
+    protected ChangeDeltaProcessorSettings settings;
+
 
     public ChangeDeltaProcessor(@NonNull NameNodeEnv env,
                                 @NonNull Class<? extends ChangeDeltaProcessorSettings> settingsType,
                                 @NonNull EProcessorMode mode,
-                                @NonNull EventProcessorMetrics metrics,
+                                @NonNull HCdcBaseMetrics metrics,
                                 boolean ignoreMissing) {
         super(env, metrics, HCdcProcessingState.class);
         Preconditions.checkState(super.stateManager() instanceof HCdcStateManager);
@@ -80,11 +82,6 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
         this.env = env;
     }
 
-    public ChangeDeltaProcessor<MO> withProcessor(@NonNull TransactionProcessor processor) {
-        this.processor = processor;
-        return this;
-    }
-
     @Override
     public ChangeDeltaProcessor<MO> init(@NonNull String name,
                                          @NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
@@ -93,7 +90,9 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
             path = ChangeDeltaProcessorSettings.__CONFIG_PATH;
         }
         receiverConfig = new ChangeDeltaProcessorConfig(xmlConfig, path, settingsType);
-        return (ChangeDeltaProcessor<MO>) super.init(name, xmlConfig, path);
+        super.init(name, xmlConfig, path);
+        settings = (ChangeDeltaProcessorSettings) receiverConfig.settings();
+        return this;
     }
 
     @Override

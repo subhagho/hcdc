@@ -23,10 +23,7 @@ import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
 import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.MessageSender;
-import ai.sapper.cdc.core.model.EFileState;
-import ai.sapper.cdc.core.model.EFileType;
-import ai.sapper.cdc.core.model.HCdcTxId;
-import ai.sapper.cdc.core.model.Params;
+import ai.sapper.cdc.core.model.*;
 import ai.sapper.cdc.core.model.dfs.*;
 import ai.sapper.cdc.core.utils.ProtoUtils;
 import ai.sapper.cdc.core.utils.SchemaEntityHelper;
@@ -44,8 +41,10 @@ import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 public class EditsChangeTransactionProcessor extends TransactionProcessor {
     private MessageSender<String, DFSChangeDelta> sender;
 
-    public EditsChangeTransactionProcessor(@NonNull String name, @NonNull NameNodeEnv env) {
-        super(name, env);
+    public EditsChangeTransactionProcessor(@NonNull String name,
+                                           @NonNull NameNodeEnv env,
+                                           @NonNull HCdcBaseMetrics metrics) {
+        super(name, env, metrics);
     }
 
     public TransactionProcessor withSenderQueue(@NonNull MessageSender<String, DFSChangeDelta> sender) {
@@ -133,7 +132,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
 
             rState = stateManager().replicaStateHelper().update(rState);
         } else {
-            LOGGER.debug(getClass(),  params.txId().getId(),
+            LOGGER.debug(getClass(), params.txId().getId(),
                     String.format("No match found. [path=%s]", fileState.getFileInfo().getHdfsPath()));
             sendIgnoreTx(message, data);
         }
@@ -177,7 +176,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                         message.mode());
                 sender.send(message);
             } else if (fileState.hasError()) {
-                throw new InvalidTransactionError( params.txId().getId(),
+                throw new InvalidTransactionError(params.txId().getId(),
                         DFSError.ErrorCode.SYNC_STOPPED,
                         fileState.getFileInfo().getHdfsPath(),
                         new Exception(String.format("FileSystem sync error. [path=%s]",
@@ -325,23 +324,23 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                     DefaultLogger.warn(LOG, String.format("Temp file not registered. [path=%s]", path));
                     return;
                 }
-                throw new InvalidTransactionError( params.txId().getId(),
+                throw new InvalidTransactionError(params.txId().getId(),
                         DFSError.ErrorCode.SYNC_STOPPED,
                         path,
                         new Exception(String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                                 path)))
                         .withFile(data.getFile());
             }
-            checkDirectoryDelete(data, message,  params.txId());
+            checkDirectoryDelete(data, message, params.txId());
             return;
         }
         if (fileState.checkDeleted()) {
-            LOGGER.warn(getClass(),  params.txId().getId(),
+            LOGGER.warn(getClass(), params.txId().getId(),
                     String.format("File already deleted. [path=%s]", fileState.getFileInfo().getHdfsPath()));
             return;
         }
-        if (fileState.getLastTnxId() >=  params.txId().getId()) {
-            LOGGER.warn(getClass(),  params.txId().getId(),
+        if (fileState.getLastTnxId() >= params.txId().getId()) {
+            LOGGER.warn(getClass(), params.txId().getId(),
                     String.format("Duplicate transaction message: [message ID=%s][mode=%s]",
                             message.id(), message.mode().name()));
             return;
@@ -376,7 +375,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
 
                 stateManager().replicaStateHelper().delete(schemaEntity, rState.getFileInfo().getInodeId());
             } else if (fileState.hasError()) {
-                throw new InvalidTransactionError( params.txId().getId(),
+                throw new InvalidTransactionError(params.txId().getId(),
                         DFSError.ErrorCode.SYNC_STOPPED,
                         fileState.getFileInfo().getHdfsPath(),
                         new Exception(String.format("FileSystem sync error. [path=%s]",
@@ -457,7 +456,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
 
                 rState = stateManager().replicaStateHelper().update(rState);
             } else if (fileState.hasError()) {
-                throw new InvalidTransactionError( params.txId().getId(),
+                throw new InvalidTransactionError(params.txId().getId(),
                         DFSError.ErrorCode.SYNC_STOPPED,
                         fileState.getFileInfo().getHdfsPath(),
                         new Exception(String.format("File State is in error. [path=%s]",
@@ -485,7 +484,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
         }
         List<DFSBlock> blocks = data.getBlocksList();
         if (blocks.isEmpty()) {
-            throw new InvalidTransactionError( params.txId().getId(),
+            throw new InvalidTransactionError(params.txId().getId(),
                     DFSError.ErrorCode.SYNC_STOPPED,
                     fileState.getFileInfo().getHdfsPath(),
                     new Exception(String.format("File State out of sync, no block to update. [path=%s]",
@@ -495,14 +494,14 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
         for (DFSBlock block : blocks) {
             DFSBlockState bs = fileState.get(block.getBlockId());
             if (bs == null) {
-                throw new InvalidTransactionError( params.txId().getId(),
+                throw new InvalidTransactionError(params.txId().getId(),
                         DFSError.ErrorCode.SYNC_STOPPED,
                         fileState.getFileInfo().getHdfsPath(),
                         new Exception(String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
                                 fileState.getFileInfo().getHdfsPath(), block.getBlockId())))
                         .withFile(data.getFile());
             } else if (bs.getDataSize() != block.getSize()) {
-                throw new InvalidTransactionError( params.txId().getId(),
+                throw new InvalidTransactionError(params.txId().getId(),
                         DFSError.ErrorCode.SYNC_STOPPED,
                         fileState.getFileInfo().getHdfsPath(),
                         new Exception(String.format("File State out of sync, block size mismatch. [path=%s][blockID=%d]",
@@ -547,7 +546,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
 
                 rState = stateManager().replicaStateHelper().update(rState);
             } else if (fileState.hasError()) {
-                throw new InvalidTransactionError( params.txId().getId(),
+                throw new InvalidTransactionError(params.txId().getId(),
                         DFSError.ErrorCode.SYNC_STOPPED,
                         fileState.getFileInfo().getHdfsPath(),
                         new Exception(String.format("FileSystem sync error. [path=%s]",
@@ -597,7 +596,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
             for (DFSBlock block : blocks) {
                 DFSBlockState bs = fileState.get(block.getBlockId());
                 if (bs == null) {
-                    throw new InvalidTransactionError( params.txId().getId(),
+                    throw new InvalidTransactionError(params.txId().getId(),
                             DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getFileInfo().getHdfsPath(),
                             new Exception(String.format("File State out of sync, block not found. [path=%s][blockID=%d]",
@@ -615,14 +614,14 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                                     EBlockState.Finalized,
                                     params.txId().getId());
                 } else if (bs.getDataSize() != block.getSize()) {
-                    throw new InvalidTransactionError( params.txId().getId(),
+                    throw new InvalidTransactionError(params.txId().getId(),
                             DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getFileInfo().getHdfsPath(),
                             new Exception(String.format("File State out of sync, block size mismatch. [path=%s][blockID=%d]",
                                     fileState.getFileInfo().getHdfsPath(), block.getBlockId())))
                             .withFile(data.getFile());
                 } else {
-                    throw new InvalidTransactionError( params.txId().getId(),
+                    throw new InvalidTransactionError(params.txId().getId(),
                             DFSError.ErrorCode.SYNC_STOPPED,
                             fileState.getFileInfo().getHdfsPath(),
                             new Exception(String.format("File State out of sync, block state mismatch. [path=%s][blockID=%d]",
@@ -660,9 +659,9 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
                     DFSBlock.Builder bb = block.toBuilder();
                     DFSBlockState bs = fileState.get(block.getBlockId());
 
-                    BlockTransactionDelta bd = bs.delta( params.txId().getId());
+                    BlockTransactionDelta bd = bs.delta(params.txId().getId());
                     if (bd == null) {
-                        throw new InvalidTransactionError( params.txId().getId(),
+                        throw new InvalidTransactionError(params.txId().getId(),
                                 DFSError.ErrorCode.SYNC_STOPPED,
                                 fileState.getFileInfo().getHdfsPath(),
                                 new Exception(String.format("Block State out of sync, missing transaction delta. [path=%s][blockID=%d]",
@@ -683,7 +682,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
 
                 rState = stateManager().replicaStateHelper().update(rState);
             } else if (fileState.hasError()) {
-                throw new InvalidTransactionError( params.txId().getId(),
+                throw new InvalidTransactionError(params.txId().getId(),
                         DFSError.ErrorCode.SYNC_STOPPED,
                         fileState.getFileInfo().getHdfsPath(),
                         new Exception(String.format("FileSystem sync error. [path=%s]", fileState.getFileInfo().getHdfsPath())))
@@ -704,18 +703,18 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
             if (!stateManager()
                     .fileStateHelper()
                     .checkIsDirectoryPath(path) && !params.retry()) {
-                throw new InvalidTransactionError( params.txId().getId(),
+                throw new InvalidTransactionError(params.txId().getId(),
                         DFSError.ErrorCode.SYNC_STOPPED,
                         path,
                         new Exception(String.format("NameNode Replica out of sync, missing file state. [path=%s]",
                                 path)))
                         .withFile(data.getSrcFile());
             }
-            checkDirectoryRename(data, message,  params.txId());
+            checkDirectoryRename(data, message, params.txId());
             return;
         }
         if (!fileState.canProcess()) {
-            throw new InvalidTransactionError( params.txId().getId(),
+            throw new InvalidTransactionError(params.txId().getId(),
                     DFSError.ErrorCode.SYNC_STOPPED,
                     path,
                     new Exception(String.format("NameNode Replica: File state is invalid. [path=%s][state=%s]",
@@ -725,7 +724,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
         SchemaEntity schemaEntity = SchemaEntityHelper.parse(message.value().getEntity());
 
         // Add new file section
-        DFSTransaction tx = ProtoUtils.buildTx( params.txId(), DFSTransaction.Operation.CLOSE, false);
+        DFSTransaction tx = ProtoUtils.buildTx(params.txId(), DFSTransaction.Operation.CLOSE, false);
         DFSFile fa = DFSFile.newBuilder()
                 .setEntity(data.getDestFile().getEntity())
                 .setInodeId(fileState.getFileInfo().getInodeId())
@@ -764,7 +763,7 @@ public class EditsChangeTransactionProcessor extends TransactionProcessor {
         processAddFileTxMessage(ams, am, params);
 
         // Close new file section
-        DFSFileClose cms = HDFSSnapshotProcessor.generateSnapshot(fileState, fa,  params.txId());
+        DFSFileClose cms = HDFSSnapshotProcessor.generateSnapshot(fileState, fa, params.txId());
         MessageObject<String, DFSChangeDelta> cm = ChangeDeltaSerDe.create(cms,
                         DFSFileClose.class,
                         tEntity,

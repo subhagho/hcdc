@@ -20,7 +20,6 @@ import ai.sapper.cdc.common.utils.JSONUtils;
 import ai.sapper.cdc.common.utils.PathUtils;
 import ai.sapper.cdc.entity.avro.AvroEntitySchema;
 import ai.sapper.cdc.entity.manager.zk.ZKSchemaDataHandler;
-import ai.sapper.cdc.entity.manager.zk.model.ZkEntitySchema;
 import ai.sapper.cdc.entity.schema.EntitySchema;
 import ai.sapper.cdc.entity.schema.SchemaEntity;
 import ai.sapper.cdc.entity.schema.SchemaVersion;

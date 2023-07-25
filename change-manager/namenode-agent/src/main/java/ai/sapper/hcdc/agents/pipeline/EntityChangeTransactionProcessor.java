@@ -22,6 +22,7 @@ import ai.sapper.cdc.core.messaging.InvalidMessageError;
 import ai.sapper.cdc.core.messaging.MessageObject;
 import ai.sapper.cdc.core.messaging.MessageSender;
 import ai.sapper.cdc.core.model.EFileState;
+import ai.sapper.cdc.core.model.HCdcBaseMetrics;
 import ai.sapper.cdc.core.model.Params;
 import ai.sapper.cdc.core.model.dfs.DFSBlockState;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
@@ -39,8 +40,10 @@ import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 public class EntityChangeTransactionProcessor extends TransactionProcessor {
     private MessageSender<String, DFSChangeDelta> sender;
 
-    public EntityChangeTransactionProcessor(@NonNull String name, @NonNull NameNodeEnv env) {
-        super(name, env);
+    public EntityChangeTransactionProcessor(@NonNull String name,
+                                            @NonNull NameNodeEnv env,
+                                            @NonNull HCdcBaseMetrics metrics) {
+        super(name, env, metrics);
     }
 
     public TransactionProcessor withSenderQueue(@NonNull MessageSender<String, DFSChangeDelta> sender) {
