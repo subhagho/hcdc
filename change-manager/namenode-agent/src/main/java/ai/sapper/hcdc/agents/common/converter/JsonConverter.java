@@ -86,7 +86,6 @@ public class JsonConverter extends AvroBasedConverter {
             }
             long count = 0;
             long size = 0;
-            FileOutputStream fos = (FileOutputStream) writer.getOutputStream();
             try (BufferedReader br = new BufferedReader(new FileReader(source))) {
                 String line;
                 while ((line = br.readLine()) != null) {
@@ -101,7 +100,7 @@ public class JsonConverter extends AvroBasedConverter {
                             op,
                             tid);
                     size += event.getSerializedSize();
-                    event.writeDelimitedTo(fos);
+                    event.writeDelimitedTo(writer);
                     count++;
                 }
             }

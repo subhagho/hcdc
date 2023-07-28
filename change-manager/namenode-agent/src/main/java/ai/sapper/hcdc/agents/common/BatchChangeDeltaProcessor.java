@@ -142,11 +142,11 @@ public abstract class BatchChangeDeltaProcessor<MO extends ReceiverOffset> exten
     }
 
     protected void handle(@NonNull MessageObject<String, DFSChangeDelta> message,
-                              @NonNull Object data,
-                              @NonNull Params params,
-                              @NonNull HCdcMessageProcessingState<MO> pState,
-                              @NonNull HCdcTxId txId,
-                              @NonNull HCdcTaskResponse response) throws Exception {
+                          @NonNull Object data,
+                          @NonNull Params params,
+                          @NonNull HCdcMessageProcessingState<MO> pState,
+                          @NonNull HCdcTxId txId,
+                          @NonNull HCdcTaskResponse response) throws Exception {
         HCdcStateManager stateManager = (HCdcStateManager) stateManager();
         try {
             process(message, data, pState, params, response);
@@ -221,6 +221,7 @@ public abstract class BatchChangeDeltaProcessor<MO extends ReceiverOffset> exten
         @Override
         public HCdcTxId execute() throws Exception {
             try {
+                DefaultLogger.debug(String.format("Executing task: [id=%s][entity=%s]", id(), entity().toString()));
                 processor.handle(message, data, params, pState, txId, (HCdcTaskResponse) response());
                 response().state(ETaskState.DONE);
                 response().result(txId);

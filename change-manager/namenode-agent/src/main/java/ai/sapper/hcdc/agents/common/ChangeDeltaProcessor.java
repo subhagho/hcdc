@@ -98,7 +98,7 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
     @Override
     protected void postInit(@NonNull MessagingProcessorSettings settings) throws Exception {
         sender = ((ChangeDeltaProcessorConfig) receiverConfig).readSender(env);
-        receiveBatchTimeout = settings.getReceiveBatchTimeout();
+        receiveBatchTimeout = settings.getReceiveBatchTimeout().normalized();
         if (processingState().getOffset() == null) {
             processingState().setOffset(new HCdcTxId(-1));
         }

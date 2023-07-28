@@ -95,7 +95,6 @@ public class ParquetConverter extends AvroBasedConverter {
             try {
                 AvroEntitySchema schema = parseSchema(source, schemaEntity);
                 long size = 0;
-                FileOutputStream fos = (FileOutputStream) writer.getOutputStream();
                 while (true) {
                     GenericRecord record = reader.read();
                     if (record == null) break;
@@ -107,7 +106,7 @@ public class ParquetConverter extends AvroBasedConverter {
                             op,
                             tid);
                     size += event.getSerializedSize();
-                    event.writeDelimitedTo(fos);
+                    event.writeDelimitedTo(writer);
                     count++;
                 }
                 writer.flush();

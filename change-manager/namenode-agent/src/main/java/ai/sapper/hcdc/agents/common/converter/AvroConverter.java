@@ -67,11 +67,6 @@ public class AvroConverter extends AvroBasedConverter {
         return (!Strings.isNullOrEmpty(ext) && ext.compareToIgnoreCase(EXT) == 0);
     }
 
-    /**
-     * @param source
-     * @param output
-     * @throws IOException
-     */
     @Override
     public Response convert(@NonNull File source,
                             @NonNull Writer writer,
@@ -84,7 +79,6 @@ public class AvroConverter extends AvroBasedConverter {
             long count = 0;
             long size = 0;
             AvroEntitySchema schema = parseSchema(source, schemaEntity);
-            FileOutputStream fos = (FileOutputStream) writer.getOutputStream();
             GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema.getSchema());
             try (DataFileReader<GenericRecord> dataFileReader = new DataFileReader<>(source, reader)) {
                 while (dataFileReader.hasNext()) {
@@ -98,7 +92,7 @@ public class AvroConverter extends AvroBasedConverter {
                             op,
                             tid);
                     size += event.getSerializedSize();
-                    event.writeDelimitedTo(fos);
+                    event.writeDelimitedTo(writer);
                     count++;
                 }
             }
