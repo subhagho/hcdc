@@ -97,9 +97,9 @@ public class EntityChangeDeltaReader<MO extends ReceiverOffset> extends BatchCha
             if (!connection.isConnected()) connection.connect();
 
             if (fileSystemMocker == null) {
-                fs = env().fileSystemManager().get(settings.getFs());
+                fs = env().fileSystemManager().get(settings.getFileSystem());
                 if (fs == null) {
-                    throw new Exception(String.format("FileSystem not found. [name=%s]", settings.getFs()));
+                    throw new Exception(String.format("FileSystem not found. [name=%s]", settings.getFileSystem()));
                 }
             } else {
                 fs = fileSystemMocker.create(receiverConfig.config(), env());

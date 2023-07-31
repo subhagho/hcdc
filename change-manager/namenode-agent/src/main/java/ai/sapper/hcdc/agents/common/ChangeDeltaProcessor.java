@@ -202,7 +202,7 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
                 }
             }
         }
-        receiver.ack(message.id());
+        receiver.ack(message.id(), true);
     }
 
     public void commit(@NonNull MessageObject<String, DFSChangeDelta> message,
@@ -229,7 +229,7 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
                 }
             }
         }
-        receiver.ack(message.id());
+        receiver.ack(message.id(), true);
     }
 
     @Override
@@ -267,7 +267,7 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
             throw error;
         }
         errorLogger.send(message);
-        receiver.ack(message.id());
+        receiver.ack(message.id(), true);
     }
 
     public abstract void process(@NonNull MessageObject<String, DFSChangeDelta> message,
