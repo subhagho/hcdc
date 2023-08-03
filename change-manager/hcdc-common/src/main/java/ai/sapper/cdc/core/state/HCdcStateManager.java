@@ -87,6 +87,8 @@ public class HCdcStateManager extends ProcessStateManager<EHCdcProcessorState, H
             update(processingState());
             return this;
         } catch (Exception ex) {
+            if (processingState() != null)
+                processingState().error(ex);
             throw new StateManagerError(ex);
         }
     }
