@@ -16,6 +16,7 @@
 
 package ai.sapper.hcdc.agents.common;
 
+import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.InvalidTransactionError;
 import ai.sapper.cdc.core.NameNodeEnv;
@@ -269,6 +270,23 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset<?>>
         receiver.ack(message.id(), true);
     }
 
+    @Override
+    protected void initState(@NonNull ProcessingState<EHCdcProcessorState, HCdcTxId> processingState) throws Exception {
+        HCdcStateManager stateManager = (HCdcStateManager) stateManager();
+        if (processingState.getOffset() == null) {
+            SnapshotOffset offset = stateManager.getSnapshotOffset();
+            if (offset == null) {
+                processingState.setOffset(new HCdcTxId(-1));
+            } else {
+                HCdcTxId txId = new HCdcTxId(offset.getSnapshotTxId());
+                txId.setSequence(offset.getSnapshotSeq());
+                processingState.setOffset(txId);
+            }
+        }
+        processingState.setState(EHCdcProcessorState.Running);
+        processingState = stateManager.update(processingState);
+    }
+
     public abstract void process(@NonNull MessageObject<String, DFSChangeDelta> message,
                                  @NonNull Object data,
                                  @NonNull HCdcMessageProcessingState<MO> pState,
@@ -292,6 +310,16 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset<?>>
             sender = null;
         }
         super.close();
+        HCdcStateManager stateManager = (HCdcStateManager) stateManager();
+        try {
+            if (!processingState().hasError())
+                processingState().setState(EHCdcProcessorState.Stopped);
+            stateManager.update(processingState());
+        } catch (Exception ex) {
+            DefaultLogger.error(ex.getLocalizedMessage());
+            DefaultLogger.stacktrace(ex);
+            throw new IOException(ex);
+        }
     }
 
     @Getter

@@ -111,6 +111,8 @@ public class EditsLogReader extends HDFSEditsReader {
                 processingState.setOffset(txId);
             }
         }
+        processingState.setState(EHCdcProcessorState.Running);
+        processingState = stateManager.update(processingState);
     }
 
     @Override
@@ -210,7 +212,16 @@ public class EditsLogReader extends HDFSEditsReader {
 
     @Override
     public void close() throws IOException {
-
+        HCdcStateManager stateManager = (HCdcStateManager) stateManager();
+        try {
+            if (!processingState().hasError())
+                processingState().setState(EHCdcProcessorState.Stopped);
+            stateManager.update(processingState());
+        } catch (Exception ex) {
+            DefaultLogger.error(ex.getLocalizedMessage());
+            DefaultLogger.stacktrace(ex);
+            throw new IOException(ex);
+        }
     }
 
     public static class EditsLogMetrics extends EventProcessorMetrics {
