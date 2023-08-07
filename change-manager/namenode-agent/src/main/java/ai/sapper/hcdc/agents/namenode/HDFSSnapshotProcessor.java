@@ -49,6 +49,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 import org.apache.commons.configuration2.HierarchicalConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
@@ -77,7 +78,6 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
 
     public HDFSSnapshotProcessor() {
         super(HCdcProcessingState.class);
-        Preconditions.checkState(stateManager() instanceof HCdcStateManager);
     }
 
     @Override
@@ -94,7 +94,8 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
             processorConfig.read();
             settings = (HDFSSnapshotProcessorSettings) processorConfig.settings();
             super.init(settings, name, env);
-            withMetrics(new SnapshotEventMetrics(env));
+            Preconditions.checkState(stateManager() instanceof HCdcStateManager);
+
             sender = processorConfig.readSender(env);
             adminSender = processorConfig.readAdminSender(env);
             schemaManager = ((NameNodeEnv) env).schemaManager();
@@ -106,6 +107,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
                     30000,
                     TimeUnit.MILLISECONDS,
                     new LinkedBlockingQueue<>());
+            withMetrics(new SnapshotEventMetrics(env));
             schemaManager.addFilterCallback(new SnapshotCallBack(this,
                     (SnapshotEventMetrics) metrics,
                     executor));
@@ -154,7 +156,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
         try (Timer t = new Timer(metrics.getTimer(EventProcessorMetrics.METRIC_BATCH_TIME))) {
             SnapshotOffset offset = stateManager.getSnapshotOffset();
             HCdcTxId txId = new HCdcTxId(offset.getSnapshotTxId());
-            List<Future<Integer>> responses = new ArrayList<>();
+            List<Future<SnapshotTaskResponse>> responses = new ArrayList<>();
             int count = 0;
             for (String domain : schemaManager.matchers().keySet()) {
                 DefaultLogger.info(LOG, String.format("Running snapshot for domain. [domain=%s]", domain));
@@ -166,29 +168,49 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
                             SnapshotRunner runner = new SnapshotRunner(this,
                                     matcher, filter,
                                     (SnapshotEventMetrics) metrics, false);
-                            Future<Integer> response = executor.submit(runner);
+                            Future<SnapshotTaskResponse> response = executor.submit(runner);
                             responses.add(response);
                         }
                     }
                 }
-                while (!responses.isEmpty()) {
-                    List<Integer> delete = new ArrayList<>();
-                    for (int ii = 0; ii < responses.size(); ii++) {
-                        Future<Integer> response = responses.get(ii);
-                        if (response.isDone() || response.isCancelled()) {
-                            delete.add(ii);
-                            if (response.isDone()) {
-                                count += response.get();
+            }
+            SnapshotTaskResponse current = null;
+            while (!responses.isEmpty()) {
+                List<Integer> delete = new ArrayList<>();
+                for (int ii = 0; ii < responses.size(); ii++) {
+                    Future<SnapshotTaskResponse> response = responses.get(ii);
+                    if (response.isDone() || response.isCancelled()) {
+                        delete.add(ii);
+                        if (response.isDone()) {
+                            SnapshotTaskResponse r = response.get();
+                            count += r.count;
+                            if (current == null) {
+                                if (r.offset != null)
+                                    current = r;
+                            } else {
+                                if (current.offset.getSnapshotTxId() < r.offset.getSnapshotTxId()) {
+                                    current = r;
+                                }
                             }
                         }
                     }
-                    if (!delete.isEmpty()) {
-                        for (int index : delete) {
-                            responses.remove(index);
-                        }
-                    } else {
-                        Thread.sleep(100);
+                }
+                if (!delete.isEmpty()) {
+                    for (int index : delete) {
+                        responses.remove(index);
                     }
+                } else {
+                    Thread.sleep(100);
+                }
+            }
+            if (current != null) {
+                if (current.offset != null) {
+                    SnapshotOffset so = stateManager.getSnapshotOffset();
+                    so.setSnapshotTxId(current.offset.getSnapshotTxId());
+                    so.setSnapshotSeq(current.offset.getSnapshotSeq());
+                    stateManager.updateSnapshotOffset(so);
+                } else {
+                    DefaultLogger.warn("No snapshot entities generated...");
                 }
             }
             DefaultLogger.info(String.format("[SNAPSHOT] Entities executed: %d", count));
@@ -235,9 +257,9 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
         return schemaManager.remove(domain, filter.getEntity(), filter.getPath(), filter.getRegex());
     }
 
-    public int processFilter(@NonNull Filter filter,
-                             @NonNull String domain,
-                             @NonNull HCdcTxId txId) throws Exception {
+    public SnapshotTaskResponse processFilter(@NonNull Filter filter,
+                                              @NonNull String domain,
+                                              @NonNull HCdcTxId txId) throws Exception {
         checkState();
         DomainFilterMatcher matcher = schemaManager.matchers().get(domain);
         if (matcher == null) {
@@ -251,13 +273,14 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
         return processFilter(pf, domain, txId);
     }
 
-    public int processFilter(@NonNull DomainFilterMatcher.PathFilter filter,
-                             String domain,
-                             @NonNull HCdcTxId txId) throws Exception {
+    public SnapshotTaskResponse processFilter(@NonNull DomainFilterMatcher.PathFilter filter,
+                                              String domain,
+                                              @NonNull HCdcTxId txId) throws Exception {
         checkState();
         FileSystem fs = schemaManager.hdfsConnection().fileSystem();
         List<Path> paths = FileSystemUtils.list(filter.path(), fs);
-        int count = 0;
+        SnapshotTaskResponse response = new SnapshotTaskResponse();
+        response.count = 0;
         if (paths != null) {
             DefaultLogger.debug(
                     String.format("Files returned for path. [path=%s][count=%d]", filter.path(), paths.size()));
@@ -269,17 +292,24 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
                     SchemaEntity d = new SchemaEntity();
                     d.setDomain(domain);
                     d.setEntity(filter.filter().getEntity());
-                    runSnapshot(hdfsPath, d, txId);
-                    count++;
+                    SnapshotOffset offset = runSnapshot(hdfsPath, d, txId);
+                    if (offset != null) {
+                        response.count++;
+                        if (response.offset == null) {
+                            response.offset = offset;
+                        } else if (response.offset.getSnapshotTxId() < offset.getSnapshotTxId()) {
+                            response.offset = offset;
+                        }
+                    }
                 }
             }
         }
-        return count;
+        return response;
     }
 
-    public int processFilterWithLock(@NonNull DomainFilterMatcher.PathFilter filter,
-                                     String domain,
-                                     @NonNull HCdcTxId txId) throws Exception {
+    public SnapshotTaskResponse processFilterWithLock(@NonNull DomainFilterMatcher.PathFilter filter,
+                                                      String domain,
+                                                      @NonNull HCdcTxId txId) throws Exception {
         checkState();
         __lock().lock();
         try {
@@ -289,9 +319,9 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
         }
     }
 
-    private void runSnapshot(@NonNull String hdfsPath,
-                             @NonNull SchemaEntity entity,
-                             @NonNull HCdcTxId txId) throws SnapshotError {
+    private SnapshotOffset runSnapshot(@NonNull String hdfsPath,
+                                       @NonNull SchemaEntity entity,
+                                       @NonNull HCdcTxId txId) throws SnapshotError {
         try (Timer t = new Timer(metrics.getTimer(EventProcessorMetrics.METRIC_EVENTS_TIME))) {
             HCdcStateManager stateManager = (HCdcStateManager) stateManager();
             DefaultLogger.debug(LOG, String.format("Generating snapshot for file. [path=%s]", hdfsPath));
@@ -300,7 +330,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
                     .get(hdfsPath);
             if (fileState == null) {
                 DefaultLogger.info(LOG, String.format("HDFS File State not found. [path=%s]", hdfsPath));
-                return;
+                return null;
             }
             if (txId.getId() < fileState.getLastTnxId()) {
                 txId.setId(fileState.getLastTnxId());
@@ -311,7 +341,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
                     .get(entity, fileState.getFileInfo().getInodeId());
             if (rState != null) {
                 if (rState.getOffset().getSnapshotTxId() > txId.getId()) {
-                    return;
+                    return null;
                 }
                 stateManager
                         .replicaStateHelper()
@@ -344,13 +374,14 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
             stateManager
                     .replicaStateHelper()
                     .update(rState);
-            SnapshotOffset so = stateManager.getSnapshotOffset();
+            SnapshotOffset so = new SnapshotOffset();
             so.setSnapshotTxId(offset.getSnapshotTxId());
             so.setSnapshotSeq(seq);
-            stateManager.updateSnapshotOffset(so);
+            //stateManager.updateSnapshotOffset(so);
             DefaultLogger.info(LOG, String.format("Snapshot generated for path. [path=%s][inode=%d]",
                     fileState.getFileInfo().getHdfsPath(), fileState.getFileInfo().getInodeId()));
             metrics.getCounter(EventProcessorMetrics.METRIC_EVENTS_PROCESSED).increment();
+            return so;
         } catch (Exception ex) {
             metrics.getCounter(EventProcessorMetrics.METRIC_EVENTS_ERROR).increment();
             throw new SnapshotError(ex);
@@ -590,7 +621,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
         }
     }
 
-    public static class SnapshotRunner implements Callable<Integer> {
+    public static class SnapshotRunner implements Callable<SnapshotTaskResponse> {
         private final HDFSSnapshotProcessor processor;
         private final DomainFilterMatcher matcher;
         private final DomainFilterMatcher.PathFilter filter;
@@ -610,21 +641,21 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
         }
 
         @Override
-        public Integer call() throws Exception {
+        public SnapshotTaskResponse call() throws Exception {
             try (Timer t = new Timer(metrics.getTimer(EventProcessorMetrics.METRIC_BATCH_TIME))) {
                 DefaultLogger.info(processor.LOG,
                         String.format("Processing filer: [filter=%s]",
                                 JSONUtils.asString(filter.filter(), Filter.class)));
-                int count = 0;
+                SnapshotTaskResponse response = null;
                 if (withLock) {
-                    count = processor.processFilterWithLock(filter, matcher.domain(), new HCdcTxId(-1));
+                    response = processor.processFilterWithLock(filter, matcher.domain(), new HCdcTxId(-1));
                 } else {
-                    count = processor.processFilter(filter, matcher.domain(), new HCdcTxId(-1));
+                    response = processor.processFilter(filter, matcher.domain(), new HCdcTxId(-1));
                 }
                 DefaultLogger.info(processor.LOG,
                         String.format("Processed filer: [filter=%s][files=%d]",
-                                JSONUtils.asString(filter.filter(), Filter.class), count));
-                return count;
+                                JSONUtils.asString(filter.filter(), Filter.class), response.count));
+                return response;
             } catch (Exception ex) {
                 DefaultLogger.error(processor.LOG,
                         String.format("Error processing filter: %s", filter.filter().toString()), ex);
@@ -642,5 +673,13 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
                     NameNodeEnv.Constants.DB_TYPE,
                     env);
         }
+    }
+
+    @Getter
+    @Setter
+    @Accessors(fluent = true)
+    public static class SnapshotTaskResponse {
+        private SnapshotOffset offset;
+        private int count;
     }
 }
