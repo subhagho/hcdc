@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: hadoop-cdc-engine
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: [ "health", "metrics", "prometheus" ]
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+server:
+  port: 8080

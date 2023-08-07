@@ -60,10 +60,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 @Getter
 @Accessors(fluent = true)
@@ -74,15 +73,16 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
     private HDFSSnapshotProcessorConfig processorConfig;
     private HDFSSnapshotProcessorSettings settings;
     private HCdcSchemaManager schemaManager;
+    private ThreadPoolExecutor executor;
 
-    public HDFSSnapshotProcessor(@NonNull NameNodeEnv env) {
-        super(env, new SnapshotEventMetrics(env),
-                HCdcProcessingState.class);
+    public HDFSSnapshotProcessor() {
+        super(HCdcProcessingState.class);
         Preconditions.checkState(stateManager() instanceof HCdcStateManager);
     }
 
     @Override
-    public Processor<EHCdcProcessorState, HCdcTxId> init(@NonNull String name,
+    public Processor<EHCdcProcessorState, HCdcTxId> init(@NonNull BaseEnv<?> env,
+                                                         @NonNull String name,
                                                          @NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                                                          String path) throws ConfigurationException {
         Preconditions.checkState(env instanceof NameNodeEnv);
@@ -93,15 +93,23 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
             processorConfig = new HDFSSnapshotProcessorConfig(xmlConfig, path);
             processorConfig.read();
             settings = (HDFSSnapshotProcessorSettings) processorConfig.settings();
-            super.init(settings, name);
+            super.init(settings, name, env);
+            withMetrics(new SnapshotEventMetrics(env));
             sender = processorConfig.readSender(env);
             adminSender = processorConfig.readAdminSender(env);
             schemaManager = ((NameNodeEnv) env).schemaManager();
             if (schemaManager == null) {
                 throw new Exception(String.format("[%s] Schema Manager not initialized...", name()));
             }
-            schemaManager.addFilterCallback(new SnapshotCallBack(this, (SnapshotEventMetrics) metrics,
-                    settings.getExecutorPoolSize()));
+            executor = new ThreadPoolExecutor(settings.getExecutorPoolSize(),
+                    settings.getExecutorPoolSize(),
+                    30000,
+                    TimeUnit.MILLISECONDS,
+                    new LinkedBlockingQueue<>());
+            schemaManager.addFilterCallback(new SnapshotCallBack(this,
+                    (SnapshotEventMetrics) metrics,
+                    executor));
+
             LOG = LoggerFactory.getLogger(getClass());
             state.setState(ProcessorState.EProcessorState.Running);
             return this;
@@ -146,6 +154,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
         try (Timer t = new Timer(metrics.getTimer(EventProcessorMetrics.METRIC_BATCH_TIME))) {
             SnapshotOffset offset = stateManager.getSnapshotOffset();
             HCdcTxId txId = new HCdcTxId(offset.getSnapshotTxId());
+            List<Future<Integer>> responses = new ArrayList<>();
             int count = 0;
             for (String domain : schemaManager.matchers().keySet()) {
                 DefaultLogger.info(LOG, String.format("Running snapshot for domain. [domain=%s]", domain));
@@ -154,8 +163,31 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
                     List<DomainFilterMatcher.PathFilter> filters = matcher.patterns();
                     if (filters != null && !filters.isEmpty()) {
                         for (DomainFilterMatcher.PathFilter filter : filters) {
-                            count += processFilter(filter, domain, txId);
+                            SnapshotRunner runner = new SnapshotRunner(this,
+                                    matcher, filter,
+                                    (SnapshotEventMetrics) metrics, false);
+                            Future<Integer> response = executor.submit(runner);
+                            responses.add(response);
                         }
+                    }
+                }
+                while (!responses.isEmpty()) {
+                    List<Integer> delete = new ArrayList<>();
+                    for (int ii = 0; ii < responses.size(); ii++) {
+                        Future<Integer> response = responses.get(ii);
+                        if (response.isDone() || response.isCancelled()) {
+                            delete.add(ii);
+                            if (response.isDone()) {
+                                count += response.get();
+                            }
+                        }
+                    }
+                    if (!delete.isEmpty()) {
+                        for (int index : delete) {
+                            responses.remove(index);
+                        }
+                    } else {
+                        Thread.sleep(100);
                     }
                 }
             }
@@ -529,15 +561,10 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
 
         public SnapshotCallBack(@NonNull HDFSSnapshotProcessor processor,
                                 @NonNull SnapshotEventMetrics metrics,
-                                int corePoolSize) {
-            Preconditions.checkArgument(corePoolSize > 0);
+                                @NonNull ThreadPoolExecutor executor) {
             this.processor = processor;
             this.metrics = metrics;
-            executor = new ThreadPoolExecutor(corePoolSize,
-                    corePoolSize,
-                    30000,
-                    TimeUnit.MILLISECONDS,
-                    new LinkedBlockingQueue<>());
+            this.executor = executor;
         }
 
 
@@ -550,7 +577,7 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
         public void process(@NonNull DomainFilterMatcher matcher,
                             DomainFilterMatcher.PathFilter filter,
                             @NonNull String path) {
-            SnapshotRunner runner = new SnapshotRunner(processor, matcher, filter, metrics);
+            SnapshotRunner runner = new SnapshotRunner(processor, matcher, filter, metrics, true);
             executor.submit(runner);
         }
 
@@ -563,36 +590,46 @@ public class HDFSSnapshotProcessor extends Processor<EHCdcProcessorState, HCdcTx
         }
     }
 
-    public static class SnapshotRunner implements Runnable {
+    public static class SnapshotRunner implements Callable<Integer> {
         private final HDFSSnapshotProcessor processor;
         private final DomainFilterMatcher matcher;
         private final DomainFilterMatcher.PathFilter filter;
         private final SnapshotEventMetrics metrics;
+        private final boolean withLock;
 
         public SnapshotRunner(@NonNull HDFSSnapshotProcessor processor,
                               @NonNull DomainFilterMatcher matcher,
                               @NonNull DomainFilterMatcher.PathFilter filter,
-                              @NonNull SnapshotEventMetrics metrics) {
+                              @NonNull SnapshotEventMetrics metrics,
+                              boolean withLock) {
             this.processor = processor;
             this.matcher = matcher;
             this.filter = filter;
             this.metrics = metrics;
+            this.withLock = withLock;
         }
 
         @Override
-        public void run() {
+        public Integer call() throws Exception {
             try (Timer t = new Timer(metrics.getTimer(EventProcessorMetrics.METRIC_BATCH_TIME))) {
                 DefaultLogger.info(processor.LOG,
                         String.format("Processing filer: [filter=%s]",
                                 JSONUtils.asString(filter.filter(), Filter.class)));
-                int count = processor.processFilterWithLock(filter, matcher.domain(), new HCdcTxId(-1));
+                int count = 0;
+                if (withLock) {
+                    count = processor.processFilterWithLock(filter, matcher.domain(), new HCdcTxId(-1));
+                } else {
+                    count = processor.processFilter(filter, matcher.domain(), new HCdcTxId(-1));
+                }
                 DefaultLogger.info(processor.LOG,
                         String.format("Processed filer: [filter=%s][files=%d]",
                                 JSONUtils.asString(filter.filter(), Filter.class), count));
+                return count;
             } catch (Exception ex) {
                 DefaultLogger.error(processor.LOG,
                         String.format("Error processing filter: %s", filter.filter().toString()), ex);
                 DefaultLogger.stacktrace(ex);
+                throw ex;
             }
         }
     }

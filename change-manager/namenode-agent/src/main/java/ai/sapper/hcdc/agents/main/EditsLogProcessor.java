@@ -68,8 +68,8 @@ public class EditsLogProcessor implements Service<ProcessorState.EProcessorState
             config = ConfigReader.read(configFile, fileSource);
             env = NameNodeEnv.setup(name(), getClass(), config);
 
-            processor = new EditsLogReader(env);
-            processor.init("HDFSLogReader", env.agentConfig(), null);
+            processor = new EditsLogReader();
+            processor.init(env, "HDFSLogReader", env.agentConfig(), null);
             env.withProcessor(processor);
             return this;
         } catch (Throwable t) {

@@ -76,7 +76,7 @@ public class EditsChangeConsumer implements Service<ProcessorState.EProcessorSta
 
             processor = (EditsChangeDeltaProcessor<?>) def.type().getDeclaredConstructor(NameNodeEnv.class, String.class)
                     .newInstance(env, name());
-            processor.init(def.name(), env.agentConfig());
+            processor.init(env, def.name(), env.agentConfig());
 
             return this;
         } catch (Throwable t) {

@@ -17,6 +17,7 @@
 package ai.sapper.hcdc.agents.common;
 
 import ai.sapper.cdc.common.utils.DefaultLogger;
+import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.executor.*;
 import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
@@ -49,22 +50,22 @@ import java.util.List;
 
 import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 
-public abstract class BatchChangeDeltaProcessor<MO extends ReceiverOffset> extends ChangeDeltaProcessor<MO> {
+public abstract class BatchChangeDeltaProcessor<MO extends ReceiverOffset<?>> extends ChangeDeltaProcessor<MO> {
     private HCdcShardedExecutor executor;
 
-    public BatchChangeDeltaProcessor(@NonNull NameNodeEnv env,
-                                     @NonNull Class<? extends ChangeDeltaProcessorSettings> settingsType,
+    public BatchChangeDeltaProcessor(@NonNull Class<? extends ChangeDeltaProcessorSettings> settingsType,
                                      @NonNull EProcessorMode mode,
-                                     @NonNull HCdcBaseMetrics metrics,
                                      boolean ignoreMissing) {
-        super(env, settingsType, mode, metrics, ignoreMissing);
+        super(settingsType, mode, ignoreMissing);
     }
 
     @Override
-    public ChangeDeltaProcessor<MO> init(@NonNull String name,
+    public ChangeDeltaProcessor<MO> init(@NonNull BaseEnv<?> env,
+                                         @NonNull String name,
                                          @NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
-                                         String path) throws ConfigurationException {
-        super.init(name, xmlConfig, path);
+                                         String path)
+            throws ConfigurationException {
+        super.init(env, name, xmlConfig, path);
         executor = new HCdcShardedExecutor();
         executor.init(receiverConfig.config(), env());
         return this;
@@ -174,7 +175,7 @@ public abstract class BatchChangeDeltaProcessor<MO extends ReceiverOffset> exten
 
     @Getter
     @Accessors(fluent = true)
-    public static class ChangeDeltaTask<MO extends ReceiverOffset> extends EntityTask<HCdcTxId> {
+    public static class ChangeDeltaTask<MO extends ReceiverOffset<?>> extends EntityTask<HCdcTxId> {
         private final BatchChangeDeltaProcessor<MO> processor;
         private final MessageObject<String, DFSChangeDelta> message;
         private final Object data;

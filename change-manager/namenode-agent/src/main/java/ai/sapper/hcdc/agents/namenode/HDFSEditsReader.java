@@ -18,14 +18,12 @@ package ai.sapper.hcdc.agents.namenode;
 
 import ai.sapper.cdc.common.config.ConfigReader;
 import ai.sapper.cdc.core.BaseEnv;
-import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.messaging.MessageSender;
 import ai.sapper.cdc.core.messaging.builders.MessageSenderBuilder;
 import ai.sapper.cdc.core.model.EHCdcProcessorState;
 import ai.sapper.cdc.core.model.HCdcProcessingState;
 import ai.sapper.cdc.core.model.HCdcTxId;
 import ai.sapper.cdc.core.processing.Processor;
-import ai.sapper.cdc.core.utils.MetricsBase;
 import ai.sapper.hcdc.agents.settings.HDFSEditsReaderSettings;
 import ai.sapper.hcdc.common.model.DFSChangeDelta;
 import lombok.Getter;
@@ -41,9 +39,8 @@ public abstract class HDFSEditsReader extends Processor<EHCdcProcessorState, HCd
     protected MessageSender<String, DFSChangeDelta> sender;
     protected HDFSEditsReaderSettings settings;
 
-    public HDFSEditsReader(@NonNull NameNodeEnv env,
-                           @NonNull MetricsBase metrics) {
-        super(env, metrics, HCdcProcessingState.class);
+    public HDFSEditsReader() {
+        super(HCdcProcessingState.class);
     }
 
     @SuppressWarnings("unchecked")
@@ -54,7 +51,7 @@ public abstract class HDFSEditsReader extends Processor<EHCdcProcessorState, HCd
         ConfigReader reader = new ConfigReader(xmlConfig, settingsType);
         reader.read();
         settings = (HDFSEditsReaderSettings) reader.settings();
-        super.init(settings, name);
+        super.init(settings, name, env);
 
         MessageSenderBuilder<String, DFSChangeDelta> builder
                 = (MessageSenderBuilder<String, DFSChangeDelta>) settings.getBuilderType()

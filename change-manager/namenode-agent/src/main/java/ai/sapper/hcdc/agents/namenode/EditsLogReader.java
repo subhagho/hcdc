@@ -61,22 +61,16 @@ public class EditsLogReader extends HDFSEditsReader {
     private HierarchicalConfiguration<ImmutableNode> config;
     private HCdcTxId txId;
 
-    public EditsLogReader(@NonNull NameNodeEnv env) {
-        super(env,
-                new EditsLogMetrics(env.source(),
-                        NameNodeEnv.Constants.DB_TYPE,
-                        env));
-    }
-
     @Override
-    public Processor<EHCdcProcessorState, HCdcTxId> init(@NonNull String name,
+    public Processor<EHCdcProcessorState, HCdcTxId> init(@NonNull BaseEnv<?> environment,
+                                                         @NonNull String name,
                                                          @NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                                                          String path) throws ConfigurationException {
         if (Strings.isNullOrEmpty(path)) {
             path = HDFSEditsReaderSettings.__CONFIG_PATH;
         }
         try {
-            NameNodeEnv env = (NameNodeEnv) this.env;
+            NameNodeEnv env = (NameNodeEnv) environment;
             config = xmlConfig.configurationAt(path);
             Preconditions.checkNotNull(env.hadoopConfig());
             String dir = env.hadoopConfig().nameNodeEditsDir();
@@ -87,6 +81,9 @@ public class EditsLogReader extends HDFSEditsReader {
                                 editsDir.getAbsolutePath()));
             }
             setup(name, config, HDFSEditsReaderSettings.class, env);
+            withMetrics(new EditsLogMetrics(env.source(),
+                    NameNodeEnv.Constants.DB_TYPE,
+                    env));
             state.setState(ProcessorState.EProcessorState.Initialized);
             return this;
         } catch (Throwable ex) {

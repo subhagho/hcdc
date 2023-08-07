@@ -66,8 +66,8 @@ public class SnapshotRunner implements Service<ProcessorState.EProcessorState> {
             config = ConfigReader.read(configFile, fileSource);
             env = NameNodeEnv.setup(name(), getClass(), config);
             Preconditions.checkNotNull(env.agentConfig());
-            processor = new HDFSSnapshotProcessor(env);
-            processor.init("SnapshotProcessor", env.agentConfig(), null);
+            processor = new HDFSSnapshotProcessor();
+            processor.init(env, "SnapshotProcessor", env.agentConfig(), null);
             env.withProcessor(processor);
             return this;
         } catch (Throwable t) {

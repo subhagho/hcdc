@@ -18,10 +18,7 @@ package ai.sapper.hcdc.agents.namenode;
 
 import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.NameNodeEnv;
-import ai.sapper.cdc.core.messaging.ChangeDeltaSerDe;
-import ai.sapper.cdc.core.messaging.InvalidMessageError;
-import ai.sapper.cdc.core.messaging.MessageObject;
-import ai.sapper.cdc.core.messaging.ReceiverOffset;
+import ai.sapper.cdc.core.messaging.*;
 import ai.sapper.cdc.core.model.*;
 import ai.sapper.cdc.core.model.dfs.DFSBlockState;
 import ai.sapper.cdc.core.model.dfs.DFSFileReplicaState;
@@ -53,7 +50,7 @@ import java.io.IOException;
 
 @Getter
 @Accessors(fluent = true)
-public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends ChangeDeltaProcessor<MO> {
+public class EditsChangeDeltaProcessor<MO extends ReceiverOffset<?>> extends ChangeDeltaProcessor<MO> {
     private static final Logger LOG = LoggerFactory.getLogger(EditsChangeDeltaProcessor.class.getCanonicalName());
     public static final String __CONFIG_PATH = "processor.edits";
 
@@ -61,11 +58,8 @@ public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends Change
 
     public EditsChangeDeltaProcessor(@NonNull NameNodeEnv env,
                                      @NonNull String name) {
-        super(env,
-                ChangeDeltaProcessorSettings.class,
+        super(ChangeDeltaProcessorSettings.class,
                 EProcessorMode.Committer,
-                new EditsChangeDeltaMetrics(env.name(),
-                        env),
                 false);
         schemaManager = env.schemaManager();
         this.name = name;
@@ -109,9 +103,10 @@ public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends Change
     }
 
     @Override
-    public ChangeDeltaProcessor<MO> init(@NonNull String name,
+    public ChangeDeltaProcessor<MO> init(@NonNull NameNodeEnv env,
+                                         @NonNull String name,
                                          @NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
-        super.init(name, xmlConfig, __CONFIG_PATH);
+        super.init(env, name, xmlConfig, __CONFIG_PATH);
         processor
                 = new EditsChangeTransactionProcessor(name(),
                 env(),
@@ -122,6 +117,12 @@ public class EditsChangeDeltaProcessor<MO extends ReceiverOffset> extends Change
         return this;
     }
 
+    @Override
+    protected void postInit(@NonNull MessagingProcessorSettings settings) throws Exception {
+        super.postInit(settings);
+        withMetrics(new EditsChangeDeltaMetrics(env().name(),
+                env()));
+    }
 
     @Override
     protected void initState(@NonNull ProcessingState<EHCdcProcessorState, HCdcTxId> processingState) throws Exception {

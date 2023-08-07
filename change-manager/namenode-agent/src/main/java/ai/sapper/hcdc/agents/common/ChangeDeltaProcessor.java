@@ -49,7 +49,7 @@ import static ai.sapper.cdc.core.utils.TransactionLogger.LOGGER;
 
 @Getter
 @Accessors(fluent = true)
-public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
+public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset<?>>
         extends BatchMessageProcessor<HCdcTxId, String, DFSChangeDelta, EHCdcProcessorState, HCdcTxId, MO> {
     public enum EProcessorMode {
         Reader, Committer
@@ -59,7 +59,7 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
 
     private MessageSender<String, DFSChangeDelta> sender;
     private long receiveBatchTimeout = 1000;
-    private final NameNodeEnv env;
+    private NameNodeEnv env;
     protected TransactionProcessor processor;
     protected final EProcessorMode mode;
     protected final boolean ignoreMissing;
@@ -68,29 +68,28 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
     protected ChangeDeltaProcessorSettings settings;
 
 
-    public ChangeDeltaProcessor(@NonNull NameNodeEnv env,
-                                @NonNull Class<? extends ChangeDeltaProcessorSettings> settingsType,
+    public ChangeDeltaProcessor(@NonNull Class<? extends ChangeDeltaProcessorSettings> settingsType,
                                 @NonNull EProcessorMode mode,
-                                @NonNull HCdcBaseMetrics metrics,
                                 boolean ignoreMissing) {
-        super(env, metrics, HCdcProcessingState.class);
+        super(HCdcProcessingState.class);
         Preconditions.checkState(super.stateManager() instanceof HCdcStateManager);
         Preconditions.checkState(super.stateManager().processingState() instanceof HCdcMessageProcessingState);
         this.mode = mode;
         this.ignoreMissing = ignoreMissing;
         this.settingsType = settingsType;
-        this.env = env;
     }
 
     @Override
-    public ChangeDeltaProcessor<MO> init(@NonNull String name,
+    public ChangeDeltaProcessor<MO> init(@NonNull BaseEnv<?> env,
+                                         @NonNull String name,
                                          @NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig,
                                          String path) throws ConfigurationException {
+        this.env = (NameNodeEnv) env;
         if (Strings.isNullOrEmpty(path)) {
             path = ChangeDeltaProcessorSettings.__CONFIG_PATH;
         }
         receiverConfig = new ChangeDeltaProcessorConfig(xmlConfig, path, settingsType);
-        super.init(name, xmlConfig, path);
+        super.init(env, name, xmlConfig, path);
         settings = (ChangeDeltaProcessorSettings) receiverConfig.settings();
         return this;
     }
@@ -276,7 +275,8 @@ public abstract class ChangeDeltaProcessor<MO extends ReceiverOffset>
                                  @NonNull Params params,
                                  @NonNull HCdcTaskResponse response) throws Exception;
 
-    public abstract ChangeDeltaProcessor<MO> init(@NonNull String name,
+    public abstract ChangeDeltaProcessor<MO> init(@NonNull NameNodeEnv env,
+                                                  @NonNull String name,
                                                   @NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException;
 
     @Override

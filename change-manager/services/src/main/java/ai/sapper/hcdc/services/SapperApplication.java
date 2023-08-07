@@ -16,9 +16,12 @@
 
 package ai.sapper.hcdc.services;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
@@ -31,4 +34,8 @@ public class SapperApplication extends SpringBootServletInitializer {
         SpringApplication.run(SapperApplication.class, args);
     }
 
+    @Bean
+    public MeterRegistry getMeterRegistry() {
+        return new CompositeMeterRegistry();
+    }
 }

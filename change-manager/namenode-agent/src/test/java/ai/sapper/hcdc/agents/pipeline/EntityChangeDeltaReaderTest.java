@@ -57,12 +57,12 @@ class EntityChangeDeltaReaderTest {
             s3Client.createBucket(CreateBucketRequest.builder().bucket(DEFAULT_BUCKET_NAME).build());
 
             HierarchicalConfiguration<ImmutableNode> config = ConfigReader.read(CONFIG_FILE, EConfigFileType.File);
-            NameNodeEnv.setup(name, getClass(), config);
+            NameNodeEnv env = NameNodeEnv.setup(name, getClass(), config);
 
             EntityChangeDeltaReader<KafkaOffset> processor
-                    = new KafkaEntityChangeDeltaReader(NameNodeEnv.get(name), name)
+                    = new KafkaEntityChangeDeltaReader(env, name)
                     .withMockFileSystem(new S3Mocker(s3Client));
-            processor.init("EntityChangeDeltaReader", NameNodeEnv.get(name).agentConfig());
+            processor.init(env, "EntityChangeDeltaReader", NameNodeEnv.get(name).agentConfig());
             processor.run();
         } catch (Throwable t) {
             DefaultLogger.stacktrace(t);

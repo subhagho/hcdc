@@ -20,6 +20,7 @@ import ai.sapper.cdc.common.utils.DefaultLogger;
 import ai.sapper.cdc.core.BaseEnv;
 import ai.sapper.cdc.core.NameNodeEnv;
 import ai.sapper.cdc.core.messaging.MessageObject;
+import ai.sapper.cdc.core.messaging.MessagingProcessorSettings;
 import ai.sapper.cdc.core.messaging.ReceiverOffset;
 import ai.sapper.cdc.core.model.*;
 import ai.sapper.cdc.core.model.dfs.DFSFileState;
@@ -46,17 +47,15 @@ import java.util.List;
 
 @Getter
 @Accessors(fluent = true)
-public class EntityChangeDeltaProcessor<MO extends ReceiverOffset> extends BatchChangeDeltaProcessor<MO> {
+public class EntityChangeDeltaProcessor<MO extends ReceiverOffset<?>> extends BatchChangeDeltaProcessor<MO> {
     private static Logger LOG = LoggerFactory.getLogger(EntityChangeDeltaProcessor.class.getCanonicalName());
     private final HCdcSchemaManager schemaManager;
 
 
     public EntityChangeDeltaProcessor(@NonNull NameNodeEnv env,
                                       @NonNull String name) {
-        super(env,
-                EntityChangeDeltaProcessorSettings.class,
+        super(EntityChangeDeltaProcessorSettings.class,
                 EProcessorMode.Reader,
-                new EntityChangeDeltaMetrics(env.name(), env),
                 true);
         schemaManager = env.schemaManager();
         this.name = name;
@@ -117,15 +116,22 @@ public class EntityChangeDeltaProcessor<MO extends ReceiverOffset> extends Batch
     }
 
     @Override
-    public ChangeDeltaProcessor<MO> init(@NonNull String name,
+    public ChangeDeltaProcessor<MO> init(@NonNull NameNodeEnv env,
+                                         @NonNull String name,
                                          @NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
-        super.init(name, xmlConfig, EntityChangeDeltaProcessorSettings.__CONFIG_PATH);
+        super.init(env, name, xmlConfig, EntityChangeDeltaProcessorSettings.__CONFIG_PATH);
         processor
                 = new EntityChangeTransactionProcessor(name(), env(), (HCdcBaseMetrics) metrics)
                 .withSenderQueue(sender())
                 .withErrorQueue(errorLogger);
         state.setState(ProcessorState.EProcessorState.Initialized);
         return this;
+    }
+
+    @Override
+    protected void postInit(@NonNull MessagingProcessorSettings settings) throws Exception {
+        super.postInit(settings);
+        withMetrics(new EntityChangeDeltaMetrics(env().name(), env()));
     }
 
     @Override

@@ -26,6 +26,7 @@ import ai.sapper.cdc.core.io.Archiver;
 import ai.sapper.cdc.core.io.EncryptionHandler;
 import ai.sapper.cdc.core.io.FileSystem;
 import ai.sapper.cdc.core.messaging.MessageObject;
+import ai.sapper.cdc.core.messaging.MessagingProcessorSettings;
 import ai.sapper.cdc.core.messaging.ReceiverOffset;
 import ai.sapper.cdc.core.model.*;
 import ai.sapper.cdc.core.processing.MessageProcessorState;
@@ -49,7 +50,7 @@ import java.nio.ByteBuffer;
 
 @Getter
 @Accessors(fluent = true)
-public class EntityChangeDeltaReader<MO extends ReceiverOffset> extends BatchChangeDeltaProcessor<MO> {
+public class EntityChangeDeltaReader<MO extends ReceiverOffset<?>> extends BatchChangeDeltaProcessor<MO> {
     private static Logger LOG = LoggerFactory.getLogger(EntityChangeDeltaReader.class);
 
     private FileSystem fs;
@@ -62,10 +63,8 @@ public class EntityChangeDeltaReader<MO extends ReceiverOffset> extends BatchCha
 
     public EntityChangeDeltaReader(@NonNull NameNodeEnv env,
                                    @NonNull String name) {
-        super(env,
-                EntityChangeDeltaReaderSettings.class,
+        super(EntityChangeDeltaReaderSettings.class,
                 EProcessorMode.Committer,
-                new EntityChangeReaderMetrics(env.name(), env),
                 true);
         this.name = name;
     }
@@ -82,10 +81,11 @@ public class EntityChangeDeltaReader<MO extends ReceiverOffset> extends BatchCha
      * @throws ConfigurationException
      */
     @Override
-    public ChangeDeltaProcessor<MO> init(@NonNull String name,
+    public ChangeDeltaProcessor<MO> init(@NonNull NameNodeEnv env,
+                                         @NonNull String name,
                                          @NonNull HierarchicalConfiguration<ImmutableNode> xmlConfig) throws ConfigurationException {
         try {
-            super.init(name, xmlConfig, EntityChangeDeltaReaderSettings.__CONFIG_PATH);
+            super.init(env, name, xmlConfig, EntityChangeDeltaReaderSettings.__CONFIG_PATH);
             ConnectionManager manger = env().connectionManager();
             EntityChangeTransactionReader processor = new EntityChangeTransactionReader(name(), env(), (HCdcBaseMetrics) metrics);
             EntityChangeDeltaReaderSettings settings = (EntityChangeDeltaReaderSettings) receiverConfig.settings();
@@ -137,6 +137,12 @@ public class EntityChangeDeltaReader<MO extends ReceiverOffset> extends BatchCha
         } catch (Exception ex) {
             throw new ConfigurationException(ex);
         }
+    }
+
+    @Override
+    protected void postInit(@NonNull MessagingProcessorSettings settings) throws Exception {
+        super.postInit(settings);
+        withMetrics(new EntityChangeReaderMetrics(env().name(), env()));
     }
 
     @Override
